@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "567879566720",
+    "project_id": "thisai-crm-silver",
+    "storage_bucket": "thisai-crm-silver.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:567879566720:android:74360e3fccc66479bded65",
+        "android_client_info": {
+          "package_name": "com.thisai.crm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBduUugHOc1bCKxHNgr1ehGNOdDclVBbrU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

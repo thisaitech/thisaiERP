@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "thisai-crm-silver",
+    "billing": "thisai-crm-silver"
+  },
+  "targets": {},
+  "etags": {}
+}
