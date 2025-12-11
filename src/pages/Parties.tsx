@@ -33,6 +33,7 @@ import { getParties, getPartiesWithOutstanding, createParty, updateParty, delete
 import { getPartySettings, type PartySettings } from '../services/settingsService'
 import { getInvoices } from '../services/invoiceService'
 import { toast } from 'sonner'
+import { validateCustomerName, validatePhoneNumber, validateGSTIN } from '../utils/inputValidation'
 
 // Indian States list with priority states first
 const INDIAN_STATES = [
@@ -135,6 +136,8 @@ const Parties = () => {
   const [partyCreditLimit, setPartyCreditLimit] = useState<number>(0)
   const [partyCreditDays, setPartyCreditDays] = useState<number>(30)
   const [showCreditLimit, setShowCreditLimit] = useState(false)
+  const [partyOpeningBalance, setPartyOpeningBalance] = useState('')
+  const [showOpeningBalance, setShowOpeningBalance] = useState(false)
 
   // Load parties from database with live outstanding balances
   const loadPartiesFromDatabase = async () => {
@@ -235,6 +238,8 @@ const Parties = () => {
     setShowState(false)
     setShowVehicleNo(false)
     setShowCreditLimit(false)
+    setPartyOpeningBalance('')
+    setShowOpeningBalance(false)
     setIsEditMode(false)
     setEditingPartyId(null)
   }
@@ -278,6 +283,7 @@ const Parties = () => {
       })
 
       // Build party data object, omitting undefined fields for Firebase
+      const openingBal = parseFloat(partyOpeningBalance) || 0
       const partyData: any = {
         type: partyType,
         companyName: partyName.trim(),
@@ -294,8 +300,8 @@ const Parties = () => {
         },
         sameAsShipping: true,
         paymentTerms: partyCustomerType,
-        openingBalance: 0,
-        currentBalance: 0,
+        openingBalance: openingBal,
+        currentBalance: openingBal,
         createdBy: 'User',
         isActive: true,
         // Add credit days from settings or user input
@@ -1174,8 +1180,8 @@ const Parties = () => {
                     <input
                       type="text"
                       value={partyName}
-                      onChange={(e) => setPartyName(e.target.value)}
-                      placeholder={language === 'ta' ? `${partyType === 'customer' ? 'வாடிக்கையாளர்' : 'சப்ளையர்'} பெயர் உள்ளிடவும்` : `Enter ${partyType} name`}
+                      onChange={(e) => setPartyName(validateCustomerName(e.target.value))}
+                      placeholder={language === 'ta' ? `${partyType === 'customer' ? 'வாடிக்கையாளர்' : 'சப்ளையர்'} பெயர் உள்ளிடவும்` : `Enter ${partyType} name (letters only)`}
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                     />
                   </div>
@@ -1184,23 +1190,14 @@ const Parties = () => {
                     <label className="text-sm font-medium mb-1.5 block">
                       {language === 'ta' ? 'தொலைபேசி எண்' : 'Phone Number'} <span className="text-destructive">*</span>
                     </label>
-                    <div className="flex">
-                      <span className="inline-flex items-center px-3 py-2.5 bg-muted border border-r-0 border-border rounded-l-lg text-sm font-medium text-muted-foreground">
-                        +91
-                      </span>
-                      <input
-                        type="tel"
-                        value={partyPhone}
-                        onChange={(e) => {
-                          // Allow digits, spaces, dashes, and plus for international format
-                          const value = e.target.value.replace(/[^\d\s\-+]/g, '').slice(0, 18)
-                          setPartyPhone(value)
-                        }}
-                        placeholder={language === 'ta' ? 'எண் உள்ளிடவும்' : 'Enter phone number'}
-                        maxLength={18}
-                        className="flex-1 px-3 py-2.5 bg-background border border-border rounded-r-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                      />
-                    </div>
+                    <input
+                      type="tel"
+                      value={partyPhone}
+                      onChange={(e) => setPartyPhone(validatePhoneNumber(e.target.value))}
+                      placeholder={language === 'ta' ? 'எண் உள்ளிடவும் (எ.கா., +919876543210)' : 'Enter phone number (e.g., +919876543210)'}
+                      maxLength={16}
+                      className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                    />
                     {partyPhone && partyPhone.replace(/\D/g, '').length < 10 && (
                       <p className="text-xs text-destructive mt-1">{language === 'ta' ? 'தொலைபேசி எண் குறைந்தது 10 இலக்கங்களாக இருக்க வேண்டும்' : 'Phone number must be at least 10 digits'}</p>
                     )}
@@ -1429,6 +1426,38 @@ const Parties = () => {
                         {language === 'ta' ? `அடிப்படை: ${partySettings.defaultCreditPeriod} நாட்கள்` : `Default: ${partySettings.defaultCreditPeriod} days`}
                       </p>
                     </motion.div>
+                  </div>
+
+                  {/* Opening Balance */}
+                  <div>
+                    {!showOpeningBalance ? (
+                      <button
+                        onClick={() => setShowOpeningBalance(true)}
+                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                      >
+                        <Plus size={14} weight="bold" />
+                        {language === 'ta' ? 'ஆரம்ப இருப்பு' : 'Opening Balance'}
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-2"
+                      >
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'ஆரம்ப இருப்பு (₹)' : 'Opening Balance (₹)'}</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={partyOpeningBalance}
+                          onChange={(e) => setPartyOpeningBalance(e.target.value)}
+                          placeholder={language === 'ta' ? 'ஆரம்ப இருப்பு உள்ளிடவும் (எ.கா., 5000)' : 'Enter opening balance (e.g., 5000)'}
+                          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {language === 'ta' ? 'நேர் = அவர்கள் கடன்பட்டுள்ளனர், எதிர் = நீங்கள் கடன்பட்டுள்ளீர்கள்' : 'Positive = They owe you, Negative = You owe them'}
+                        </p>
+                      </motion.div>
+                    )}
                   </div>
 
                   {/* Vehicle No */}

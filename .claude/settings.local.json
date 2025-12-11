@@ -53,7 +53,10 @@
       "Bash(npx cap run:*)",
       "Bash(git init:*)",
       "Bash(git remote add:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(npx vite build:*)",
+      "Bash(npx firebase deploy --only hosting)",
+      "Bash(start cmd /k \"cd /d d:\\Project2\\Anna && npx firebase login --reauth\")"
     ],
     "deny": [],
     "ask": []

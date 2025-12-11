@@ -50,7 +50,8 @@ import {
   Cube,
   CurrencyInr,
   FloppyDisk,
-  Storefront
+  Storefront,
+  MapPin
 } from '@phosphor-icons/react'
 import { useBanking } from '../hooks/useBanking'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -72,6 +73,7 @@ import { generatePaymentRef, savePaymentStatus, type UPIPaymentDetails, type Car
 import { generateIndianInvoiceNumber } from '../utils/invoiceNumbering'
 import { exportToTallyExcel, exportToTallyCSV, downloadTallyXML } from '../utils/exportUtils'
 import { calculateGSTBreakdown, isIntraStateTransaction, isB2BTransaction, isHSNRequired, formatGSTDisplay } from '../utils/gstCalculations'
+import { validateCustomerName, validateBusinessName, validateItemName, validatePhoneNumber, validateGSTIN, validateHSNCode, validateBarcode } from '../utils/inputValidation'
 import { getCompanySettings, getTaxSettings, getInvoiceTableColumnSettings } from '../services/settingsService'
 import { calculateTax } from '../utils/gstTaxCalculator'
 import { getUnitPrice, getBaseQtyForSale, getStockDisplay, hasEnoughStock, getAvailableStockMessage } from '../utils/multiUnitUtils'
@@ -200,6 +202,7 @@ const Sales = () => {
     invoiceItems: InvoiceItem[]
     paymentMode: string
     invoiceDiscount: number
+    discountType: 'percent' | 'amount'
     notes: string
     customerSearch: string
   }
@@ -245,10 +248,12 @@ const Sales = () => {
       if (saved) {
         const parsed = JSON.parse(saved)
         if (parsed && parsed.length > 0) {
-          // Migrate old tabs without mode property
+          // Migrate old tabs without mode/discountType properties
           return parsed.map((tab: any) => ({
             ...tab,
-            mode: tab.mode || 'invoice' // Default to invoice mode for old tabs
+            mode: tab.mode || 'invoice', // Default to invoice mode for old tabs
+            customerState: tab.customerState || '',
+            discountType: tab.discountType || 'percent' // Default to percent for old tabs
           }))
         }
       }
@@ -268,6 +273,7 @@ const Sales = () => {
       invoiceItems: [],
       paymentMode: 'cash',
       invoiceDiscount: 0,
+      discountType: 'percent',
       notes: '',
       customerSearch: ''
     }]
@@ -319,6 +325,7 @@ const Sales = () => {
   const [paymentMode, setPaymentMode] = useState('cash')
   const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>('')
   const [invoiceDiscount, setInvoiceDiscount] = useState(0)
+  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent')
   const [roundOff, setRoundOff] = useState(true)
   const [notes, setNotes] = useState('')
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false)
@@ -354,10 +361,6 @@ const Sales = () => {
     { type: 'cash', amount: 0, reference: '' }
   ])
 
-  // Attachments State
-  const [attachments, setAttachments] = useState<{ name: string; type: 'image' | 'document'; url: string }[]>([])
-  const imageInputRef = useRef<HTMLInputElement>(null)
-  const documentInputRef = useRef<HTMLInputElement>(null)
 
   // Invoice Preview Modal State
   const [showInvoicePreview, setShowInvoicePreview] = useState(false)
@@ -384,12 +387,16 @@ const Sales = () => {
   const [newCustomerState, setNewCustomerState] = useState('')
   const [newCustomerType, setNewCustomerType] = useState('Regular')
   const [newCustomerNotes, setNewCustomerNotes] = useState('')
+  const [newCustomerOpeningBalance, setNewCustomerOpeningBalance] = useState('')
+  const [newCustomerCreditDays, setNewCustomerCreditDays] = useState(30)
   const [showAddressField, setShowAddressField] = useState(false)
   const [showStateField, setShowStateField] = useState(false)
   const [showGstField, setShowGstField] = useState(false)
   const [showEmailField, setShowEmailField] = useState(false)
   const [showCustomerTypeField, setShowCustomerTypeField] = useState(false)
   const [showNotesField, setShowNotesField] = useState(false)
+  const [showOpeningBalanceField, setShowOpeningBalanceField] = useState(false)
+  const [showCreditDaysField, setShowCreditDaysField] = useState(false)
   const [savingCustomer, setSavingCustomer] = useState(false)
 
   // POS Preview Modal State
@@ -424,6 +431,8 @@ const Sales = () => {
   const customerDropdownRef = useRef<HTMLDivElement>(null)
   const itemDropdownRef = useRef<HTMLDivElement>(null)
   const itemSearchInputRef = useRef<HTMLInputElement>(null)
+  const itemTableContainerRef = useRef<HTMLDivElement>(null)
+  const mobileItemsContainerRef = useRef<HTMLDivElement>(null)
 
   // Column visibility state for invoice items table
   const [visibleColumns, setVisibleColumns] = useState({
@@ -653,6 +662,7 @@ const Sales = () => {
     setInvoiceItems(activeTab.invoiceItems)
     setPaymentMode(activeTab.paymentMode)
     setInvoiceDiscount(activeTab.invoiceDiscount)
+    setDiscountType(activeTab.discountType || 'percent')
     setNotes(activeTab.notes)
     setCustomerSearch(activeTab.customerSearch)
 
@@ -682,6 +692,7 @@ const Sales = () => {
       activeTab.invoiceItems === invoiceItems &&
       activeTab.paymentMode === paymentMode &&
       activeTab.invoiceDiscount === invoiceDiscount &&
+      (activeTab.discountType || 'percent') === discountType &&
       activeTab.notes === notes &&
       activeTab.customerSearch === customerSearch
 
@@ -701,6 +712,7 @@ const Sales = () => {
               invoiceItems,
               paymentMode,
               invoiceDiscount,
+              discountType,
               notes,
               customerSearch
             }
@@ -719,6 +731,7 @@ const Sales = () => {
     invoiceItems,
     paymentMode,
     invoiceDiscount,
+    discountType,
     notes,
     customerSearch,
     viewMode
@@ -807,6 +820,20 @@ const Sales = () => {
     }
   }, [salesMode, activeTabId])
 
+  // Auto-scroll to last item when items are added
+  useEffect(() => {
+    if (invoiceItems.length > 0) {
+      // Scroll desktop table container
+      if (itemTableContainerRef.current) {
+        itemTableContainerRef.current.scrollTop = itemTableContainerRef.current.scrollHeight
+      }
+      // Scroll mobile items container
+      if (mobileItemsContainerRef.current) {
+        mobileItemsContainerRef.current.scrollTop = mobileItemsContainerRef.current.scrollHeight
+      }
+    }
+  }, [invoiceItems.length])
+
   // Add new tab
   const addNewTab = (type: 'sale' | 'credit' = 'sale') => {
     const newTab: InvoiceTab = {
@@ -822,6 +849,7 @@ const Sales = () => {
       invoiceItems: [],
       paymentMode: 'cash',
       invoiceDiscount: 0,
+      discountType: 'percent',
       notes: '',
       customerSearch: ''
     }
@@ -887,13 +915,16 @@ const Sales = () => {
       const resetTab: InvoiceTab = {
         id: activeTabId,
         type: 'sale',
+        mode: 'invoice',
         customerName: '',
         customerPhone: '',
         customerEmail: '',
         customerGST: '',
+        customerState: '',
         invoiceItems: [],
         paymentMode: 'cash',
         invoiceDiscount: 0,
+        discountType: 'percent',
         notes: '',
         customerSearch: ''
       }
@@ -908,6 +939,7 @@ const Sales = () => {
       setInvoiceItems([])
       setPaymentMode('cash')
       setInvoiceDiscount(0)
+      setDiscountType('percent')
       setNotes('')
       setCustomerSearch('')
       setInvoiceNumber(newInvoiceNumber)
@@ -943,6 +975,7 @@ const Sales = () => {
     setInvoiceItems(newActiveTab.invoiceItems)
     setPaymentMode(newActiveTab.paymentMode)
     setInvoiceDiscount(newActiveTab.invoiceDiscount || 0)
+    setDiscountType(newActiveTab.discountType || 'percent')
     setNotes(newActiveTab.notes || '')
     setCustomerSearch(newActiveTab.customerSearch || '')
 
@@ -1188,6 +1221,7 @@ const Sales = () => {
         invoiceItems: mappedItems,
         paymentMode: converted.paymentMode || 'cash',
         invoiceDiscount: converted.discount || 0,
+        discountType: 'percent',
         notes: converted.notes || '',
         customerSearch: converted.partyName || ''
       }
@@ -1719,6 +1753,7 @@ const Sales = () => {
     // Auto-focus and scroll into view the search input for next item
     setTimeout(() => {
       itemSearchInputRef.current?.focus()
+      setShowItemDropdown(true)
       // Avoid smooth scrolling on mobile to prevent viewport shaking
       if (typeof window !== 'undefined' && window.innerWidth > 768) {
         itemSearchInputRef.current?.scrollIntoView({ behavior: 'auto', block: 'center' })
@@ -1736,12 +1771,16 @@ const Sales = () => {
     setNewCustomerState('')
     setNewCustomerType('Regular')
     setNewCustomerNotes('')
+    setNewCustomerOpeningBalance('')
+    setNewCustomerCreditDays(30)
     setShowAddressField(false)
     setShowStateField(false)
     setShowGstField(false)
     setShowEmailField(false)
     setShowCustomerTypeField(false)
     setShowNotesField(false)
+    setShowOpeningBalanceField(false)
+    setShowCreditDaysField(false)
   }
 
   // Handle saving new customer
@@ -1754,6 +1793,7 @@ const Sales = () => {
     setSavingCustomer(true)
     try {
       const { createParty } = await import('../services/partyService')
+      const openingBal = parseFloat(newCustomerOpeningBalance) || 0
       const newParty = await createParty({
         name: newCustomerName.trim(),
         type: 'customer',
@@ -1762,8 +1802,9 @@ const Sales = () => {
         gstin: newCustomerGST.trim() || undefined,
         billingAddress: newCustomerAddress.trim() || undefined,
         state: newCustomerState.trim() || undefined,
-        openingBalance: 0,
-        balance: 0
+        openingBalance: openingBal,
+        balance: openingBal,
+        creditDays: newCustomerCreditDays
       })
 
       if (newParty) {
@@ -2489,12 +2530,15 @@ const Sales = () => {
     setInvoiceItems(invoiceItems.filter(item => item.id !== id))
   }
 
+  // Add empty manual row at the top of the items list
   const addEmptyRow = () => {
+    const taxSettings = getTaxSettings()
+    const defaultTaxMode = taxSettings.defaultTaxMode || 'exclusive'
     const newEmptyItem: InvoiceItem = {
-      id: `empty_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `manual_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       name: '',
       qty: 1,
-      unit: 'NONE',
+      unit: 'PCS',
       price: 0,
       discount: 0,
       discountAmount: 0,
@@ -2506,8 +2550,10 @@ const Sales = () => {
       sgstAmount: 0,
       igstPercent: 0,
       igstAmount: 0,
-      total: 0
+      total: 0,
+      taxMode: defaultTaxMode
     }
+    // Add at the end (bottom) of the list
     setInvoiceItems([...invoiceItems, newEmptyItem])
   }
 
@@ -2552,7 +2598,9 @@ const Sales = () => {
     })
 
     // Apply invoice-level discount on taxable subtotal
-    const discount = taxableSubtotal * (invoiceDiscount / 100)
+    const discount = discountType === 'percent'
+      ? taxableSubtotal * (invoiceDiscount / 100)
+      : invoiceDiscount
     const subtotalAfterDiscount = taxableSubtotal - discount
 
     // GST should be calculated on discounted amount (GST compliance)
@@ -4415,6 +4463,7 @@ const Sales = () => {
         invoiceItems: duplicatedItems,
         paymentMode: invoice.paymentMode || 'cash',
         invoiceDiscount: invoice.invoiceDiscount || invoice.discount || 0,
+        discountType: invoice.discountType || 'percent',
         notes: invoice.notes || '',
         customerSearch: invoice.partyName || ''
       }
@@ -4796,9 +4845,14 @@ TOTAL:       ₹${invoice.total}
     }
   }
 
+  const desktopTableStyle = {
+    maxHeight: invoiceItems.length > 0 ? '35vh' : 'auto',
+    minHeight: invoiceItems.length > 0 ? '120px' : '0'
+  }
+
   return (
     <div className={cn(
-      "h-screen overflow-hidden overflow-x-hidden flex flex-col max-w-[100vw] w-full",
+      "overflow-x-hidden flex flex-col max-w-[100vw] w-full",
       viewMode === 'list' ? "p-2 sm:p-3 lg:p-4 bg-[#F8F5FF]" : "bg-white"
     )}>
       {/* Header - Only show in list mode */}
@@ -5746,7 +5800,7 @@ TOTAL:       ₹${invoice.total}
 
       {/* Create Invoice Form - Show when in create mode */}
       {viewMode === 'create' && (
-        <div className="flex-1 flex flex-col min-h-0 h-full">
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Modern Café POS View */}
           {showCafePOS ? (
             <div className="flex-1 overflow-hidden">
@@ -5765,14 +5819,14 @@ TOTAL:       ₹${invoice.total}
           ) : (
           <div
             className={cn(
-              "flex-1 flex flex-col min-h-0 h-full",
+              "flex flex-col",
               (salesMode === 'pos' || showPosPreview)
-                ? "flex flex-col lg:flex-row gap-2"
-                : "flex flex-col"
+                ? "lg:flex-row gap-2"
+                : ""
             )}
           >
           {/* Left Column - Invoice Form / POS Product Area */}
-          <div className="flex flex-col flex-1 min-h-0 h-full bg-white">
+          <div className="flex flex-col bg-white">
 
 
           {/* Tabs for multiple invoices + Mode Toggle + Back */}
@@ -5848,7 +5902,7 @@ TOTAL:       ₹${invoice.total}
           </div>
 
           <div className={cn(
-            "flex-1 flex flex-col overflow-y-auto pb-40 md:pb-2",
+            "flex flex-col overflow-y-auto",
             salesMode === 'pos' ? "p-2" : "p-2"
           )}>
             {/* HEADER - Fixed at top */}
@@ -5921,19 +5975,6 @@ TOTAL:       ₹${invoice.total}
                       onClick={(e) => e.stopPropagation()}
                       className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-[100] max-h-60 overflow-y-auto"
                     >
-                      {/* Add New Customer Button */}
-                      <div
-                        onMouseDown={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          setShowCustomerDropdown(false)
-                          setShowAddCustomerModal(true)
-                        }}
-                        className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-b border-border flex items-center gap-2 text-primary font-medium cursor-pointer"
-                      >
-                        <Plus size={14} weight="bold" />
-                        Add New Customer
-                      </div>
                       {loadingParties ? (
                         <div className="px-4 py-3 text-sm text-muted-foreground">Loading customers...</div>
                       ) : filteredCustomers.length === 0 ? (
@@ -5949,7 +5990,7 @@ TOTAL:       ₹${invoice.total}
                               e.stopPropagation()
                               handleCustomerSelect(party)
                             }}
-                            className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
+                            className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 cursor-pointer"
                           >
                             <div className="flex items-center justify-between">
                               <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
@@ -5971,6 +6012,19 @@ TOTAL:       ₹${invoice.total}
                           </div>
                         ))
                       )}
+                      {/* Add New Customer Button - At Bottom */}
+                      <div
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setShowCustomerDropdown(false)
+                          setShowAddCustomerModal(true)
+                        }}
+                        className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium cursor-pointer sticky bottom-0 bg-card"
+                      >
+                        <Plus size={14} weight="bold" />
+                        Add New Customer
+                      </div>
                     </motion.div>
                   </>
                 )}
@@ -6085,19 +6139,6 @@ TOTAL:       ₹${invoice.total}
                       onClick={(e) => e.stopPropagation()}
                       className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-[100] max-h-64 overflow-y-auto"
                     >
-                      {/* Add New Customer Button */}
-                      <div
-                        onMouseDown={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          setShowCustomerDropdown(false)
-                          setShowAddCustomerModal(true)
-                        }}
-                        className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-b border-border flex items-center gap-2 text-primary font-medium cursor-pointer"
-                      >
-                        <Plus size={14} weight="bold" />
-                        Add New Customer
-                      </div>
                       {loadingParties ? (
                         <div className="px-4 py-3 text-sm text-muted-foreground">Loading customers...</div>
                       ) : filteredCustomers.length === 0 ? (
@@ -6113,7 +6154,7 @@ TOTAL:       ₹${invoice.total}
                               e.stopPropagation()
                               handleCustomerSelect(party)
                             }}
-                            className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
+                            className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 cursor-pointer"
                           >
                             <div className="flex items-center justify-between">
                               <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
@@ -6135,6 +6176,19 @@ TOTAL:       ₹${invoice.total}
                           </div>
                         ))
                       )}
+                      {/* Add New Customer Button - At Bottom */}
+                      <div
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setShowCustomerDropdown(false)
+                          setShowAddCustomerModal(true)
+                        }}
+                        className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium cursor-pointer sticky bottom-0 bg-card"
+                      >
+                        <Plus size={14} weight="bold" />
+                        Add New Customer
+                      </div>
                     </motion.div>
                   </>
                 )}
@@ -6161,6 +6215,33 @@ TOTAL:       ₹${invoice.total}
                           <Buildings size={10} /> {customerGST}
                         </div>
                       )}
+                      {/* Customer State with Intra/Inter-State Indicator */}
+                      <div className="flex items-center gap-1.5 col-span-2 mt-0.5">
+                        <MapPin size={10} className="text-muted-foreground" />
+                        <select
+                          value={customerState}
+                          onChange={(e) => setCustomerState(e.target.value)}
+                          className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded outline-none"
+                        >
+                          <option value="">Select State</option>
+                          {INDIAN_STATES.map((state) => (
+                            <option key={state} value={state}>{state}</option>
+                          ))}
+                        </select>
+                        {customerState && (() => {
+                          const companySettings = getCompanySettings()
+                          const sellerState = companySettings.state || 'Tamil Nadu'
+                          const isIntra = isIntraStateTransaction(sellerState, customerState)
+                          return (
+                            <span className={cn(
+                              "px-1.5 py-0.5 text-[9px] font-semibold rounded",
+                              isIntra ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
+                            )}>
+                              {isIntra ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}
+                            </span>
+                          )
+                        })()}
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -6169,6 +6250,7 @@ TOTAL:       ₹${invoice.total}
                         setCustomerPhone('')
                         setCustomerEmail('')
                         setCustomerGST('')
+                        setCustomerState('')
                         setCustomerSearch('')
                       }}
                       className="text-xs text-destructive hover:underline ml-2"
@@ -6207,7 +6289,7 @@ TOTAL:       ₹${invoice.total}
               {/* Items List - Scrollable Table for All Devices */}
               <div>
                 {/* Mobile Card Layout - Clean & Consistent */}
-                <div className="md:hidden space-y-1.5 max-h-[55vh] overflow-y-auto">
+                <div ref={mobileItemsContainerRef} className="md:hidden space-y-1.5 max-h-[55vh] overflow-y-auto">
                   {invoiceItems.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
                       <Package size={24} className="mx-auto mb-1 text-slate-300" />
@@ -6371,11 +6453,9 @@ TOTAL:       ₹${invoice.total}
 
                 {/* Scrollable Items Table - Desktop */}
                 <div
+                  ref={itemTableContainerRef}
                   className="hidden md:block border border-slate-300 rounded-t overflow-x-auto overflow-y-auto"
-                  style={{
-                    maxHeight: '35vh',
-                    minHeight: '120px'
-                  }}
+                  style={desktopTableStyle}
                 >
                   <table className="w-full text-xs border-collapse" style={{ minWidth: '720px' }}>
                     <thead className="bg-blue-600 sticky top-0 z-10">
@@ -6422,7 +6502,7 @@ TOTAL:       ₹${invoice.total}
                           {showColumnMenu && (
                             <div
                               ref={columnMenuRef}
-                              className="absolute right-0 bottom-full mb-1 bg-popover border border-border rounded-lg shadow-lg z-50 min-w-[180px]"
+                              className="absolute right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[100] min-w-[180px]"
                             >
                               <div className="p-2 text-xs">
                                 <div className="font-semibold mb-2 text-foreground">{language === 'ta' ? 'நெடுவரிசைகளைக் காட்டு' : 'Show Columns'}</div>
@@ -6641,7 +6721,22 @@ TOTAL:       ₹${invoice.total}
                                     />
                                   </td>
                                   <td className="px-1 py-1 text-right align-middle border-r border-slate-200" style={{ width: '55px', minWidth: '55px' }}>
-                                    <span className="text-[10px] font-medium text-gray-800">₹{(item.discountAmount || 0).toFixed(2)}</span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      value={item.discountAmount ? Math.round(item.discountAmount * 100) / 100 : ''}
+                                      onChange={(e) => {
+                                        const discAmt = parseFloat(e.target.value) || 0
+                                        // Calculate discount % from amount
+                                        const basePrice = item.basePrice || item.price
+                                        const totalBase = basePrice * item.qty
+                                        const discPercent = totalBase > 0 ? (discAmt / totalBase) * 100 : 0
+                                        updateItem(item.id, 'discount', Math.round(discPercent * 100) / 100)
+                                      }}
+                                      placeholder="0"
+                                      className="w-full h-6 px-0.5 bg-transparent border-0 text-[10px] text-right text-gray-800 focus:ring-0 focus:outline-none"
+                                    />
                                   </td>
                                 </>
                               )}
@@ -6747,7 +6842,17 @@ TOTAL:       ₹${invoice.total}
                 </div>
                 {/* Fixed Total Row - Desktop only (Search moved to top) */}
                 <div className="hidden md:flex bg-slate-50 border border-slate-300 border-t-0 rounded-b px-2 py-1.5 items-center gap-3" style={{ minWidth: '720px' }}>
-                  {/* Item search moved to top - spacer */}
+                  {/* Add Manual Row Button - Left Side */}
+                  <button
+                    type="button"
+                    onClick={() => addEmptyRow()}
+                    className="flex items-center gap-1 px-2 py-1 bg-green-500 hover:bg-green-600 text-white text-[10px] font-medium rounded transition-colors"
+                    title="Add manual item row"
+                  >
+                    <Plus size={12} weight="bold" />
+                    Add Row
+                  </button>
+                  {/* Spacer */}
                   <div className="flex-1"></div>
                   {/* Desktop only: Total bar + Round checkbox */}
                   <div className="hidden md:flex items-center justify-end gap-3 ml-auto">
@@ -6773,8 +6878,12 @@ TOTAL:       ₹${invoice.total}
                     </div>
                   </div>
                 </div>
-                {/* Item Search Bar - Desktop (below total) */}
-                <div className="hidden md:flex bg-amber-50 border-2 border-amber-400 rounded-lg px-3 py-2 mt-2 items-center gap-3">
+                {/* Item Search Bar + Totals - Desktop (side by side) */}
+                <div className="hidden md:grid md:grid-cols-2 gap-4 mt-2 px-2 items-start">
+                {/* Left Column - Search Bar + Discount/Payment/Notes */}
+                <div className="space-y-2">
+                {/* Search Bar */}
+                <div className="flex bg-amber-50 border-2 border-amber-400 rounded-lg px-3 py-2 items-center gap-3">
                   <MagnifyingGlass size={18} className="text-amber-600 flex-shrink-0" />
                   <div ref={itemDropdownRef} className="relative flex-1">
                     <input
@@ -6791,6 +6900,7 @@ TOTAL:       ₹${invoice.total}
                         setShowItemDropdown(true)
                         setHighlightedItemIndex(-1)
                       }}
+                      onClick={() => setShowItemDropdown(true)}
                       onBlur={(e) => {
                         const relatedTarget = e.relatedTarget as HTMLElement
                         if (!relatedTarget?.closest('.item-search-dropdown')) {
@@ -6823,18 +6933,6 @@ TOTAL:       ₹${invoice.total}
                     {/* Item Search Dropdown */}
                     {showItemDropdown && (
                       <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-72 overflow-y-auto">
-                        <div
-                          onMouseDown={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            setShowItemDropdown(false)
-                            setShowAddItemModal(true)
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-blue-50 border-b border-slate-200 flex items-center gap-2 text-blue-600 font-medium cursor-pointer"
-                        >
-                          <Plus size={16} weight="bold" />
-                          Create New Item
-                        </div>
                         {loadingItems ? (
                           <div className="px-4 py-3 text-sm text-slate-500">Loading items...</div>
                         ) : filteredItems.length === 0 ? (
@@ -6852,7 +6950,7 @@ TOTAL:       ₹${invoice.total}
                                 setItemSearch('')
                               }}
                               className={cn(
-                                "w-full px-4 py-2.5 text-left border-b border-slate-100 last:border-b-0 cursor-pointer",
+                                "w-full px-4 py-2.5 text-left border-b border-slate-100 cursor-pointer",
                                 highlightedItemIndex === index ? "bg-blue-50" : "hover:bg-slate-50"
                               )}
                             >
@@ -6871,6 +6969,19 @@ TOTAL:       ₹${invoice.total}
                             </div>
                           ))
                         )}
+                        {/* Create New Item - At Bottom */}
+                        <div
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setShowItemDropdown(false)
+                            setShowAddItemModal(true)
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-blue-50 border-t border-slate-200 flex items-center gap-2 text-blue-600 font-medium cursor-pointer sticky bottom-0 bg-white"
+                        >
+                          <Plus size={16} weight="bold" />
+                          Create New Item
+                        </div>
                       </div>
                     )}
                   </div>
@@ -6883,229 +6994,6 @@ TOTAL:       ₹${invoice.total}
                     <Barcode size={18} weight="bold" />
                   </button>
                 </div>
-              </div>
-            {/* FOOTER - Mobile Only */}
-            <div className="md:hidden flex flex-col gap-2 mt-1">
-              {/* Totals Summary - First */}
-              <div className="p-2 bg-gradient-to-r from-slate-50 via-blue-50 to-blue-100 border border-blue-200 rounded-lg shadow-sm">
-                {invoiceItems.length > 0 ? (
-                  <div className="flex items-center justify-between text-[11px]">
-                    {/* LEFT - Subtotal, Discount & Round */}
-                    <div className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-500">Subtotal: <strong className="text-gray-800">₹{totals.subtotal.toFixed(2)}</strong></span>
-                        {invoiceDiscount > 0 && (
-                          <span className="text-orange-600 text-[10px]">-₹{totals.discount.toFixed(2)} <span className="text-orange-400">({invoiceDiscount}%)</span></span>
-                        )}
-                      </div>
-                      <label className="flex items-center gap-1 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={roundOff}
-                          onChange={(e) => setRoundOff(e.target.checked)}
-                          className="w-3 h-3 rounded accent-blue-600"
-                        />
-                        <span className="text-[10px] text-gray-400">Round Off</span>
-                        {roundOff && totals.roundOffAmount !== 0 && (
-                          <span className="text-[9px] text-blue-600">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
-                        )}
-                      </label>
-                    </div>
-                    
-                    {/* MIDDLE - Tax breakdown */}
-                    <div className="flex flex-col items-center gap-0.5 px-3 border-l border-r border-blue-200">
-                      {totals.totalCGST > 0 && <span className="text-gray-500">CGST: <strong className="text-gray-700">₹{totals.totalCGST.toFixed(2)}</strong></span>}
-                      {totals.totalSGST > 0 && <span className="text-gray-500">SGST: <strong className="text-gray-700">₹{totals.totalSGST.toFixed(2)}</strong></span>}
-                      {totals.totalIGST > 0 && <span className="text-gray-500">IGST: <strong className="text-gray-700">₹{totals.totalIGST.toFixed(2)}</strong></span>}
-                      {totals.totalTax === 0 && <span className="text-gray-400 text-[10px]">No Tax</span>}
-                    </div>
-                    
-                    {/* RIGHT - Total */}
-                    <div className="flex flex-col items-end">
-                      <span className="text-[10px] text-gray-500 uppercase tracking-wide">Total</span>
-                      <span className="font-bold text-xl text-blue-600">₹{totals.total.toFixed(0)}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-400 text-xs py-2">Add items to see total</div>
-                )}
-              </div>
-
-              {/* Discount & Payment - Clean Compact */}
-              <div className="px-2 py-1.5 bg-gradient-to-r from-slate-50 to-white border border-slate-200 rounded-lg space-y-1">
-                {/* Hidden file inputs */}
-                <input type="file" ref={imageInputRef} accept="image/*" className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) {
-                      setAttachments([...attachments, { name: file.name, type: 'image', url: URL.createObjectURL(file) }])
-                    }
-                    e.target.value = ''
-                  }}
-                />
-                <input type="file" ref={documentInputRef} accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) {
-                      setAttachments([...attachments, { name: file.name, type: 'document', url: URL.createObjectURL(file) }])
-                    }
-                    e.target.value = ''
-                  }}
-                />
-
-                {/* ROW 1: Discount + Payment + Attach - All same size */}
-                <div className="flex items-center gap-2 text-[11px]">
-                  {/* Discount */}
-                  <div className="flex items-center gap-1">
-                    <Percent size={12} className="text-orange-500" />
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={invoiceDiscount}
-                      onChange={(e) => setInvoiceDiscount(parseFloat(e.target.value) || 0)}
-                      className="w-8 h-6 px-1 text-[11px] text-center bg-white border border-slate-200 rounded outline-none text-gray-800"
-                    />
-                    <span className="text-[10px] text-gray-400">%</span>
-                  </div>
-                  
-                  <div className="w-px h-5 bg-slate-200" />
-                  
-                  {/* Payment */}
-                  <div className="flex items-center gap-1">
-                    <CreditCard size={12} className="text-green-600" />
-                    <select
-                      value={payments[0]?.type || 'cash'}
-                      onChange={(e) => {
-                        const newPayments = [...payments]
-                        if (newPayments[0]) newPayments[0].type = e.target.value
-                        setPayments(newPayments)
-                        // Reset bank account when not bank
-                        if (e.target.value !== 'bank') {
-                          setSelectedBankAccountId('')
-                        }
-                      }}
-                      className="h-6 px-1 text-[11px] bg-white border border-slate-200 rounded outline-none text-gray-700"
-                    >
-                      <option value="cash">Cash</option>
-                      <option value="card">Card</option>
-                      <option value="upi">UPI</option>
-                      <option value="bank">Bank</option>
-                      <option value="credit">Credit</option>
-                    </select>
-                    {/* Bank Account Dropdown - Show when Bank is selected */}
-                    {payments[0]?.type === 'bank' && (
-                      <select
-                        value={selectedBankAccountId}
-                        onChange={(e) => setSelectedBankAccountId(e.target.value)}
-                        className="h-6 px-1 text-[11px] bg-blue-50 border border-blue-300 rounded outline-none text-gray-700 max-w-[140px]"
-                      >
-                        <option value="">{bankAccounts.length > 0 ? '-- Select Account --' : 'No bank accounts'}</option>
-                        {bankAccounts.map((account) => (
-                          <option key={account.id} value={account.id}>
-                            {account.name} {account.accountNo ? `(*${account.accountNo.slice(-4)})` : ''}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                    <input
-                      type="number"
-                      value={payments[0]?.amount || ''}
-                      onChange={(e) => {
-                        const newPayments = [...payments]
-                        if (newPayments[0]) newPayments[0].amount = parseFloat(e.target.value) || 0
-                        setPayments(newPayments)
-                      }}
-                      placeholder="₹0"
-                      className="w-14 h-6 px-1.5 text-[11px] bg-white border border-slate-200 rounded outline-none text-gray-700"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setPayments([...payments, { type: 'cash', amount: 0, reference: '' }])}
-                      className="w-6 h-6 flex items-center justify-center text-blue-500 hover:bg-blue-50 border border-slate-200 rounded"
-                      title="Add Payment"
-                    >
-                      <Plus size={12} />
-                    </button>
-                  </div>
-                  
-                  <div className="w-px h-5 bg-slate-200" />
-                  
-                  {/* Attach */}
-                  <div className="flex items-center gap-1">
-                    <button type="button" onClick={() => imageInputRef.current?.click()} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-slate-100 border border-slate-200 rounded" title="Image">
-                      <Camera size={12} />
-                    </button>
-                    <button type="button" onClick={() => documentInputRef.current?.click()} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-slate-100 border border-slate-200 rounded" title="Doc">
-                      <FileText size={12} />
-                    </button>
-                    {attachments.length > 0 && (
-                      <span className="text-[9px] bg-blue-100 text-blue-600 px-1 rounded">{attachments.length}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* ROW 2: Notes (full width) OR Notes + Additional Payments */}
-                <div className="flex items-center gap-2 text-[11px]">
-                  <Pencil size={12} className="text-purple-500 flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add notes..."
-                    className={cn(
-                      "h-6 px-2 text-[11px] bg-white border border-slate-200 rounded outline-none text-gray-700 placeholder:text-gray-400 transition-all",
-                      payments.length > 1 ? "w-20" : "flex-1"
-                    )}
-                  />
-                  
-                  {/* Additional Payments appear here when added */}
-                  {payments.length > 1 && (
-                    <div className="flex items-center gap-1 flex-1 overflow-x-auto">
-                      {payments.slice(1).map((payment, idx) => (
-                        <div key={idx + 1} className="flex items-center gap-0.5 bg-slate-100 rounded px-1 py-0.5 flex-shrink-0">
-                          <select
-                            value={payment.type}
-                            onChange={(e) => {
-                              const newPayments = [...payments]
-                              newPayments[idx + 1].type = e.target.value
-                              setPayments(newPayments)
-                            }}
-                            className="h-5 px-0.5 text-[10px] bg-white border border-slate-200 rounded outline-none text-gray-700"
-                          >
-                            <option value="cash">Cash</option>
-                            <option value="card">Card</option>
-                            <option value="upi">UPI</option>
-                            <option value="bank">Bank</option>
-                            <option value="credit">Cr</option>
-                          </select>
-                          <input
-                            type="number"
-                            value={payment.amount || ''}
-                            onChange={(e) => {
-                              const newPayments = [...payments]
-                              newPayments[idx + 1].amount = parseFloat(e.target.value) || 0
-                              setPayments(newPayments)
-                            }}
-                            placeholder="₹0"
-                            className="w-12 h-5 px-1 text-[10px] bg-white border border-slate-200 rounded outline-none text-gray-700"
-                          />
-                          <button type="button" onClick={() => setPayments(payments.filter((_, i) => i !== idx + 1))} className="text-red-400 hover:text-red-600">
-                            <X size={10} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-
-            {/* FOOTER - Desktop Only - Inline Row Layout: Left (Discount/Payment/Notes) | Right (Totals) */}
-            <div className="hidden md:grid md:grid-cols-2 gap-4 mt-1 px-2">
-              {/* Left Side - Discount, Payment, Attachments & Notes */}
-              <div className="space-y-2">
                 {/* Discount Row */}
                 <div className="grid grid-cols-[80px_1fr] items-center gap-2">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
@@ -7113,18 +7001,31 @@ TOTAL:       ₹${invoice.total}
                     Discount
                   </label>
                   <div className="flex items-center bg-background border border-border rounded-md w-fit">
+                    <button
+                      type="button"
+                      onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
+                      className={`px-2 py-1.5 text-xs font-medium border-r border-border transition-colors ${
+                        discountType === 'percent'
+                          ? 'bg-orange-50 text-orange-600'
+                          : 'bg-green-50 text-green-600'
+                      }`}
+                      title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
+                    >
+                      {discountType === 'percent' ? '%' : '₹'}
+                    </button>
                     <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={invoiceDiscount}
-                      onChange={(e) => setInvoiceDiscount(parseFloat(e.target.value) || 0)}
+                      type="text"
+                      inputMode="decimal"
+                      value={invoiceDiscount === 0 ? '' : invoiceDiscount}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '')
+                        setInvoiceDiscount(parseFloat(val) || 0)
+                      }}
+                      placeholder="0"
                       className="w-14 px-2 py-1.5 text-xs text-center bg-transparent outline-none"
                     />
-                    <span className="px-2 text-xs text-muted-foreground border-l border-border">%</span>
                   </div>
                 </div>
-
                 {/* Payment Row */}
                 <div className="grid grid-cols-[80px_1fr] items-start gap-2">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 pt-1.5">
@@ -7140,7 +7041,6 @@ TOTAL:       ₹${invoice.total}
                             const newPayments = [...payments]
                             newPayments[index].type = e.target.value
                             setPayments(newPayments)
-                            // Reset bank account when not bank
                             if (e.target.value !== 'bank') {
                               setSelectedBankAccountId('')
                             }
@@ -7154,7 +7054,6 @@ TOTAL:       ₹${invoice.total}
                           <option value="credit">Credit</option>
                           <option value="cheque">Cheque</option>
                         </select>
-                        {/* Bank Account Dropdown - Show when Bank is selected */}
                         {payment.type === 'bank' && (
                           <>
                             <select
@@ -7163,7 +7062,6 @@ TOTAL:       ₹${invoice.total}
                                 const newPayments = [...payments]
                                 const selectedAccount = bankAccounts.find(acc => acc.id.toString() === e.target.value)
                                 if (selectedAccount) {
-                                  // Store bank account ID and name in reference for later retrieval
                                   newPayments[index].reference = `${selectedAccount.name} (*${selectedAccount.accountNo.slice(-4)})`
                                   setPayments(newPayments)
                                   setSelectedBankAccountId(e.target.value)
@@ -7231,24 +7129,6 @@ TOTAL:       ₹${invoice.total}
                     </button>
                   </div>
                 </div>
-
-                {/* Attachments Row */}
-                <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <UploadSimple size={12} className="text-blue-500" />
-                    Attach
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => imageInputRef.current?.click()} className="px-2 py-1 text-xs bg-background border border-border rounded-md hover:bg-muted flex items-center gap-1">
-                      <Camera size={12} /> Image
-                    </button>
-                    <button type="button" onClick={() => documentInputRef.current?.click()} className="px-2 py-1 text-xs bg-background border border-border rounded-md hover:bg-muted flex items-center gap-1">
-                      <FileText size={12} /> Document
-                    </button>
-                    {attachments.length > 0 && <span className="text-xs text-muted-foreground">{attachments.length} file(s)</span>}
-                  </div>
-                </div>
-
                 {/* Notes Row */}
                 <div className="grid grid-cols-[80px_1fr] items-start gap-2">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 pt-1.5">
@@ -7263,91 +7143,295 @@ TOTAL:       ₹${invoice.total}
                     className="w-full px-2 py-1.5 text-xs bg-background border border-border rounded-md outline-none resize-none"
                   />
                 </div>
-              </div>
-
-              {/* Right Side - Totals Summary */}
-              <div className="p-3 bg-background border border-border rounded-lg">
-                {invoiceItems.length > 0 ? (
-                  <div className="space-y-1.5 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subtotal:</span>
-                      <span className="font-medium">₹{totals.subtotal.toFixed(2)}</span>
-                    </div>
-                    {invoiceDiscount > 0 && (
+                </div>
+                {/* Right Side - Totals Summary */}
+                <div className="p-3 bg-background border border-border rounded-lg">
+                  {invoiceItems.length > 0 ? (
+                    <div className="space-y-1.5 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Discount ({invoiceDiscount}%):</span>
-                        <span className="font-medium text-orange-600">-₹{totals.discount.toFixed(2)}</span>
+                        <span className="text-muted-foreground">Subtotal:</span>
+                        <span className="font-medium">₹{totals.subtotal.toFixed(2)}</span>
                       </div>
-                    )}
-                    {totals.totalCGST > 0 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">CGST:</span>
-                        <span className="font-medium text-emerald-600">₹{totals.totalCGST.toFixed(2)}</span>
+                      {invoiceDiscount > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
+                          <span className="font-medium text-orange-600">-₹{totals.discount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {totals.totalCGST > 0 && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">CGST:</span>
+                          <span className="font-medium text-emerald-600">₹{totals.totalCGST.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {totals.totalSGST > 0 && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">SGST:</span>
+                          <span className="font-medium text-emerald-600">₹{totals.totalSGST.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {totals.totalIGST > 0 && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">IGST:</span>
+                          <span className="font-medium text-blue-600">₹{totals.totalIGST.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between pt-1.5 border-t border-border">
+                        <span className="text-muted-foreground">Tax:</span>
+                        <span className="font-medium">₹{totals.totalTax.toFixed(2)}</span>
                       </div>
-                    )}
-                    {totals.totalSGST > 0 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">SGST:</span>
-                        <span className="font-medium text-emerald-600">₹{totals.totalSGST.toFixed(2)}</span>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={roundOff}
+                            onChange={(e) => setRoundOff(e.target.checked)}
+                            className="w-3.5 h-3.5 rounded accent-primary"
+                          />
+                          <span className="text-xs text-muted-foreground">Round Off</span>
+                        </label>
+                        {roundOff && totals.roundOffAmount !== 0 && (
+                          <span className="text-xs text-primary">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
+                        )}
                       </div>
-                    )}
-                    {totals.totalIGST > 0 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">IGST:</span>
-                        <span className="font-medium text-blue-600">₹{totals.totalIGST.toFixed(2)}</span>
+                      <div className="flex justify-between items-center pt-2 mt-1 border-t-2 border-primary/30">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-foreground">TOTAL</span>
+                          <span className="text-xs text-muted-foreground">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <span className="font-bold text-2xl text-primary">₹{totals.total.toFixed(0)}</span>
                       </div>
-                    )}
-                    <div className="flex justify-between pt-1.5 border-t border-border">
-                      <span className="text-muted-foreground">Tax:</span>
-                      <span className="font-medium">₹{totals.totalTax.toFixed(2)}</span>
+                      {totals.received > 0 && (
+                        <>
+                          <div className="flex justify-between text-xs pt-1.5 border-t border-border/50">
+                            <span className="text-muted-foreground">Paid:</span>
+                            <span className="font-medium text-emerald-600">₹{totals.received.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Balance:</span>
+                            <span className={cn("font-semibold", totals.balance > 0 ? "text-red-600" : "text-emerald-600")}>
+                              ₹{Math.abs(totals.balance).toFixed(2)}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-1.5 cursor-pointer">
+                  ) : (
+                    <div className="text-center text-muted-foreground text-sm py-4">
+                      Add items to see totals
+                    </div>
+                  )}
+                </div>
+              </div>
+              </div>
+            {/* FOOTER - Mobile Only */}
+            <div className="md:hidden flex flex-col gap-2 mt-1">
+              {/* Totals Summary - First */}
+              <div className="p-2 bg-gradient-to-r from-slate-50 via-blue-50 to-blue-100 border border-blue-200 rounded-lg shadow-sm">
+                {invoiceItems.length > 0 ? (
+                  <div className="flex items-center justify-between text-[11px]">
+                    {/* Add Row Button - Far Left */}
+                    <button
+                      type="button"
+                      onClick={() => addEmptyRow()}
+                      className="flex items-center justify-center w-7 h-7 bg-green-500 hover:bg-green-600 text-white rounded transition-colors flex-shrink-0"
+                      title="Add manual item row"
+                    >
+                      <Plus size={14} weight="bold" />
+                    </button>
+                    {/* LEFT - Subtotal, Discount & Round */}
+                    <div className="flex flex-col gap-0.5 ml-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">Subtotal: <strong className="text-gray-800">₹{totals.subtotal.toFixed(2)}</strong></span>
+                        {invoiceDiscount > 0 && (
+                          <span className="text-orange-600 text-[10px]">-₹{totals.discount.toFixed(2)} <span className="text-orange-400">({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`})</span></span>
+                        )}
+                      </div>
+                      <label className="flex items-center gap-1 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={roundOff}
                           onChange={(e) => setRoundOff(e.target.checked)}
-                          className="w-3.5 h-3.5 rounded accent-primary"
+                          className="w-3 h-3 rounded accent-blue-600"
                         />
-                        <span className="text-xs text-muted-foreground">Round Off</span>
+                        <span className="text-[10px] text-gray-400">Round Off</span>
+                        {roundOff && totals.roundOffAmount !== 0 && (
+                          <span className="text-[9px] text-blue-600">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
+                        )}
                       </label>
-                      {roundOff && totals.roundOffAmount !== 0 && (
-                        <span className="text-xs text-primary">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
-                      )}
                     </div>
-                    <div className="flex justify-between items-center pt-2 mt-1 border-t-2 border-primary/30">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-foreground">TOTAL</span>
-                        <span className="text-xs text-muted-foreground">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
-                      </div>
-                      <span className="font-bold text-2xl text-primary">₹{totals.total.toFixed(0)}</span>
+                    
+                    {/* MIDDLE - Tax breakdown */}
+                    <div className="flex flex-col items-center gap-0.5 px-3 border-l border-r border-blue-200">
+                      {totals.totalCGST > 0 && <span className="text-gray-500">CGST: <strong className="text-gray-700">₹{totals.totalCGST.toFixed(2)}</strong></span>}
+                      {totals.totalSGST > 0 && <span className="text-gray-500">SGST: <strong className="text-gray-700">₹{totals.totalSGST.toFixed(2)}</strong></span>}
+                      {totals.totalIGST > 0 && <span className="text-gray-500">IGST: <strong className="text-gray-700">₹{totals.totalIGST.toFixed(2)}</strong></span>}
+                      {totals.totalTax === 0 && <span className="text-gray-400 text-[10px]">No Tax</span>}
                     </div>
-                    {totals.received > 0 && (
-                      <>
-                        <div className="flex justify-between text-xs pt-1.5 border-t border-border/50">
-                          <span className="text-muted-foreground">Paid:</span>
-                          <span className="font-medium text-emerald-600">₹{totals.received.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">Balance:</span>
-                          <span className={cn("font-semibold", totals.balance > 0 ? "text-red-600" : "text-emerald-600")}>
-                            ₹{Math.abs(totals.balance).toFixed(2)}
-                          </span>
-                        </div>
-                      </>
-                    )}
+                    
+                    {/* RIGHT - Total */}
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wide">Total</span>
+                      <span className="font-bold text-xl text-blue-600">₹{totals.total.toFixed(0)}</span>
+                    </div>
                   </div>
                 ) : (
-                  <div className="text-center text-muted-foreground text-sm py-4">
-                    Add items to see totals
-                  </div>
+                  <div className="text-center text-gray-400 text-xs py-2">Add items to see total</div>
                 )}
               </div>
+
+              {/* Discount & Payment - Clean Compact */}
+              <div className="px-2 py-1.5 bg-gradient-to-r from-slate-50 to-white border border-slate-200 rounded-lg space-y-1">
+                {/* ROW 1: Discount + Payment */}
+                <div className="flex items-center gap-2 text-[11px]">
+                  {/* Discount */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
+                      className={`w-5 h-5 flex items-center justify-center rounded text-[10px] font-medium transition-colors ${
+                        discountType === 'percent'
+                          ? 'bg-orange-100 text-orange-600'
+                          : 'bg-green-100 text-green-600'
+                      }`}
+                      title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
+                    >
+                      {discountType === 'percent' ? '%' : '₹'}
+                    </button>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={invoiceDiscount === 0 ? '' : invoiceDiscount}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '')
+                        setInvoiceDiscount(parseFloat(val) || 0)
+                      }}
+                      placeholder="0"
+                      className="w-10 h-6 px-1 text-[11px] text-center bg-white border border-slate-200 rounded outline-none text-gray-800"
+                    />
+                  </div>
+                  
+                  <div className="w-px h-5 bg-slate-200" />
+                  
+                  {/* Payment */}
+                  <div className="flex items-center gap-1">
+                    <CreditCard size={12} className="text-green-600" />
+                    <select
+                      value={payments[0]?.type || 'cash'}
+                      onChange={(e) => {
+                        const newPayments = [...payments]
+                        if (newPayments[0]) newPayments[0].type = e.target.value
+                        setPayments(newPayments)
+                        // Reset bank account when not bank
+                        if (e.target.value !== 'bank') {
+                          setSelectedBankAccountId('')
+                        }
+                      }}
+                      className="h-6 px-1 text-[11px] bg-white border border-slate-200 rounded outline-none text-gray-700"
+                    >
+                      <option value="cash">Cash</option>
+                      <option value="card">Card</option>
+                      <option value="upi">UPI</option>
+                      <option value="bank">Bank</option>
+                      <option value="credit">Credit</option>
+                    </select>
+                    {/* Bank Account Dropdown - Show when Bank is selected */}
+                    {payments[0]?.type === 'bank' && (
+                      <select
+                        value={selectedBankAccountId}
+                        onChange={(e) => setSelectedBankAccountId(e.target.value)}
+                        className="h-6 px-1 text-[11px] bg-blue-50 border border-blue-300 rounded outline-none text-gray-700 max-w-[140px]"
+                      >
+                        <option value="">{bankAccounts.length > 0 ? '-- Select Account --' : 'No bank accounts'}</option>
+                        {bankAccounts.map((account) => (
+                          <option key={account.id} value={account.id}>
+                            {account.name} {account.accountNo ? `(*${account.accountNo.slice(-4)})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <input
+                      type="number"
+                      value={payments[0]?.amount || ''}
+                      onChange={(e) => {
+                        const newPayments = [...payments]
+                        if (newPayments[0]) newPayments[0].amount = parseFloat(e.target.value) || 0
+                        setPayments(newPayments)
+                      }}
+                      placeholder="₹0"
+                      className="w-14 h-6 px-1.5 text-[11px] bg-white border border-slate-200 rounded outline-none text-gray-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPayments([...payments, { type: 'cash', amount: 0, reference: '' }])}
+                      className="w-6 h-6 flex items-center justify-center text-blue-500 hover:bg-blue-50 border border-slate-200 rounded"
+                      title="Add Payment"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* ROW 2: Notes (full width) OR Notes + Additional Payments */}
+                <div className="flex items-center gap-2 text-[11px]">
+                  <Pencil size={12} className="text-purple-500 flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add notes..."
+                    className={cn(
+                      "h-6 px-2 text-[11px] bg-white border border-slate-200 rounded outline-none text-gray-700 placeholder:text-gray-400 transition-all",
+                      payments.length > 1 ? "w-20" : "flex-1"
+                    )}
+                  />
+                  
+                  {/* Additional Payments appear here when added */}
+                  {payments.length > 1 && (
+                    <div className="flex items-center gap-1 flex-1 overflow-x-auto">
+                      {payments.slice(1).map((payment, idx) => (
+                        <div key={idx + 1} className="flex items-center gap-0.5 bg-slate-100 rounded px-1 py-0.5 flex-shrink-0">
+                          <select
+                            value={payment.type}
+                            onChange={(e) => {
+                              const newPayments = [...payments]
+                              newPayments[idx + 1].type = e.target.value
+                              setPayments(newPayments)
+                            }}
+                            className="h-5 px-0.5 text-[10px] bg-white border border-slate-200 rounded outline-none text-gray-700"
+                          >
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="upi">UPI</option>
+                            <option value="bank">Bank</option>
+                            <option value="credit">Cr</option>
+                          </select>
+                          <input
+                            type="number"
+                            value={payment.amount || ''}
+                            onChange={(e) => {
+                              const newPayments = [...payments]
+                              newPayments[idx + 1].amount = parseFloat(e.target.value) || 0
+                              setPayments(newPayments)
+                            }}
+                            placeholder="₹0"
+                            className="w-12 h-5 px-1 text-[10px] bg-white border border-slate-200 rounded outline-none text-gray-700"
+                          />
+                          <button type="button" onClick={() => setPayments(payments.filter((_, i) => i !== idx + 1))} className="text-red-400 hover:text-red-600">
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
 
           </div>
-          {/* Bottom Action Bar - Fixed at bottom on mobile, above nav bar */}
-          <div className="fixed md:relative bottom-[120px] md:bottom-0 left-0 right-0 z-50 px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white flex-shrink-0 shadow-lg md:shadow-none mt-1 [body[data-mobile-menu-open]_&]:hidden">
+          {/* Bottom Action Bar */}
+          <div className="px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white mt-2">
             
             {/* Mobile Search Bar - MOVED TO TOP (near customer search) */}
             <div className="hidden">
@@ -8552,21 +8636,6 @@ TOTAL:       ₹${invoice.total}
                           onClick={(e) => e.stopPropagation()}
                           className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-[100] max-h-64 overflow-y-auto"
                         >
-                        {/* Add New Customer */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            console.log('🔴🔴🔴 ADD CUSTOMER BUTTON CLICKED 🔴🔴🔴')
-                            setShowCustomerDropdown(false)
-                            setShowAddCustomerModal(true)
-                            console.log('🟢🟢🟢 showAddCustomerModal set to TRUE 🟢🟢🟢')
-                          }}
-                          className="w-full px-4 py-3 text-left hover:bg-primary/10 border-b border-border flex items-center gap-2 text-primary font-medium"
-                        >
-                          <Plus size={16} weight="bold" />
-                          Add New Customer
-                        </button>
-
                         {/* Loading State */}
                         {loadingParties ? (
                           <div className="px-4 py-3 text-sm text-muted-foreground">
@@ -8582,7 +8651,7 @@ TOTAL:       ₹${invoice.total}
                               key={party.id}
                               type="button"
                               onClick={() => handleCustomerSelect(party)}
-                              className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 last:border-b-0"
+                              className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50"
                             >
                               <div className="flex items-center justify-between">
                                 <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
@@ -8606,6 +8675,18 @@ TOTAL:       ₹${invoice.total}
                             </button>
                           ))
                         )}
+                        {/* Add New Customer - At Bottom */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCustomerDropdown(false)
+                            setShowAddCustomerModal(true)
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium sticky bottom-0 bg-card"
+                        >
+                          <Plus size={16} weight="bold" />
+                          Add New Customer
+                        </button>
                       </motion.div>
                       </>
                     )}
@@ -8619,6 +8700,33 @@ TOTAL:       ₹${invoice.total}
                         {customerPhone && <div><span className="text-muted-foreground">Phone:</span> <span className="font-medium">{customerPhone}</span></div>}
                         {customerEmail && <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{customerEmail}</span></div>}
                         {customerGST && <div><span className="text-muted-foreground">GST:</span> <span className="font-medium">{customerGST}</span></div>}
+                        {/* Customer State with Intra/Inter-State Indicator */}
+                        <div className="flex items-center gap-2 col-span-2">
+                          <span className="text-muted-foreground">State:</span>
+                          <select
+                            value={customerState}
+                            onChange={(e) => setCustomerState(e.target.value)}
+                            className="px-2 py-1 text-xs bg-background border border-border rounded outline-none"
+                          >
+                            <option value="">Select State</option>
+                            {INDIAN_STATES.map((state) => (
+                              <option key={state} value={state}>{state}</option>
+                            ))}
+                          </select>
+                          {customerState && (() => {
+                            const companySettings = getCompanySettings()
+                            const sellerState = companySettings.state || 'Tamil Nadu'
+                            const isIntra = isIntraStateTransaction(sellerState, customerState)
+                            return (
+                              <span className={cn(
+                                "px-2 py-1 text-xs font-semibold rounded",
+                                isIntra ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
+                              )}>
+                                {isIntra ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}
+                              </span>
+                            )
+                          })()}
+                        </div>
                       </div>
                       <button
                         type="button"
@@ -8627,6 +8735,7 @@ TOTAL:       ₹${invoice.total}
                           setCustomerPhone('')
                           setCustomerEmail('')
                           setCustomerGST('')
+                          setCustomerState('')
                           setCustomerSearch('')
                         }}
                         className="mt-2 text-xs text-primary hover:underline"
@@ -9047,17 +9156,30 @@ TOTAL:       ₹${invoice.total}
                 {/* Invoice Discount & Payment Mode */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Discount %</label>
-                    <div className="relative">
-                      <Percent size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <label className="text-sm font-medium mb-2 block">Discount</label>
+                    <div className="flex items-center bg-muted/30 border border-border rounded-lg overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
+                        className={`px-3 py-2 text-sm font-medium border-r border-border transition-colors ${
+                          discountType === 'percent'
+                            ? 'bg-orange-100 text-orange-600'
+                            : 'bg-green-100 text-green-600'
+                        }`}
+                        title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
+                      >
+                        {discountType === 'percent' ? '%' : '₹'}
+                      </button>
                       <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={invoiceDiscount}
-                        onChange={(e) => setInvoiceDiscount(parseFloat(e.target.value) || 0)}
-                        className="w-full pl-9 pr-3 py-2 bg-muted/30 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                        type="text"
+                        inputMode="decimal"
+                        value={invoiceDiscount === 0 ? '' : invoiceDiscount}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '')
+                          setInvoiceDiscount(parseFloat(val) || 0)
+                        }}
+                        placeholder="0"
+                        className="flex-1 px-3 py-2 bg-transparent outline-none text-sm"
                       />
                     </div>
                   </div>
@@ -9129,7 +9251,7 @@ TOTAL:       ₹${invoice.total}
                       </div>
                       {invoiceDiscount > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Discount ({invoiceDiscount}%):</span>
+                          <span className="text-muted-foreground">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
                           <span className="font-medium text-destructive">-₹{totals.discount.toFixed(2)}</span>
                         </div>
                       )}
@@ -9640,8 +9762,8 @@ TOTAL:       ₹${invoice.total}
                     <input
                       type="text"
                       value={newCustomerName}
-                      onChange={(e) => setNewCustomerName(e.target.value)}
-                      placeholder="Enter customer name"
+                      onChange={(e) => setNewCustomerName(validateCustomerName(e.target.value))}
+                      placeholder="Enter customer name (letters only)"
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                       autoFocus
                     />
@@ -9654,15 +9776,9 @@ TOTAL:       ₹${invoice.total}
                     <input
                       type="tel"
                       value={newCustomerPhone}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '')
-                        if (value.length <= 10) {
-                          setNewCustomerPhone(value)
-                        }
-                      }}
-                      placeholder="Enter 10-digit phone number"
-                      maxLength={10}
-                      pattern="[0-9]{10}"
+                      onChange={(e) => setNewCustomerPhone(validatePhoneNumber(e.target.value))}
+                      placeholder="Enter phone number (e.g., +919876543210)"
+                      maxLength={16}
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                     />
                   </div>
@@ -9753,9 +9869,10 @@ TOTAL:       ₹${invoice.total}
                         <input
                           type="text"
                           value={newCustomerGST}
-                          onChange={(e) => setNewCustomerGST(e.target.value)}
-                          placeholder="Enter GST number"
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          onChange={(e) => setNewCustomerGST(validateGSTIN(e.target.value))}
+                          placeholder="Enter GST number (15 chars)"
+                          maxLength={15}
+                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all uppercase"
                         />
                       </motion.div>
                     )}
@@ -9844,6 +9961,67 @@ TOTAL:       ₹${invoice.total}
                           placeholder="Add any additional notes"
                           className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
                         ></textarea>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Opening Balance */}
+                  <div>
+                    {!showOpeningBalanceField ? (
+                      <button
+                        onClick={() => setShowOpeningBalanceField(true)}
+                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                      >
+                        <Plus size={14} weight="bold" />
+                        Opening Balance
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-2"
+                      >
+                        <label className="text-sm font-medium mb-1.5 block">Opening Balance (₹)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={newCustomerOpeningBalance}
+                          onChange={(e) => setNewCustomerOpeningBalance(e.target.value)}
+                          placeholder="Enter opening balance (e.g., 5000)"
+                          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        />
+                        <p className="text-xs text-muted-foreground">Positive = Customer owes you, Negative = You owe customer</p>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Credit Days */}
+                  <div>
+                    {!showCreditDaysField ? (
+                      <button
+                        onClick={() => setShowCreditDaysField(true)}
+                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                      >
+                        <Plus size={14} weight="bold" />
+                        Credit Period (Days)
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-2"
+                      >
+                        <label className="text-sm font-medium mb-1.5 block">Credit Period (Days)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="365"
+                          value={newCustomerCreditDays}
+                          onChange={(e) => setNewCustomerCreditDays(Number(e.target.value) || 0)}
+                          placeholder="Enter credit period in days"
+                          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        />
+                        <p className="text-xs text-muted-foreground">Default: 30 days</p>
                       </motion.div>
                     )}
                   </div>
@@ -9940,7 +10118,7 @@ TOTAL:       ₹${invoice.total}
                           <input
                             type="text"
                             value={newItemName}
-                            onChange={(e) => setNewItemName(e.target.value)}
+                            onChange={(e) => setNewItemName(validateItemName(e.target.value))}
                             placeholder="Enter item name (e.g., Ball Pen, Office Chair)"
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             autoFocus

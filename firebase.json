@@ -4,7 +4,7 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "site": "thisai-crm-silver",
+    "site": "bill-anna",
     "public": "dist",
     "ignore": [
       "firebase.json",

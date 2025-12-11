@@ -21,7 +21,7 @@ import {
   ShieldCheck,
   Lightning
 } from '@phosphor-icons/react'
-import { signIn, createAdminAccount } from '../services/authService'
+import { signIn, createAdminAccount, signInWithGoogle, signInWithFacebook, signInWithApple } from '../services/authService'
 import { toast } from 'sonner'
 
 type AuthMode = 'login' | 'register' | 'forgot'
@@ -265,8 +265,42 @@ const Login = () => {
     toast.info('Password reset feature coming soon. Please contact support.')
   }
 
-  const handleSocialLogin = (provider: 'google' | 'apple' | 'facebook') => {
-    toast.info(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login coming soon!`)
+  const handleSocialLogin = async (provider: 'google' | 'apple' | 'facebook') => {
+    setIsLoading(true)
+
+    try {
+      let userData
+
+      switch (provider) {
+        case 'google':
+          userData = await signInWithGoogle()
+          break
+        case 'facebook':
+          userData = await signInWithFacebook()
+          break
+        case 'apple':
+          userData = await signInWithApple()
+          break
+      }
+
+      if (userData) {
+        toast.success(`Welcome${userData.displayName ? `, ${userData.displayName}` : ''}!`)
+
+        // Store user data in localStorage for persistence
+        localStorage.setItem('user', JSON.stringify(userData))
+
+        // Navigate to dashboard or setup if new user
+        if (!userData.companyName) {
+          navigate('/setup')
+        } else {
+          navigate('/')
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || `${provider} login failed`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Load remembered email

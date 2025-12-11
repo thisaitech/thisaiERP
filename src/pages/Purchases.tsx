@@ -50,7 +50,8 @@ import {
   Cube,
   CurrencyInr,
   FloppyDisk,
-  Storefront
+  Storefront,
+  MapPin
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -71,6 +72,7 @@ import { generatePaymentRef, savePaymentStatus, type UPIPaymentDetails, type Car
 import { generateIndianInvoiceNumber } from '../utils/invoiceNumbering'
 import { exportToTallyExcel, exportToTallyCSV, downloadTallyXML } from '../utils/exportUtils'
 import { calculateGSTBreakdown, isIntraStateTransaction, isB2BTransaction, isHSNRequired, formatGSTDisplay } from '../utils/gstCalculations'
+import { validateCustomerName, validateBusinessName, validateItemName, validatePhoneNumber, validateGSTIN } from '../utils/inputValidation'
 import { getCompanySettings, getTaxSettings, getInvoiceTableColumnSettings } from '../services/settingsService'
 import { calculateTax } from '../utils/gstTaxCalculator'
 import { getUnitPrice, getBaseQtyForSale, getStockDisplay, hasEnoughStock, getAvailableStockMessage } from '../utils/multiUnitUtils'
@@ -199,6 +201,7 @@ const Purchases = () => {
     invoiceItems: InvoiceItem[]
     paymentMode: string
     invoiceDiscount: number
+    discountType: 'percent' | 'amount'
     notes: string
     customerSearch: string
   }
@@ -231,10 +234,12 @@ const Purchases = () => {
       if (saved) {
         const parsed = JSON.parse(saved)
         if (parsed && parsed.length > 0) {
-          // Migrate old tabs without mode property
+          // Migrate old tabs without mode/discountType properties
           return parsed.map((tab: any) => ({
             ...tab,
-            mode: tab.mode || 'invoice' // Default to invoice mode for old tabs
+            mode: tab.mode || 'invoice', // Default to invoice mode for old tabs
+            customerState: tab.customerState || '',
+            discountType: tab.discountType || 'percent' // Default to percent for old tabs
           }))
         }
       }
@@ -254,6 +259,7 @@ const Purchases = () => {
       invoiceItems: [],
       paymentMode: 'cash',
       invoiceDiscount: 0,
+      discountType: 'percent',
       notes: '',
       customerSearch: ''
     }]
@@ -302,6 +308,7 @@ const Purchases = () => {
   const [paymentMode, setPaymentMode] = useState('cash')
   const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>('')
   const [invoiceDiscount, setInvoiceDiscount] = useState(0)
+  const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent')
   const [roundOff, setRoundOff] = useState(true)
   const [notes, setNotes] = useState('')
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false)
@@ -406,6 +413,8 @@ const Purchases = () => {
   const customerDropdownRef = useRef<HTMLDivElement>(null)
   const itemDropdownRef = useRef<HTMLDivElement>(null)
   const itemSearchInputRef = useRef<HTMLInputElement>(null)
+  const itemTableContainerRef = useRef<HTMLDivElement>(null)
+  const mobileItemsContainerRef = useRef<HTMLDivElement>(null)
 
   // Column visibility state for invoice items table
   const [visibleColumns, setVisibleColumns] = useState({
@@ -630,6 +639,7 @@ const Purchases = () => {
       setInvoiceItems(activeTab.invoiceItems)
       setPaymentMode(activeTab.paymentMode)
       setInvoiceDiscount(activeTab.invoiceDiscount)
+      setDiscountType(activeTab.discountType || 'percent')
       setNotes(activeTab.notes)
       setCustomerSearch(activeTab.customerSearch)
     }
@@ -652,6 +662,7 @@ const Purchases = () => {
                 invoiceItems,
                 paymentMode,
                 invoiceDiscount,
+                discountType,
                 notes,
                 customerSearch
               }
@@ -659,7 +670,7 @@ const Purchases = () => {
         )
       )
     }
-  }, [customerName, customerPhone, customerEmail, customerGST, customerState, customerVehicleNo, invoiceItems, paymentMode, invoiceDiscount, notes, customerSearch, viewMode])
+  }, [customerName, customerPhone, customerEmail, customerGST, customerState, customerVehicleNo, invoiceItems, paymentMode, invoiceDiscount, discountType, notes, customerSearch, viewMode])
 
   // Generate invoice number on mount
   useEffect(() => {
@@ -744,6 +755,20 @@ const Purchases = () => {
     }
   }, [salesMode, activeTabId])
 
+  // Auto-scroll to last item when items are added
+  useEffect(() => {
+    if (invoiceItems.length > 0) {
+      // Scroll desktop table container
+      if (itemTableContainerRef.current) {
+        itemTableContainerRef.current.scrollTop = itemTableContainerRef.current.scrollHeight
+      }
+      // Scroll mobile items container
+      if (mobileItemsContainerRef.current) {
+        mobileItemsContainerRef.current.scrollTop = mobileItemsContainerRef.current.scrollHeight
+      }
+    }
+  }, [invoiceItems.length])
+
   // Add new tab
   const addNewTab = (type: 'purchase' | 'credit' = 'purchase') => {
     const newTab: InvoiceTab = {
@@ -759,6 +784,7 @@ const Purchases = () => {
       invoiceItems: [],
       paymentMode: 'cash',
       invoiceDiscount: 0,
+      discountType: 'percent',
       notes: '',
       customerSearch: ''
     }
@@ -824,13 +850,16 @@ const Purchases = () => {
       const resetTab: InvoiceTab = {
         id: activeTabId,
         type: 'purchase',
+        mode: 'invoice',
         customerName: '',
         customerPhone: '',
         customerEmail: '',
         customerGST: '',
+        customerState: '',
         invoiceItems: [],
         paymentMode: 'cash',
         invoiceDiscount: 0,
+        discountType: 'percent',
         notes: '',
         customerSearch: ''
       }
@@ -845,6 +874,7 @@ const Purchases = () => {
       setInvoiceItems([])
       setPaymentMode('cash')
       setInvoiceDiscount(0)
+      setDiscountType('percent')
       setNotes('')
       setCustomerSearch('')
       setInvoiceNumber(newInvoiceNumber)
@@ -1635,6 +1665,7 @@ const Purchases = () => {
     // Auto-focus and scroll into view the search input for next item
     setTimeout(() => {
       itemSearchInputRef.current?.focus()
+      setShowItemDropdown(true)
       itemSearchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 100)
   }
@@ -2465,7 +2496,9 @@ const Purchases = () => {
     })
 
     // Apply invoice-level discount on taxable subtotal
-    const discount = taxableSubtotal * (invoiceDiscount / 100)
+    const discount = discountType === 'percent'
+      ? taxableSubtotal * (invoiceDiscount / 100)
+      : invoiceDiscount
     const subtotalAfterDiscount = taxableSubtotal - discount
 
     // GST should be calculated on discounted amount (GST compliance)
@@ -5776,14 +5809,14 @@ TOTAL:       ₹${invoice.total}
           ) : (
           <div
             className={cn(
-              "flex-1 flex flex-col min-h-0 h-full",
+              "flex flex-col",
               (salesMode === 'pos' || showPosPreview)
-                ? "flex flex-col lg:flex-row gap-2"
-                : "flex flex-col"
+                ? "lg:flex-row gap-2"
+                : ""
             )}
           >
           {/* Left Column - Invoice Form / POS Product Area */}
-          <div className="flex flex-col flex-1 min-h-0 h-full bg-white">
+          <div className="flex flex-col bg-white">
 
 
           {/* Tabs for multiple invoices + Mode Toggle + Back */}
@@ -5859,7 +5892,7 @@ TOTAL:       ₹${invoice.total}
           </div>
 
           <div className={cn(
-            "flex-1 flex flex-col overflow-y-auto pb-40 md:pb-2",
+            "flex flex-col overflow-y-auto",
             salesMode === 'pos' ? "p-2" : "p-2"
           )}>
             {/* HEADER - Fixed at top */}
@@ -6172,6 +6205,33 @@ TOTAL:       ₹${invoice.total}
                           <Buildings size={10} /> {customerGST}
                         </div>
                       )}
+                      {/* Supplier State with Intra/Inter-State Indicator */}
+                      <div className="flex items-center gap-1.5 col-span-2 mt-0.5">
+                        <MapPin size={10} className="text-muted-foreground" />
+                        <select
+                          value={customerState}
+                          onChange={(e) => setCustomerState(e.target.value)}
+                          className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded outline-none"
+                        >
+                          <option value="">Select State</option>
+                          {INDIAN_STATES.map((state) => (
+                            <option key={state} value={state}>{state}</option>
+                          ))}
+                        </select>
+                        {customerState && (() => {
+                          const companySettings = getCompanySettings()
+                          const sellerState = companySettings.state || 'Tamil Nadu'
+                          const isIntra = isIntraStateTransaction(sellerState, customerState)
+                          return (
+                            <span className={cn(
+                              "px-1.5 py-0.5 text-[9px] font-semibold rounded",
+                              isIntra ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
+                            )}>
+                              {isIntra ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}
+                            </span>
+                          )
+                        })()}
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -6180,6 +6240,7 @@ TOTAL:       ₹${invoice.total}
                         setCustomerPhone('')
                         setCustomerEmail('')
                         setCustomerGST('')
+                        setCustomerState('')
                         setCustomerSearch('')
                       }}
                       className="text-xs text-destructive hover:underline ml-2"
@@ -6219,7 +6280,7 @@ TOTAL:       ₹${invoice.total}
               {/* Items List - Scrollable Table for All Devices */}
               <div>
                 {/* Mobile Card Layout - Clean & Consistent */}
-                <div className="md:hidden space-y-1.5 max-h-[55vh] overflow-y-auto">
+                <div ref={mobileItemsContainerRef} className="md:hidden space-y-1.5 max-h-[55vh] overflow-y-auto">
                   {invoiceItems.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
                       <Package size={24} className="mx-auto mb-1 text-slate-300" />
@@ -6383,6 +6444,7 @@ TOTAL:       ₹${invoice.total}
 
                 {/* Scrollable Items Table - Desktop */}
                 <div
+                  ref={itemTableContainerRef}
                   className="hidden md:block border border-slate-300 rounded-t overflow-x-auto overflow-y-auto"
                   style={{
                     maxHeight: '35vh',
@@ -6434,7 +6496,7 @@ TOTAL:       ₹${invoice.total}
                           {showColumnMenu && (
                             <div
                               ref={columnMenuRef}
-                              className="absolute right-0 bottom-full mb-1 bg-popover border border-border rounded-lg shadow-lg z-50 min-w-[180px]"
+                              className="absolute right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[100] min-w-[180px]"
                             >
                               <div className="p-2 text-xs">
                                 <div className="font-semibold mb-2 text-foreground">{language === 'ta' ? 'நெடுவரிசைகளைக் காட்டு' : 'Show Columns'}</div>
@@ -6786,7 +6848,7 @@ TOTAL:       ₹${invoice.total}
                   </div>
                 </div>
                 {/* Item Search Bar - Desktop (below total) */}
-                <div className="hidden md:flex bg-amber-50 border-2 border-amber-400 rounded-lg px-3 py-2 mt-2 items-center gap-3">
+                <div className="hidden md:flex bg-amber-50 border-2 border-amber-400 rounded-lg px-3 py-2 mt-2 items-center gap-3 md:w-[calc(50%-8px)]">
                   <MagnifyingGlass size={18} className="text-amber-600 flex-shrink-0" />
                   <div ref={itemDropdownRef} className="relative flex-1">
                     <input
@@ -6969,20 +7031,33 @@ TOTAL:       ₹${invoice.total}
                 <div className="flex items-center gap-2 text-[11px]">
                   {/* Discount */}
                   <div className="flex items-center gap-1">
-                    <Percent size={12} className="text-orange-500" />
+                    <button
+                      type="button"
+                      onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
+                      className={`w-5 h-5 flex items-center justify-center rounded text-[10px] font-medium transition-colors ${
+                        discountType === 'percent'
+                          ? 'bg-orange-100 text-orange-600'
+                          : 'bg-green-100 text-green-600'
+                      }`}
+                      title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
+                    >
+                      {discountType === 'percent' ? '%' : '₹'}
+                    </button>
                     <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={invoiceDiscount}
-                      onChange={(e) => setInvoiceDiscount(parseFloat(e.target.value) || 0)}
-                      className="w-8 h-6 px-1 text-[11px] text-center bg-white border border-slate-200 rounded outline-none text-gray-800"
+                      type="text"
+                      inputMode="decimal"
+                      value={invoiceDiscount === 0 ? '' : invoiceDiscount}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '')
+                        setInvoiceDiscount(parseFloat(val) || 0)
+                      }}
+                      placeholder="0"
+                      className="w-10 h-6 px-1 text-[11px] text-center bg-white border border-slate-200 rounded outline-none text-gray-800"
                     />
-                    <span className="text-[10px] text-gray-400">%</span>
                   </div>
-                  
+
                   <div className="w-px h-5 bg-slate-200" />
-                  
+
                   {/* Payment */}
                   <div className="flex items-center gap-1">
                     <CreditCard size={12} className="text-green-600" />
@@ -7115,7 +7190,7 @@ TOTAL:       ₹${invoice.total}
             </div>
 
             {/* FOOTER - Desktop Only - Inline Row Layout: Left (Discount/Payment/Notes) | Right (Totals) */}
-            <div className="hidden md:grid md:grid-cols-2 gap-4 mt-1 px-2">
+            <div className="hidden md:grid md:grid-cols-2 gap-4 mt-1 px-2 items-start">
               {/* Left Side - Discount, Payment, Attachments & Notes */}
               <div className="space-y-2">
                 {/* Discount Row */}
@@ -7125,15 +7200,29 @@ TOTAL:       ₹${invoice.total}
                     Discount
                   </label>
                   <div className="flex items-center bg-background border border-border rounded-md w-fit">
+                    <button
+                      type="button"
+                      onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
+                      className={`px-2 py-1.5 text-xs font-medium border-r border-border transition-colors ${
+                        discountType === 'percent'
+                          ? 'bg-orange-50 text-orange-600'
+                          : 'bg-green-50 text-green-600'
+                      }`}
+                      title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
+                    >
+                      {discountType === 'percent' ? '%' : '₹'}
+                    </button>
                     <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={invoiceDiscount}
-                      onChange={(e) => setInvoiceDiscount(parseFloat(e.target.value) || 0)}
+                      type="text"
+                      inputMode="decimal"
+                      value={invoiceDiscount === 0 ? '' : invoiceDiscount}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '')
+                        setInvoiceDiscount(parseFloat(val) || 0)
+                      }}
+                      placeholder="0"
                       className="w-14 px-2 py-1.5 text-xs text-center bg-transparent outline-none"
                     />
-                    <span className="px-2 text-xs text-muted-foreground border-l border-border">%</span>
                   </div>
                 </div>
 
@@ -7358,8 +7447,8 @@ TOTAL:       ₹${invoice.total}
             </div>
 
           </div>
-          {/* Bottom Action Bar - Fixed at bottom on mobile, above nav bar */}
-          <div className="fixed md:relative bottom-[120px] md:bottom-0 left-0 right-0 z-50 px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white flex-shrink-0 shadow-lg md:shadow-none mt-1 [body[data-mobile-menu-open]_&]:hidden">
+          {/* Bottom Action Bar */}
+          <div className="px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white mt-2">
             
             {/* Mobile Search Bar - MOVED TO TOP (near customer search) */}
             <div className="hidden">
@@ -8612,6 +8701,33 @@ TOTAL:       ₹${invoice.total}
                         {customerPhone && <div><span className="text-muted-foreground">Phone:</span> <span className="font-medium">{customerPhone}</span></div>}
                         {customerEmail && <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{customerEmail}</span></div>}
                         {customerGST && <div><span className="text-muted-foreground">GST:</span> <span className="font-medium">{customerGST}</span></div>}
+                        {/* Supplier State with Intra/Inter-State Indicator */}
+                        <div className="flex items-center gap-2 col-span-2">
+                          <span className="text-muted-foreground">State:</span>
+                          <select
+                            value={customerState}
+                            onChange={(e) => setCustomerState(e.target.value)}
+                            className="px-2 py-1 text-xs bg-background border border-border rounded outline-none"
+                          >
+                            <option value="">Select State</option>
+                            {INDIAN_STATES.map((state) => (
+                              <option key={state} value={state}>{state}</option>
+                            ))}
+                          </select>
+                          {customerState && (() => {
+                            const companySettings = getCompanySettings()
+                            const sellerState = companySettings.state || 'Tamil Nadu'
+                            const isIntra = isIntraStateTransaction(sellerState, customerState)
+                            return (
+                              <span className={cn(
+                                "px-2 py-1 text-xs font-semibold rounded",
+                                isIntra ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
+                              )}>
+                                {isIntra ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}
+                              </span>
+                            )
+                          })()}
+                        </div>
                       </div>
                       <button
                         type="button"
@@ -8620,6 +8736,7 @@ TOTAL:       ₹${invoice.total}
                           setCustomerPhone('')
                           setCustomerEmail('')
                           setCustomerGST('')
+                          setCustomerState('')
                           setCustomerSearch('')
                         }}
                         className="mt-2 text-xs text-primary hover:underline"
@@ -9040,17 +9157,30 @@ TOTAL:       ₹${invoice.total}
                 {/* Invoice Discount & Payment Mode */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Discount %</label>
-                    <div className="relative">
-                      <Percent size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <label className="text-sm font-medium mb-2 block">Discount</label>
+                    <div className="flex items-center bg-muted/30 border border-border rounded-lg overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
+                        className={`px-3 py-2 text-sm font-medium border-r border-border transition-colors ${
+                          discountType === 'percent'
+                            ? 'bg-orange-100 text-orange-600'
+                            : 'bg-green-100 text-green-600'
+                        }`}
+                        title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
+                      >
+                        {discountType === 'percent' ? '%' : '₹'}
+                      </button>
                       <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={invoiceDiscount}
-                        onChange={(e) => setInvoiceDiscount(parseFloat(e.target.value) || 0)}
-                        className="w-full pl-9 pr-3 py-2 bg-muted/30 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                        type="text"
+                        inputMode="decimal"
+                        value={invoiceDiscount === 0 ? '' : invoiceDiscount}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '')
+                          setInvoiceDiscount(parseFloat(val) || 0)
+                        }}
+                        placeholder="0"
+                        className="flex-1 px-3 py-2 bg-transparent outline-none text-sm"
                       />
                     </div>
                   </div>
@@ -9636,8 +9766,8 @@ TOTAL:       ₹${invoice.total}
                     <input
                       type="text"
                       value={newCustomerName}
-                      onChange={(e) => setNewCustomerName(e.target.value)}
-                      placeholder="Enter customer name"
+                      onChange={(e) => setNewCustomerName(validateCustomerName(e.target.value))}
+                      placeholder="Enter supplier name (letters only)"
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                       autoFocus
                     />
@@ -9749,9 +9879,10 @@ TOTAL:       ₹${invoice.total}
                         <input
                           type="text"
                           value={newCustomerGST}
-                          onChange={(e) => setNewCustomerGST(e.target.value)}
-                          placeholder="Enter GST number"
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          onChange={(e) => setNewCustomerGST(validateGSTIN(e.target.value))}
+                          placeholder="Enter GST number (15 chars)"
+                          maxLength={15}
+                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all uppercase"
                         />
                       </motion.div>
                     )}
@@ -9936,7 +10067,7 @@ TOTAL:       ₹${invoice.total}
                           <input
                             type="text"
                             value={newItemName}
-                            onChange={(e) => setNewItemName(e.target.value)}
+                            onChange={(e) => setNewItemName(validateItemName(e.target.value))}
                             placeholder="Enter item name (e.g., Ball Pen, Office Chair)"
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             autoFocus

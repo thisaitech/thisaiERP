@@ -38,7 +38,7 @@ async function clearCollection(collectionName: string): Promise<number> {
  * Clear all localStorage data
  */
 function clearLocalStorage(): void {
-  const keysToKeep = ['theme', 'language'] // Keep user preferences
+  const keysToKeep = ['theme', 'language', 'hasSeenOnboarding'] // Keep user preferences and onboarding flag
   const allKeys = Object.keys(localStorage)
 
   let clearedCount = 0

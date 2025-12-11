@@ -1143,7 +1143,7 @@ const Dashboard = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowOnboarding(false)}
+            onClick={completeOnboarding}
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
@@ -1162,7 +1162,7 @@ const Dashboard = () => {
                     <p className="text-sm text-slate-600">3-Step Setup • 2 Minutes</p>
                   </div>
                 </div>
-                <button onClick={() => setShowOnboarding(false)} className="p-2 hover:bg-slate-100 rounded-lg transition-all">
+                <button onClick={completeOnboarding} className="p-2 hover:bg-slate-100 rounded-lg transition-all">
                   <X size={24} weight="bold" className="text-slate-600" />
                 </button>
               </div>

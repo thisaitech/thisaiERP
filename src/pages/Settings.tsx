@@ -91,6 +91,7 @@ import {
   saveOfflineSyncSettings,
   OfflineSyncSettings
 } from '../services/settingsService'
+import { INDIAN_STATES_WITH_CODES, getStateCode } from '../services/taxCalculations'
 import {
   getCacheStats,
   clearAllOfflineData,
@@ -847,6 +848,62 @@ const Settings = () => {
                         onChange={(e) => setCompanySettings({...companySettings, address: e.target.value})}
                         className="w-full px-3 py-2 border border-border rounded-lg"
                       ></textarea>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                          <MapPin size={16} />
+                          City
+                        </label>
+                        <input
+                          type="text"
+                          value={companySettings.city || ''}
+                          onChange={(e) => setCompanySettings({...companySettings, city: e.target.value})}
+                          placeholder="Enter city"
+                          className="w-full px-3 py-2 border border-border rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                          <MapPin size={16} />
+                          State <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={companySettings.state || ''}
+                          onChange={(e) => {
+                            const selectedState = e.target.value
+                            const stateCode = getStateCode(selectedState)
+                            setCompanySettings({
+                              ...companySettings,
+                              state: selectedState,
+                              stateCode: stateCode
+                            })
+                          }}
+                          className="w-full px-3 py-2 border border-border rounded-lg bg-background"
+                        >
+                          <option value="">Select State</option>
+                          {INDIAN_STATES_WITH_CODES.map((state) => (
+                            <option key={state.code} value={state.name}>
+                              {state.name} ({state.code})
+                            </option>
+                          ))}
+                        </select>
+                        {companySettings.state && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            State Code: {companySettings.stateCode || getStateCode(companySettings.state)}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Pincode</label>
+                        <input
+                          type="text"
+                          value={companySettings.pincode || ''}
+                          onChange={(e) => setCompanySettings({...companySettings, pincode: e.target.value})}
+                          placeholder="Enter pincode"
+                          className="w-full px-3 py-2 border border-border rounded-lg"
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>

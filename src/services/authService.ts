@@ -7,7 +7,13 @@ import {
   User,
   updateProfile,
   reauthenticateWithCredential,
-  EmailAuthProvider
+  EmailAuthProvider,
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  OAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, updateDoc } from 'firebase/firestore'
 import { auth, db, COLLECTIONS } from './firebase'
@@ -94,6 +100,144 @@ export const signIn = async (email: string, password: string): Promise<UserData>
   } catch (error: any) {
     console.error('Sign in error:', error)
     throw new Error(getAuthErrorMessage(error.code))
+  }
+}
+
+// ============ SOCIAL LOGIN FUNCTIONS ============
+
+// Sign in with Google
+export const signInWithGoogle = async (): Promise<UserData> => {
+  if (!auth) {
+    throw new Error('Firebase authentication not initialized')
+  }
+
+  try {
+    const provider = new GoogleAuthProvider()
+    provider.addScope('email')
+    provider.addScope('profile')
+
+    const result = await signInWithPopup(auth, provider)
+    const user = result.user
+
+    return await handleSocialLoginUser(user, 'google')
+  } catch (error: any) {
+    console.error('Google sign in error:', error)
+    throw new Error(getSocialAuthErrorMessage(error.code))
+  }
+}
+
+// Sign in with Facebook
+export const signInWithFacebook = async (): Promise<UserData> => {
+  if (!auth) {
+    throw new Error('Firebase authentication not initialized')
+  }
+
+  try {
+    const provider = new FacebookAuthProvider()
+    provider.addScope('email')
+    provider.addScope('public_profile')
+
+    const result = await signInWithPopup(auth, provider)
+    const user = result.user
+
+    return await handleSocialLoginUser(user, 'facebook')
+  } catch (error: any) {
+    console.error('Facebook sign in error:', error)
+    throw new Error(getSocialAuthErrorMessage(error.code))
+  }
+}
+
+// Sign in with Apple
+export const signInWithApple = async (): Promise<UserData> => {
+  if (!auth) {
+    throw new Error('Firebase authentication not initialized')
+  }
+
+  try {
+    const provider = new OAuthProvider('apple.com')
+    provider.addScope('email')
+    provider.addScope('name')
+
+    const result = await signInWithPopup(auth, provider)
+    const user = result.user
+
+    return await handleSocialLoginUser(user, 'apple')
+  } catch (error: any) {
+    console.error('Apple sign in error:', error)
+    throw new Error(getSocialAuthErrorMessage(error.code))
+  }
+}
+
+// Handle social login user - create or update user document
+const handleSocialLoginUser = async (user: User, provider: string): Promise<UserData> => {
+  const now = new Date().toISOString()
+
+  if (db) {
+    const userDocRef = doc(db, COLLECTIONS.USERS, user.uid)
+    const userDoc = await getDoc(userDocRef)
+
+    if (userDoc.exists()) {
+      // Existing user - update last login
+      const existingData = userDoc.data() as UserData
+      const updatedData: UserData = {
+        ...existingData,
+        lastLogin: now
+      }
+      await setDoc(userDocRef, updatedData, { merge: true })
+      return updatedData
+    } else {
+      // New user - create document
+      const companyId = deriveCompanyId(user.email, user.displayName || '')
+      const newUserData: UserData = {
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || user.email?.split('@')[0] || 'User',
+        companyName: '', // User will need to set this in settings
+        companyId,
+        role: 'admin', // First time social login users get admin role
+        status: 'active',
+        createdAt: now,
+        lastLogin: now
+      }
+      await setDoc(userDocRef, newUserData)
+      return newUserData
+    }
+  }
+
+  // Fallback if db is not available
+  return {
+    uid: user.uid,
+    email: user.email || '',
+    displayName: user.displayName || '',
+    companyName: '',
+    role: 'admin',
+    status: 'active',
+    createdAt: now,
+    lastLogin: now
+  }
+}
+
+// Helper function for social auth error messages
+const getSocialAuthErrorMessage = (errorCode: string): string => {
+  switch (errorCode) {
+    case 'auth/popup-closed-by-user':
+      return 'Sign-in popup was closed. Please try again.'
+    case 'auth/popup-blocked':
+      return 'Popup was blocked by browser. Please allow popups and try again.'
+    case 'auth/cancelled-popup-request':
+      return 'Sign-in cancelled. Please try again.'
+    case 'auth/account-exists-with-different-credential':
+      return 'An account already exists with this email using a different sign-in method.'
+    case 'auth/auth-domain-config-required':
+      return 'Authentication domain not configured. Please contact support.'
+    case 'auth/operation-not-allowed':
+      return 'This sign-in method is not enabled. Please contact support.'
+    case 'auth/unauthorized-domain':
+      return 'This domain is not authorized for sign-in. Please contact support.'
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your connection.'
+    default:
+      return 'Sign-in failed. Please try again.'
   }
 }
 

@@ -709,7 +709,7 @@ export function savePartySettings(settings: Partial<PartySettings>): void {
 
 function getDefaultPartySettings(): PartySettings {
   return {
-    requireGSTIN: true,
+    requireGSTIN: false, // GST is optional by default
     enableCreditLimit: false,
     trackLedgerAutomatically: true,
     defaultCreditPeriod: 30,
