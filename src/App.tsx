@@ -73,7 +73,7 @@ function App() {
       <AuthProvider>
         <AIAssistantProvider>
           <CelebrationProvider>
-          <div className="min-h-screen bg-background overflow-x-hidden max-w-[100vw]">
+          <div className="min-h-screen bg-background text-foreground overflow-x-hidden max-w-[100vw]">
           <ToastCleaner />
           <OfflineIndicator position="bottom-left" />
           <Toaster
