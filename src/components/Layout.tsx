@@ -67,7 +67,7 @@ const Layout = () => {
     { path: '/settings', label: t.nav.settings, icon: Gear, allowedRoles: ['admin'], pageKey: 'settings' },
     { path: '/expenses', label: t.nav.expenses, icon: Wallet, allowedRoles: ['admin', 'manager'], pageKey: 'expenses' },
     { path: '/banking', label: t.nav.banking, icon: Bank, allowedRoles: ['admin', 'manager'], pageKey: 'banking' },
-    { path: '/more', label: t.nav.others, icon: List, pageKey: 'others' },
+
   ]
 
   const navigationItems = allNavigationItems.filter(item => {
@@ -83,23 +83,22 @@ const Layout = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
       {/* Desktop Navigation */}
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 hidden lg:block">
-        <div className="max-w-[1800px] mx-auto px-4">
+        <div className="mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <NavLink to="/" className="flex items-center gap-2">
-                <div className="p-2 bg-blue-600 rounded-lg">
-                  <Sparkle size={20} weight="fill" className="text-white" />
-                </div>
-                <span className="text-lg font-bold text-slate-900 dark:text-white">Billi</span>
-              </NavLink>
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
-              <nav className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+              <div className="p-2 bg-blue-600 rounded-lg">
+                <Sparkle size={20} weight="fill" className="text-white" />
+              </div>
+              <span className="text-lg font-bold text-slate-900 dark:text-white">Billi</span>
+            </div>
+              <nav className="flex items-center gap-0">
                 {navigationItems.map((item) => (
                   <NavLink
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-0 px-2 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5",
+                      "flex items-center gap-0 px-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5",
                       isActive
                         ? "text-blue-600 bg-blue-100/50 dark:bg-blue-500/10 dark:text-blue-400"
                         : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
@@ -111,10 +110,10 @@ const Layout = () => {
               </nav>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
 
 
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+
 
               <div ref={userDropdownRef} className="relative">
                 <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center gap-2">
@@ -226,7 +225,7 @@ const Layout = () => {
                         : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                     )}
                   >
-                    <item.icon size={20} weight="duotone" />
+
                     <span>{item.label}</span>
                   </NavLink>
                 ))}
@@ -277,7 +276,7 @@ const Layout = () => {
                   : "text-slate-500 dark:text-slate-400"
               )}
             >
-              <item.icon size={24} weight={"regular"} />
+
               <span className="text-[11px] font-bold">{item.label}</span>
             </NavLink>
           ))}
