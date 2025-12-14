@@ -56,7 +56,7 @@ const Layout = () => {
     pageKey?: keyof PagePermissions;
     allowedRoles?: string[];
   }> = [
-    { path: '/', label: t.nav.dashboard, icon: House, pageKey: 'dashboard' },
+
     { path: '/sales', label: t.nav.sales, icon: Receipt, pageKey: 'sales' },
     { path: '/pos', label: t.nav.pos, icon: Storefront, pageKey: 'pos' },
     { path: '/purchases', label: t.nav.purchases, icon: ShoppingCart, allowedRoles: ['admin', 'manager'], pageKey: 'purchases' },
@@ -93,37 +93,26 @@ const Layout = () => {
                 <span className="text-lg font-bold text-slate-900 dark:text-white">Billi</span>
               </NavLink>
               <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
-              <nav className="flex items-center gap-2">
+              <nav className="flex items-center gap-1">
                 {navigationItems.map((item) => (
                   <NavLink
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5",
+                      "flex items-center gap-0 px-2 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5",
                       isActive
                         ? "text-blue-600 bg-blue-100/50 dark:bg-blue-500/10 dark:text-blue-400"
                         : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                     )}
                   >
-                        <item.icon size={18} weight={"regular"} />
-                        <span>{item.label}</span>
+                    <span>{item.label}</span>
                   </NavLink>
                 ))}
               </nav>
             </div>
             
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <button className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-                  <MagnifyingGlass size={20} />
-                </button>
-                <button className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-                  <Bell size={20} />
-                </button>
-                <button onClick={toggleDarkMode} className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-                  {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
-              </div>
+
 
               <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
 
