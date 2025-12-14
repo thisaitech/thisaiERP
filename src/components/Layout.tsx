@@ -2,31 +2,25 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   House, Receipt, ShoppingCart, Users, Package, ChartLine, List, X, Sparkle,
-  Moon, Sun, Wallet, Bank, Gear, FileText, DotsThreeOutline, SignOut,
-  Headset, Storefront, Plus, MagnifyingGlass, Bell, CaretDown, CheckCircle
+  Moon, Sun, Wallet, Bank, Gear, FileText, SignOut, Storefront, MagnifyingGlass, Bell, CaretDown
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
-import { signOut, type UserRole } from '../services/authService'
+import { signOut } from '../services/authService'
 import { canAccessPage, PagePermissions } from '../services/permissionsService'
 import { toast } from 'sonner'
-import AIAssistant from './AIAssistant'
-import SyncStatusIndicator from './SyncStatusIndicator'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTheme } from '../contexts/ThemeContext'
 
 const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { isDarkMode, toggleDarkMode } = useTheme()
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
-  const [isMoreDropdownOpen, setIsMoreDropdownOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { userData } = useAuth()
   const userDropdownRef = useRef<HTMLDivElement>(null)
-  const moreDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.body.dataset.mobileMenuOpen = isMobileMenuOpen ? 'true' : 'false'
@@ -38,28 +32,9 @@ const Layout = () => {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setIsUserDropdownOpen(false)
       }
-      if (moreDropdownRef.current && !moreDropdownRef.current.contains(event.target as Node)) {
-        setIsMoreDropdownOpen(false)
-      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const getGreeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return 'Good Morning'
-    if (hour < 17) return 'Good Afternoon'
-    return 'Good Evening'
-  }
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-    }
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
   }, [])
 
   const handleLogout = async () => {
@@ -74,7 +49,13 @@ const Layout = () => {
 
   const { t } = useLanguage()
 
-  const allNavigationItems = [
+  const allNavigationItems: Array<{
+    path: string;
+    label: string;
+    icon: React.ElementType;
+    pageKey?: keyof PagePermissions;
+    allowedRoles?: string[];
+  }> = [
     { path: '/', label: t.nav.dashboard, icon: House, pageKey: 'dashboard' },
     { path: '/sales', label: t.nav.sales, icon: Receipt, pageKey: 'sales' },
     { path: '/pos', label: t.nav.pos, icon: Storefront, pageKey: 'pos' },
@@ -82,7 +63,6 @@ const Layout = () => {
     { path: '/reports', label: t.nav.reports, icon: ChartLine, allowedRoles: ['admin', 'manager'], pageKey: 'reports' },
     { path: '/parties', label: t.nav.parties, icon: Users, allowedRoles: ['admin', 'manager'], pageKey: 'parties' },
     { path: '/quotations', label: t.nav.quotations, icon: FileText, pageKey: 'quotations' },
-    // More dropdown items
     { path: '/inventory', label: t.nav.inventory, icon: Package, allowedRoles: ['admin', 'manager'], pageKey: 'inventory' },
     { path: '/settings', label: t.nav.settings, icon: Gear, allowedRoles: ['admin'], pageKey: 'settings' },
     { path: '/expenses', label: t.nav.expenses, icon: Wallet, allowedRoles: ['admin', 'manager'], pageKey: 'expenses' },
@@ -96,7 +76,7 @@ const Layout = () => {
     return !item.allowedRoles || item.allowedRoles.includes(userData.role)
   })
 
-  const isMoreSectionActive = navigationItems.slice(8).some(item => location.pathname.startsWith(item.path))
+
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
@@ -113,7 +93,7 @@ const Layout = () => {
               </NavLink>
               <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
               <nav className="flex items-center gap-2">
-                {navigationItems.slice(1, 8).map((item) => (
+                {navigationItems.map((item) => (
                   <NavLink
                     key={item.path}
                     to={item.path}
@@ -128,55 +108,6 @@ const Layout = () => {
                         <span>{item.label}</span>
                   </NavLink>
                 ))}
-                {navigationItems.length > 8 && (
-                  <div ref={moreDropdownRef} className="relative">
-                    <button
-                      onClick={() => setIsMoreDropdownOpen(!isMoreDropdownOpen)}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5",
-                        isMoreDropdownOpen || isMoreSectionActive
-                          ? "text-blue-600 bg-blue-100/50 dark:bg-blue-500/10 dark:text-blue-400"
-                          : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
-                      )}
-                    >
-                      <DotsThreeOutline size={18} weight={isMoreDropdownOpen || isMoreSectionActive ? "fill" : "regular"} />
-                      <span>More</span>
-                      <CaretDown size={12} className={cn(
-                        "transition-transform duration-200",
-                        isMoreDropdownOpen && "rotate-180"
-                      )} />
-                    </button>
-
-                    {/* Dropdown for more items */}
-                    <AnimatePresence>
-                      {isMoreDropdownOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden py-2"
-                        >
-                          {navigationItems.slice(8).map((item) => (
-                            <NavLink
-                              key={item.path}
-                              to={item.path}
-                              onClick={() => setIsMoreDropdownOpen(false)}
-                              className={({ isActive }) => cn(
-                                "flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors",
-                                isActive
-                                  ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                                  : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                              )}
-                            >
-                              <item.icon size={18} weight="duotone" />
-                              <span>{item.label}</span>
-                            </NavLink>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
               </nav>
             </div>
             
