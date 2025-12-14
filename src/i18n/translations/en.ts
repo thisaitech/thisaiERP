@@ -90,6 +90,7 @@ export const en = {
     banking: 'Banking',
     utilities: 'Utilities',
     others: 'Others',
+    userManagement: 'User Management',
     settings: 'Settings',
     companyInfo: 'Company Info',
     logout: 'Logout',

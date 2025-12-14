@@ -87,7 +87,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PagePermissions> = {
 
 // Page info for display
 export const PAGE_INFO: { key: keyof PagePermissions; label: string; labelTa: string; path: string }[] = [
-  { key: 'dashboard', label: 'Dashboard', labelTa: 'டாஷ்போர்டு', path: '/' },
+
   { key: 'sales', label: 'Sales', labelTa: 'விற்பனை', path: '/sales' },
   { key: 'pos', label: 'POS', labelTa: 'பிஓஎஸ்', path: '/pos' },
   { key: 'purchases', label: 'Purchases', labelTa: 'கொள்முதல்', path: '/purchases' },

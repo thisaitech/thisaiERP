@@ -61,7 +61,7 @@ const InputField = ({
         onChange={(e) => onChange(e.target.value)}
         className={`w-full pl-10 ${showToggle ? 'pr-12' : 'pr-4'} py-3 border ${
           error ? 'border-red-300 focus:ring-red-500' : 'border-slate-300 focus:ring-primary'
-        } rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all bg-white/80 backdrop-blur-sm`}
+        } rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all bg-white/80 backdrop-blur-sm text-slate-900 placeholder:text-slate-400`}
         placeholder={placeholder}
         disabled={disabled}
       />
@@ -361,7 +361,7 @@ const Login = () => {
         {/* Auth Card */}
         <motion.div
           layout
-          className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-8 overflow-hidden"
+          className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-8 overflow-hidden text-slate-900"
         >
           <AnimatePresence mode="wait">
             {/* Login Form */}
@@ -449,7 +449,7 @@ const Login = () => {
                     <div className="w-full border-t border-slate-200" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-3 bg-white text-slate-500">Or continue with</span>
+                    <span className="px-3 bg-white/90 text-slate-600 font-medium">Or continue with</span>
                   </div>
                 </div>
 
