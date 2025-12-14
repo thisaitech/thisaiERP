@@ -67,6 +67,7 @@ const Layout = () => {
     { path: '/settings', label: t.nav.settings, icon: Gear, allowedRoles: ['admin'], pageKey: 'settings' },
     { path: '/expenses', label: t.nav.expenses, icon: Wallet, allowedRoles: ['admin', 'manager'], pageKey: 'expenses' },
     { path: '/banking', label: t.nav.banking, icon: Bank, allowedRoles: ['admin', 'manager'], pageKey: 'banking' },
+    { path: '/more', label: t.nav.others, icon: List, pageKey: 'others' },
   ]
 
   const navigationItems = allNavigationItems.filter(item => {
