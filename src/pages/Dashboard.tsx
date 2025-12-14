@@ -16,56 +16,26 @@ import {
   Users,
   Package,
   ArrowRight,
-  ArrowLeft,
   WarningCircle,
-  CurrencyCircleDollar,
   ChartLine,
-  Sparkle,
-  CaretRight,
   Plus,
   FileText,
-  Money,
-  ChartBar,
-  Barcode,
   Calculator,
   UserPlus,
-  Gift,
-  Camera,
   X,
   Phone,
-  WhatsappLogo,
-  Robot,
-  Lightning,
-  CaretDown,
-  CaretUp,
   Scan,
   ChatCircleText,
   Share,
   Trophy,
   Fire,
-  Megaphone,
-  GraduationCap,
-  MagnifyingGlass,
-  Bell,
-  Gear,
-  House,
-  Star,
-  Heart,
-  CreditCard,
-  Bank,
-  Cube,
-  Tag,
-  Percent,
-  ArrowsClockwise,
-  Eye,
   Clock,
-  CheckCircle,
-  Circle
+  ArrowsClockwise,
+  Gear,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 import toast from 'react-hot-toast'
-import { useAIAssistant } from '../contexts/AIAssistantContext'
 import { getLowStockItems } from '../utils/stockUtils'
 
 type WeeklyOverviewEntry = {
@@ -91,21 +61,14 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const { t, language } = useLanguage()
   const { userData } = useAuth()
-  const { triggerAction } = useAIAssistant()
   const [selectedPeriod, setSelectedPeriod] = useState('today')
   const [customDateRange, setCustomDateRange] = useState({
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   })
   const [showCustomDatePicker, setShowCustomDatePicker] = useState(false)
-  const quickActionsRef = React.useRef<HTMLDivElement>(null)
-  const [showAIAdvisor, setShowAIAdvisor] = useState(true)
   const [currentAlertIndex, setCurrentAlertIndex] = useState(0)
-  const [showInsights, setShowInsights] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(false)
-  const [onboardingStep, setOnboardingStep] = useState(0)
   const [greeting, setGreeting] = useState('')
-  const [currentTime, setCurrentTime] = useState(new Date())
   const [isLoading, setIsLoading] = useState(true)
 
   // Real metrics state
@@ -133,18 +96,7 @@ const Dashboard = () => {
     if (hour < 12) setGreeting(language === 'ta' ? 'காலை வணக்கம்' : 'Good Morning')
     else if (hour < 17) setGreeting(language === 'ta' ? 'மதிய வணக்கம்' : 'Good Afternoon')
     else setGreeting(language === 'ta' ? 'மாலை வணக்கம்' : 'Good Evening')
-
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
-    return () => clearInterval(timer)
   }, [language])
-
-  // Check if first time user
-  useEffect(() => {
-    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding')
-    if (!hasSeenOnboarding) {
-      setTimeout(() => setShowOnboarding(true), 1000)
-    }
-  }, [])
 
   // Fetch real data from Firebase
   const fetchDashboardData = useCallback(async () => {
@@ -668,13 +620,6 @@ const Dashboard = () => {
     inventory: realMetrics.inventory
   }
 
-  const topCustomers = [
-    { name: 'Rajesh Kumar', sales: 125000, outstanding: 15000, trend: 'up', growth: 12, weeklyTrend: [10, 15, 12, 18, 25, 20, 30] },
-    { name: 'Tech Solutions Ltd', sales: 98000, outstanding: 0, trend: 'up', growth: 25, weeklyTrend: [5, 8, 12, 15, 20, 22, 25] },
-    { name: 'City Mall Store', sales: 87000, outstanding: 12000, trend: 'down', growth: -5, weeklyTrend: [20, 18, 15, 12, 10, 8, 5] },
-    { name: 'Modern Retailers', sales: 76000, outstanding: 8500, trend: 'up', growth: 18, weeklyTrend: [8, 10, 12, 14, 16, 17, 18] }
-  ]
-
   const weeklyMaxValue = Math.max(
     1,
     ...weeklyOverviewData.map(entry => Math.max(entry.sales, entry.purchases))
@@ -724,12 +669,6 @@ const Dashboard = () => {
     }
   ]
 
-  const fastMovingItems = [
-    { name: 'Milk Packets', qty: 120, trend: '+15%' },
-    { name: 'Bread Loaves', qty: 95, trend: '+8%' },
-    { name: 'Rice 1kg', qty: 80, trend: '+12%' }
-  ]
-
   const periods = [
     { id: 'today', label: t.common.today },
     { id: 'week', label: t.common.week },
@@ -745,745 +684,412 @@ const Dashboard = () => {
     return () => clearInterval(interval)
   }, [smartAlerts.length])
 
-  const profitChange = metrics.profit.today - metrics.profit.yesterday
-  const profitChangePercent = ((profitChange / metrics.profit.yesterday) * 100).toFixed(0)
-
-  const badges = [
-    { name: 'Speed Star', icon: Lightning, unlocked: todayInvoices >= 5, requirement: '5 invoices today', color: 'yellow' },
-    { name: 'Pro Biller', icon: Trophy, unlocked: levelProgress >= 85, requirement: '85% progress', color: 'purple' },
-    { name: 'Streak Master', icon: Fire, unlocked: true, requirement: '10 days streak', color: 'orange' }
-  ]
-
-  const referralCode = 'THIRUVIZHA500'
-
-  const handleReferralShare = () => {
-    const referralLink = `https://thisai-crm-silver.web.app/?ref=${referralCode}`
-    const message = `Billing Pro saved me 2hrs/day with AI billing! Join free & get ₹500 credit: ${referralLink}`
-    if (navigator.share) {
-      navigator.share({ title: 'Join Billing Pro', text: message, url: referralLink }).catch(() => {})
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
-    }
-    toast.success('Referral link copied!')
-  }
-
-  const handleWhatsAppBlast = () => {
-    const message = '🎉 50% off on Milk today! Reply YES to order.\n\n- Billing Pro'
-    toast.success('Preparing WhatsApp blast...')
-    setTimeout(() => {
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
-    }, 1000)
-  }
-
-  const completeOnboarding = () => {
-    localStorage.setItem('hasSeenOnboarding', 'true')
-    setShowOnboarding(false)
-    toast.success('Welcome to Billing Pro!')
-  }
-
-  // Mini Sparkline
-  const MiniSparkline = ({ data, color }: { data: number[]; color: string }) => {
-    const max = Math.max(...data)
-    const min = Math.min(...data)
-    const range = max - min || 1
-    const points = data.map((val, i) => {
-      const x = (i / (data.length - 1)) * 100
-      const y = 100 - ((val - min) / range) * 100
-      return `${x},${y}`
-    }).join(' ')
+  // ==================== MOBILE DASHBOARD (Reverted) ====================
+  const MobileDashboard = () => {
     return (
-      <svg className="w-full h-6" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <polyline points={points} fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-      </svg>
-    )
-  }
-
-  // Pie Chart
-  const MiniPieChart = ({ cashPercent, creditPercent }: { cashPercent: number; creditPercent: number }) => (
-    <div className="flex items-center gap-2">
-      <div className="relative w-12 h-12">
-        <div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(#10b981 0% ${cashPercent}%, #f59e0b ${cashPercent}% 100%)` }} />
-        <div className="absolute inset-1 bg-white rounded-full flex items-center justify-center">
-          <span className="text-[8px] font-bold text-slate-700">{cashPercent}%</span>
+      <div className="p-4 bg-slate-50 dark:bg-slate-900 min-h-screen">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{greeting}, {userData?.firstName || 'User'}!</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Welcome back.</p>
+          </div>
+          <button onClick={() => navigate('/settings')} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+            <span>Settings</span>
+          </button>
         </div>
-      </div>
-      <div className="flex flex-col gap-0.5 text-[9px]">
-        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /><span className="font-semibold text-slate-700">Cash {cashPercent}%</span></div>
-        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /><span className="font-semibold text-slate-700">Credit {creditPercent}%</span></div>
-      </div>
-    </div>
-  )
-
-  // ==================== MOBILE PREMIUM DASHBOARD ====================
-  const MobilePremiumDashboard = () => {
-    return (
-      <div className="min-h-[calc(100vh-110px)] bg-gradient-to-br from-slate-100 via-blue-50 to-slate-50 flex flex-col px-4 pt-3 pb-24">
-        
-        {/* AI Alert Banner - Professional Style */}
-        <AnimatePresence>
-          {showAIAdvisor && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, height: 0 }}
-              className="relative overflow-hidden mb-4 rounded-xl bg-slate-50 border border-slate-200 shadow-sm"
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentAlertIndex}
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className="flex items-center gap-3 p-3"
-                  onClick={() => navigate(smartAlerts[currentAlertIndex].link)}
-                >
-                  <motion.div
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-                      smartAlerts[currentAlertIndex].color === 'red' ? "bg-red-100" :
-                      smartAlerts[currentAlertIndex].color === 'orange' ? "bg-amber-100" :
-                      smartAlerts[currentAlertIndex].color === 'blue' ? "bg-blue-100" :
-                      "bg-violet-100"
-                    )}
-                  >
-                    {React.createElement(smartAlerts[currentAlertIndex].icon, { 
-                      size: 20, 
-                      weight: 'duotone', 
-                      className: cn(
-                        smartAlerts[currentAlertIndex].color === 'red' ? "text-red-600" :
-                        smartAlerts[currentAlertIndex].color === 'orange' ? "text-amber-600" :
-                        smartAlerts[currentAlertIndex].color === 'blue' ? "text-blue-600" :
-                        "text-violet-600"
-                      )
-                    })}
-                  </motion.div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-800">{smartAlerts[currentAlertIndex].title}</p>
-                    <p className="text-xs text-slate-500 truncate">{smartAlerts[currentAlertIndex].message}</p>
-                  </div>
-                  <motion.button 
-                    whileTap={{ scale: 0.95 }}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg text-xs font-semibold",
-                      smartAlerts[currentAlertIndex].color === 'red' ? "bg-red-600 text-white" :
-                      smartAlerts[currentAlertIndex].color === 'orange' ? "bg-amber-500 text-white" :
-                      smartAlerts[currentAlertIndex].color === 'blue' ? "bg-blue-600 text-white" :
-                      "bg-emerald-600 text-white"
-                    )}
-                  >
-                    {smartAlerts[currentAlertIndex].action}
-                  </motion.button>
-                  <button onClick={(e) => { e.stopPropagation(); setShowAIAdvisor(false); }} className="p-1.5 hover:bg-slate-200 rounded-lg transition-colors">
-                    <X size={14} className="text-slate-400" />
-                  </button>
-                </motion.div>
-              </AnimatePresence>
-              {/* Progress dots */}
-              <div className="flex justify-center gap-1.5 pb-2">
-                {smartAlerts.map((_, i) => (
-                  <motion.div
-                    key={i}
-                    animate={{ 
-                      width: i === currentAlertIndex ? 16 : 6,
-                      opacity: i === currentAlertIndex ? 1 : 0.5 
-                    }}
-                    className={cn(
-                      "h-1.5 rounded-full transition-colors",
-                      i === currentAlertIndex ? "bg-blue-500" : "bg-slate-300"
-                    )}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Period Filter - Prominent Bar */}
-        <div className="bg-white rounded-xl p-2 shadow-md border-2 border-violet-100 mb-1">
-          <div className="flex items-center gap-1 overflow-x-auto">
-            {[
-              { key: 'today', label: 'Today' },
-              { key: 'week', label: 'Week' },
-              { key: 'month', label: 'Month' },
-              { key: 'year', label: 'Year' },
-              { key: 'all', label: 'All' },
-              { key: 'custom', label: 'Custom' },
-            ].map((period) => (
+        {/* Period Filter */}
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
+            {periods.map((period) => (
               <button
-                key={period.key}
-                onClick={() => {
-                  setSelectedPeriod(period.key)
-                  if (period.key === 'custom') {
-                    setShowCustomDatePicker(true)
-                  }
-                }}
-                className={cn(
-                  "flex-1 min-w-[60px] px-3 py-2.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap",
-                  selectedPeriod === period.key
-                    ? "bg-violet-600 text-white shadow-md"
-                    : "text-slate-600 hover:bg-violet-50 hover:text-violet-600"
-                )}
+                key={period.id}
+                onClick={() => setSelectedPeriod(period.id)}
+                className={`px-4 py-2 text-sm font-semibold rounded-full whitespace-nowrap transition-colors ${selectedPeriod === period.id ? "bg-blue-600 text-white shadow" : "text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"}`}
               >
                 {period.label}
               </button>
             ))}
-          </div>
-
-          {/* Custom Date Picker */}
-          {selectedPeriod === 'custom' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mt-3 pt-3 border-t border-slate-200"
-            >
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-slate-500">From:</label>
-                  <input
-                    type="date"
-                    value={customDateRange.startDate}
-                    onChange={(e) => setCustomDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-slate-500">To:</label>
-                  <input
-                    type="date"
-                    value={customDateRange.endDate}
-                    onChange={(e) => setCustomDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                  />
-                </div>
-                <button
-                  onClick={() => {
-                    // Re-fetch data with custom date range
-                    fetchDashboardData()
-                  }}
-                  className="px-3 py-1.5 text-xs font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700"
-                >
-                  Apply
-                </button>
-              </div>
-            </motion.div>
-          )}
         </div>
 
-        {/* Stats Grid - Professional Cards */}
-        <div className="grid grid-cols-2 gap-3">
+        <motion.div
+          className="grid grid-cols-2 gap-4"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            visible: {
+              transition: {
+                staggerChildren: 0.1,
+              },
+            },
+          }}
+        >
           {[
-            { label: 'Sales', value: getValueByPeriod(metrics.sales), color: 'blue', growth: metrics.sales.growth, route: '/sales', icon: Receipt },
-            { label: 'Purchases', value: getValueByPeriod(metrics.purchases), color: 'amber', growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart },
-            { label: 'Expenses', value: getExpenseByPeriod(), color: 'rose', growth: 0, route: '/expenses', icon: Calculator },
-            { label: 'Profit', value: getProfitByPeriod(), color: 'emerald', growth: metrics.profit.growth, route: '/reports', icon: TrendUp },
-            { label: 'Balance', value: getValueByPeriod(metrics.sales) - getValueByPeriod(metrics.purchases), color: 'violet', route: '/banking', isLakh: true, icon: Wallet },
-            { label: 'Receivable', value: metrics.receivables, color: 'cyan', route: '/parties', icon: Users },
+            { label: 'Sales', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, color: 'green' },
+            { label: 'Purchases', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, color: 'red' },
+            { label: 'Expenses', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, color: 'amber' },
+            { label: 'Profit', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, color: 'blue' },
           ].map((stat, i) => (
             <motion.div
               key={i}
-              whileTap={{ scale: 0.98 }}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
               onClick={() => navigate(stat.route)}
-              className={cn(
-                "relative p-4 rounded-xl cursor-pointer bg-white border shadow-sm hover:shadow-md transition-all",
-                stat.color === 'blue' ? "border-blue-200" :
-                stat.color === 'amber' ? "border-amber-200" :
-                stat.color === 'rose' ? "border-rose-200" :
-                stat.color === 'emerald' ? "border-emerald-200" :
-                stat.color === 'violet' ? "border-violet-200" :
-                "border-cyan-200"
-              )}
+              className="p-4 rounded-2xl cursor-pointer bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 shadow-sm"
             >
-              <div className="flex items-start justify-between mb-2">
-                <div className={cn(
-                  "p-2 rounded-lg",
-                  stat.color === 'blue' ? "bg-blue-50" :
-                  stat.color === 'amber' ? "bg-amber-50" :
-                  stat.color === 'rose' ? "bg-rose-50" :
-                  stat.color === 'emerald' ? "bg-emerald-50" :
-                  stat.color === 'violet' ? "bg-violet-50" :
-                  "bg-cyan-50"
+              <div className="flex items-center gap-2 mb-2">
+                <div className={cn("p-1.5 rounded-full",
+                    stat.color === 'green' && 'bg-green-100 dark:bg-green-900/50',
+                    stat.color === 'red' && 'bg-red-100 dark:bg-red-900/50',
+                    stat.color === 'amber' && 'bg-yellow-100 dark:bg-yellow-900/50',
+                    stat.color === 'blue' && 'bg-blue-100 dark:bg-blue-900/50',
                 )}>
-                  <stat.icon size={18} weight="duotone" className={cn(
-                    stat.color === 'blue' ? "text-blue-600" :
-                    stat.color === 'amber' ? "text-amber-600" :
-                    stat.color === 'rose' ? "text-rose-600" :
-                    stat.color === 'emerald' ? "text-emerald-600" :
-                    stat.color === 'violet' ? "text-violet-600" :
-                    "text-cyan-600"
+                  <stat.icon size={20} weight="bold" className={cn(
+                    stat.color === 'green' && 'text-green-600 dark:text-green-400',
+                    stat.color === 'red' && 'text-red-600 dark:text-red-400',
+                    stat.color === 'amber' && 'text-yellow-600 dark:text-yellow-400',
+                    stat.color === 'blue' && 'text-blue-600 dark:text-blue-400',
                   )} />
                 </div>
-                {stat.growth && (
-                  <div className={cn(
-                    "flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
-                    stat.growth > 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-                  )}>
-                    {stat.growth > 0 ? <TrendUp size={10} /> : <TrendDown size={10} />}
-                    {Math.abs(stat.growth)}%
-                  </div>
-                )}
+                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{stat.label}</p>
               </div>
-              <p className="text-2xl font-bold text-slate-800 mb-0.5">
-                {stat.isLakh ? `₹${(stat.value / 100000).toFixed(1)}L` : `₹${(stat.value / 1000).toFixed(0)}K`}
+              <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                {`₹${(stat.value / 1000).toLocaleString('en-IN', { maximumFractionDigits: 1 })}K`}
               </p>
-              <p className={cn(
-                "text-xs font-medium",
-                stat.color === 'blue' ? "text-blue-600" :
-                stat.color === 'amber' ? "text-amber-600" :
-                stat.color === 'rose' ? "text-rose-600" :
-                stat.color === 'emerald' ? "text-emerald-600" :
-                stat.color === 'violet' ? "text-violet-600" :
-                "text-cyan-600"
-              )}>{stat.label}</p>
+              {stat.growth !== null && (
+                <div className="flex items-center gap-1 text-xs mt-1">
+                  <span className={cn("font-semibold", stat.growth >= 0 ? 'text-green-500' : 'text-red-500')}>
+                    {stat.growth >= 0 ? `+${stat.growth.toFixed(1)}%` : `${stat.growth.toFixed(1)}%`}
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs">vs yest.</span>
+                </div>
+              )}
             </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        {/* Weekly Chart - Professional Style */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm mt-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-slate-800">Weekly Overview</p>
-            <div className="flex gap-3">
-              <span className="flex items-center gap-1 text-[10px] font-medium text-slate-600">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />Sales
-              </span>
-              <span className="flex items-center gap-1 text-[10px] font-medium text-slate-600">
-                <div className="w-2 h-2 rounded-full bg-amber-500" />Purchases
-              </span>
+        {/* Weekly Chart */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 shadow-sm mt-4">
+          <div className="flex justify-between items-center mb-3">
+            <p className="text-base font-semibold text-slate-800 dark:text-slate-100">Weekly Overview</p>
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
+                <span className="text-slate-500 dark:text-slate-400">Sales</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-amber-300 to-amber-500"></div>
+                <span className="text-slate-500 dark:text-slate-400">Purchases</span>
+              </div>
             </div>
           </div>
-          <div className="flex items-end justify-between gap-1 h-28">
+          <motion.div
+            className="flex items-end justify-between gap-1 h-32"
+            initial="hidden"
+            animate="visible"
+            variants={{
+                visible: { transition: { staggerChildren: 0.05 } },
+            }}
+          >
             {weeklyOverviewData.map((day, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full flex items-end justify-center gap-0.5 h-20">
+              <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                <div className="w-full flex items-end justify-center gap-0.5 h-full">
                   <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${Math.max((day.sales / weeklyMaxValue) * 100, 4)}%` }}
-                    transition={{ delay: i * 0.05, duration: 0.4 }}
-                    className="flex-1 max-w-[14px] bg-blue-500 rounded-t min-h-[3px]"
+                    variants={{
+                        hidden: { height: '4%', opacity: 0 },
+                        visible: { height: `${Math.max((day.sales / weeklyMaxValue) * 100, 4)}%`, opacity: 1 },
+                    }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                    className="w-3.5 bg-gradient-to-t from-blue-400 to-blue-600 rounded-t-md"
+                    title={`Sales: ₹${day.sales.toLocaleString()}`}
                   />
                   <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${Math.max((day.purchases / weeklyMaxValue) * 100, 4)}%` }}
-                    transition={{ delay: i * 0.05 + 0.05, duration: 0.4 }}
-                    className="flex-1 max-w-[14px] bg-amber-400 rounded-t min-h-[3px]"
+                    variants={{
+                        hidden: { height: '4%', opacity: 0 },
+                        visible: { height: `${Math.max((day.purchases / weeklyMaxValue) * 100, 4)}%`, opacity: 1 },
+                    }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.1 }}
+                    className="w-3.5 bg-gradient-to-t from-amber-300 to-amber-500 rounded-t-md"
+                    title={`Purchases: ₹${day.purchases.toLocaleString()}`}
                   />
                 </div>
-                <span className="text-[10px] font-medium text-slate-400">{day.day.charAt(0)}</span>
+                <span className="text-xs font-medium text-slate-400">{day.day}</span>
               </div>
             ))}
-          </div>
+          </motion.div>
         </div>
 
-        {/* Recent Transactions - Professional Style */}
-        <div className="mt-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-slate-800">Recent Activity</p>
-            <button onClick={() => navigate('/reports')} className="text-xs text-blue-600 font-semibold flex items-center gap-1">
-              View All <ArrowRight size={12} weight="bold" />
-            </button>
+        {/* Recent Transactions */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">Recent Activity</p>
+            <button onClick={() => navigate('/reports')} className="text-sm text-blue-600 dark:text-blue-400 font-semibold">View All</button>
           </div>
-          <div className="space-y-2">
-            {recentTransactions.length === 0 ? (
-              <div className="p-6 rounded-xl bg-white border border-slate-200 text-center">
-                <Clock size={32} weight="duotone" className="text-slate-300 mx-auto mb-2" />
-                <p className="text-xs text-slate-500">No recent transactions</p>
-                <p className="text-[10px] text-slate-400 mt-1">Create your first sale or purchase</p>
-              </div>
-            ) : (
-              recentTransactions.slice(0, 2).map((tx) => (
-                <motion.div
-                  key={tx.id}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate(tx.type === 'sale' ? '/sales' : tx.type === 'purchase' ? '/purchases' : '/expenses')}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all"
-                >
-                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center",
-                    tx.type === 'sale' ? "bg-blue-50" : tx.type === 'purchase' ? "bg-amber-50" : "bg-rose-50"
+          <motion.div
+            className="space-y-3"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: { transition: { staggerChildren: 0.1 } },
+            }}
+          >
+            {recentTransactions.slice(0, 4).map((tx) => (
+              <motion.div
+                key={tx.id}
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+              >
+                <div className={cn('w-10 h-10 rounded-full flex items-center justify-center',
+                    tx.type === 'sale' ? 'bg-green-100 dark:bg-green-900/50' :
+                    tx.type === 'purchase' ? 'bg-red-100 dark:bg-red-900/50' :
+                    'bg-yellow-100 dark:bg-yellow-900/50'
+                )}>
+                   <tx.icon size={20} className={cn(
+                      tx.type === 'sale' ? 'text-green-600 dark:text-green-400' :
+                      tx.type === 'purchase' ? 'text-red-600 dark:text-red-400' :
+                      'text-yellow-600 dark:text-yellow-400'
+                  )} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{tx.party}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{tx.date}</p>
+                </div>
+                <div className="text-right">
+                  <p className={cn('text-base font-bold',
+                      tx.type === 'sale' ? 'text-green-600' :
+                      tx.type === 'purchase' ? 'text-red-600' : 'text-yellow-600'
                   )}>
-                    <tx.icon size={18} weight="duotone" className={cn(
-                      tx.type === 'sale' ? "text-blue-600" : tx.type === 'purchase' ? "text-amber-600" : "text-rose-600"
-                    )} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 truncate">{tx.party}</p>
-                    <p className="text-xs text-slate-500">{tx.date}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className={cn("text-sm font-bold", tx.type === 'sale' ? "text-emerald-600" : "text-slate-600")}>
-                      {tx.type === 'sale' ? '+' : '-'}₹{(tx.amount / 1000).toFixed(1)}K
-                    </p>
-                    <span className={cn(
-                      "text-[9px] font-medium px-1.5 py-0.5 rounded-full",
-                      tx.status === 'paid' ? "bg-emerald-50 text-emerald-600" :
-                      tx.status === 'partial' ? "bg-blue-50 text-blue-600" :
-                      "bg-amber-50 text-amber-600"
-                    )}>{tx.status}</span>
-                  </div>
-                </motion.div>
-              ))
-            )}
-          </div>
+                    {tx.type === 'sale' ? '+' : '-'}&nbsp;₹{tx.amount.toLocaleString('en-IN')}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
-
       </div>
     )
   }
 
-  // ==================== DESKTOP DASHBOARD (UNCHANGED) ====================
-  const DesktopDashboard = () => (
-    <div className="max-w-[1800px] mx-auto p-3 md:p-4 lg:p-6 pb-24 md:pb-20 lg:pb-8 space-y-3 md:space-y-4">
-      {/* ONBOARDING WIZARD MODAL */}
-      <AnimatePresence>
-        {showOnboarding && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={completeOnboarding}
-          >
+  // ==================== DESKTOP DASHBOARD (Reverted) ====================
+    const DesktopDashboard = () => (
+      <div className="max-w-screen-xl mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100">{greeting}, {userData?.firstName || 'User'}!</h1>
+            <p className="text-base text-slate-500 dark:text-slate-400 mt-1">Here's your business overview for {getPeriodLabel()}.</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+                {periods.map((period) => (
+                  <button
+                    key={period.id}
+                    onClick={() => setSelectedPeriod(period.id)}
+                    className={cn(
+                      "px-4 py-2 text-sm font-semibold rounded-full transition-colors",
+                      selectedPeriod === period.id
+                        ? "bg-blue-600 text-white shadow"
+                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    )}
+                  >
+                    {period.label}
+                  </button>
+                ))}
+            </div>
+            <button 
+                onClick={() => { localStorage.setItem('sales_viewMode', 'create'); navigate('/sales') }} 
+                className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105"
+              >
+                <Plus size={20} weight="bold" />
+                <span>Create Invoice</span>
+              </button>
+          </div>
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-3 gap-6">
+          {/* Left Column */}
+          <div className="col-span-3 lg:col-span-2 space-y-6">
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                visible: {
+                  transition: {
+                    staggerChildren: 0.1,
+                  },
+                },
+              }}
             >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
-                    <GraduationCap size={32} weight="duotone" className="text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900">Welcome to Billing Pro!</h2>
-                    <p className="text-sm text-slate-600">3-Step Setup • 2 Minutes</p>
-                  </div>
-                </div>
-                <button onClick={completeOnboarding} className="p-2 hover:bg-slate-100 rounded-lg transition-all">
-                  <X size={24} weight="bold" className="text-slate-600" />
-                </button>
-              </div>
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-2">
-                  {['Shop Info', 'Invoice Demo', 'POS Demo'].map((step, index) => (
-                    <div key={index} className={cn("flex items-center gap-2 text-xs font-bold", onboardingStep >= index ? "text-blue-600" : "text-slate-400")}>
-                      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", onboardingStep >= index ? "bg-blue-500 text-white" : "bg-slate-200 text-slate-500")}>{index + 1}</div>
-                      <span className="hidden sm:inline">{step}</span>
+              {[
+                { label: 'Sales', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, color: 'green' },
+                { label: 'Purchases', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, color: 'red' },
+                { label: 'Expenses', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, color: 'amber' },
+                { label: 'Profit', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, color: 'blue' },
+              ].map((stat, i) => (
+                <motion.div
+                  key={i}
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  onClick={() => navigate(stat.route)}
+                  className={cn(
+                    "relative p-6 rounded-2xl cursor-pointer bg-white dark:bg-slate-800/50 border border-transparent hover:border-blue-500/50 dark:hover:border-blue-500/30 shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden",
+                    `border-${stat.color}-500/10`
+                  )}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</p>
+                      <p className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-2">
+                        {`₹${(stat.value / 1000).toLocaleString('en-IN', { maximumFractionDigits: stat.value > 10000 ? 0 : 1 })}K`}
+                      </p>
                     </div>
-                  ))}
-                </div>
-                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${((onboardingStep + 1) / 3) * 100}%` }} className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" />
-                </div>
-              </div>
-              <div className="mb-8">
-                {onboardingStep === 0 && (
-                  <div className="text-center py-8">
-                    <h3 className="text-xl font-bold text-slate-900 mb-4">Add Your Shop Name</h3>
-                    <input type="text" placeholder="e.g., My Store" className="w-full max-w-md mx-auto px-4 py-3 border-2 border-slate-300 rounded-lg text-center text-lg font-semibold focus:border-blue-500 focus:outline-none" />
+                    <div className={cn("absolute -top-4 -right-4 text-8xl", 
+                      stat.color === 'green' && 'text-green-500/10 dark:text-green-400/5',
+                      stat.color === 'red' && 'text-red-500/10 dark:text-red-400/5',
+                      stat.color === 'amber' && 'text-amber-500/10 dark:text-amber-400/5',
+                      stat.color === 'blue' && 'text-blue-500/10 dark:text-blue-400/5',
+                    )}>
+                      <stat.icon weight="bold" />
+                    </div>
                   </div>
-                )}
-                {onboardingStep === 1 && (
-                  <div className="text-center py-8">
-                    <div className="inline-flex p-4 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl mb-4"><Receipt size={64} weight="duotone" className="text-blue-600" /></div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">Invoice Demo</h3>
-                    <p className="text-slate-600 mb-4">Create professional invoices quickly and easily!</p>
-                  </div>
-                )}
-                {onboardingStep === 2 && (
-                  <div className="text-center py-8">
-                    <div className="inline-flex p-4 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-2xl mb-4"><ShoppingCart size={64} weight="duotone" className="text-emerald-600" /></div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">POS Demo</h3>
-                    <p className="text-slate-600 mb-4">Fast checkout with our Point of Sale system!</p>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center justify-between">
-                <button onClick={() => setOnboardingStep(Math.max(0, onboardingStep - 1))} disabled={onboardingStep === 0} className={cn("px-6 py-2 rounded-lg font-bold transition-all", onboardingStep === 0 ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-slate-200 text-slate-700 hover:bg-slate-300")}>Back</button>
-                <button onClick={() => { if (onboardingStep < 2) setOnboardingStep(onboardingStep + 1); else completeOnboarding(); }} className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-lg font-bold transition-all shadow-lg">{onboardingStep === 2 ? "Let's Start!" : 'Next'}</button>
-              </div>
-              <button onClick={completeOnboarding} className="w-full mt-4 text-sm text-slate-500 hover:text-slate-700 font-semibold">Skip & Explore</button>
+                  {stat.growth !== null && (
+                    <div className="flex items-center gap-1 text-sm mt-4">
+                      <span className={cn("font-semibold", stat.growth >= 0 ? 'text-green-500' : 'text-red-500')}>
+                        {stat.growth >= 0 ? `+${stat.growth.toFixed(1)}%` : `${stat.growth.toFixed(1)}%`}
+                      </span>
+                      <span className="text-slate-500 dark:text-slate-400">vs yesterday</span>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* AI BUSINESS ADVISOR */}
-      <AnimatePresence>
-        {showAIAdvisor && (
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="bg-white rounded-xl shadow-sm border-2 border-orange-300 overflow-hidden">
-            <div className="p-3 lg:p-4 flex items-start gap-2 lg:gap-3">
-              <div className="p-1.5 lg:p-2 bg-orange-50 rounded-lg flex-shrink-0"><Robot size={20} weight="duotone" className="text-orange-600 lg:w-6 lg:h-6" /></div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 lg:gap-2 mb-1">
-                  <h3 className="text-xs lg:text-sm font-bold text-slate-800 flex items-center gap-1 lg:gap-1.5"><Sparkle size={12} weight="fill" className="text-orange-500 lg:w-3.5 lg:h-3.5" />AI Business Advisor</h3>
-                  <span className="px-1.5 lg:px-2 py-0.5 bg-orange-100 rounded-full text-[7px] lg:text-[8px] font-bold text-orange-600 uppercase tracking-wide">Today</span>
-                </div>
-                <p className="text-slate-600 text-[10px] lg:text-xs font-semibold mb-1.5 lg:mb-2 leading-relaxed">Profit: <span className="font-black text-slate-800">₹{(profitChange / 1000).toFixed(1)}K</span> ({Number(profitChangePercent) > 0 ? '+' : ''}{profitChangePercent}% vs yesterday) • Low stock: {metrics.inventory.lowStock} items</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button onClick={() => navigate('/parties')} className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 transition-all flex items-center gap-1 shadow-sm"><Phone size={12} weight="bold" />Call Customer</button>
-                  <button onClick={() => navigate('/inventory')} className="px-3 py-1.5 bg-orange-50 border border-orange-200 text-orange-600 rounded-lg text-xs font-bold hover:bg-orange-100 transition-all flex items-center gap-1"><Package size={12} weight="bold" />View Stock</button>
+            {/* Weekly Chart */}
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Weekly Overview</h2>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
+                    <span className="text-slate-500 dark:text-slate-400">Sales</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-br from-amber-300 to-amber-500"></div>
+                    <span className="text-slate-500 dark:text-slate-400">Purchases</span>
+                  </div>
                 </div>
               </div>
-              <button onClick={() => setShowAIAdvisor(false)} className="p-1 hover:bg-slate-100 rounded-lg transition-all flex-shrink-0"><X size={16} weight="bold" className="text-slate-400" /></button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* KPI CARDS - Same style as Mobile */}
-      <div className="grid grid-cols-3 lg:grid-cols-6 gap-4">
-        {/* Sales Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={() => navigate('/sales')}
-          whileTap={{ scale: 0.98 }}
-          className="bg-white rounded-xl shadow-sm hover:shadow-md cursor-pointer transition-all border border-blue-200 p-4"
-        >
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-2 rounded-lg bg-blue-50">
-              <Receipt size={20} weight="duotone" className="text-blue-600" />
-            </div>
-            <div className={cn(
-              "flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
-              metrics.sales.growth > 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-            )}>
-              {metrics.sales.growth > 0 ? <TrendUp size={10} /> : <TrendDown size={10} />}
-              {Math.abs(metrics.sales.growth)}%
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-slate-800 mb-0.5">₹{(metrics.sales.month / 1000).toFixed(0)}K</p>
-          <p className="text-xs font-medium text-blue-600">Sales</p>
-        </motion.div>
-
-        {/* Purchases Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          onClick={() => navigate('/purchases')}
-          whileTap={{ scale: 0.98 }}
-          className="bg-white rounded-xl shadow-sm hover:shadow-md cursor-pointer transition-all border border-amber-200 p-4"
-        >
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-2 rounded-lg bg-amber-50">
-              <ShoppingCart size={20} weight="duotone" className="text-amber-600" />
-            </div>
-            <div className={cn(
-              "flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
-              metrics.purchases.growth > 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-            )}>
-              {metrics.purchases.growth > 0 ? <TrendUp size={10} /> : <TrendDown size={10} />}
-              {Math.abs(metrics.purchases.growth)}%
+              <motion.div
+                className="flex items-end justify-between gap-2 h-64"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: { transition: { staggerChildren: 0.05 } },
+                }}
+              >
+                {weeklyOverviewData.map((day, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                    <div className="w-full flex items-end justify-center gap-1.5 h-full">
+                      <motion.div
+                        variants={{
+                          hidden: { height: '2%', opacity: 0 },
+                          visible: { height: `${Math.max((day.sales / weeklyMaxValue) * 100, 2)}%`, opacity: 1 },
+                        }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                        className="w-8 bg-gradient-to-t from-blue-400 to-blue-600 rounded-t-lg transition-all duration-300 group-hover:from-blue-500 group-hover:to-blue-700"
+                        title={`Sales: ₹${day.sales.toLocaleString()}`}
+                      />
+                      <motion.div
+                        variants={{
+                          hidden: { height: '2%', opacity: 0 },
+                          visible: { height: `${Math.max((day.purchases / weeklyMaxValue) * 100, 2)}%`, opacity: 1 },
+                        }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.1 }}
+                        className="w-8 bg-gradient-to-t from-amber-300 to-amber-500 rounded-t-lg transition-all duration-300 group-hover:from-amber-400 group-hover:to-amber-600"
+                        title={`Purchases: ₹${day.purchases.toLocaleString()}`}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{day.day}</span>
+                  </div>
+                ))}
+              </motion.div>
             </div>
           </div>
-          <p className="text-2xl font-bold text-slate-800 mb-0.5">₹{(metrics.purchases.month / 1000).toFixed(0)}K</p>
-          <p className="text-xs font-medium text-amber-600">Purchases</p>
-        </motion.div>
 
-        {/* Expenses Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          onClick={() => navigate('/expenses')}
-          whileTap={{ scale: 0.98 }}
-          className="bg-white rounded-xl shadow-sm hover:shadow-md cursor-pointer transition-all border border-rose-200 p-4"
-        >
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-2 rounded-lg bg-rose-50">
-              <Calculator size={20} weight="duotone" className="text-rose-600" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-slate-800 mb-0.5">₹{(getExpenseByPeriod() / 1000).toFixed(0)}K</p>
-          <p className="text-xs font-medium text-rose-600">Expenses</p>
-        </motion.div>
-
-        {/* Profit Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          onClick={() => navigate('/reports')}
-          whileTap={{ scale: 0.98 }}
-          className="bg-white rounded-xl shadow-sm hover:shadow-md cursor-pointer transition-all border border-emerald-200 p-4"
-        >
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-2 rounded-lg bg-emerald-50">
-              <TrendUp size={20} weight="duotone" className="text-emerald-600" />
-            </div>
-            <div className={cn(
-              "flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full",
-              metrics.profit.growth > 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-            )}>
-              {metrics.profit.growth > 0 ? <TrendUp size={10} /> : <TrendDown size={10} />}
-              {Math.abs(metrics.profit.growth)}%
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-slate-800 mb-0.5">₹{(metrics.profit.month / 1000).toFixed(0)}K</p>
-          <p className="text-xs font-medium text-emerald-600">Profit</p>
-        </motion.div>
-
-        {/* Balance Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          onClick={() => navigate('/banking')}
-          whileTap={{ scale: 0.98 }}
-          className="bg-white rounded-xl shadow-sm hover:shadow-md cursor-pointer transition-all border border-violet-200 p-4"
-        >
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-2 rounded-lg bg-violet-50">
-              <Wallet size={20} weight="duotone" className="text-violet-600" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-slate-800 mb-0.5">₹{((metrics.sales.month - metrics.purchases.month) / 100000).toFixed(1)}L</p>
-          <p className="text-xs font-medium text-violet-600">Balance</p>
-        </motion.div>
-
-        {/* Receivable Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          onClick={() => navigate('/parties')}
-          whileTap={{ scale: 0.98 }}
-          className="bg-white rounded-xl shadow-sm hover:shadow-md cursor-pointer transition-all border border-cyan-200 p-4"
-        >
-          <div className="flex items-start justify-between mb-2">
-            <div className="p-2 rounded-lg bg-cyan-50">
-              <Users size={20} weight="duotone" className="text-cyan-600" />
-            </div>
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-600">
-              {metrics.receivables > 0 ? metrics.receivables : 0}
-            </span>
-          </div>
-          <p className="text-2xl font-bold text-slate-800 mb-0.5">₹{(realMetrics.receivables / 1000).toFixed(0)}K</p>
-          <p className="text-xs font-medium text-cyan-600">Receivable</p>
-        </motion.div>
-      </div>
-
-      {/* QUICK ACTION CARDS - Invoice & POS */}
-      <div className="grid grid-cols-2 gap-4">
-        <motion.div 
-          initial={{ opacity: 0, x: -10 }} 
-          animate={{ opacity: 1, x: 0 }} 
-          onClick={() => { localStorage.setItem('sales_viewMode', 'create'); navigate('/sales') }} 
-          whileTap={{ scale: 0.97 }} 
-          className="bg-white rounded-xl shadow-sm hover:shadow-md border-2 border-orange-300 p-6 cursor-pointer transition-all flex flex-col items-center justify-center"
-        >
-          <div className="p-3 bg-orange-50 rounded-xl mb-3">
-            <Receipt size={28} weight="duotone" className="text-orange-600" />
-          </div>
-          <h3 className="text-lg font-bold text-slate-800">Invoice</h3>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, x: 10 }} 
-          animate={{ opacity: 1, x: 0 }} 
-          onClick={() => navigate('/pos')} 
-          whileTap={{ scale: 0.97 }} 
-          className="bg-white rounded-xl shadow-sm hover:shadow-md border-2 border-violet-300 p-6 cursor-pointer transition-all flex flex-col items-center justify-center"
-        >
-          <div className="p-3 bg-violet-50 rounded-xl mb-3">
-            <Barcode size={28} weight="duotone" className="text-violet-600" />
-          </div>
-          <h3 className="text-lg font-bold text-slate-800">POS</h3>
-        </motion.div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-100">
-          <h2 className="text-sm font-bold text-slate-900">Quick Actions</h2>
-          <button onClick={() => navigate('/more')} className="text-xs font-semibold text-blue-600 flex items-center gap-1">See All <ArrowRight size={12} weight="bold" /></button>
-        </div>
-        <div ref={quickActionsRef} className="flex gap-2 overflow-x-auto scrollbar-hide p-3" style={{ scrollbarWidth: 'none' }}>
-          {[
-            { label: 'Invoice', icon: Receipt, color: 'bg-blue-500', route: '/sales?action=add' },
-            { label: 'Purchase', icon: ShoppingCart, color: 'bg-orange-500', route: '/purchases?action=add' },
-            { label: 'Quote', icon: FileText, color: 'bg-purple-500', route: '/quotations?action=add' },
-            { label: 'Party', icon: UserPlus, color: 'bg-cyan-500', route: '/parties?action=add' },
-            { label: 'Expense', icon: Calculator, color: 'bg-rose-500', route: '/expenses?action=add' },
-            { label: 'Item', icon: Package, color: 'bg-violet-500', route: '/inventory?action=add' },
-            { label: 'Pay In', icon: Money, color: 'bg-emerald-500', route: '/banking?action=payment-in' },
-            { label: 'Pay Out', icon: Wallet, color: 'bg-red-500', route: '/banking?action=payment-out' }
-          ].map((action, index) => (
-            <motion.button key={index} whileTap={{ scale: 0.95 }} onClick={() => navigate(action.route)} className="flex-shrink-0 flex flex-col items-center gap-1.5 min-w-[56px]">
-              <div className={`${action.color} p-2.5 rounded-xl shadow-sm`}><action.icon size={20} weight="fill" className="text-white" /></div>
-              <span className="text-[10px] font-semibold text-slate-600">{action.label}</span>
-            </motion.button>
-          ))}
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-100">
-          <h2 className="text-sm font-bold text-slate-900">Recent Activity</h2>
-          <button onClick={() => navigate('/reports')} className="text-xs font-semibold text-blue-600 flex items-center gap-1">View All <ArrowRight size={12} weight="bold" /></button>
-        </div>
-        <div className="divide-y divide-slate-50">
-          {recentTransactions.length === 0 ? (
-            <div className="p-8 text-center">
-              <Clock size={40} weight="duotone" className="text-slate-300 mx-auto mb-3" />
-              <p className="text-sm font-medium text-slate-500">No recent transactions</p>
-              <p className="text-xs text-slate-400 mt-1">Create your first sale or purchase to see activity here</p>
-            </div>
-          ) : (
-            recentTransactions.slice(0, 3).map((transaction) => (
-              <div key={transaction.id} className="p-3 flex items-center gap-3 active:bg-slate-50 cursor-pointer" onClick={() => navigate(transaction.type === 'sale' ? '/sales' : transaction.type === 'purchase' ? '/purchases' : '/expenses')}>
-                <div className={cn("p-2 rounded-lg",
-                  transaction.type === 'sale' ? 'bg-blue-50' :
-                  transaction.type === 'purchase' ? 'bg-orange-50' :
-                  transaction.type === 'expense' ? 'bg-rose-50' : 'bg-emerald-50'
-                )}>
-                  <transaction.icon size={16} weight="duotone" className={cn(
-                    transaction.type === 'sale' ? 'text-blue-600' :
-                    transaction.type === 'purchase' ? 'text-orange-600' :
-                    transaction.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'
-                  )} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 truncate">{transaction.party}</p>
-                  <p className="text-[10px] text-slate-500">{transaction.date}</p>
-                </div>
-                <div className="text-right">
-                  <p className={cn("text-sm font-bold", transaction.type === 'sale' ? 'text-emerald-600' : 'text-slate-700')}>
-                    {transaction.type === 'sale' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
-                  </p>
-                  <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium",
-                    transaction.status === 'paid' ? 'bg-emerald-50 text-emerald-600' :
-                    transaction.status === 'partial' ? 'bg-blue-50 text-blue-600' :
-                    transaction.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
-                  )}>{transaction.status}</span>
-                </div>
+          {/* Right Column */}
+          <div className="col-span-3 lg:col-span-1 space-y-6">
+            <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Recent Activity</h2>
+                <button onClick={() => navigate('/reports')} className="text-sm text-blue-600 dark:text-blue-400 font-semibold hover:underline">View All</button>
               </div>
-            ))
-          )}
+              <motion.div
+                className="space-y-1"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: { transition: { staggerChildren: 0.1 } },
+                }}
+              >
+                {recentTransactions.slice(0, 5).map((transaction) => (
+                    <motion.div
+                      key={transaction.id}
+                      variants={{
+                        hidden: { opacity: 0, x: -20 },
+                        visible: { opacity: 1, x: 0 },
+                      }}
+                      className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors duration-200"
+                    >
+                      <div className={cn('p-3 rounded-full',
+                          transaction.type === 'sale' ? 'bg-green-100 dark:bg-green-900/50' :
+                          transaction.type === 'purchase' ? 'bg-red-100 dark:bg-red-900/50' :
+                          'bg-yellow-100 dark:bg-yellow-900/50'
+                      )}>
+                        <transaction.icon size={20} className={cn(
+                            transaction.type === 'sale' ? 'text-green-600 dark:text-green-400' :
+                            transaction.type === 'purchase' ? 'text-red-600 dark:text-red-400' :
+                            'text-yellow-600 dark:text-yellow-400'
+                        )} />
+                      </div>
+                      <div className="flex-grow">
+                        <p className="text-base font-semibold text-slate-800 dark:text-slate-100">{transaction.party}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{transaction.date}</p>
+                      </div>
+                      <p className={cn('text-lg font-bold',
+                        transaction.type === 'sale' ? 'text-green-600' :
+                        transaction.type === 'purchase' ? 'text-red-600' : 'text-yellow-600'
+                      )}>
+                        {transaction.type === 'sale' ? '+' : '-'}&nbsp;₹{transaction.amount.toLocaleString('en-IN')}
+                      </p>
+                    </motion.div>
+                  ))}
+              </motion.div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  )
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-slate-50">
-      {/* Mobile Premium Dashboard */}
-      <div className="md:hidden">
-        <MobilePremiumDashboard />
+    )
+  
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Mobile Dashboard */}
+        <div className="md:hidden">
+          <MobileDashboard />
+        </div>
+        
+        {/* Desktop Dashboard */}
+        <div className="hidden md:block">
+          <DesktopDashboard />
+        </div>
       </div>
-      
-      {/* Desktop Dashboard (unchanged) */}
-      <div className="hidden md:block">
-        <DesktopDashboard />
-      </div>
-    </div>
-  )
-}
-
-export default Dashboard
+    )
+  }
+  
+  export default Dashboard

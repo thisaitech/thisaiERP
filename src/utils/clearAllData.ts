@@ -38,7 +38,12 @@ async function clearCollection(collectionName: string): Promise<number> {
  * Clear all localStorage data
  */
 function clearLocalStorage(): void {
-  const keysToKeep = ['theme', 'language', 'hasSeenOnboarding'] // Keep user preferences and onboarding flag
+  const keysToKeep = [
+    'theme',
+    'language',
+    'hasSeenOnboarding',
+    'thisai_crm_settings' // IMPORTANT: Keep company/business settings
+  ]
   const allKeys = Object.keys(localStorage)
 
   let clearedCount = 0
@@ -49,7 +54,7 @@ function clearLocalStorage(): void {
     }
   })
 
-  console.log(`🗑️ Cleared ${clearedCount} items from localStorage`)
+  console.log(`🗑️ Cleared ${clearedCount} items from localStorage (preserved company settings)`)
 }
 
 /**

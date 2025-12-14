@@ -44,13 +44,31 @@ export function isB2BTransaction(customerGSTIN?: string): boolean {
  * Inter-state = different state (use IGST)
  */
 export function isIntraStateTransaction(sellerState: string, customerState: string): boolean {
-  if (!sellerState || !customerState) return true // Default to intra-state if states not provided
+  // If seller state is not provided, cannot determine - default to intrastate
+  if (!sellerState || sellerState.trim() === '') {
+    console.warn('⚠️ Seller state not provided - Please set your company state in Settings')
+    return true
+  }
+
+  // If customer state is not provided, assume customer is in same state as seller (walk-in/local customer)
+  // This is standard behavior for B2C transactions without customer state
+  if (!customerState || customerState.trim() === '') {
+    console.log(`📍 No customer state - Assuming local customer in ${sellerState} (CGST+SGST)`)
+    return true
+  }
 
   // Normalize state names (trim, lowercase, remove special chars)
   const normalize = (state: string) =>
     state.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
 
-  return normalize(sellerState) === normalize(customerState)
+  const normalizedSeller = normalize(sellerState)
+  const normalizedCustomer = normalize(customerState)
+
+  const isIntra = normalizedSeller === normalizedCustomer
+
+  console.log(`🔍 Tax Type: Seller="${sellerState}" vs Customer="${customerState}" → ${isIntra ? 'INTRASTATE (CGST+SGST)' : 'INTERSTATE (IGST)'}`)
+
+  return isIntra
 }
 
 /**

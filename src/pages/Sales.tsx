@@ -1292,18 +1292,20 @@ const Sales = () => {
 
   // Normalize invoice items to ensure CGST/SGST/IGST percentages are always calculated
   // This is MANDATORY for GST compliance - percentages must always show if GST rate > 0
+  // CRITICAL: Recalculate ALL items when customerState changes (interstate vs intrastate)
   useEffect(() => {
     const companySettings = getCompanySettings()
     const sellerState = companySettings.state || 'Tamil Nadu'
+
+    console.log(`🔄 useEffect TRIGGERED - Recalculating items | Seller: ${sellerState}, Customer: ${customerState || '(none)'}`)
 
     setInvoiceItems(prevItems =>
       prevItems.map(item => {
         const taxPercent = Number(item.tax) || 0
 
-        // If item has GST rate > 0 but CGST/SGST/IGST percentages are missing/zero, recalculate
-        if (taxPercent > 0 && (
-          !item.cgstPercent && !item.sgstPercent && !item.igstPercent
-        )) {
+        // Recalculate GST breakdown for items with tax rate > 0
+        // This ensures CGST/SGST/IGST updates when customer state changes
+        if (taxPercent > 0) {
           const price = Number(item.price) || 0
           const qty = Number(item.qty) || 1
           const discountPercent = Number(item.discount) || 0
@@ -1326,16 +1328,20 @@ const Sales = () => {
             taxableAmount,
             gstRate: taxPercent,
             sellerState,
-            customerState: customerState || sellerState,
+            customerState: customerState,
             customerGSTIN: customerGST
+          })
+
+          console.log(`🔧 Recalculating ${item.name}:`, {
+            seller: sellerState,
+            customer: customerState,
+            breakdown: `CGST=${gstBreakdown.cgstAmount}, SGST=${gstBreakdown.sgstAmount}, IGST=${gstBreakdown.igstAmount}`
           })
 
           // Calculate total based on taxMode
           const total = taxMode === 'inclusive'
             ? price * qty  // For inclusive, total = MRP × qty
             : taxableAmount + gstBreakdown.totalTaxAmount  // For exclusive, total = base + GST
-
-          console.log('🔧 Normalizing item GST breakdown:', item.name, { taxMode, taxablePerUnit, taxableAmount, gst: gstBreakdown.totalTaxAmount, total })
 
           return {
             ...item,
@@ -1704,7 +1710,7 @@ const Sales = () => {
       taxableAmount,
       gstRate: taxPercent,
       sellerState,
-      customerState: customerState || sellerState,
+      customerState: customerState,
       customerGSTIN: customerGST
     })
 
@@ -2211,7 +2217,7 @@ const Sales = () => {
         taxableAmount,
         gstRate: taxPercent,
         sellerState,
-        customerState: customerState || sellerState,
+        customerState: customerState,
         customerGSTIN: customerGST
       })
 
@@ -2294,7 +2300,7 @@ const Sales = () => {
         taxableAmount,
         gstRate: taxPercent,
         sellerState,
-        customerState: customerState || sellerState,
+        customerState: customerState,
         customerGSTIN: customerGST
       })
 
@@ -2402,7 +2408,7 @@ const Sales = () => {
         const discountPercent = Number(updated.discount) || 0
         const taxPercent = Number(updated.tax) || 0
         const taxMode = updated.taxMode || 'exclusive' // Default to exclusive
-        const isInterstate = sellerState !== (customerState || sellerState)
+        const isInterstate = sellerState !== customerState
 
         // GST Calculation - Vyapar/Standard Logic
         // Exclusive (Without GST): MRP is base price, add GST on top
@@ -2441,7 +2447,7 @@ const Sales = () => {
           taxableAmount,
           gstRate: taxPercent,
           sellerState,
-          customerState: customerState || sellerState,
+          customerState: customerState,
           customerGSTIN: customerGST
         })
 
@@ -2561,6 +2567,8 @@ const Sales = () => {
     const companySettings = getCompanySettings()
     const sellerState = companySettings.state || 'Tamil Nadu'
 
+    console.log(`💰 Calculating Totals - Seller: ${sellerState}, Customer: ${customerState || '(none)'}`)
+
     // Calculate GST breakdown totals and taxable subtotal
     // Use basePrice (taxable value) for subtotal - NOT item.price which may include GST
     let totalCGST = 0
@@ -2579,6 +2587,7 @@ const Sales = () => {
 
       if (item.cgstAmount !== undefined && item.sgstAmount !== undefined && item.igstAmount !== undefined) {
         // New items with breakdown already calculated
+        console.log(`  Item: ${item.name} - CGST: ₹${item.cgstAmount}, SGST: ₹${item.sgstAmount}, IGST: ₹${item.igstAmount}`)
         totalCGST += item.cgstAmount
         totalSGST += item.sgstAmount
         totalIGST += item.igstAmount
@@ -2588,7 +2597,7 @@ const Sales = () => {
           taxableAmount: lineTaxable,
           gstRate: item.tax,
           sellerState,
-          customerState: customerState || sellerState,
+          customerState: customerState,
           customerGSTIN: customerGST
         })
         totalCGST += gstBreakdown.cgstAmount
@@ -2620,7 +2629,7 @@ const Sales = () => {
     const roundOffAmount = roundOff ? (Math.round(totalBeforeRound) - totalBeforeRound) : 0
     const total = roundOff ? Math.round(totalBeforeRound) : totalBeforeRound
 
-    return {
+    const result = {
       subtotal: Math.round(taxableSubtotal * 100) / 100,
       discount: Math.round(discount * 100) / 100,
       totalTax: Math.round(totalTax * 100) / 100,
@@ -2630,9 +2639,22 @@ const Sales = () => {
       totalIGST: Math.round(adjustedIGST * 100) / 100,
       roundOffAmount: Math.round(roundOffAmount * 100) / 100
     }
+
+    console.log(`📊 FINAL TOTALS: CGST=₹${result.totalCGST}, SGST=₹${result.totalSGST}, IGST=₹${result.totalIGST}, Tax=₹${result.totalTax}`)
+
+    return result
   }
 
-  const totals = calculateTotals()
+  // Use useMemo to ensure totals are recalculated only after invoiceItems are updated by useEffect
+  // This prevents race conditions where calculateTotals() runs before useEffect finishes updating items
+  const totals = useMemo(() => calculateTotals(), [
+    invoiceItems,
+    invoiceDiscount,
+    discountType,
+    roundOff,
+    customerState,
+    customerGST
+  ])
 
   // Generate PDF filename: Invoice_INV-2025-26-0020_Gane_20112025.pdf
   const generatePDFFilename = () => {
@@ -4846,7 +4868,7 @@ TOTAL:       ₹${invoice.total}
   }
 
   const desktopTableStyle = {
-    maxHeight: invoiceItems.length > 0 ? '35vh' : 'auto',
+    maxHeight: invoiceItems.length > 0 ? '48vh' : 'auto',
     minHeight: invoiceItems.length > 0 ? '120px' : '0'
   }
 
@@ -5866,7 +5888,7 @@ TOTAL:       ₹${invoice.total}
                       }}
                       className="p-0.5 hover:bg-muted rounded transition-colors"
                     >
-                      <X size={14} />
+                      <X size={14} className="text-black" />
                     </button>
                   )}
                 </div>
@@ -5883,7 +5905,7 @@ TOTAL:       ₹${invoice.total}
                     "w-1.5 h-1.5 rounded-full",
                     salesMode === 'pos' ? "bg-green-500" : "bg-blue-500"
                   )} />
-                  <Plus size={14} className="text-muted-foreground group-hover:text-foreground" />
+                  <Plus size={14} className="text-black" />
                 </div>
               </button>
             </div>
@@ -5894,7 +5916,7 @@ TOTAL:       ₹${invoice.total}
             {/* Back Button */}
             <button
               onClick={handleBackToList}
-              className="flex items-center gap-1 px-2.5 py-1 bg-destructive text-white hover:bg-destructive/90 rounded-lg font-medium transition-colors text-xs"
+              className="flex items-center gap-1 px-2.5 py-1 bg-gray-700 text-white hover:bg-gray-600 rounded-lg font-medium transition-colors text-xs"
             >
               <ArrowLeft size={14} weight="bold" />
               <span className="hidden md:inline">Back</span>
@@ -6046,7 +6068,9 @@ TOTAL:       ₹${invoice.total}
                   />
                   {/* Mobile Item Search Dropdown */}
                   {showItemDropdown && (
-                    <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-60 overflow-y-auto">
+                    <>
+                      <div className="fixed inset-0 z-[199]" onClick={() => setShowItemDropdown(false)} />
+                      <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-60 overflow-y-auto">
                       <div
                         onMouseDown={(e) => {
                           e.preventDefault()
@@ -6093,6 +6117,7 @@ TOTAL:       ₹${invoice.total}
                         ))
                       )}
                     </div>
+                    </>
                   )}
                 </div>
                 <button
@@ -6215,33 +6240,6 @@ TOTAL:       ₹${invoice.total}
                           <Buildings size={10} /> {customerGST}
                         </div>
                       )}
-                      {/* Customer State with Intra/Inter-State Indicator */}
-                      <div className="flex items-center gap-1.5 col-span-2 mt-0.5">
-                        <MapPin size={10} className="text-muted-foreground" />
-                        <select
-                          value={customerState}
-                          onChange={(e) => setCustomerState(e.target.value)}
-                          className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded outline-none"
-                        >
-                          <option value="">Select State</option>
-                          {INDIAN_STATES.map((state) => (
-                            <option key={state} value={state}>{state}</option>
-                          ))}
-                        </select>
-                        {customerState && (() => {
-                          const companySettings = getCompanySettings()
-                          const sellerState = companySettings.state || 'Tamil Nadu'
-                          const isIntra = isIntraStateTransaction(sellerState, customerState)
-                          return (
-                            <span className={cn(
-                              "px-1.5 py-0.5 text-[9px] font-semibold rounded",
-                              isIntra ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
-                            )}>
-                              {isIntra ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}
-                            </span>
-                          )
-                        })()}
-                      </div>
                     </div>
                     <button
                       type="button"
@@ -6932,7 +6930,9 @@ TOTAL:       ₹${invoice.total}
                     />
                     {/* Item Search Dropdown */}
                     {showItemDropdown && (
-                      <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-72 overflow-y-auto">
+                      <>
+                        <div className="fixed inset-0 z-[199]" onClick={() => setShowItemDropdown(false)} />
+                        <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-72 overflow-y-auto">
                         {loadingItems ? (
                           <div className="px-4 py-3 text-sm text-slate-500">Loading items...</div>
                         ) : filteredItems.length === 0 ? (
@@ -6983,6 +6983,7 @@ TOTAL:       ₹${invoice.total}
                           Create New Item
                         </div>
                       </div>
+                      </>
                     )}
                   </div>
                   <button
@@ -6994,35 +6995,52 @@ TOTAL:       ₹${invoice.total}
                     <Barcode size={18} weight="bold" />
                   </button>
                 </div>
-                {/* Discount Row */}
-                <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <Percent size={12} className="text-orange-500" />
-                    Discount
-                  </label>
-                  <div className="flex items-center bg-background border border-border rounded-md w-fit">
-                    <button
-                      type="button"
-                      onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
-                      className={`px-2 py-1.5 text-xs font-medium border-r border-border transition-colors ${
-                        discountType === 'percent'
-                          ? 'bg-orange-50 text-orange-600'
-                          : 'bg-green-50 text-green-600'
-                      }`}
-                      title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
-                    >
-                      {discountType === 'percent' ? '%' : '₹'}
-                    </button>
+                {/* Discount & Notes Row */}
+                <div className="grid grid-cols-[auto_1fr] gap-6 items-center">
+                  {/* Discount */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Percent size={12} className="text-orange-500" />
+                      Discount
+                    </label>
+                    <div className="flex items-center bg-background border border-border rounded-md w-fit">
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
+                        className={`px-2 py-1.5 text-xs font-medium border-r border-border transition-colors ${
+                          discountType === 'percent'
+                            ? 'bg-orange-50 text-orange-600'
+                            : 'bg-green-50 text-green-600'
+                        }`}
+                        title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
+                      >
+                        {discountType === 'percent' ? '%' : '₹'}
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={invoiceDiscount === 0 ? '' : invoiceDiscount}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '')
+                          setInvoiceDiscount(parseFloat(val) || 0)
+                        }}
+                        placeholder="0"
+                        className="w-14 px-2 py-1.5 text-xs text-center bg-transparent outline-none"
+                      />
+                    </div>
+                  </div>
+                  {/* Notes */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <Pencil size={12} className="text-purple-500" />
+                      Notes
+                    </label>
                     <input
                       type="text"
-                      inputMode="decimal"
-                      value={invoiceDiscount === 0 ? '' : invoiceDiscount}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '')
-                        setInvoiceDiscount(parseFloat(val) || 0)
-                      }}
-                      placeholder="0"
-                      className="w-14 px-2 py-1.5 text-xs text-center bg-transparent outline-none"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Add notes..."
+                      className="flex-1 px-2 py-1.5 text-xs bg-background border border-border rounded-md outline-none"
                     />
                   </div>
                 </div>
@@ -7129,55 +7147,53 @@ TOTAL:       ₹${invoice.total}
                     </button>
                   </div>
                 </div>
-                {/* Notes Row */}
-                <div className="grid grid-cols-[80px_1fr] items-start gap-2">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 pt-1.5">
-                    <Pencil size={12} className="text-purple-500" />
-                    Notes
-                  </label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add notes..."
-                    rows={2}
-                    className="w-full px-2 py-1.5 text-xs bg-background border border-border rounded-md outline-none resize-none"
-                  />
-                </div>
                 </div>
                 {/* Right Side - Totals Summary */}
                 <div className="p-3 bg-background border border-border rounded-lg">
                   {invoiceItems.length > 0 ? (
                     <div className="space-y-1.5 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Subtotal:</span>
+                        <span className="text-slate-700">Subtotal:</span>
                         <span className="font-medium">₹{totals.subtotal.toFixed(2)}</span>
                       </div>
                       {invoiceDiscount > 0 && (
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
+                          <span className="text-slate-700">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
                           <span className="font-medium text-orange-600">-₹{totals.discount.toFixed(2)}</span>
                         </div>
                       )}
                       {totals.totalCGST > 0 && (
                         <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">CGST:</span>
+                          <span className="text-slate-700">CGST:</span>
                           <span className="font-medium text-emerald-600">₹{totals.totalCGST.toFixed(2)}</span>
                         </div>
                       )}
                       {totals.totalSGST > 0 && (
                         <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">SGST:</span>
+                          <span className="text-slate-700">SGST:</span>
                           <span className="font-medium text-emerald-600">₹{totals.totalSGST.toFixed(2)}</span>
                         </div>
                       )}
                       {totals.totalIGST > 0 && (
                         <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">IGST:</span>
+                          <span className="text-slate-700">IGST:</span>
                           <span className="font-medium text-blue-600">₹{totals.totalIGST.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="flex justify-between pt-1.5 border-t border-border">
-                        <span className="text-muted-foreground">Tax:</span>
+                      <div className="flex justify-between items-center pt-1.5 border-t border-border">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-700">Tax:</span>
+                          {totals.totalIGST > 0 && (
+                            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-medium rounded">
+                              Interstate
+                            </span>
+                          )}
+                          {totals.totalCGST > 0 && (
+                            <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-medium rounded">
+                              Intrastate
+                            </span>
+                          )}
+                        </div>
                         <span className="font-medium">₹{totals.totalTax.toFixed(2)}</span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -7188,7 +7204,7 @@ TOTAL:       ₹${invoice.total}
                             onChange={(e) => setRoundOff(e.target.checked)}
                             className="w-3.5 h-3.5 rounded accent-primary"
                           />
-                          <span className="text-xs text-muted-foreground">Round Off</span>
+                          <span className="text-xs text-slate-700">Round Off</span>
                         </label>
                         {roundOff && totals.roundOffAmount !== 0 && (
                           <span className="text-xs text-primary">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
@@ -7225,7 +7241,7 @@ TOTAL:       ₹${invoice.total}
               </div>
               </div>
             {/* FOOTER - Mobile Only */}
-            <div className="md:hidden flex flex-col gap-2 mt-1">
+            <div className="md:hidden flex flex-col gap-2">
               {/* Totals Summary - First */}
               <div className="p-2 bg-gradient-to-r from-slate-50 via-blue-50 to-blue-100 border border-blue-200 rounded-lg shadow-sm">
                 {invoiceItems.length > 0 ? (
@@ -7431,7 +7447,7 @@ TOTAL:       ₹${invoice.total}
 
           </div>
           {/* Bottom Action Bar */}
-          <div className="px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white mt-2">
+          <div className="px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white">
             
             {/* Mobile Search Bar - MOVED TO TOP (near customer search) */}
             <div className="hidden">
@@ -7514,7 +7530,7 @@ TOTAL:       ₹${invoice.total}
               <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mb-2 md:mb-0">
                 <button
                   onClick={handleBackToList}
-                  className="px-3 md:px-4 py-3 md:py-2.5 bg-muted hover:bg-muted/70 rounded-xl md:rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2 active:scale-95"
+                  className="px-3 md:px-4 py-3 md:py-2.5 bg-muted hover:bg-muted/70 rounded-xl md:rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2 active:scale-95 text-black"
                 >
                   <X size={18} weight="bold" className="md:w-4 md:h-4" />
                   <span className="hidden sm:inline">Cancel</span>
@@ -8700,33 +8716,6 @@ TOTAL:       ₹${invoice.total}
                         {customerPhone && <div><span className="text-muted-foreground">Phone:</span> <span className="font-medium">{customerPhone}</span></div>}
                         {customerEmail && <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{customerEmail}</span></div>}
                         {customerGST && <div><span className="text-muted-foreground">GST:</span> <span className="font-medium">{customerGST}</span></div>}
-                        {/* Customer State with Intra/Inter-State Indicator */}
-                        <div className="flex items-center gap-2 col-span-2">
-                          <span className="text-muted-foreground">State:</span>
-                          <select
-                            value={customerState}
-                            onChange={(e) => setCustomerState(e.target.value)}
-                            className="px-2 py-1 text-xs bg-background border border-border rounded outline-none"
-                          >
-                            <option value="">Select State</option>
-                            {INDIAN_STATES.map((state) => (
-                              <option key={state} value={state}>{state}</option>
-                            ))}
-                          </select>
-                          {customerState && (() => {
-                            const companySettings = getCompanySettings()
-                            const sellerState = companySettings.state || 'Tamil Nadu'
-                            const isIntra = isIntraStateTransaction(sellerState, customerState)
-                            return (
-                              <span className={cn(
-                                "px-2 py-1 text-xs font-semibold rounded",
-                                isIntra ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
-                              )}>
-                                {isIntra ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}
-                              </span>
-                            )
-                          })()}
-                        </div>
                       </div>
                       <button
                         type="button"
@@ -9663,7 +9652,7 @@ TOTAL:       ₹${invoice.total}
                 {selectedInvoiceForPayment.paymentStatus !== 'paid' && (
                   <button
                     onClick={handleRecordPayment}
-                    className="flex-1 px-4 py-2.5 bg-success hover:bg-success/90 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     <Money size={18} weight="bold" />
                     Record Payment
@@ -11633,4 +11622,3 @@ TOTAL:       ₹${invoice.total}
 }
 
 export default Sales
-

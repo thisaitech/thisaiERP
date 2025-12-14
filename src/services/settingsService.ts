@@ -387,8 +387,8 @@ function getDefaultCompanySettings(): CompanySettings {
     phone: '',
     address: '',
     city: '',
-    state: '',
-    stateCode: '27',
+    state: 'Tamil Nadu',
+    stateCode: '33',
     pincode: '',
     country: 'India',
 

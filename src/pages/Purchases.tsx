@@ -1238,7 +1238,7 @@ const Purchases = () => {
             taxableAmount,
             gstRate: taxPercent,
             sellerState,
-            customerState: customerState || sellerState,
+            customerState: customerState,
             customerGSTIN: customerGST
           })
 
@@ -1616,7 +1616,7 @@ const Purchases = () => {
       taxableAmount,
       gstRate: taxPercent,
       sellerState,
-      customerState: customerState || sellerState,
+      customerState: customerState,
       customerGSTIN: customerGST
     })
 
@@ -2114,7 +2114,7 @@ const Purchases = () => {
         taxableAmount,
         gstRate: taxPercent,
         sellerState,
-        customerState: customerState || sellerState,
+        customerState: customerState,
         customerGSTIN: customerGST
       })
 
@@ -2197,7 +2197,7 @@ const Purchases = () => {
         taxableAmount,
         gstRate: taxPercent,
         sellerState,
-        customerState: customerState || sellerState,
+        customerState: customerState,
         customerGSTIN: customerGST
       })
 
@@ -2305,7 +2305,7 @@ const Purchases = () => {
         const discountPercent = Number(updated.discount) || 0
         const taxPercent = Number(updated.tax) || 0
         const taxMode = updated.taxMode || 'exclusive' // Default to exclusive
-        const isInterstate = sellerState !== (customerState || sellerState)
+        const isInterstate = sellerState !== customerState
 
         // GST Calculation - Vyapar/Standard Logic
         // Exclusive (Without GST): MRP is base price, add GST on top
@@ -2344,7 +2344,7 @@ const Purchases = () => {
           taxableAmount,
           gstRate: taxPercent,
           sellerState,
-          customerState: customerState || sellerState,
+          customerState: customerState,
           customerGSTIN: customerGST
         })
 
@@ -2486,7 +2486,7 @@ const Purchases = () => {
           taxableAmount: lineTaxable,
           gstRate: item.tax,
           sellerState,
-          customerState: customerState || sellerState,
+          customerState: customerState,
           customerGSTIN: customerGST
         })
         totalCGST += gstBreakdown.cgstAmount
@@ -2530,7 +2530,15 @@ const Purchases = () => {
     }
   }
 
-  const totals = calculateTotals()
+  // Use useMemo to prevent race conditions with useEffect
+  const totals = useMemo(() => calculateTotals(), [
+    invoiceItems,
+    invoiceDiscount,
+    discountType,
+    roundOff,
+    customerState,
+    customerGST
+  ])
 
   // Generate PDF filename: Invoice_INV-2025-26-0020_Gane_20112025.pdf
   const generatePDFFilename = () => {
@@ -5856,7 +5864,7 @@ TOTAL:       ₹${invoice.total}
                       }}
                       className="p-0.5 hover:bg-muted rounded transition-colors"
                     >
-                      <X size={14} />
+                      <X size={14} className="text-black" />
                     </button>
                   )}
                 </div>
@@ -5873,7 +5881,7 @@ TOTAL:       ₹${invoice.total}
                     "w-1.5 h-1.5 rounded-full",
                     salesMode === 'pos' ? "bg-green-500" : "bg-blue-500"
                   )} />
-                  <Plus size={14} className="text-muted-foreground group-hover:text-foreground" />
+                  <Plus size={14} className="text-black" />
                 </div>
               </button>
             </div>
@@ -5884,7 +5892,7 @@ TOTAL:       ₹${invoice.total}
             {/* Back Button */}
             <button
               onClick={handleBackToList}
-              className="flex items-center gap-1 px-2.5 py-1 bg-destructive text-white hover:bg-destructive/90 rounded-lg font-medium transition-colors text-xs"
+              className="flex items-center gap-1 px-2.5 py-1 bg-gray-700 text-white hover:bg-gray-600 rounded-lg font-medium transition-colors text-xs"
             >
               <ArrowLeft size={14} weight="bold" />
               <span className="hidden md:inline">Back</span>
@@ -6036,7 +6044,9 @@ TOTAL:       ₹${invoice.total}
                   />
                   {/* Mobile Item Search Dropdown */}
                   {showItemDropdown && (
-                    <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-60 overflow-y-auto">
+                    <>
+                      <div className="fixed inset-0 z-[199]" onClick={() => setShowItemDropdown(false)} />
+                      <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-60 overflow-y-auto">
                       <div
                         onMouseDown={(e) => {
                           e.preventDefault()
@@ -6083,6 +6093,7 @@ TOTAL:       ₹${invoice.total}
                         ))
                       )}
                     </div>
+                    </>
                   )}
                 </div>
                 <button
@@ -6205,33 +6216,6 @@ TOTAL:       ₹${invoice.total}
                           <Buildings size={10} /> {customerGST}
                         </div>
                       )}
-                      {/* Supplier State with Intra/Inter-State Indicator */}
-                      <div className="flex items-center gap-1.5 col-span-2 mt-0.5">
-                        <MapPin size={10} className="text-muted-foreground" />
-                        <select
-                          value={customerState}
-                          onChange={(e) => setCustomerState(e.target.value)}
-                          className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded outline-none"
-                        >
-                          <option value="">Select State</option>
-                          {INDIAN_STATES.map((state) => (
-                            <option key={state} value={state}>{state}</option>
-                          ))}
-                        </select>
-                        {customerState && (() => {
-                          const companySettings = getCompanySettings()
-                          const sellerState = companySettings.state || 'Tamil Nadu'
-                          const isIntra = isIntraStateTransaction(sellerState, customerState)
-                          return (
-                            <span className={cn(
-                              "px-1.5 py-0.5 text-[9px] font-semibold rounded",
-                              isIntra ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
-                            )}>
-                              {isIntra ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}
-                            </span>
-                          )
-                        })()}
-                      </div>
                     </div>
                     <button
                       type="button"
@@ -6447,7 +6431,7 @@ TOTAL:       ₹${invoice.total}
                   ref={itemTableContainerRef}
                   className="hidden md:block border border-slate-300 rounded-t overflow-x-auto overflow-y-auto"
                   style={{
-                    maxHeight: '35vh',
+                    maxHeight: '48vh',
                     minHeight: '120px'
                   }}
                 >
@@ -6896,7 +6880,9 @@ TOTAL:       ₹${invoice.total}
                     />
                     {/* Item Search Dropdown */}
                     {showItemDropdown && (
-                      <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-72 overflow-y-auto">
+                      <>
+                        <div className="fixed inset-0 z-[199]" onClick={() => setShowItemDropdown(false)} />
+                        <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-72 overflow-y-auto">
                         <div
                           onMouseDown={(e) => {
                             e.preventDefault()
@@ -6946,6 +6932,7 @@ TOTAL:       ₹${invoice.total}
                           ))
                         )}
                       </div>
+                      </>
                     )}
                   </div>
                   <button
@@ -7371,35 +7358,35 @@ TOTAL:       ₹${invoice.total}
                 {invoiceItems.length > 0 ? (
                   <div className="space-y-1.5 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subtotal:</span>
+                      <span className="text-slate-700">Subtotal:</span>
                       <span className="font-medium">₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     {invoiceDiscount > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Discount ({invoiceDiscount}%):</span>
+                        <span className="text-slate-700">Discount ({invoiceDiscount}%):</span>
                         <span className="font-medium text-orange-600">-₹{totals.discount.toFixed(2)}</span>
                       </div>
                     )}
                     {totals.totalCGST > 0 && (
                       <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">CGST:</span>
+                        <span className="text-slate-700">CGST:</span>
                         <span className="font-medium text-emerald-600">₹{totals.totalCGST.toFixed(2)}</span>
                       </div>
                     )}
                     {totals.totalSGST > 0 && (
                       <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">SGST:</span>
+                        <span className="text-slate-700">SGST:</span>
                         <span className="font-medium text-emerald-600">₹{totals.totalSGST.toFixed(2)}</span>
                       </div>
                     )}
                     {totals.totalIGST > 0 && (
                       <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">IGST:</span>
+                        <span className="text-slate-700">IGST:</span>
                         <span className="font-medium text-blue-600">₹{totals.totalIGST.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between pt-1.5 border-t border-border">
-                      <span className="text-muted-foreground">Tax:</span>
+                      <span className="text-slate-700">Tax:</span>
                       <span className="font-medium">₹{totals.totalTax.toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -7410,7 +7397,7 @@ TOTAL:       ₹${invoice.total}
                           onChange={(e) => setRoundOff(e.target.checked)}
                           className="w-3.5 h-3.5 rounded accent-primary"
                         />
-                        <span className="text-xs text-muted-foreground">Round Off</span>
+                        <span className="text-xs text-slate-700">Round Off</span>
                       </label>
                       {roundOff && totals.roundOffAmount !== 0 && (
                         <span className="text-xs text-primary">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
@@ -7531,7 +7518,7 @@ TOTAL:       ₹${invoice.total}
               <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mb-2 md:mb-0">
                 <button
                   onClick={handleBackToList}
-                  className="px-3 md:px-4 py-3 md:py-2.5 bg-muted hover:bg-muted/70 rounded-xl md:rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2 active:scale-95"
+                  className="px-3 md:px-4 py-3 md:py-2.5 bg-muted hover:bg-muted/70 rounded-xl md:rounded-lg font-medium transition-colors text-sm flex items-center justify-center gap-2 active:scale-95 text-black"
                 >
                   <X size={18} weight="bold" className="md:w-4 md:h-4" />
                   <span className="hidden sm:inline">Cancel</span>
@@ -8701,33 +8688,6 @@ TOTAL:       ₹${invoice.total}
                         {customerPhone && <div><span className="text-muted-foreground">Phone:</span> <span className="font-medium">{customerPhone}</span></div>}
                         {customerEmail && <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{customerEmail}</span></div>}
                         {customerGST && <div><span className="text-muted-foreground">GST:</span> <span className="font-medium">{customerGST}</span></div>}
-                        {/* Supplier State with Intra/Inter-State Indicator */}
-                        <div className="flex items-center gap-2 col-span-2">
-                          <span className="text-muted-foreground">State:</span>
-                          <select
-                            value={customerState}
-                            onChange={(e) => setCustomerState(e.target.value)}
-                            className="px-2 py-1 text-xs bg-background border border-border rounded outline-none"
-                          >
-                            <option value="">Select State</option>
-                            {INDIAN_STATES.map((state) => (
-                              <option key={state} value={state}>{state}</option>
-                            ))}
-                          </select>
-                          {customerState && (() => {
-                            const companySettings = getCompanySettings()
-                            const sellerState = companySettings.state || 'Tamil Nadu'
-                            const isIntra = isIntraStateTransaction(sellerState, customerState)
-                            return (
-                              <span className={cn(
-                                "px-2 py-1 text-xs font-semibold rounded",
-                                isIntra ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
-                              )}>
-                                {isIntra ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}
-                              </span>
-                            )
-                          })()}
-                        </div>
                       </div>
                       <button
                         type="button"
@@ -9667,7 +9627,7 @@ TOTAL:       ₹${invoice.total}
                 {(selectedInvoiceForPayment.total - (selectedInvoiceForPayment.paidAmount || 0)) > 0 && (
                   <button
                     onClick={handleRecordPayment}
-                    className="flex-1 px-4 py-2.5 bg-success hover:bg-success/90 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     <Money size={18} weight="bold" />
                     Record Payment

@@ -2,7 +2,7 @@
 // Provides local storage for offline-first functionality
 
 const DB_NAME = 'thisai_crm_offline'
-const DB_VERSION = 1
+const DB_VERSION = 3
 
 // Store names for different data types
 export const STORES = {
@@ -263,12 +263,3 @@ export const isOfflineId = (id: string): boolean => {
 }
 
 export default offlineDB
-
-
-
-
-
-
-
-
-
