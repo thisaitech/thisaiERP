@@ -662,6 +662,16 @@
   background: var(--accent);
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* ============================================
    THERMAL PRINTER STYLES (58mm/80mm)
    ============================================ */

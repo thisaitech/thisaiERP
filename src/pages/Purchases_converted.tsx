@@ -49,6 +49,7 @@ import {
   CurrencyInr
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '../lib/utils'
 import { toast } from 'sonner'
@@ -2882,17 +2883,54 @@ TOTAL:       ₹${Bill.total}
               {/* Item Search Dropdown - Rendered outside table to avoid overflow clipping */}
               {showItemDropdown && itemDropdownRef.current && (
                 <>
-                  <div className="fixed inset-0 z-[99]" onClick={() => setShowItemDropdown(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="fixed bg-card border border-border rounded-lg shadow-2xl z-[100] max-h-60 overflow-y-auto w-[400px]"
-                    style={{
-                      top: itemDropdownRef.current.getBoundingClientRect().bottom + 4,
-                      left: itemDropdownRef.current.getBoundingClientRect().left,
-                    }}
-                  >
+                  {createPortal(
+                    <>
+                      <div className="fixed inset-0 z-[999998]" onClick={() => setShowItemDropdown(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="fixed bg-card border border-border rounded-lg shadow-2xl max-h-80 overflow-y-auto"
+                        style={{
+                          zIndex: 2147483647,
+                           width: itemDropdownRef.current.getBoundingClientRect().width,
+                          // Ensure dropdown stays within viewport horizontally
+                          right: (() => {
+                            const rect = itemDropdownRef.current.getBoundingClientRect()
+                            const dropdownWidth = rect.width
+                            const spaceRight = window.innerWidth - rect.left
+                            if (spaceRight < dropdownWidth + 24) {
+                              return 24 + 'px'
+                            }
+                            return 'auto'
+                          })(),
+                           bottom: (() => {
+                             const rect = itemDropdownRef.current.getBoundingClientRect()
+                             const viewportHeight = window.innerHeight
+                             const spaceBelow = viewportHeight - rect.bottom
+                     
+                             // Prioritize showing above if not enough space below
+                             if (spaceBelow < 350) {
+                               return (viewportHeight - rect.top) + 4 + 'px'
+                             }
+                             // Show below if there's space
+                             return 'auto'
+                           })(),
+                           top: (() => {
+                             const rect = itemDropdownRef.current.getBoundingClientRect()
+                             const viewportHeight = window.innerHeight
+                             const spaceBelow = viewportHeight - rect.bottom
+                     
+                             // Show below if there's enough space
+                             if (spaceBelow >= 350) {
+                               return (rect.bottom + 4) + 'px'
+                             }
+                             // Show above otherwise
+                             return 'auto'
+                           })(),
+                           left: itemDropdownRef.current.getBoundingClientRect().left + 'px',
+                        }}
+                      >
                     <div
                       onMouseDown={(e) => {
                         e.preventDefault()
@@ -2934,7 +2972,10 @@ TOTAL:       ₹${Bill.total}
                         </div>
                       ))
                     )}
-                  </motion.div>
+                      </motion.div>
+                    </>,
+                    document.body
+                  )}
                 </>
               )}
 
@@ -3752,7 +3793,7 @@ TOTAL:       ₹${Bill.total}
         {/* Right Column - Bill Preview / POS Checkout - Show based on mode */}
         {((activeTab.mode === 'pos' && BillItems.length > 0) || showPreview) && (
         <div className={cn(
-          "rounded-2xl border-2 overflow-hidden flex flex-col shadow-2xl",
+          "rounded-2xl border-2 overflow-hidden flex flex-col shadow-2xl relative z-[10]",
           activeTab.mode === 'pos'
             ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-slate-700"
             : "bg-gradient-to-br from-white via-white to-gray-50/50 border-warning/20"

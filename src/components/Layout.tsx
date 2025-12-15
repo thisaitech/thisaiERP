@@ -83,23 +83,23 @@ const Layout = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
       {/* Desktop Navigation */}
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 hidden lg:block">
-        <div className="max-w-[1800px] mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <NavLink to="/" className="flex items-center gap-2">
-                <div className="p-2 bg-blue-600 rounded-lg">
-                  <Sparkle size={20} weight="fill" className="text-white" />
+        <div className="max-w-[1800px] mx-auto px-3">
+          <div className="flex items-center justify-between h-11">
+            <div className="flex items-center gap-3">
+              <NavLink to="/" className="flex items-center gap-1.5">
+                <div className="p-1.5 bg-blue-600 rounded-md">
+                  <Sparkle size={16} weight="fill" className="text-white" />
                 </div>
-                <span className="text-lg font-bold text-slate-900 dark:text-white">Billi</span>
+                <span className="text-base font-bold text-slate-900 dark:text-white">Billi</span>
               </NavLink>
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
-              <nav className="flex items-center gap-1">
+              <div className="h-5 w-px bg-slate-200 dark:bg-slate-700"></div>
+              <nav className="flex items-center gap-0.5">
                 {navigationItems.map((item) => (
                   <NavLink
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-0 px-2 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5",
+                      "flex items-center px-2.5 py-0.5 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:-translate-y-0.5",
                       isActive
                         ? "text-blue-600 bg-blue-100/50 dark:bg-blue-500/10 dark:text-blue-400"
                         : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
@@ -111,19 +111,19 @@ const Layout = () => {
               </nav>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
 
 
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+              <div className="h-5 w-px bg-slate-200 dark:bg-slate-700"></div>
 
               <div ref={userDropdownRef} className="relative">
-                <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center font-bold text-blue-600">
+                <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center gap-1.5">
+                  <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-sm font-bold text-blue-600">
                     {userData?.displayName?.charAt(0).toUpperCase() || 'A'}
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{userData?.displayName}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{userData?.role}</p>
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{userData?.displayName}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize">{userData?.role}</p>
                   </div>
                   <CaretDown size={14} className="text-slate-500" />
                 </button>
@@ -259,7 +259,7 @@ const Layout = () => {
         )}
       </AnimatePresence>
 
-      <main className="max-w-[1800px] mx-auto px-4 py-6">
+      <main className="max-w-[1800px] mx-auto px-3 py-2">
         <Outlet />
       </main>
 

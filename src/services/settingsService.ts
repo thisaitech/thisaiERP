@@ -461,6 +461,9 @@ export function saveGeneralSettings(settings: Partial<GeneralSettings>): void {
     const current = stored ? JSON.parse(stored) : {}
     current.general = { ...getDefaultGeneralSettings(), ...current.general, ...settings }
     localStorage.setItem('appSettings', JSON.stringify(current))
+    
+    // Dispatch event to notify ThemeContext and other listeners
+    window.dispatchEvent(new Event('settingsUpdated'))
   } catch (error) {
     console.error('Error saving general settings:', error)
   }

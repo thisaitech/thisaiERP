@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import {
   Gear,
   User,
@@ -133,6 +134,7 @@ import {
 
 const Settings = () => {
   const { t } = useLanguage()
+  const { isDarkMode, setDarkMode } = useTheme()
   const [selectedSection, setSelectedSection] = useState('general')
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -772,20 +774,26 @@ const Settings = () => {
                       <h3 className="font-medium mb-3">{t.settings.appearance}</h3>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          {generalSettings.darkMode ? <Moon size={20} weight="duotone" /> : <Sun size={20} weight="duotone" />}
+                          {isDarkMode ? <Moon size={20} weight="duotone" /> : <Sun size={20} weight="duotone" />}
                           <span className="text-sm">{t.settings.darkMode}</span>
                         </div>
                         <label className="relative inline-block w-12 h-6">
                           <input
                             type="checkbox"
-                            checked={generalSettings.darkMode}
-                            onChange={() => setGeneralSettings({...generalSettings, darkMode: !generalSettings.darkMode})}
+                            checked={isDarkMode}
+                            onChange={() => {
+                              const newValue = !isDarkMode
+                              setDarkMode(newValue)
+                              setGeneralSettings({...generalSettings, darkMode: newValue})
+                              // Save immediately
+                              saveGeneralSettings({...generalSettings, darkMode: newValue})
+                            }}
                             className="sr-only peer"
                           />
                           <div className="w-full h-full bg-muted rounded-full peer peer-checked:bg-primary transition-colors cursor-pointer"></div>
                           <div className={cn(
                             "absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform",
-                            generalSettings.darkMode && "translate-x-6"
+                            isDarkMode && "translate-x-6"
                           )}></div>
                         </label>
                       </div>
