@@ -2075,21 +2075,21 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
   return (
     <div className="h-full flex bg-slate-50">
       {/* Left Side - Items Grid */}
-      <div className="flex-1 flex flex-col p-2 md:p-4 pb-20 md:pb-4">
-        {/* Header with Search */}
-        <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3 flex-shrink-0">
+      <div className="flex-1 flex flex-col p-1.5 md:p-2 pb-20 md:pb-2">
+        {/* Header with Search - Compact */}
+        <div className="flex items-center gap-2 mb-1.5 flex-shrink-0">
           {/* Search */}
           <div className="flex-1 relative">
             <MagnifyingGlass
-              size={20}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={16}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <input
               type="text"
               placeholder={t.posPage.searchItems}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2.5 md:py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm md:text-base shadow-sm"
+              className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm shadow-sm"
               autoFocus
             />
           </div>
@@ -2097,18 +2097,17 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           {onClose && (
             <button
               onClick={onClose}
-              className="h-9 md:h-10 px-3 md:px-4 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 text-white font-semibold flex items-center gap-1.5 md:gap-2 shadow-md hover:shadow-lg hover:from-red-600 hover:to-rose-600 transition-all text-sm md:text-base"
+              className="h-8 px-3 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white font-semibold flex items-center gap-1.5 shadow-md hover:shadow-lg hover:from-red-600 hover:to-rose-600 transition-all text-xs"
             >
-              <X size={16} weight="bold" className="md:hidden" />
-              <X size={18} weight="bold" className="hidden md:block" />
-              <span className="hidden md:inline">{t.posPage.back}</span>
+              <X size={14} weight="bold" />
+              <span className="hidden sm:inline">{t.posPage.back}</span>
             </button>
           )}
         </div>
 
-        {/* Categories - With Hover Dropdown */}
-        <div className="flex-shrink-0 mb-2 relative z-50">
-          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        {/* Categories - Horizontal Scroll for Small Screens */}
+        <div className="flex-shrink-0 mb-1.5 relative z-50" style={{ overflow: 'visible' }}>
+          <div className="flex gap-1 pb-1 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {/* All Category */}
             <button
               onClick={() => {
@@ -2117,13 +2116,13 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 setHoveredCategory(null)
               }}
               className={cn(
-                "flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0",
+                "flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-[11px] whitespace-nowrap transition-all flex-shrink-0",
                 selectedCategory === 'All'
-                  ? "bg-emerald-500 text-white shadow-md"
+                  ? "bg-emerald-500 text-white shadow"
                   : "bg-white text-gray-600 hover:bg-emerald-50 border border-gray-200"
               )}
             >
-              <Squares size={14} weight="fill" />
+              <Squares size={12} weight="fill" />
               All
             </button>
             
@@ -2135,166 +2134,141 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 setHoveredCategory(null)
               }}
               className={cn(
-                "flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0",
+                "flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-[11px] whitespace-nowrap transition-all flex-shrink-0",
                 selectedCategory === 'Popular'
-                  ? "bg-orange-500 text-white shadow-md"
+                  ? "bg-orange-500 text-white shadow"
                   : "bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200"
               )}
             >
-              <Fire size={14} weight="fill" />
+              <Fire size={12} weight="fill" />
               Hot
             </button>
 
-            {/* Other Categories - With Hover */}
+            {/* Other Categories - With Hover Dropdown */}
             {categories.filter(c => c !== 'All').map(category => {
+              const categoryItems = items.filter(i => i.category === category)
+              const topItems = categoryItems.filter(i => i.stock > 0).slice(0, 6)
+              const subcategories = [...new Set(categoryItems.map(i => i.subcategory).filter(Boolean))] as string[]
+              const brands = [...new Set(categoryItems.map(i => i.brand).filter(Boolean))] as string[]
+              
               return (
-                <button
-                  key={category}
-                  onClick={() => {
-                    setSelectedCategory(category)
-                    setSelectedSubcategory(null)
-                    setHoveredCategory(null)
-                  }}
-                  onMouseEnter={() => setHoveredCategory(category)}
-                  onMouseLeave={() => {
-                    setTimeout(() => {
-                      setHoveredCategory(prev => prev === category ? null : prev)
-                    }, 300)
-                  }}
-                  className={cn(
-                    "flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0",
-                    selectedCategory === category
-                      ? "bg-emerald-500 text-white shadow-md"
-                      : "bg-white text-gray-600 hover:bg-emerald-50 border border-gray-200"
-                  )}
-                >
-                  <span className="[&>svg]:w-3.5 [&>svg]:h-3.5">{categoryIcons[category] || categoryIcons['default']}</span>
-                  {category}
-                  <CaretDown size={10} className="ml-0.5 opacity-50" />
-                </button>
+                <div key={category} className="relative flex-shrink-0 group/cat">
+                  <button
+                    onClick={() => {
+                      setSelectedCategory(category)
+                      setSelectedSubcategory(null)
+                    }}
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-[11px] whitespace-nowrap transition-all",
+                      selectedCategory === category
+                        ? "bg-emerald-500 text-white shadow"
+                        : "bg-white text-gray-600 hover:bg-emerald-50 border border-gray-200"
+                    )}
+                  >
+                    <span className="[&>svg]:w-3 [&>svg]:h-3">{categoryIcons[category] || categoryIcons['default']}</span>
+                    {category}
+                    <CaretDown size={8} className="ml-0.5 opacity-50" />
+                  </button>
+                  
+                  {/* CSS Hover Dropdown */}
+                  <div className="absolute left-0 top-full pt-1 hidden group-hover/cat:block z-[9999]">
+                    <div className="bg-white rounded-xl shadow-2xl border border-gray-200 w-[300px] p-3">
+                      {/* Category Header */}
+                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-500">{categoryIcons[category] || categoryIcons['default']}</span>
+                          <span className="font-bold text-gray-800 text-sm">{category}</span>
+                        </div>
+                        <span className="text-[10px] text-gray-400">{categoryItems.length} items</span>
+                      </div>
+
+                      {/* Quick Add Items */}
+                      {topItems.length > 0 && (
+                        <div className="mb-2">
+                          <p className="text-[10px] font-semibold text-orange-500 uppercase mb-1.5 flex items-center gap-1">
+                            <Fire size={10} weight="fill" /> Quick Add
+                          </p>
+                          <div className="grid grid-cols-2 gap-1">
+                            {topItems.map(item => (
+                              <button
+                                key={item.id}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  addToCart(item)
+                                }}
+                                className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg px-2 py-1 text-left"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[10px] font-medium text-gray-700 truncate">{item.name}</p>
+                                  <p className="text-[10px] font-bold text-emerald-600">₹{item.sellingPrice}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Subcategories */}
+                      {subcategories.length > 0 && (
+                        <div className="mb-2">
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase mb-1">Subcategories</p>
+                          <div className="flex flex-wrap gap-1">
+                            {subcategories.slice(0, 6).map(sub => (
+                              <button
+                                key={sub}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedCategory(category)
+                                  setSelectedSubcategory(sub)
+                                }}
+                                className="px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700"
+                              >
+                                {sub}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Brands */}
+                      {brands.length > 0 && (
+                        <div className="mb-2">
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase mb-1">Brands</p>
+                          <div className="flex flex-wrap gap-1">
+                            {brands.slice(0, 6).map(brand => (
+                              <button
+                                key={brand}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedCategory(category)
+                                  setSelectedSubcategory(brand)
+                                }}
+                                className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-600 hover:bg-blue-100"
+                              >
+                                {brand}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* View All */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedCategory(category)
+                          setSelectedSubcategory(null)
+                        }}
+                        className="w-full py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg"
+                      >
+                        View All {category} →
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )
             })}
           </div>
-
-          {/* Hover Dropdown - Rendered Outside Scroll Container */}
-          {hoveredCategory && hoveredCategory !== 'All' && hoveredCategory !== 'Popular' && (
-            <div 
-              className="absolute left-0 top-full mt-1 bg-white rounded-xl shadow-2xl border border-gray-200 z-[9999] w-[350px] p-3"
-              onMouseEnter={() => setHoveredCategory(hoveredCategory)}
-              onMouseLeave={() => setHoveredCategory(null)}
-            >
-              {(() => {
-                const category = hoveredCategory
-                const categoryItems = items.filter(i => i.category === category)
-                const topItems = categoryItems.filter(i => i.stock > 0).slice(0, 8)
-                const subcategories = [...new Set(categoryItems.map(i => i.subcategory).filter(Boolean))] as string[]
-                const brands = [...new Set(categoryItems.map(i => i.brand).filter(Boolean))] as string[]
-                
-                return (
-                  <>
-                    {/* Category Header */}
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
-                      <div className="flex items-center gap-2">
-                        <span className="text-emerald-500">{categoryIcons[category] || categoryIcons['default']}</span>
-                        <span className="font-bold text-gray-800">{category}</span>
-                      </div>
-                      <span className="text-xs text-gray-400">{categoryItems.length} items</span>
-                    </div>
-
-                    {/* Quick Add Items */}
-                    {topItems.length > 0 ? (
-                      <div className="mb-3">
-                        <p className="text-[10px] font-semibold text-orange-500 uppercase mb-2 flex items-center gap-1">
-                          <Fire size={12} weight="fill" /> Top Items - Click to Add
-                        </p>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          {topItems.map(item => (
-                            <button
-                              key={item.id}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                addToCart(item)
-                              }}
-                              className="flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border border-emerald-200 rounded-lg px-2 py-1.5 transition-all text-left group"
-                            >
-                              <div className="w-6 h-6 rounded bg-white border border-emerald-100 flex items-center justify-center flex-shrink-0">
-                                <span className="text-emerald-400 [&>svg]:w-3 [&>svg]:h-3">{getCategoryIcon(item.category)}</span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[10px] font-medium text-gray-700 truncate">{item.name}</p>
-                                <p className="text-xs font-bold text-emerald-600">₹{item.sellingPrice}</p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-400 mb-3">No items in stock</p>
-                    )}
-
-                    {/* Subcategories */}
-                    {subcategories.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase mb-1.5">Subcategories</p>
-                        <div className="flex flex-wrap gap-1">
-                          {subcategories.map(sub => (
-                            <button
-                              key={sub}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setSelectedCategory(category)
-                                setSelectedSubcategory(sub)
-                                setHoveredCategory(null)
-                              }}
-                              className="px-2 py-1 rounded-lg text-[10px] font-medium bg-gray-100 text-gray-600 hover:bg-emerald-100 hover:text-emerald-700 transition-all"
-                            >
-                              {sub}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Brands */}
-                    {brands.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase mb-1.5">Brands</p>
-                        <div className="flex flex-wrap gap-1">
-                          {brands.slice(0, 8).map(brand => (
-                            <button
-                              key={brand}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setSelectedCategory(category)
-                                setSelectedSubcategory(brand)
-                                setHoveredCategory(null)
-                              }}
-                              className="px-2 py-1 rounded-lg text-[10px] font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all"
-                            >
-                              {brand}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* View All Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setSelectedCategory(category)
-                        setSelectedSubcategory(null)
-                        setHoveredCategory(null)
-                      }}
-                      className="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-bold rounded-lg transition-all shadow-md"
-                    >
-                      View All {category} →
-                    </button>
-                  </>
-                )
-              })()}
-            </div>
-          )}
 
           {/* Active Subcategory/Brand Filter Chip */}
           {selectedSubcategory && (
@@ -2313,31 +2287,9 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           )}
         </div>
 
-        {/* Quick Add Popular Strip - Only when All selected */}
-        {selectedCategory === 'All' && !searchQuery && !selectedSubcategory && (
-          <div className="flex-shrink-0 mb-2 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-2 border border-orange-100">
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-              <span className="flex-shrink-0 flex items-center gap-1 text-orange-600 font-semibold text-xs">
-                <Fire size={14} weight="fill" />
-                Quick:
-              </span>
-              {items.filter(item => item.stock > 0).slice(0, 10).map(item => (
-                <button
-                  key={`quick-${item.id}`}
-                  onClick={() => addToCart(item)}
-                  className="flex-shrink-0 flex items-center gap-1.5 bg-white hover:bg-orange-100 border border-orange-200 rounded-lg px-2 py-1 transition-all"
-                >
-                  <span className="font-medium text-gray-700 text-[10px] max-w-[60px] truncate">{item.name}</span>
-                  <span className="font-bold text-orange-600 text-[10px]">₹{item.sellingPrice}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Items Grid - Compact Cards for Many Items */}
+        {/* Items Grid - Ultra Compact for Small Screens */}
         <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-10 gap-1.5">
             <AnimatePresence>
               {(selectedCategory === 'Popular' 
                 ? items.filter(item => item.stock > 0).slice(0, 50)
@@ -2355,48 +2307,48 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                   onClick={() => addToCart(item)}
                   className={cn(
                     "bg-white cursor-pointer border transition-all group relative",
-                    "rounded-xl p-2",
+                    "rounded-lg p-1.5",
                     availableStock <= 0 
                       ? "opacity-50 border-gray-200" 
                       : inCart > 0 
-                        ? "border-emerald-400 shadow-md ring-2 ring-emerald-400" 
-                        : "border-gray-200 hover:border-emerald-400 hover:shadow-lg"
+                        ? "border-emerald-400 shadow ring-1 ring-emerald-400" 
+                        : "border-gray-200 hover:border-emerald-400 hover:shadow"
                   )}
                 >
                   {/* Cart quantity badge */}
                   {inCart > 0 && (
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg z-10">
+                    <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow z-10">
                       {inCart}
                     </div>
                   )}
 
                   {/* Out of Stock Badge */}
                   {availableStock <= 0 && (
-                    <div className="absolute top-1 left-1 z-10">
-                      <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">OUT</span>
+                    <div className="absolute top-0.5 left-0.5 z-10">
+                      <span className="bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded">OUT</span>
                     </div>
                   )}
 
-                  {/* Compact Layout: Icon + Info */}
-                  <div className="flex items-center gap-2">
-                    {/* Icon/Image */}
-                    <div className="w-10 h-10 flex-shrink-0 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center overflow-hidden border border-emerald-100">
+                  {/* Ultra Compact Layout: Icon + Info */}
+                  <div className="flex items-center gap-1.5">
+                    {/* Icon/Image - Smaller */}
+                    <div className="w-8 h-8 flex-shrink-0 rounded bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center overflow-hidden border border-emerald-100">
                       {item.imageUrl ? (
                         <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-emerald-500 [&>svg]:w-5 [&>svg]:h-5">{getCategoryIcon(item.category)}</span>
+                        <span className="text-emerald-500 [&>svg]:w-4 [&>svg]:h-4">{getCategoryIcon(item.category)}</span>
                       )}
                     </div>
                     
                     {/* Info - Stacked */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-800 text-xs leading-tight line-clamp-1">
+                      <h3 className="font-medium text-gray-800 text-[10px] leading-tight line-clamp-1">
                         {item.name}
                       </h3>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <span className="font-bold text-emerald-600 text-sm">₹{item.sellingPrice}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-emerald-600 text-xs">₹{item.sellingPrice}</span>
                         <span className={cn(
-                          "text-[10px] font-semibold",
+                          "text-[9px] font-semibold",
                           availableStock <= 0 ? "text-red-500" : availableStock <= 5 ? "text-amber-500" : "text-gray-400"
                         )}>
                           {availableStock}
@@ -2410,17 +2362,16 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           </div>
 
           {filteredItems.length === 0 && selectedCategory !== 'Popular' && (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-              <Package size={48} className="mb-2" />
-              <p className="font-medium">No items found</p>
-              <p className="text-sm">Try a different search term</p>
+            <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+              <Package size={32} className="mb-1" />
+              <p className="font-medium text-sm">No items found</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Right Side - Cart / Bill - Hidden on mobile */}
-      <div className="hidden md:flex md:w-96 h-full bg-white border-l border-gray-200 flex-col shadow-xl overflow-hidden">
+      <div className="hidden md:flex md:w-80 lg:md:w-96 h-full bg-white border-l border-gray-200 flex-col shadow-xl overflow-hidden">
         {/* ========== MULTI-CUSTOMER TABS BAR ========== */}
         <div className="bg-gray-100 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center overflow-x-auto scrollbar-hide">
@@ -2430,7 +2381,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 key={tab.id}
                 onClick={() => switchToTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 cursor-pointer border-r border-gray-200 min-w-[90px] transition-all relative group",
+                  "flex items-center gap-1 px-2 py-1.5 cursor-pointer border-r border-gray-200 min-w-[80px] transition-all relative group",
                   tab.id === activeTabId
                     ? "bg-white text-emerald-700 shadow-sm"
                     : "hover:bg-gray-50 text-gray-600",
@@ -2439,7 +2390,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
               >
                 {/* Status indicator dot */}
                 <div className={cn(
-                  "w-2 h-2 rounded-full flex-shrink-0",
+                  "w-1.5 h-1.5 rounded-full flex-shrink-0",
                   tab.status === 'processing' ? "bg-amber-500 animate-pulse" :
                   tab.items.length > 0 ? "bg-emerald-500" : "bg-gray-300"
                 )} />
@@ -2447,17 +2398,17 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 {/* Tab content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1">
-                    <span className="font-bold text-xs">#{tab.tokenNumber}</span>
+                    <span className="font-bold text-[10px]">#{tab.tokenNumber}</span>
                     {tab.items.length > 0 && (
-                      <span className="text-[10px] bg-gray-200 px-1 rounded">
+                      <span className="text-[9px] bg-gray-200 px-1 rounded">
                         {tab.items.reduce((sum, i) => sum + i.quantity, 0)}
                       </span>
                     )}
                   </div>
                   {tab.customerName ? (
-                    <p className="text-[10px] truncate max-w-[60px]">{tab.customerName}</p>
+                    <p className="text-[9px] truncate max-w-[50px]">{tab.customerName}</p>
                   ) : (
-                    <p className="text-[10px] text-gray-400 italic">{t.posPage.walkIn}</p>
+                    <p className="text-[9px] text-gray-400 italic">{t.posPage.walkIn}</p>
                   )}
                 </div>
 
