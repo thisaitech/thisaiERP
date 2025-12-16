@@ -5031,9 +5031,7 @@ TOTAL:       ₹${invoice.total}
       setReturnNotes('')
 
       // Refresh the invoices list to show updated totals
-      if (refreshInvoices) {
-        await refreshInvoices()
-      }
+      await loadInvoicesFromDatabase()
 
       // Refresh the returns map to show the indicator immediately
       const invoiceIds = invoices.map(inv => inv.id)
