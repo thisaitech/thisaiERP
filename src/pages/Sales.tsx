@@ -7158,7 +7158,7 @@ TOTAL:       ₹${invoice.total}
                         value={invoiceNumber}
                         onChange={(e) => setInvoiceNumber(e.target.value)}
                         placeholder="INV/2024-25/001"
-                        className="w-28 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary"
+                        className="w-36 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary"
                       />
                     </div>
                     <div className="flex items-center gap-1">
