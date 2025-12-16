@@ -2587,9 +2587,9 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
             </div>
           </div>
         ) : !showQuickCheckout ? (
-          <>
-            {/* Cart Items - Compact for more items */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Cart Items - Compact for more items - Scrollable */}
+            <div className="flex-1 overflow-y-auto min-h-0 p-2 space-y-1">
               <AnimatePresence>
                 {cart.length === 0 ? (
                   <motion.div
@@ -2654,9 +2654,9 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
               </AnimatePresence>
             </div>
 
-            {/* Cart Footer - Totals & Actions - Compact */}
+            {/* Cart Footer - Totals & Actions - Always Visible at Bottom */}
             {cart.length > 0 && (
-              <div className="border-t border-gray-100 p-2.5 bg-gray-50/50 flex-shrink-0">
+              <div className="border-t border-gray-100 p-2.5 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex-shrink-0">
                 {/* Paper Size Toggle - Inline */}
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] text-gray-500 font-medium">Paper:</span>
@@ -2745,7 +2745,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 </div>
               </div>
             )}
-          </>
+          </div>
         ) : (
           /* Inline Checkout Panel - No Modal, Direct Access */
           <div className="flex-1 flex flex-col overflow-hidden">
