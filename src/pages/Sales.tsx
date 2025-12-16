@@ -17,6 +17,7 @@ import {
   Sparkle,
   ArrowRight,
   ArrowLeft,
+  ArrowUUpLeft,
   User,
   Phone,
   Envelope,
@@ -5879,7 +5880,7 @@ TOTAL:       ₹${invoice.total}
                         }}
                         className="w-full px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200"
                       >
-                        <ArrowCounterClockwise size={18} weight="duotone" className="text-amber-500" />
+                        <ArrowUUpLeft size={18} weight="duotone" className="text-orange-500" />
                         <span>{language === 'ta' ? 'திருப்பி' : 'Sale Return'}</span>
                       </button>
 
