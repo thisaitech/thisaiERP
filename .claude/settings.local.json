@@ -56,7 +56,9 @@
       "Bash(git branch:*)",
       "Bash(npx vite build:*)",
       "Bash(npx firebase deploy --only hosting)",
-      "Bash(start cmd /k \"cd /d d:\\Project2\\Anna && npx firebase login --reauth\")"
+      "Bash(start cmd /k \"cd /d d:\\Project2\\Anna && npx firebase login --reauth\")",
+      "Bash(firebase hosting:channel:list:*)",
+      "Bash(npx firebase deploy --only hosting --force)"
     ],
     "deny": [],
     "ask": []
