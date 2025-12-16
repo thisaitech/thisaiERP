@@ -64,7 +64,7 @@ import type { ScannedInvoiceData } from '../types'
 import { processScannedInvoice, getInvoices, deleteInvoice, createInvoice as createInvoiceService, getInvoiceById } from '../services/invoiceService'
 import { recordPayment, getInvoicePayments, deletePayment } from '../services/paymentService'
 import type { Payment } from '../services/paymentService'
-import { downloadInvoicePDF, printInvoicePDF, downloadEInvoicePDF, downloadEWayBillPDF } from '../services/pdfService'
+import { downloadInvoicePDF, printInvoicePDF } from '../services/pdfService'
 import type { InvoicePDFData } from '../services/pdfService'
 import { shareViaWhatsApp, sendPaymentReminderWhatsApp } from '../services/shareService'
 import { UPIPaymentModal, CardPaymentModal } from '../components/PaymentModals'
@@ -675,7 +675,7 @@ const Purchases = () => {
   // Generate invoice number on mount
   useEffect(() => {
     if (!invoiceNumber) {
-      const generatedInvoiceNumber = generateIndianInvoiceNumber()
+      const generatedInvoiceNumber = generateIndianInvoiceNumber('PUR')
       setInvoiceNumber(generatedInvoiceNumber)
     }
   }, [])
@@ -844,7 +844,7 @@ const Purchases = () => {
 
     // If only one tab exists, reset it to blank instead of closing
     if (invoiceTabs.length === 1) {
-      const newInvoiceNumber = generateIndianInvoiceNumber()
+      const newInvoiceNumber = generateIndianInvoiceNumber('PUR')
       const newDate = new Date().toISOString().split('T')[0]
 
       const resetTab: InvoiceTab = {
@@ -3141,7 +3141,7 @@ const Purchases = () => {
   const handlePOSCheckoutComplete = async (checkoutData: CheckoutData) => {
     try {
       // Generate invoice number
-      const newInvoiceNumber = await generateIndianInvoiceNumber()
+      const newInvoiceNumber = await generateIndianInvoiceNumber('PUR')
       const today = new Date().toISOString().split('T')[0]
 
       // Calculate totals from checkout data
@@ -3291,7 +3291,7 @@ const Purchases = () => {
   const handleQuickCheckout = async (data: QuickCheckoutData) => {
     try {
       // Generate invoice number
-      const newInvoiceNumber = await generateIndianInvoiceNumber()
+      const newInvoiceNumber = await generateIndianInvoiceNumber('PUR')
       const today = new Date().toISOString().split('T')[0]
 
       // Calculate totals from checkout data
@@ -3485,7 +3485,7 @@ const Purchases = () => {
         sgstAmount: item.sgstAmount || 0,
         igstAmount: item.igstAmount || 0
       })) : [{
-        name: 'Sale Item',
+        name: 'Purchase Item',
         quantity: 1,
         price: invoice.subtotal || invoice.total || 0,
         total: invoice.total || 0,
@@ -3977,7 +3977,7 @@ const Purchases = () => {
             }
           })
         : [{
-            name: 'Sale Item',
+            name: 'Purchase Item',
             quantity: 1,
             unit: 'pcs',
             rate: invoiceData.subtotal || invoiceData.total || 0,
@@ -4014,77 +4014,6 @@ const Purchases = () => {
     } catch (error) {
       console.error('Error downloading PDF:', error)
       toast.error('Failed to download PDF')
-    }
-  }
-
-  // Generate & download E-Invoice data and PDF
-  const handleGenerateEInvoice = async (invoice: any) => {
-    const loadingToast = toast.loading('Generating E-Invoice...')
-    try {
-      const companySettings = getCompanySettings()
-
-      // Build items array from invoice items
-      const pdfItems = invoice.items?.length > 0
-        ? invoice.items.map((item: any) => ({
-            name: item.description || item.name || item.itemName || 'Item',
-            hsnCode: item.hsnCode || item.hsn || '',
-            quantity: item.quantity || item.qty || 1,
-            unit: item.unit || 'pcs',
-            rate: item.price || item.rate || 0,
-            taxRate: item.tax || item.taxRate || item.gst || 0,
-            amount: item.total || item.amount || 0
-          }))
-        : []
-
-      const einvoiceData = {
-        // IRN and acknowledgment details
-        irn: `IRN${Date.now()}${Math.random().toString(36).substring(7)}`,
-        ackNo: `ACK${Date.now()}`,
-        ackDate: new Date().toISOString().split('T')[0],
-        signedQRCode: `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==`,
-
-        // Invoice details
-        invoiceNumber: invoice.invoiceNumber,
-        invoiceDate: invoice.invoiceDate || invoice.date || new Date().toISOString().split('T')[0],
-
-        // Company (Seller) details
-        companyName: companySettings.companyName || 'ThisAI CRM',
-        companyGSTIN: companySettings.gstin || '',
-        companyAddress: companySettings.address || '',
-        companyState: companySettings.state || 'Tamil Nadu',
-
-        // Party (Buyer) details
-        partyName: invoice.partyName || 'Customer',
-        partyGSTIN: invoice.partyGSTIN || '',
-        partyAddress: invoice.partyAddress || '',
-        partyState: invoice.partyState || 'Tamil Nadu',
-
-        // Items
-        items: pdfItems,
-
-        // Totals
-        subtotal: invoice.subtotal || 0,
-        discount: invoice.discountAmount || invoice.discount || 0,
-        cgstAmount: invoice.cgstAmount || (invoice.totalTaxAmount || invoice.tax || 0) / 2,
-        sgstAmount: invoice.sgstAmount || (invoice.totalTaxAmount || invoice.tax || 0) / 2,
-        igstAmount: invoice.igstAmount || 0,
-        grandTotal: invoice.grandTotal || invoice.total || 0,
-
-        // Payment
-        paymentStatus: invoice.paymentStatus || 'pending'
-      }
-
-      // Download readable PDF
-      downloadEInvoicePDF(einvoiceData)
-
-      await new Promise((r) => setTimeout(r, 900))
-
-      toast.dismiss(loadingToast)
-      toast.success('E-Invoice generated and downloaded', { id: loadingToast })
-    } catch (error) {
-      console.error('Error generating E-Invoice:', error)
-      toast.dismiss(loadingToast)
-      toast.error('Failed to generate E-Invoice')
     }
   }
 
@@ -4129,55 +4058,6 @@ const Purchases = () => {
     return matchesSearch && matchesFilter && matchesDate && matchesSource
   })
 
-  // Generate & download E-Way Bill data and PDF
-  const handleGenerateEWayBill = async (invoice: any) => {
-    toast.dismiss()
-    const toastId = toast.loading('Generating E-Way Bill...')
-    try {
-      const companySettings = getCompanySettings()
-      const pdfItems = invoice.items?.length > 0
-        ? invoice.items.map((item: any) => ({
-            name: item.description || item.name || item.itemName || 'Item',
-            hsnCode: item.hsnCode || item.hsn || '',
-            quantity: item.quantity || item.qty || 1,
-            unit: item.unit || 'pcs',
-            rate: item.price || item.rate || 0,
-            taxRate: item.tax || item.taxRate || item.gst || 0,
-            amount: item.total || item.amount || 0
-          }))
-        : []
-      const ewayBillData = {
-        ewbNo: `EWB${Date.now()}`,
-        ewbDate: new Date().toISOString().split('T')[0],
-        validUpto: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString().split('T')[0],
-        distance: 150,
-        vehicleNo: invoice.partyVehicleNo || 'TN01AB1234',
-        transportMode: 'Road',
-        invoiceNumber: invoice.invoiceNumber,
-        invoiceDate: invoice.invoiceDate || invoice.date || new Date().toISOString().split('T')[0],
-        companyName: companySettings.companyName || 'ThisAI CRM',
-        companyGSTIN: companySettings.gstin || '',
-        companyAddress: companySettings.address || '',
-        companyState: companySettings.state || 'Tamil Nadu',
-        partyName: invoice.partyName || 'Customer',
-        partyGSTIN: invoice.partyGSTIN || '',
-        partyAddress: invoice.partyAddress || '',
-        partyState: invoice.partyState || 'Tamil Nadu',
-        items: pdfItems,
-        subtotal: invoice.subtotal || 0,
-        cgstAmount: invoice.cgstAmount || (invoice.totalTaxAmount || invoice.tax || 0) / 2,
-        sgstAmount: invoice.sgstAmount || (invoice.totalTaxAmount || invoice.tax || 0) / 2,
-        igstAmount: invoice.igstAmount || 0,
-        grandTotal: invoice.grandTotal || invoice.total || 0
-      }
-      downloadEWayBillPDF(ewayBillData)
-      await new Promise((r) => setTimeout(r, 900))
-      toast.success('E-Way Bill generated and downloaded', { id: toastId })
-    } catch (error) {
-      console.error('Error generating E-Way Bill:', error)
-      toast.error('Failed to generate E-Way Bill', { id: toastId })
-    }
-  }
   const handleQuickEdit = async (invoice: any) => {
     try {
       console.log('Quick Edit - Loading invoice:', invoice.id)
@@ -4398,7 +4278,7 @@ const Purchases = () => {
   const handleDuplicateInvoice = async (invoice: any) => {
     try {
       // Generate new invoice number
-      const newInvoiceNumber = await generateIndianInvoiceNumber()
+      const newInvoiceNumber = await generateIndianInvoiceNumber('PUR')
       
       // Get items array - handle both array and non-array cases
       const itemsArray = Array.isArray(invoice.items) ? invoice.items : []
@@ -4736,7 +4616,7 @@ TOTAL:       ₹${invoice.total}
 
       // Save sale return to database
       const docRef = await addDoc(collection(db, 'sale_returns'), saleReturnData)
-      console.log('Sale return created with ID:', docRef.id)
+      console.log('Purchase return created with ID:', docRef.id)
 
       // Update inventory - purchase return sends stock BACK to supplier (reduce our stock)
       for (const item of selectedItems) {
@@ -4951,7 +4831,7 @@ TOTAL:       ₹${invoice.total}
                   className="h-8 px-2.5 rounded-full border border-[#E1D7FF] bg-white text-[10px] text-[#3B82F6] font-semibold flex items-center gap-1 shadow-sm hover:border-[#7A35FF]/30 transition-all"
                 >
                   <Plus size={12} weight="bold" />
-                  <span>{location.pathname === '/pos' ? 'POS' : 'Sale'}</span>
+                  <span>{location.pathname === '/pos' ? 'POS' : 'Purchase'}</span>
                 </button>
           </div>
         </div>
@@ -5684,38 +5564,6 @@ TOTAL:       ₹${invoice.total}
                         <span>{language === 'ta' ? 'PDF பதிவிறக்கு' : 'Download PDF'}</span>
                       </button>
 
-                      {/* E-Invoice */}
-                      <button
-                        onClick={() => {
-                          if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current)
-                          handleGenerateEInvoice(invoice)
-                          setOpenActionMenu(null)
-                          setDropdownPosition(null)
-                          setDropdownInvoiceId(null)
-                          setDropdownButtonElement(null)
-                        }}
-                        className="w-full px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200"
-                      >
-                        <FileText size={18} weight="duotone" className="text-purple-600" />
-                        <span>{language === 'ta' ? 'இ-விலைப்பட்டியல்' : 'E-Invoice'}</span>
-                      </button>
-
-                      {/* E-Way Bill */}
-                      <button
-                        onClick={() => {
-                          if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current)
-                          handleGenerateEWayBill(invoice)
-                          setOpenActionMenu(null)
-                          setDropdownPosition(null)
-                          setDropdownInvoiceId(null)
-                          setDropdownButtonElement(null)
-                        }}
-                        className="w-full px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200"
-                      >
-                        <Truck size={18} weight="duotone" className="text-blue-600" />
-                        <span>{language === 'ta' ? 'இ-வே பில்' : 'E-Way Bill'}</span>
-                      </button>
-
                       <div className="border-t border-slate-100 dark:border-slate-700 my-1.5 mx-2" />
 
                       {/* Duplicate Invoice */}
@@ -5763,7 +5611,7 @@ TOTAL:       ₹${invoice.total}
                         className="w-full px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200"
                       >
                         <ArrowCounterClockwise size={18} weight="duotone" className="text-amber-500" />
-                        <span>{language === 'ta' ? 'திருப்பி' : 'Sale Return'}</span>
+                        <span>{language === 'ta' ? 'திருப்பி' : 'Purchase Return'}</span>
                       </button>
 
                       <div className="border-t border-slate-100 dark:border-slate-700 my-1.5 mx-2" />
@@ -8329,7 +8177,7 @@ TOTAL:       ₹${invoice.total}
                   <div className="flex justify-between mb-3 text-xs">
                     <div>
                       <p className="font-bold">TAX INVOICE</p>
-                      <p>Invoice #: {invoiceNumber || 'INV-XXXX'}</p>
+                      <p>Invoice #: {invoiceNumber || 'PUR-XXXX'}</p>
                       <p>Date: {new Date().toLocaleDateString('en-IN')}</p>
                     </div>
                     <div className="text-right">
@@ -8430,7 +8278,7 @@ TOTAL:       ₹${invoice.total}
                   <div className="flex justify-between mb-4 text-sm">
                     <div>
                       <h2 className="font-bold text-lg">TAX INVOICE</h2>
-                      <p>Invoice #: {invoiceNumber || 'INV-XXXX'}</p>
+                      <p>Invoice #: {invoiceNumber || 'PUR-XXXX'}</p>
                       <p>Date: {new Date().toLocaleDateString('en-IN')}</p>
                     </div>
                     <div className="text-right">
@@ -11260,7 +11108,7 @@ TOTAL:       ₹${invoice.total}
                 <div className="text-[10px] space-y-1 mb-3">
                   <div className="flex justify-between">
                     <span className="font-bold">Bill#:</span>
-                    <span>{invoiceNumber || 'INV-XXXX'}</span>
+                    <span>{invoiceNumber || 'PUR-XXXX'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-bold">Date:</span>
