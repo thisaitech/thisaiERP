@@ -6267,10 +6267,12 @@ TOTAL:       ₹${invoice.total}
             </div>
 
             {/* Desktop Header - Item Search on Left, Customer on Right - 50/50 split */}
-            <div className="hidden md:grid md:grid-cols-2 gap-4 mb-3 px-1">
+            <div className="hidden md:grid md:grid-cols-2 gap-6 mb-4 px-1">
               {/* Left: Item Search Bar - 50% width */}
-              <div className="flex items-center gap-2">
-                <MagnifyingGlass size={18} className="text-amber-600 flex-shrink-0" />
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-lg">
+                  <MagnifyingGlass size={18} className="text-amber-600" />
+                </div>
                 <div ref={desktopItemDropdownRef} className="relative flex-1">
                   <input
                     ref={itemSearchInputRef}
@@ -6314,7 +6316,7 @@ TOTAL:       ₹${invoice.total}
                         setHighlightedItemIndex(-1)
                       }
                     }}
-                    className="w-full px-2 py-1.5 bg-white border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 placeholder:text-slate-400"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 placeholder:text-slate-400 shadow-sm transition-all"
                   />
                   {/* Desktop Item Search Dropdown - Top Header */}
                   {showItemDropdown && desktopItemDropdownRef.current && createPortal(
@@ -6371,7 +6373,7 @@ TOTAL:       ₹${invoice.total}
                           setShowItemDropdown(false)
                           setShowAddItemModal(true)
                         }}
-                        className="w-full px-4 py-2.5 text-left hover:bg-blue-50 border-t border-slate-200 flex items-center gap-2 text-blue-600 font-medium cursor-pointer sticky bottom-0 bg-white"
+                        className="w-full px-4 py-2.5 text-left hover:bg-emerald-50 border-t border-slate-200 flex items-center gap-2 text-emerald-600 font-medium cursor-pointer sticky bottom-0 bg-white"
                       >
                         <Plus size={16} weight="bold" />
                         Create New Item
@@ -6383,7 +6385,7 @@ TOTAL:       ₹${invoice.total}
                 <button
                   type="button"
                   onClick={() => setShowBarcodeScanner(true)}
-                  className="px-2 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg flex items-center gap-1.5 transition-colors font-medium text-sm"
+                  className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl flex items-center gap-1.5 transition-all hover:scale-105 font-medium text-sm shadow-sm"
                   title="Scan Barcode"
                 >
                   <Barcode size={16} weight="bold" />
@@ -6391,10 +6393,12 @@ TOTAL:       ₹${invoice.total}
               </div>
 
               {/* Right: Customer Search + Details - 50% width */}
-              <div className="flex items-center gap-2">
-                <User size={18} className="text-blue-600 flex-shrink-0" />
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <User size={18} className="text-blue-600" />
+                </div>
                 {/* Customer Search Input */}
-                <div className={cn("relative", customerName ? "w-36" : "flex-1")} ref={customerDropdownRef}>
+                <div className={cn("relative", customerName ? "w-40" : "flex-1")} ref={customerDropdownRef}>
                   <input
                     type="text"
                     placeholder="Search customer..."
@@ -6429,7 +6433,7 @@ TOTAL:       ₹${invoice.total}
                         setHighlightedCustomerIndex(-1)
                       }
                     }}
-                    className="w-full px-2 py-1.5 bg-white border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder:text-slate-400"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 placeholder:text-slate-400 shadow-sm transition-all"
                   />
                   {/* Desktop Customer Dropdown */}
                   {showCustomerDropdown && (
@@ -6439,7 +6443,7 @@ TOTAL:       ₹${invoice.total}
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-[100] max-h-64 overflow-y-auto min-w-[320px]"
+                        className="absolute top-full left-0 mt-1 bg-white border border-slate-200/60 rounded-xl shadow-xl z-[100] max-h-64 overflow-y-auto min-w-[320px]"
                       >
                         {loadingParties ? (
                           <div className="px-4 py-3 text-sm text-muted-foreground">Loading customers...</div>
@@ -6720,52 +6724,52 @@ TOTAL:       ₹${invoice.total}
                 {/* Scrollable Items Table - Desktop */}
                 <div
                   ref={itemTableContainerRef}
-                  className="hidden md:block border border-slate-200 rounded-lg overflow-x-auto overflow-y-auto shadow-sm"
+                  className="hidden md:block border border-slate-200/60 rounded-xl overflow-x-auto overflow-y-auto bg-white shadow-sm"
                   style={desktopTableStyle}
                 >
                   <table className="w-full text-sm border-collapse" style={{ minWidth: '720px' }}>
-                    <thead className="bg-gradient-to-r from-slate-50 to-slate-100 sticky top-0 z-10 border-b border-slate-200">
+                    <thead className="bg-gradient-to-r from-slate-50 to-slate-100/80 sticky top-0 z-10">
                       <tr>
-                        <th className="px-2 py-2.5 text-center border-r border-slate-200" style={{ width: '28px', minWidth: '28px' }}>
+                        <th className="px-2 py-2.5 text-center" style={{ width: '28px', minWidth: '28px' }}>
                           <button
                             type="button"
                             onClick={() => addEmptyRow()}
-                            className="w-6 h-6 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full transition-all shadow-sm hover:shadow"
+                            className="w-6 h-6 flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-full transition-all hover:scale-110 shadow-sm"
                             title="Add manual item row"
                           >
                             <Plus size={14} weight="bold" />
                           </button>
                         </th>
-                        <th className="px-2 py-2.5 text-left text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '180px', minWidth: '180px' }}>{columnLabels.itemNameLabel || t.sales.itemName}</th>
+                        <th className="px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '170px', minWidth: '170px' }}>ITEM NAME</th>
                         {visibleColumns.hsnCode && (
-                          <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '70px', minWidth: '70px' }}>{columnLabels.hsnCodeLabel || t.sales.hsnCode}</th>
+                          <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '65px', minWidth: '65px' }}>HSN</th>
                         )}
                         {visibleColumns.description && (
-                          <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '50px', minWidth: '50px' }}>{columnLabels.descriptionLabel || t.common.description}</th>
+                          <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '45px', minWidth: '45px' }}>DESC</th>
                         )}
-                        <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '32px', minWidth: '32px' }}>{columnLabels.qtyLabel || t.sales.qty}</th>
-                        <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '42px', minWidth: '42px' }}>{columnLabels.unitLabel || t.common.unit}</th>
-                        <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '65px', minWidth: '65px' }}>{columnLabels.taxModeLabel || t.sales.taxMode}</th>
-                        <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '48px', minWidth: '48px' }}>{columnLabels.mrpLabel || t.sales.mrp}</th>
-                        <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '55px', minWidth: '55px' }}>{columnLabels.taxableLabel || t.sales.taxable}</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '30px', minWidth: '30px' }}>QTY</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '48px', minWidth: '48px' }}>UNIT</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '58px', minWidth: '58px' }}>TAX</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '60px', minWidth: '60px' }}>MRP</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '60px', minWidth: '60px' }}>TAXABLE</th>
                         {visibleColumns.discount && (
                           <>
-                            <th className="px-1 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '35px', minWidth: '35px' }}>{columnLabels.discountPercentLabel || t.sales.discPercent}</th>
-                            <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '55px', minWidth: '55px' }}>{columnLabels.discountAmountLabel || t.sales.discAmount}</th>
+                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>Dis%</th>
+                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>Dis₹</th>
                           </>
                         )}
                         {/* Single GST % column - always visible */}
-                        <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '40px', minWidth: '40px' }}>{columnLabels.gstPercentLabel || t.sales.gstPercent}</th>
-                        <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>{columnLabels.gstAmountLabel || t.sales.gstAmount}</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>GST%</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>GST₹</th>
                         {/* CGST/SGST/IGST breakdown - optional */}
                         {visibleColumns.gstBreakdown && (
                           <>
-                            <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>{t.sales.cgst}%</th>
-                            <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>{t.sales.sgst}%</th>
-                            <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>{t.sales.igst}%</th>
+                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider" style={{ width: '35px', minWidth: '35px' }}>CGST%</th>
+                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider" style={{ width: '35px', minWidth: '35px' }}>SGST%</th>
+                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider" style={{ width: '35px', minWidth: '35px' }}>IGST%</th>
                           </>
                         )}
-                        <th className="px-2 py-2.5 text-center text-[11px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 whitespace-nowrap" style={{ width: '55px', minWidth: '55px' }}>{t.common.total}</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-emerald-600 uppercase tracking-wider" style={{ width: '65px', minWidth: '65px' }}>TOTAL</th>
                         <th className="px-1 py-2.5 relative" style={{ width: '28px', minWidth: '28px' }}>
                           <button
                             onClick={() => setShowColumnMenu(!showColumnMenu)}
@@ -6848,34 +6852,31 @@ TOTAL:       ₹${invoice.total}
                       {invoiceItems.length > 0 && invoiceItems.map((item, index) => (
                             <tr
                               key={item.id}
-                              className={cn(
-                                "hover:bg-blue-50/80 transition-all duration-150 border-b border-slate-100",
-                                index % 2 === 0 ? "bg-white" : "bg-slate-50/50"
-                              )}
+                              className="hover:bg-gradient-to-r hover:from-blue-50/60 hover:to-indigo-50/40 transition-all duration-200 border-b border-slate-100/60 group"
                             >
-                              <td className="px-2 py-1.5 text-center align-middle text-xs font-semibold text-slate-500 border-r border-slate-100" style={{ width: '28px', minWidth: '28px' }}>
-                                {index + 1}
+                              <td className="px-2 py-2 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-slate-100 to-slate-200/80 text-[10px] font-bold text-slate-500">{index + 1}</span>
                               </td>
-                              <td className="px-2 py-1.5 align-middle border-r border-slate-100" style={{ width: '180px', minWidth: '180px' }}>
+                              <td className="px-1 py-1.5 align-middle" style={{ width: '170px', minWidth: '170px' }}>
                                 <input
                                   type="text"
                                   value={item.name}
                                   onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                                  className="w-full h-7 px-1.5 bg-transparent border-0 text-sm font-medium text-slate-800 focus:ring-0 focus:outline-none placeholder:text-slate-300"
-                                  style={{ minWidth: '150px' }}
+                                  className="w-full h-7 px-1 bg-transparent border-0 text-sm font-semibold text-slate-700 focus:ring-0 focus:outline-none placeholder:text-slate-300 tracking-tight"
+                                  style={{ minWidth: '140px' }}
                                   placeholder="Item name"
                                 />
                               </td>
                               {visibleColumns.hsnCode && (
-                                <td className="px-2 py-1.5 align-middle border-r border-slate-100" style={{ width: '70px', minWidth: '70px' }}>
+                                <td className="px-1 py-1.5 align-middle" style={{ width: '65px', minWidth: '65px' }}>
                                   <input
                                     type="text"
                                     value={item.hsnCode || ''}
                                     onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
                                     className={cn(
-                                      "w-full h-6 px-1.5 bg-transparent border-0 text-xs text-center font-medium focus:ring-0 focus:outline-none placeholder:text-slate-300",
+                                      "w-full h-6 px-1 bg-transparent border-0 text-xs text-center font-medium focus:ring-0 focus:outline-none placeholder:text-slate-300/70 font-mono tracking-wide",
                                       isHSNRequired(customerGST) && (!item.hsnCode || item.hsnCode.trim() === '')
-                                        ? "text-amber-600"
+                                        ? "text-orange-500 placeholder:text-orange-300"
                                         : "text-slate-600"
                                     )}
                                     placeholder="HSN"
@@ -6883,7 +6884,7 @@ TOTAL:       ₹${invoice.total}
                                 </td>
                               )}
                               {visibleColumns.description && (
-                                <td className="px-2 py-1.5 align-middle border-r border-slate-100" style={{ width: '50px', minWidth: '50px' }}>
+                                <td className="px-1 py-1.5 align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                   <input
                                     type="text"
                                     value={item.description || ''}
@@ -6893,7 +6894,7 @@ TOTAL:       ₹${invoice.total}
                                   />
                                 </td>
                               )}
-                              <td className="px-2 py-1.5 text-center align-middle border-r border-slate-100" style={{ width: '32px', minWidth: '32px' }}>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '30px', minWidth: '30px' }}>
                                 <input
                                   type="number"
                                   min="1"
@@ -6917,15 +6918,15 @@ TOTAL:       ₹${invoice.total}
                                       updateItem(item.id, 'qty', 1)
                                     }
                                   }}
-                                  className="w-full h-6 px-1 bg-transparent border-0 text-xs text-center font-semibold focus:ring-0 focus:outline-none text-slate-700"
+                                  className="w-full h-6 px-0.5 bg-transparent border-0 text-xs text-center font-semibold focus:ring-0 focus:outline-none text-slate-700"
                                 />
                               </td>
-                              <td className="px-2 py-1.5 align-middle border-r border-slate-100" style={{ width: '42px', minWidth: '42px' }}>
+                              <td className="px-1 py-1.5 align-middle" style={{ width: '48px', minWidth: '48px' }}>
                                 {item.hasMultiUnit ? (
                                   <select
                                     value={item.unit || item.baseUnit || 'Pcs'}
                                     onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                                    className="w-full h-6 px-0.5 bg-transparent border-0 text-xs font-medium text-slate-600 focus:ring-0 focus:outline-none cursor-pointer"
+                                    className="w-full h-6 px-0 bg-transparent border-0 text-xs font-medium text-slate-600 focus:ring-0 focus:outline-none cursor-pointer"
                                     title={`1 ${item.purchaseUnit || 'Box'} = ${item.piecesPerPurchaseUnit || 12} ${item.baseUnit || 'Pcs'}`}
                                   >
                                     <option value={item.baseUnit || 'Pcs'}>{item.baseUnit || 'Pcs'}</option>
@@ -6948,23 +6949,18 @@ TOTAL:       ₹${invoice.total}
                                   </select>
                                 )}
                               </td>
-                              <td className="px-1 py-1.5 text-center align-middle border-r border-slate-100" style={{ width: '65px', minWidth: '65px' }}>
+                              <td className="px-0.5 py-1.5 text-center align-middle" style={{ width: '58px', minWidth: '58px' }}>
                                 <select
                                   value={item.taxMode || 'exclusive'}
                                   onChange={(e) => updateItem(item.id, 'taxMode', e.target.value)}
-                                  className={cn(
-                                    "h-6 text-[10px] px-1 border-0 rounded font-medium focus:ring-0 focus:outline-none cursor-pointer",
-                                    item.taxMode === 'inclusive' 
-                                      ? "bg-emerald-50 text-emerald-700" 
-                                      : "bg-slate-100 text-slate-600"
-                                  )}
+                                  className="h-6 text-[9px] px-0.5 bg-transparent border-0 rounded font-medium text-slate-600 focus:ring-0 focus:outline-none cursor-pointer"
                                   title="GST Tax Mode"
                                 >
                                   <option value="exclusive">Without GST</option>
                                   <option value="inclusive">With GST</option>
                                 </select>
                               </td>
-                              <td className="px-1 py-1.5 text-center align-middle border-r border-slate-100" style={{ width: '48px', minWidth: '48px' }}>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '60px', minWidth: '60px' }}>
                                 <input
                                   type="number"
                                   step="0.01"
@@ -6975,16 +6971,16 @@ TOTAL:       ₹${invoice.total}
                                     // Simply store what user enters - updateItem handles tax calculation based on mode
                                     updateItem(item.id, 'price', enteredPrice)
                                   }}
-                                  className="w-full h-6 px-1 bg-slate-50 border border-slate-200 rounded text-xs text-right font-semibold text-slate-700 focus:ring-1 focus:ring-blue-300 focus:border-blue-300 focus:outline-none transition-all"
+                                  className="w-full h-6 px-1 bg-transparent border-0 text-xs text-right font-semibold text-slate-700 focus:ring-0 focus:outline-none"
                                   placeholder="0"
                                 />
                               </td>
-                              <td className="px-2 py-1.5 text-right align-middle border-r border-slate-100" style={{ width: '55px', minWidth: '55px' }}>
-                                <span className="text-xs font-medium text-slate-700">₹{(item.basePrice || item.price).toFixed(2)}</span>
+                              <td className="px-1 py-1.5 text-right align-middle" style={{ width: '60px', minWidth: '60px' }}>
+                                <span className="text-xs font-semibold text-slate-600">₹{(item.basePrice || item.price).toFixed(2)}</span>
                               </td>
                               {visibleColumns.discount && (
                                 <>
-                                  <td className="px-1 py-1.5 text-center align-middle border-r border-slate-100" style={{ width: '30px', minWidth: '30px' }}>
+                                  <td className="px-0.5 py-1.5 text-center align-middle" style={{ width: '32px', minWidth: '32px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -6997,10 +6993,10 @@ TOTAL:       ₹${invoice.total}
                                           parseFloat(e.target.value) || 0
                                         )
                                       }
-                                      className="w-full h-6 px-1 bg-transparent border-0 text-xs text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-0.5 bg-transparent border-0 text-xs text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
                                     />
                                   </td>
-                                  <td className="px-2 py-1.5 text-right align-middle border-r border-slate-100" style={{ width: '55px', minWidth: '55px' }}>
+                                  <td className="px-1 py-1.5 text-right align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -7021,7 +7017,7 @@ TOTAL:       ₹${invoice.total}
                                 </>
                               )}
                               {/* Single GST % - Always visible */}
-                              <td className="px-2 py-1.5 text-center align-middle border-r border-slate-100" style={{ width: '35px', minWidth: '35px' }}>
+                              <td className="px-0.5 py-1.5 text-center align-middle" style={{ width: '35px', minWidth: '35px' }}>
                                 <input
                                   type="number"
                                   min="0"
@@ -7033,19 +7029,19 @@ TOTAL:       ₹${invoice.total}
                                     // Update the main tax field for calculations
                                     updateItem(item.id, 'tax', totalGst)
                                   }}
-                                  className="w-full h-6 px-1 bg-transparent border-0 text-xs font-semibold text-center text-slate-700 focus:ring-0 focus:outline-none"
+                                  className="w-full h-6 px-0.5 bg-transparent border-0 text-xs font-semibold text-center text-slate-700 focus:ring-0 focus:outline-none"
                                   title="GST % (Total)"
                                 />
                               </td>
                               {/* GST ₹ - Always visible */}
-                              <td className="px-2 py-1.5 text-right align-middle border-r border-slate-100" style={{ width: '42px', minWidth: '42px' }}>
+                              <td className="px-1 py-1.5 text-right align-middle" style={{ width: '42px', minWidth: '42px' }}>
                                 <span className="text-xs font-medium text-slate-600">₹{(item.taxAmount || 0).toFixed(2)}</span>
                               </td>
                               {/* CGST/SGST/IGST breakdown - Optional */}
                               {visibleColumns.gstBreakdown && (
                                 <>
                                   {/* CGST% */}
-                                  <td className="px-2 py-1.5 text-center align-middle border-r border-slate-100" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-2 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -7059,12 +7055,12 @@ TOTAL:       ₹${invoice.total}
                                           parseFloat(e.target.value) || 0
                                         )
                                       }
-                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-medium text-center text-slate-600 focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-semibold text-center text-slate-500 focus:ring-0 focus:outline-none"
                                       title="CGST %"
                                     />
                                   </td>
                                   {/* SGST% */}
-                                  <td className="px-2 py-1.5 text-center align-middle border-r border-slate-100" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-2 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -7078,12 +7074,12 @@ TOTAL:       ₹${invoice.total}
                                           parseFloat(e.target.value) || 0
                                         )
                                       }
-                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-medium text-center text-slate-600 focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-semibold text-center text-slate-500 focus:ring-0 focus:outline-none"
                                       title="SGST %"
                                     />
                                   </td>
                                   {/* IGST% */}
-                                  <td className="px-2 py-1.5 text-center align-middle border-r border-slate-100" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-2 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -7097,20 +7093,20 @@ TOTAL:       ₹${invoice.total}
                                           parseFloat(e.target.value) || 0
                                         )
                                       }
-                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-medium text-center text-slate-600 focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-semibold text-center text-slate-500 focus:ring-0 focus:outline-none"
                                       title="IGST %"
                                     />
                                   </td>
                                 </>
                               )}
-                              <td className="px-2 py-1.5 text-right align-middle border-r border-slate-100" style={{ width: '55px', minWidth: '55px' }}>
-                                <span className="text-xs font-bold text-slate-800">₹{item.total.toFixed(2)}</span>
+                              <td className="px-1 py-1.5 text-right align-middle" style={{ width: '65px', minWidth: '65px' }}>
+                                <span className="text-sm font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">₹{item.total.toFixed(2)}</span>
                               </td>
                               <td className="px-1 py-1.5 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
                                 <button
                                   type="button"
                                   onClick={() => removeItem(item.id)}
-                                  className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors"
+                                  className="p-1 opacity-0 group-hover:opacity-100 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-full transition-all"
                                 >
                                   <Trash size={14} weight="bold" />
                                 </button>
@@ -7302,51 +7298,50 @@ TOTAL:       ₹${invoice.total}
                 </div>
                 </div>
                 {/* Right Side - Totals Summary */}
-                <div className="p-4 bg-background border border-border rounded-lg">
+                <div className="p-4 bg-gradient-to-br from-slate-50 to-white border border-slate-200/60 rounded-xl">
                   {invoiceItems.length > 0 ? (
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Subtotal:</span>
-                        <span className="font-medium">₹{totals.subtotal.toFixed(2)}</span>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">Subtotal:</span>
+                        <span className="font-semibold text-slate-700">₹{totals.subtotal.toFixed(2)}</span>
                       </div>
                       {invoiceDiscount > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-slate-600">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
-                          <span className="font-medium text-orange-600">-₹{totals.discount.toFixed(2)}</span>
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
+                          <span className="font-semibold text-orange-500">-₹{totals.discount.toFixed(2)}</span>
                         </div>
                       )}
                       {/* Tax Row - Consolidated with CGST/SGST/IGST breakdown inline */}
                       {totals.totalTax > 0 && (
-                        <div className="flex justify-between items-center pt-2 pb-1 border-t border-border">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-slate-700">Tax:</span>
+                        <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400">Tax</span>
                             {totals.totalIGST > 0 ? (
-                              <>
-                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                                  Interstate
-                                </span>
-                                <span className="text-sm text-blue-600 font-medium">
-                                  IGST ₹{totals.totalIGST.toFixed(2)}
-                                </span>
-                              </>
+                              <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded font-medium">Interstate</span>
+                            ) : (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded font-medium">Intra</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {totals.totalIGST > 0 ? (
+                              <span className="text-xs text-slate-600">IGST ₹{totals.totalIGST.toFixed(2)}</span>
                             ) : (
                               <>
-                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded">
-                                  Intrastate
-                                </span>
-                                <span className="text-sm text-emerald-600 font-medium">
-                                  CGST ₹{totals.totalCGST.toFixed(2)} + SGST ₹{totals.totalSGST.toFixed(2)}
-                                </span>
+                                <span className="text-[11px] text-slate-500">CGST</span>
+                                <span className="text-xs font-medium text-slate-700">₹{totals.totalCGST.toFixed(2)}</span>
+                                <span className="text-slate-300">|</span>
+                                <span className="text-[11px] text-slate-500">SGST</span>
+                                <span className="text-xs font-medium text-slate-700">₹{totals.totalSGST.toFixed(2)}</span>
                               </>
                             )}
                           </div>
-                          <span className="text-base font-semibold text-emerald-600">₹{totals.totalTax.toFixed(2)}</span>
+                          <span className="text-sm font-semibold text-slate-700">₹{totals.totalTax.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="flex justify-between items-center pt-1.5 mt-1 border-t-2 border-primary/30">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-foreground">TOTAL</span>
-                          <span className="text-xs text-muted-foreground">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
+                      <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-emerald-200">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-800">TOTAL</span>
+                          <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <label className="flex items-center gap-1 cursor-pointer">
@@ -7354,15 +7349,15 @@ TOTAL:       ₹${invoice.total}
                               type="checkbox"
                               checked={roundOff}
                               onChange={(e) => setRoundOff(e.target.checked)}
-                              className="w-3 h-3 rounded accent-primary"
+                              className="w-3 h-3 rounded accent-emerald-600"
                             />
-                            <span className="text-[10px] text-slate-500">Round Off</span>
+                            <span className="text-[10px] text-slate-400">Round Off</span>
                           </label>
                           {roundOff && totals.roundOffAmount !== 0 && (
-                            <span className="text-[10px] text-primary">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
+                            <span className="text-[10px] text-emerald-600">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
                           )}
                         </div>
-                        <span className="font-bold text-xl text-primary">₹{totals.total.toFixed(0)}</span>
+                        <span className="font-bold text-2xl text-emerald-600">₹{totals.total.toFixed(0)}</span>
                       </div>
                       {totals.received > 0 && (
                         <>
