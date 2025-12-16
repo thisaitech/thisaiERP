@@ -2654,97 +2654,107 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
               </AnimatePresence>
             </div>
 
-            {/* Cart Footer - Totals & Actions - Always Visible at Bottom */}
-            {cart.length > 0 && (
-              <div className="border-t border-gray-100 p-2.5 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex-shrink-0">
-                {/* Paper Size Toggle - Inline */}
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] text-gray-500 font-medium">Paper:</span>
-                  <div className="flex bg-gray-100 rounded p-0.5">
-                    <button
-                      onClick={() => setPaperSize('58mm')}
-                      className={cn(
-                        "px-2 py-0.5 text-[10px] font-medium rounded transition-all",
-                        paperSize === '58mm'
-                          ? "bg-emerald-500 text-white shadow-sm"
-                          : "text-gray-500 hover:text-gray-700"
-                      )}
-                    >
-                      58mm
-                    </button>
-                    <button
-                      onClick={() => setPaperSize('80mm')}
-                      className={cn(
-                        "px-2 py-0.5 text-[10px] font-medium rounded transition-all",
-                        paperSize === '80mm'
-                          ? "bg-emerald-500 text-white shadow-sm"
-                          : "text-gray-500 hover:text-gray-700"
-                      )}
-                    >
-                      80mm
-                    </button>
-                  </div>
-                </div>
-
-                {/* Totals - Compact */}
-                <div className="space-y-0.5 mb-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">Subtotal ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
-                    <span className="font-medium text-gray-700">₹{subtotal.toFixed(2)}</span>
-                  </div>
-                  {/* Discount Input */}
-                  <div className="flex justify-between items-center text-xs py-1 px-1.5 bg-orange-50 rounded -mx-1.5">
-                    <div className="flex items-center gap-1">
-                      <Percent size={12} className="text-orange-600" />
-                      <span className="text-gray-600">Discount:</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.5"
-                        value={invoiceDiscount}
-                        onChange={(e) => setInvoiceDiscount(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                        className="w-12 px-1 py-0.5 text-right text-xs font-medium border border-orange-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
-                        placeholder="0"
-                      />
-                      <span className="text-gray-500">%</span>
-                      {invoiceDiscount > 0 && (
-                        <span className="text-orange-600 font-medium">-₹{discountAmount.toFixed(0)}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-500">Tax (CGST + SGST)</span>
-                    <span className="font-medium text-gray-700">₹{totalTax.toFixed(2)}</span>
-                  </div>
-                  <div className="h-px bg-gray-200 my-1"></div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-gray-800 text-sm">Grand Total</span>
-                    <span className="font-bold text-lg text-emerald-600">₹{grandTotal.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                {/* Action Buttons - Compact */}
-                <div className="grid grid-cols-2 gap-2">
+            {/* Cart Footer - Totals & Actions - ALWAYS Visible at Bottom */}
+            <div className="border-t border-gray-200 p-2.5 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
+              {/* Paper Size Toggle - Inline */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] text-gray-500 font-medium">Paper:</span>
+                <div className="flex bg-gray-100 rounded p-0.5">
                   <button
-                    onClick={printReceipt}
-                    className="flex items-center justify-center gap-1.5 py-2 rounded-lg border-2 border-emerald-200 text-emerald-600 font-semibold text-xs hover:bg-emerald-50 transition-colors"
+                    onClick={() => setPaperSize('58mm')}
+                    className={cn(
+                      "px-2 py-0.5 text-[10px] font-medium rounded transition-all",
+                      paperSize === '58mm'
+                        ? "bg-emerald-500 text-white shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                    )}
                   >
-                    <Printer size={14} weight="bold" />
-                    Print
+                    58mm
                   </button>
                   <button
-                    onClick={handleCheckout}
-                    className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold text-xs shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all"
+                    onClick={() => setPaperSize('80mm')}
+                    className={cn(
+                      "px-2 py-0.5 text-[10px] font-medium rounded transition-all",
+                      paperSize === '80mm'
+                        ? "bg-emerald-500 text-white shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                    )}
                   >
-                    <Receipt size={14} weight="bold" />
-                    Checkout
+                    80mm
                   </button>
                 </div>
               </div>
-            )}
+
+              {/* Totals - Compact */}
+              <div className="space-y-0.5 mb-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Subtotal ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+                  <span className="font-medium text-gray-700">₹{subtotal.toFixed(2)}</span>
+                </div>
+                {/* Discount Input */}
+                <div className="flex justify-between items-center text-xs py-1 px-1.5 bg-orange-50 rounded -mx-1.5">
+                  <div className="flex items-center gap-1">
+                    <Percent size={12} className="text-orange-600" />
+                    <span className="text-gray-600">Discount:</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={invoiceDiscount}
+                      onChange={(e) => setInvoiceDiscount(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                      className="w-12 px-1 py-0.5 text-right text-xs font-medium border border-orange-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
+                      placeholder="0"
+                    />
+                    <span className="text-gray-500">%</span>
+                    {invoiceDiscount > 0 && (
+                      <span className="text-orange-600 font-medium">-₹{discountAmount.toFixed(0)}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Tax (CGST + SGST)</span>
+                  <span className="font-medium text-gray-700">₹{totalTax.toFixed(2)}</span>
+                </div>
+                <div className="h-px bg-gray-200 my-1"></div>
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-gray-800 text-sm">Grand Total</span>
+                  <span className="font-bold text-lg text-emerald-600">₹{grandTotal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Action Buttons - Compact */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={printReceipt}
+                  disabled={cart.length === 0}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 py-2 rounded-lg border-2 font-semibold text-xs transition-colors",
+                    cart.length === 0
+                      ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                      : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                  )}
+                >
+                  <Printer size={14} weight="bold" />
+                  Print
+                </button>
+                <button
+                  onClick={handleCheckout}
+                  disabled={cart.length === 0}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 py-2 rounded-lg font-semibold text-xs transition-all",
+                    cart.length === 0
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50"
+                  )}
+                >
+                  <Receipt size={14} weight="bold" />
+                  Checkout
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           /* Inline Checkout Panel - No Modal, Direct Access */
