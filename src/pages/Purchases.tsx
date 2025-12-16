@@ -1005,35 +1005,35 @@ const Sales = () => {
   const loadInvoicesFromDatabase = async () => {
     try {
       setIsLoadingInvoices(true)
-      const invoicesData = await getInvoices('sale')
+      const invoicesData = await getInvoices('purchase')
 
       if (invoicesData && Array.isArray(invoicesData) && invoicesData.length > 0) {
-        // STEP 1: Calculate customer outstanding directly from invoice data (2025 Standard)
-        // Sum (total - paid) for ALL invoices of each customer - most reliable method
-        const customerOutstandingMap: Map<string, number> = new Map()
+        // STEP 1: Calculate supplier outstanding directly from invoice data (2025 Standard)
+        // Sum (total - paid) for ALL invoices of each supplier - most reliable method
+        const supplierOutstandingMap: Map<string, number> = new Map()
 
         invoicesData.forEach(invoice => {
-          // Get customer key (normalize to lowercase for consistent matching)
-          const customerKey = (invoice?.partyName || invoice?.customerName || '').toLowerCase().trim()
-          if (!customerKey || customerKey === 'unknown') return
+          // Get supplier key (normalize to lowercase for consistent matching)
+          const supplierKey = (invoice?.partyName || invoice?.supplierName || '').toLowerCase().trim()
+          if (!supplierKey || supplierKey === 'unknown') return
 
           // Calculate this invoice's unpaid balance
           const invoiceTotal = Number(invoice?.grandTotal || invoice?.total || 0)
           const invoicePaid = Number(invoice?.payment?.paidAmount || 0)
           const invoiceBalance = invoiceTotal - invoicePaid
 
-          // Add to customer's total outstanding
-          const currentOutstanding = customerOutstandingMap.get(customerKey) || 0
-          customerOutstandingMap.set(customerKey, currentOutstanding + invoiceBalance)
+          // Add to supplier's total outstanding
+          const currentOutstanding = supplierOutstandingMap.get(supplierKey) || 0
+          supplierOutstandingMap.set(supplierKey, currentOutstanding + invoiceBalance)
         })
 
-        console.log('📊 Customer Outstanding Map:', Object.fromEntries(customerOutstandingMap))
+        console.log('📊 Supplier Outstanding Map:', Object.fromEntries(supplierOutstandingMap))
 
-        // STEP 2: Convert invoices to display format with customer outstanding attached
+        // STEP 2: Convert invoices to display format with supplier outstanding attached
         const formattedInvoices = invoicesData.map(invoice => {
-          // Look up customer's TOTAL outstanding across ALL their invoices
-          const customerKey = (invoice?.partyName || invoice?.customerName || '').toLowerCase().trim()
-          const customerOutstanding = customerOutstandingMap.get(customerKey) || 0
+          // Look up supplier's TOTAL outstanding across ALL their invoices
+          const supplierKey = (invoice?.partyName || invoice?.supplierName || '').toLowerCase().trim()
+          const supplierOutstanding = supplierOutstandingMap.get(supplierKey) || 0
 
           // Debug: Log items for converted invoices
           if (invoice?.convertedFrom || invoice?.invoiceNumber?.includes('INV/2025-26/380')) {
@@ -1072,8 +1072,8 @@ const Sales = () => {
             createdAt: invoice?.createdAt || invoice?.invoiceDate || new Date().toISOString(),
             // Track if payment was reversed
             isReversed: invoice?.isReversed || false,
-            // Customer total outstanding (2025 Standard - shows customer's total balance across all invoices)
-            customerOutstanding: customerOutstanding,
+            // Supplier total outstanding (2025 Standard - shows supplier's total balance across all invoices)
+            supplierOutstanding: supplierOutstanding,
             // Track invoice source (pos/invoice/ai)
             source: invoice?.source || 'invoice'
           }
