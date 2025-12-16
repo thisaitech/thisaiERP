@@ -5027,6 +5027,14 @@ TOTAL:       ₹${invoice.total}
                     </>
                   )}
                 </div>
+                {/* AI Scan Button */}
+                <button
+                  onClick={() => setShowScanner(true)}
+                  className="h-8 px-3 rounded-lg border border-violet-200 bg-violet-600 text-xs text-white font-semibold flex items-center gap-1.5 hover:bg-violet-700 transition-all shadow-sm"
+                >
+                  <Camera size={14} weight="bold" />
+                  <span>AI Scan</span>
+                </button>
                 {/* Add Sale/New POS Bill */}
                 <button
                   onClick={() => {
@@ -10556,7 +10564,7 @@ TOTAL:       ₹${invoice.total}
         isOpen={showScanner}
         onClose={() => setShowScanner(false)}
         onScanComplete={handleScanComplete}
-        type="sale"
+        type="purchase"
       />
 
       {/* Barcode Scanner for Items */}
