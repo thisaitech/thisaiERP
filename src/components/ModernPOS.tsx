@@ -88,11 +88,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { toast } from 'sonner'
 import { getItems } from '../services/itemService'
-import { getCompanySettings, getTaxSettings } from '../services/settingsService'
+import { getCompanySettings, getTaxSettings, getItemSettings } from '../services/settingsService'
 import { getParties, createParty } from '../services/partyService'
 import type { Item, Party } from '../types'
 import { usePOSSession } from '../contexts/POSSessionContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import BarcodeScanner from './BarcodeScanner'
 
 // POS Mode - Simple for grocery, Advanced for cafe
 type POSMode = 'simple' | 'cafe'
@@ -621,6 +622,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
   const [showQuickCheckout, setShowQuickCheckout] = useState(false)
   const [showBillPreview, setShowBillPreview] = useState(false) // Bill preview modal
   const [showMobileCart, setShowMobileCart] = useState(false) // Mobile cart drawer
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false) // Barcode scanner modal
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
   const [amountTendered, setAmountTendered] = useState<string>('')
   const [transactionId, setTransactionId] = useState('')
@@ -1008,10 +1010,14 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
     }
   }
 
-  // Get unique categories
+  // Get unique categories - merge from items AND settings
   const categories = useMemo(() => {
-    const cats = ['All', ...new Set(items.map(item => item.category || 'Uncategorized'))]
-    return cats
+    const itemSettings = getItemSettings()
+    const settingsCategories = itemSettings.productCategories || []
+    const itemCategories = items.map(item => item.category || 'Uncategorized')
+    // Merge both sources and remove duplicates
+    const allCategories = [...new Set([...settingsCategories, ...itemCategories])]
+    return ['All', ...allCategories.sort()]
   }, [items])
 
   // Get subcategories for a category
@@ -1629,7 +1635,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
             margin-bottom: 5px;
           }
           .company-details {
-            font-size: 13px;
+            font-size:  13px;
             color: #666;
             line-height: 1.6;
           }
@@ -1722,10 +1728,9 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
             color: #10b981;
             margin-bottom: 10px;
           }
-          .footer .powered {
-            font-size: 11px;
-            color: #999;
-            margin-top: 15px;
+          .barcode {
+            margin: 10px 0;
+            text-align: center;
           }
           @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -1814,7 +1819,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           <div class="footer">
             <div class="thanks">Thank You for Your Business!</div>
             <p>Items: ${cart.length} | Total Qty: ${cart.reduce((s, i) => s + i.quantity, 0)}</p>
-            <div class="powered">Powered by ThisAI CRM</div>
+            <div style="font-size:10px;">Powered by ThisAI CRM</div>
           </div>
         </div>
         <script>
@@ -2051,6 +2056,38 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           }
         </script>
         ` : ''}
+
+        <!-- Barcode Scanner Script - Only for preview, not actual print -->
+        ${forPreview ? `
+        <script>
+          window.onload = function() {
+            // Simulate barcode scan after a delay (for demo)
+            setTimeout(function() {
+              const demoBarcode = 'ITEM1234';
+              const itemName = 'Demo Item';
+              const itemPrice = 100;
+              const itemQuantity = 1;
+
+              // Add demo item to cart
+              const cartItem = {
+                id: 'demo-item',
+                itemId: demoBarcode,
+                name: itemName,
+                price: itemPrice,
+                quantity: itemQuantity,
+                unit: 'PCS',
+                tax: 0,
+                taxAmount: 0
+              };
+
+              window.openerModernPOS.addToCart(cartItem);
+
+              // Close preview window
+              window.close();
+            }, 2000);
+          }
+        </script>
+        ` : ''}
       </body>
       </html>
     `
@@ -2089,8 +2126,27 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
               placeholder={t.posPage.searchItems}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm shadow-sm"
+              className="w-full pl-8 pr-10 py-2 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm shadow-sm"
               autoFocus
+            />
+            {/* Barcode scanner icon button */}
+            <button
+              type="button"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-all"
+              onClick={() => setShowBarcodeScanner(true)}
+              title="Scan Barcode"
+            >
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M4 5a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H6v2a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1Zm14-1a1 1 0 0 0-1 1v2a1 1 0 1 0 2 0V6h1a1 1 0 1 0 0-2h-2ZM5 17a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h2a1 1 0 1 0 0-2H6v-2a1 1 0 1 0-2 0Zm14 1a1 1 0 0 1-1 1v1h-1a1 1 0 1 0 0 2h2a1 1 0 0 0 1-1v-2a1 1 0 1 0-2 0ZM8 6a1 1 0 0 1 1-1h1a1 1 0 1 1 0 2H9A1 1 0 0 1 8 6Zm3 0a1 1 0 0 1 1-1h1a1 1 0 1 1 0 2h-1a1 1 0 0 1-1-1Zm4-1a1 1 0 0 0-1 1v1a1 1 0 1 0 2 0V6a1 1 0 0 0-1-1ZM8 18a1 1 0 0 1 1-1h1a1 1 0 1 1 0 2H9a1 1 0 0 1-1-1Zm3 0a1 1 0 0 1 1-1h1a1 1 0 1 1 0 2h-1a1 1 0 0 1-1-1Zm4-1a1 1 0 0 0-1 1v1a1 1 0 1 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg>
+            </button>
+            {/* Barcode Scanner Modal */}
+            <BarcodeScanner
+              isOpen={showBarcodeScanner}
+              onClose={() => setShowBarcodeScanner(false)}
+              onScan={(barcode) => {
+                setSearchQuery(barcode)
+                setShowBarcodeScanner(false)
+              }}
+              title="Scan Item Barcode"
             />
           </div>
 
@@ -2105,9 +2161,9 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           )}
         </div>
 
-        {/* Categories - Horizontal Scroll for Small Screens */}
-        <div className="flex-shrink-0 mb-1.5 relative z-50" style={{ overflow: 'visible' }}>
-          <div className="flex gap-1 pb-1 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        {/* Categories - Wrap to show all categories */}
+        <div className="flex-shrink-0 mb-2 relative z-50" style={{ overflow: 'visible' }}>
+          <div className="flex flex-wrap gap-1.5 pb-1">
             {/* All Category */}
             <button
               onClick={() => {
@@ -2116,13 +2172,13 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 setHoveredCategory(null)
               }}
               className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-[11px] whitespace-nowrap transition-all flex-shrink-0",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap transition-all",
                 selectedCategory === 'All'
-                  ? "bg-emerald-500 text-white shadow"
+                  ? "bg-emerald-500 text-white shadow-md"
                   : "bg-white text-gray-600 hover:bg-emerald-50 border border-gray-200"
               )}
             >
-              <Squares size={12} weight="fill" />
+              <Squares size={14} weight="fill" />
               All
             </button>
             
@@ -2134,13 +2190,13 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 setHoveredCategory(null)
               }}
               className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-[11px] whitespace-nowrap transition-all flex-shrink-0",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap transition-all",
                 selectedCategory === 'Popular'
-                  ? "bg-orange-500 text-white shadow"
+                  ? "bg-orange-500 text-white shadow-md"
                   : "bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200"
               )}
             >
-              <Fire size={12} weight="fill" />
+              <Fire size={14} weight="fill" />
               Hot
             </button>
 
@@ -2152,22 +2208,22 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
               const brands = [...new Set(categoryItems.map(i => i.brand).filter(Boolean))] as string[]
               
               return (
-                <div key={category} className="relative flex-shrink-0 group/cat">
+                <div key={category} className="relative group/cat">
                   <button
                     onClick={() => {
                       setSelectedCategory(category)
                       setSelectedSubcategory(null)
                     }}
                     className={cn(
-                      "flex items-center gap-1 px-2 py-1 rounded-md font-semibold text-[11px] whitespace-nowrap transition-all",
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap transition-all",
                       selectedCategory === category
-                        ? "bg-emerald-500 text-white shadow"
+                        ? "bg-emerald-500 text-white shadow-md"
                         : "bg-white text-gray-600 hover:bg-emerald-50 border border-gray-200"
                     )}
                   >
-                    <span className="[&>svg]:w-3 [&>svg]:h-3">{categoryIcons[category] || categoryIcons['default']}</span>
+                    <span className="[&>svg]:w-3.5 [&>svg]:h-3.5">{categoryIcons[category] || categoryIcons['default']}</span>
                     {category}
-                    <CaretDown size={8} className="ml-0.5 opacity-50" />
+                    <CaretDown size={10} className="ml-0.5 opacity-50" />
                   </button>
                   
                   {/* CSS Hover Dropdown */}
@@ -2287,9 +2343,9 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           )}
         </div>
 
-        {/* Items Grid - Ultra Compact for Small Screens */}
+        {/* Items Grid - Bigger Icons for Typical POS */}
         <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 2xl:grid-cols-10 gap-1.5">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2">
             <AnimatePresence>
               {(selectedCategory === 'Popular' 
                 ? items.filter(item => item.stock > 0).slice(0, 50)
@@ -2307,48 +2363,48 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                   onClick={() => addToCart(item)}
                   className={cn(
                     "bg-white cursor-pointer border transition-all group relative",
-                    "rounded-lg p-1.5",
+                    "rounded-xl p-2",
                     availableStock <= 0 
                       ? "opacity-50 border-gray-200" 
                       : inCart > 0 
-                        ? "border-emerald-400 shadow ring-1 ring-emerald-400" 
-                        : "border-gray-200 hover:border-emerald-400 hover:shadow"
+                        ? "border-emerald-400 shadow-lg ring-2 ring-emerald-400" 
+                        : "border-gray-200 hover:border-emerald-400 hover:shadow-lg"
                   )}
                 >
                   {/* Cart quantity badge */}
                   {inCart > 0 && (
-                    <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow z-10">
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg z-10">
                       {inCart}
                     </div>
                   )}
 
                   {/* Out of Stock Badge */}
                   {availableStock <= 0 && (
-                    <div className="absolute top-0.5 left-0.5 z-10">
-                      <span className="bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded">OUT</span>
+                    <div className="absolute top-1 left-1 z-10">
+                      <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">OUT</span>
                     </div>
                   )}
 
-                  {/* Ultra Compact Layout: Icon + Info */}
-                  <div className="flex items-center gap-1.5">
-                    {/* Icon/Image - Smaller */}
-                    <div className="w-8 h-8 flex-shrink-0 rounded bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center overflow-hidden border border-emerald-100">
+                  {/* Bigger Layout: Icon on top + Info below */}
+                  <div className="flex flex-col items-center text-center">
+                    {/* Icon/Image - Bigger */}
+                    <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center overflow-hidden border border-emerald-100 mb-1.5">
                       {item.imageUrl ? (
                         <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-emerald-500 [&>svg]:w-4 [&>svg]:h-4">{getCategoryIcon(item.category)}</span>
+                        <span className="text-emerald-500 [&>svg]:w-7 [&>svg]:h-7">{getCategoryIcon(item.category)}</span>
                       )}
                     </div>
                     
-                    {/* Info - Stacked */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-800 text-[10px] leading-tight line-clamp-1">
+                    {/* Info - Below */}
+                    <div className="w-full">
+                      <h3 className="font-medium text-gray-800 text-xs leading-tight line-clamp-1 mb-0.5">
                         {item.name}
                       </h3>
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-emerald-600 text-xs">₹{item.sellingPrice}</span>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-bold text-emerald-600 text-sm">₹{item.sellingPrice}</span>
                         <span className={cn(
-                          "text-[9px] font-semibold",
+                          "text-[10px] font-semibold",
                           availableStock <= 0 ? "text-red-500" : availableStock <= 5 ? "text-amber-500" : "text-gray-400"
                         )}>
                           {availableStock}
@@ -2370,8 +2426,8 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
         </div>
       </div>
 
-      {/* Right Side - Cart / Bill - Narrower for fit */}
-      <div className="hidden md:flex w-72 lg:w-80 h-full bg-white border-l border-gray-200 flex-col shadow-xl overflow-hidden flex-shrink-0">
+      {/* Right Side - Cart / Bill - Wider for typical POS */}
+      <div className="flex w-96 xl:w-[420px] h-full bg-white border-l border-gray-200 flex-col shadow-xl overflow-hidden flex-shrink-0">
         {/* ========== MULTI-CUSTOMER TABS BAR ========== */}
         <div className="bg-gray-100 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center overflow-x-auto scrollbar-hide">
@@ -2480,7 +2536,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
               value={customerSearch}
               onChange={(e) => handleCustomerSearchChange(e.target.value)}
               onFocus={() => setShowCustomerDropdown(true)}
-              className="w-full pl-9 pr-9 py-2 rounded-lg border border-white/30 bg-white/10 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/20 transition-all text-sm"
+              className="w-full pl-9 pr-10 py-2 rounded-lg border border-white/30 bg-white/10 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/20 transition-all text-sm"
             />
             <CaretDown
               size={16}
@@ -2764,9 +2820,9 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex flex-col items-center justify-center h-full text-gray-400"
+                    className="flex flex-col items-center justify-center py-8 text-gray-400"
                   >
-                    <ShoppingCart size={48} className="mb-2 text-gray-200" />
+                    <ShoppingCart size={40} className="mb-2 text-gray-200" />
                     <p className="text-sm font-medium">{t.posPage.cartEmpty}</p>
                     <p className="text-xs">{t.posPage.tapToAdd}</p>
                   </motion.div>
@@ -2791,7 +2847,6 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                             ₹{item.price} × {item.quantity} = ₹{(item.price * item.quantity).toFixed(0)}
                           </p>
                         </div>
-
                         {/* Quantity Controls - Very Compact */}
                         <div className="flex items-center gap-0.5 flex-shrink-0">
                           <button
@@ -2947,7 +3002,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                     "flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-semibold text-sm transition-all",
                     cart.length === 0
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-[1.02]"
+                      : "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50"
                   )}
                 >
                   <Receipt size={16} weight="bold" />
@@ -2982,10 +3037,10 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                       key={method}
                       onClick={() => setPaymentMethod(method)}
                       className={cn(
-                        "flex flex-col items-center gap-0.5 p-2 rounded-lg border-2 transition-all",
+                        "flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all",
                         paymentMethod === method
-                          ? `border-${color}-500 bg-${color}-50 text-${color}-600`
-                          : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+                          ? "border-emerald-500 bg-emerald-50"
+                          : "border-gray-200 bg-white"
                       )}
                       style={{
                         borderColor: paymentMethod === method
@@ -2993,14 +3048,17 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                           : undefined,
                         backgroundColor: paymentMethod === method
                           ? (color === 'emerald' ? '#ecfdf5' : color === 'purple' ? '#faf5ff' : color === 'blue' ? '#eff6ff' : '#fffbeb')
-                          : undefined,
-                        color: paymentMethod === method
-                          ? (color === 'emerald' ? '#059669' : color === 'purple' ? '#9333ea' : color === 'blue' ? '#2563eb' : '#d97706')
                           : undefined
                       }}
                     >
-                      {icon}
-                      <span className="text-[10px] font-semibold">{label}</span>
+                      <span style={{ color: paymentMethod === method
+                          ? (color === 'emerald' ? '#059669' : color === 'purple' ? '#9333ea' : color === 'blue' ? '#2563eb' : '#d97706')
+                          : '#6b7280'
+                        }}>{icon}</span>
+                        <span className="text-xs font-semibold" style={{ color: paymentMethod === method
+                          ? (color === 'emerald' ? '#059669' : color === 'purple' ? '#9333ea' : color === 'blue' ? '#2563eb' : '#d97706')
+                          : '#6b7280'
+                        }}>{label}</span>
                     </button>
                   ))}
                 </div>
@@ -3086,69 +3144,6 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                   </div>
                 </div>
               )}
-
-              {/* Share Preview - Share without completing sale */}
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Share Preview</p>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {/* WhatsApp - Share preview only (no sale completion) */}
-                  <button
-                    onClick={handlePreviewShareWhatsApp}
-                    disabled={cart.length === 0}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg bg-[#25D366] hover:bg-[#20BD5A] text-white transition-all disabled:opacity-50"
-                  >
-                    <WhatsappLogo size={18} weight="fill" />
-                    <span className="text-[9px] font-semibold">WhatsApp</span>
-                  </button>
-
-                  {/* SMS - Share preview only (no sale completion) */}
-                  <button
-                    onClick={handlePreviewShareSMS}
-                    disabled={cart.length === 0}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-all disabled:opacity-50"
-                  >
-                    <ChatCircle size={18} weight="fill" />
-                    <span className="text-[9px] font-semibold">SMS</span>
-                  </button>
-
-                  {/* Print - Print preview only (no sale completion) */}
-                  <button
-                    onClick={handlePreviewPrint}
-                    disabled={cart.length === 0}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white transition-all disabled:opacity-50"
-                  >
-                    <Printer size={18} weight="bold" />
-                    <span className="text-[9px] font-semibold">Print</span>
-                  </button>
-
-                  {/* UPI Link - Copy payment link (no sale completion) */}
-                  <button
-                    onClick={() => {
-                      if (!companySettings?.upiId) {
-                        alert('UPI ID not configured in settings')
-                        return
-                      }
-                      const upiLink = `upi://pay?pa=${companySettings.upiId}&pn=${encodeURIComponent(companySettings.companyName || 'Store')}&am=${grandTotal}&cu=INR&tn=${encodeURIComponent(`Payment`)}`
-                      navigator.clipboard.writeText(upiLink).then(() => {
-                        alert('UPI link copied!')
-                      }).catch(() => {
-                        const textArea = document.createElement('textarea')
-                        textArea.value = upiLink
-                        document.body.appendChild(textArea)
-                        textArea.select()
-                        document.execCommand('copy')
-                        document.body.removeChild(textArea)
-                        alert('UPI link copied!')
-                      })
-                    }}
-                    disabled={cart.length === 0}
-                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white transition-all disabled:opacity-50"
-                  >
-                    <LinkIcon size={18} weight="bold" />
-                    <span className="text-[9px] font-semibold">UPI Link</span>
-                  </button>
-                </div>
-              </div>
             </div>
 
             {/* Checkout Footer - Action Buttons - Fixed at bottom */}
@@ -3341,7 +3336,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                             Showing 10 of {filteredParties.length} results
                           </div>
                         )}
-                      </motion.div>
+                        </motion.div>
                       </>
                     )}
                   </AnimatePresence>
@@ -3377,7 +3372,6 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                             ₹{item.price} × {item.quantity} = ₹{(item.price * item.quantity).toFixed(0)}
                           </p>
                         </div>
-
                         {/* Quantity Controls */}
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <button

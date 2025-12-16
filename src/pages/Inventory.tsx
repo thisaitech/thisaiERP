@@ -1544,6 +1544,22 @@ const Inventory = () => {
                             }}
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           >
+                            {/* Custom Categories from Settings */}
+                            {(() => {
+                              const customCategories = getItemSettings().productCategories || []
+                              const builtInCategories = ['Biscuits', 'Chips', 'Chocolate', 'Soap', 'Soft Drinks', 'Noodles', 'Juice', 'Water Bottles', 'Pasta', 'Rice', 'Oil', 'Milk', 'Tea', 'Coffee', 'Shampoo', 'Toothpaste', 'Cream', 'Detergent', 'Sanitizer', 'Stationery', 'Pens', 'Notebooks', 'Pencils', 'Batteries', 'Bulbs', 'Electronics', 'Furniture', 'Tablets', 'Syrup', 'General', 'Other']
+                              const newCategories = customCategories.filter(c => !builtInCategories.includes(c))
+                              if (newCategories.length > 0) {
+                                return (
+                                  <optgroup label="⭐ Your Categories">
+                                    {newCategories.map(cat => (
+                                      <option key={cat} value={cat}>📁 {cat}</option>
+                                    ))}
+                                  </optgroup>
+                                )
+                              }
+                              return null
+                            })()}
                             <optgroup label="Common Categories">
                               <option value="Biscuits">🍪 Biscuits (1 Box = 12 Pcs)</option>
                               <option value="Chips">🥔 Chips (1 Box = 24 Pcs)</option>
@@ -2666,6 +2682,22 @@ const Inventory = () => {
                             }}
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           >
+                            {/* Custom Categories from Settings */}
+                            {(() => {
+                              const customCategories = getItemSettings().productCategories || []
+                              const builtInCategories = ['Biscuits', 'Chips', 'Chocolate', 'Soap', 'Soft Drinks', 'Noodles', 'Juice', 'Water Bottles', 'Pasta', 'Oil', 'Milk', 'Tea', 'Coffee', 'Shampoo', 'Toothpaste', 'Detergent', 'Stationery', 'Pens', 'Notebooks', 'Batteries', 'Electronics', 'Furniture', 'General', 'Other']
+                              const newCategories = customCategories.filter(c => !builtInCategories.includes(c))
+                              if (newCategories.length > 0) {
+                                return (
+                                  <optgroup label="⭐ Your Categories">
+                                    {newCategories.map(cat => (
+                                      <option key={cat} value={cat}>📁 {cat}</option>
+                                    ))}
+                                  </optgroup>
+                                )
+                              }
+                              return null
+                            })()}
                             <optgroup label="Common Categories">
                               <option value="Biscuits">🍪 Biscuits</option>
                               <option value="Chips">🥔 Chips</option>

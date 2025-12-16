@@ -179,6 +179,7 @@ export interface ItemSettings {
   allowNegativeStock: boolean
   defaultTaxRate: number
   itemUnits: string[]
+  productCategories: string[]
 }
 
 // Invoice Table Column Settings - Customizable Headers
@@ -753,7 +754,8 @@ function getDefaultItemSettings(): ItemSettings {
     enableBarcode: false,
     allowNegativeStock: false,
     defaultTaxRate: 18,
-    itemUnits: ['Pieces (PCS)', 'Box (BOX)', 'Carton (CTN)', 'Dozen (DZ)', 'Kg', 'Liter']
+    itemUnits: ['Pieces (PCS)', 'Box (BOX)', 'Carton (CTN)', 'Dozen (DZ)', 'Kg', 'Liter'],
+    productCategories: ['General', 'Electronics', 'Stationery', 'Grocery', 'Medical', 'Clothing', 'Food & Beverages', 'Hardware', 'Cosmetics', 'Other']
   }
 }
 

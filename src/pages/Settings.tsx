@@ -3430,6 +3430,84 @@ const Settings = () => {
                       </div>
                     </div>
 
+                    {/* Product Categories Management */}
+                    <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg space-y-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Tag size={20} className="text-emerald-600" />
+                        <h3 className="font-bold text-emerald-800">Product Categories</h3>
+                      </div>
+                      <p className="text-xs text-emerald-600 mb-3">
+                        Manage categories for your inventory items. These will appear in POS and Inventory.
+                      </p>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {(itemSettings.productCategories || []).map((category) => (
+                          <div key={category} className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-emerald-200">
+                            <div className="flex items-center gap-2">
+                              <Package size={16} className="text-emerald-500" />
+                              <span className="text-sm font-medium">{category}</span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to delete "${category}" category?`)) {
+                                  setItemSettings({
+                                    ...itemSettings,
+                                    productCategories: (itemSettings.productCategories || []).filter(c => c !== category)
+                                  })
+                                  toast.success(`Category "${category}" removed`)
+                                }
+                              }}
+                              className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <input
+                          type="text"
+                          placeholder="Enter new category name (e.g., Medical)"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && newCategoryName.trim()) {
+                              if ((itemSettings.productCategories || []).includes(newCategoryName.trim())) {
+                                toast.error('Category already exists')
+                              } else {
+                                setItemSettings({
+                                  ...itemSettings,
+                                  productCategories: [...(itemSettings.productCategories || []), newCategoryName.trim()]
+                                })
+                                toast.success(`Category "${newCategoryName.trim()}" added`)
+                                setNewCategoryName('')
+                              }
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 text-sm border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        />
+                        <button
+                          onClick={() => {
+                            if (newCategoryName.trim()) {
+                              if ((itemSettings.productCategories || []).includes(newCategoryName.trim())) {
+                                toast.error('Category already exists')
+                              } else {
+                                setItemSettings({
+                                  ...itemSettings,
+                                  productCategories: [...(itemSettings.productCategories || []), newCategoryName.trim()]
+                                })
+                                toast.success(`Category "${newCategoryName.trim()}" added`)
+                                setNewCategoryName('')
+                              }
+                            }
+                          }}
+                          disabled={!newCategoryName.trim()}
+                          className="px-4 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    </div>
+
                     <button
                       onClick={handleSaveItemSettings}
                       className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
