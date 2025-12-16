@@ -7049,17 +7049,21 @@ TOTAL:       ₹${invoice.total}
                   </div>
                 </div>
                 
-                {/* Line 2: Terms & Conditions */}
+                {/* Line 2: Attach Document */}
                 <div className="flex items-center gap-1">
                   <label className="text-xs text-slate-600 flex items-center gap-0.5 whitespace-nowrap">
-                    <Pencil size={10} className="text-purple-500" />
-                    Terms & Conditions
+                    <UploadSimple size={10} className="text-purple-500" />
+                    Attach Document
                   </label>
                   <input
-                    type="text"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Thank you"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        toast.success(`File "${file.name}" attached`)
+                      }
+                    }}
                     className="flex-1 min-w-0 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none"
                   />
                 </div>
@@ -7632,36 +7636,6 @@ TOTAL:       ₹${invoice.total}
                               setShowBillDropdown(false)
                               const invoice = buildCurrentInvoiceData()
                               if (invoice) {
-                                handleGenerateEInvoice(invoice)
-                              } else {
-                                toast.error('Please add customer and items first')
-                              }
-                            }}
-                            className="w-full px-3 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors"
-                          >
-                            Generate e-Invoice
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowBillDropdown(false)
-                              const invoice = buildCurrentInvoiceData()
-                              if (invoice) {
-                                handleGenerateEWayBill(invoice)
-                              } else {
-                                toast.error('Please add customer and items first')
-                              }
-                            }}
-                            className="w-full px-3 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors"
-                          >
-                            Generate Eway Bill
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowBillDropdown(false)
-                              const invoice = buildCurrentInvoiceData()
-                              if (invoice) {
                                 handleShareWhatsApp(invoice)
                               } else {
                                 toast.error('Please add customer and items first')
@@ -7734,22 +7708,6 @@ TOTAL:       ₹${invoice.total}
                   <span>Save</span>
                   <WhatsappLogo size={14} weight="fill" />
                 </button>
-
-                {/* Save + Print Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowInvoicePreview(true)}
-                  disabled={invoiceItems.length === 0 || isCreatingInvoice}
-                  className={cn(
-                    "flex-1 py-2.5 px-3 rounded-lg font-medium text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95",
-                    invoiceItems.length > 0 && !isCreatingInvoice
-                      ? "bg-primary text-white hover:bg-primary/90"
-                      : "bg-primary/30 text-primary/50 cursor-not-allowed"
-                  )}
-                >
-                  <span>Save</span>
-                  <Printer size={14} weight="bold" />
-                </button>
               </div>
 
               {/* Desktop: Back Button - Before Generate Bill */}
@@ -7813,36 +7771,6 @@ TOTAL:       ₹${invoice.total}
                             transition={{ duration: 0.15 }}
                             className="absolute bottom-full right-0 mb-1 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1"
                           >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowBillDropdown(false)
-                                const invoice = buildCurrentInvoiceData()
-                                if (invoice) {
-                                  handleGenerateEInvoice(invoice)
-                                } else {
-                                  toast.error('Please add customer and items first')
-                                }
-                              }}
-                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors"
-                            >
-                              Generate e-Invoice
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowBillDropdown(false)
-                                const invoice = buildCurrentInvoiceData()
-                                if (invoice) {
-                                  handleGenerateEWayBill(invoice)
-                                } else {
-                                  toast.error('Please add customer and items first')
-                                }
-                              }}
-                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors"
-                            >
-                              Generate Eway Bill
-                            </button>
                             <button
                               type="button"
                               onClick={() => {
@@ -7929,22 +7857,6 @@ TOTAL:       ₹${invoice.total}
                 )}
               >
                 Save
-              </motion.button>
-
-              {/* Save & Print Button - Desktop only */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowInvoicePreview(true)}
-                disabled={invoiceItems.length === 0}
-                className={cn(
-                  "hidden md:flex px-5 py-2.5 rounded-lg font-semibold text-sm transition-all items-center justify-center gap-2",
-                  invoiceItems.length > 0
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
-                )}
-              >
-                {t.sales.saveAndPrint}
               </motion.button>
             </div>
           </div>
