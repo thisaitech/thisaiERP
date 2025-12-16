@@ -1055,7 +1055,10 @@ const Sales = () => {
             date: invoice?.invoiceDate || new Date().toISOString().split('T')[0],
             total: invoice?.grandTotal || 0,
             paidAmount: invoice?.paidAmount ?? invoice?.payment?.paidAmount ?? 0,
-            paymentStatus: (invoice?.paymentStatus || invoice?.payment?.status || 'pending') as any,
+            // Auto-fix status for fully returned invoices (total = 0 with returns)
+            paymentStatus: ((invoice?.grandTotal === 0 || invoice?.total === 0) && (invoice?.hasReturns || invoice?.returnedAmount > 0))
+              ? 'returned'
+              : (invoice?.paymentStatus || invoice?.payment?.status || 'pending') as any,
             itemsCount: invoice?.items?.length || 0,
             items: invoice?.items || [], // Keep full items array for duplication
             subtotal: invoice?.subtotal || 0,
@@ -5299,7 +5302,8 @@ TOTAL:       ₹${invoice.total}
               { key: 'all', label: t.common.all },
               { key: 'paid', label: t.sales.paid },
               { key: 'pending', label: t.sales.pending },
-              { key: 'partial', label: t.sales.partial }
+              { key: 'partial', label: t.sales.partial },
+              { key: 'returned', label: 'Returned' }
             ].map((status) => (
               <motion.button
                 key={status.key}
@@ -5644,6 +5648,8 @@ TOTAL:       ₹${invoice.total}
                       >
                         <Eye size={16} weight="duotone" className="text-blue-600" />
                       </button>
+                      {/* Hide payment button for fully returned invoices */}
+                      {invoice.paymentStatus !== 'returned' && (
                       <button
                         onClick={(e) => { e.stopPropagation(); openPaymentModal(invoice) }}
                         className={cn(
@@ -5663,6 +5669,7 @@ TOTAL:       ₹${invoice.total}
                             : <CheckCircle size={16} weight="duotone" className="text-emerald-600" />
                         }
                       </button>
+                      )}
                       <button
                         onClick={(e) => { e.stopPropagation(); handlePrintInvoice(invoice) }}
                         className="w-7 h-7 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-all"
@@ -5814,7 +5821,8 @@ TOTAL:       ₹${invoice.total}
                         <span>{language === 'ta' ? 'வாட்ஸ்அப்' : 'WhatsApp'}</span>
                       </button>
 
-                      {/* Record/Reverse Payment */}
+                      {/* Record/Reverse Payment - Hide for fully returned */}
+                      {invoice.paymentStatus !== 'returned' && (
                       <button
                         onClick={() => {
                           if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current)
@@ -5835,6 +5843,7 @@ TOTAL:       ₹${invoice.total}
                           : (language === 'ta' ? 'பணம் பதிவு' : 'Record Payment')
                         }</span>
                       </button>
+                      )}
 
                       <div className="border-t border-slate-100 dark:border-slate-700 my-1.5 mx-2" />
 
@@ -5920,7 +5929,8 @@ TOTAL:       ₹${invoice.total}
                         <span>{t.sales.pos}</span>
                       </button>
 
-                      {/* Create Sale Return */}
+                      {/* Create Sale Return - Hide for fully returned */}
+                      {invoice.paymentStatus !== 'returned' && (
                       <button
                         onClick={() => {
                           if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current)
@@ -5935,6 +5945,7 @@ TOTAL:       ₹${invoice.total}
                         <ArrowUUpLeft size={18} weight="duotone" className="text-orange-500" />
                         <span>{language === 'ta' ? 'திருப்பி' : 'Sale Return'}</span>
                       </button>
+                      )}
 
                       <div className="border-t border-slate-100 dark:border-slate-700 my-1.5 mx-2" />
 
