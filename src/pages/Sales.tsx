@@ -6045,10 +6045,10 @@ TOTAL:       ₹${invoice.total}
             {/* Back Button */}
             <button
               onClick={handleBackToList}
-              className="flex items-center gap-1 px-2.5 py-1 bg-gray-700 text-white hover:bg-gray-600 rounded-lg font-medium transition-colors text-xs"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white hover:bg-slate-600 rounded-lg font-semibold transition-colors text-sm shadow-sm"
             >
-              <ArrowLeft size={14} weight="bold" />
-              <span className="hidden md:inline">Back</span>
+              <ArrowLeft size={18} weight="bold" />
+              <span>Back to List</span>
             </button>
           </div>
 
@@ -6971,11 +6971,11 @@ TOTAL:       ₹${invoice.total}
                                     // Simply store what user enters - updateItem handles tax calculation based on mode
                                     updateItem(item.id, 'price', enteredPrice)
                                   }}
-                                  className="w-full h-6 px-1 bg-transparent border-0 text-xs text-right font-semibold text-slate-700 focus:ring-0 focus:outline-none"
+                                  className="w-full h-6 px-1 bg-transparent border-0 text-xs text-center font-semibold text-slate-700 focus:ring-0 focus:outline-none"
                                   placeholder="0"
                                 />
                               </td>
-                              <td className="px-1 py-1.5 text-right align-middle" style={{ width: '60px', minWidth: '60px' }}>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '60px', minWidth: '60px' }}>
                                 <span className="text-xs font-semibold text-slate-600">₹{(item.basePrice || item.price).toFixed(2)}</span>
                               </td>
                               {visibleColumns.discount && (
@@ -6996,7 +6996,7 @@ TOTAL:       ₹${invoice.total}
                                       className="w-full h-6 px-0.5 bg-transparent border-0 text-xs text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
                                     />
                                   </td>
-                                  <td className="px-1 py-1.5 text-right align-middle" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-1 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -7011,7 +7011,7 @@ TOTAL:       ₹${invoice.total}
                                         updateItem(item.id, 'discount', Math.round(discPercent * 100) / 100)
                                       }}
                                       placeholder="0"
-                                      className="w-full h-6 px-1 bg-transparent border-0 text-xs text-right text-slate-600 font-medium focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-1 bg-transparent border-0 text-xs text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
                                     />
                                   </td>
                                 </>
@@ -7034,7 +7034,7 @@ TOTAL:       ₹${invoice.total}
                                 />
                               </td>
                               {/* GST ₹ - Always visible */}
-                              <td className="px-1 py-1.5 text-right align-middle" style={{ width: '42px', minWidth: '42px' }}>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '42px', minWidth: '42px' }}>
                                 <span className="text-xs font-medium text-slate-600">₹{(item.taxAmount || 0).toFixed(2)}</span>
                               </td>
                               {/* CGST/SGST/IGST breakdown - Optional */}
@@ -7099,7 +7099,7 @@ TOTAL:       ₹${invoice.total}
                                   </td>
                                 </>
                               )}
-                              <td className="px-1 py-1.5 text-right align-middle" style={{ width: '65px', minWidth: '65px' }}>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '65px', minWidth: '65px' }}>
                                 <span className="text-sm font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">₹{item.total.toFixed(2)}</span>
                               </td>
                               <td className="px-1 py-1.5 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
@@ -7880,6 +7880,17 @@ TOTAL:       ₹${invoice.total}
                 </button>
               </div>
 
+              {/* Desktop: Back Button - Before Generate Bill */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleBackToList}
+                className="hidden md:flex px-4 py-2.5 rounded-lg font-semibold text-sm transition-all items-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
+              >
+                <ArrowLeft size={16} weight="bold" />
+                Back
+              </motion.button>
+
               {/* Desktop: Generate Bill with dropdown */}
               <div className="relative hidden md:block flex-none">
                 <div className="flex">
@@ -8032,7 +8043,7 @@ TOTAL:       ₹${invoice.total}
                 </motion.button>
               )}
 
-              {/* Save Button (without print) - Hidden on mobile, combined with Save & Print */}
+              {/* Save Button (without print) */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
