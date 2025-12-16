@@ -17,6 +17,7 @@ import {
   Sparkle,
   ArrowRight,
   ArrowLeft,
+  ArrowUUpLeft,
   User,
   Phone,
   Envelope,
@@ -53,6 +54,7 @@ import {
   Storefront,
   MapPin
 } from '@phosphor-icons/react'
+import { useBanking } from '../hooks/useBanking'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { cn } from '../lib/utils'
@@ -61,7 +63,7 @@ import { useAIAssistant } from '../contexts/AIAssistantContext'
 import AIAssistant from '../components/AIAssistant'
 import ReceiptScanner from '../components/ReceiptScanner'
 import type { ScannedInvoiceData } from '../types'
-import { processScannedInvoice, getInvoices, deleteInvoice, createInvoice as createInvoiceService, getInvoiceById } from '../services/invoiceService'
+import { processScannedInvoice, getInvoices, deleteInvoice, createInvoice as createInvoiceService, getInvoiceById, updateInvoice } from '../services/invoiceService'
 import { recordPayment, getInvoicePayments, deletePayment } from '../services/paymentService'
 import type { Payment } from '../services/paymentService'
 import { downloadInvoicePDF, printInvoicePDF } from '../services/pdfService'
@@ -72,7 +74,7 @@ import { generatePaymentRef, savePaymentStatus, type UPIPaymentDetails, type Car
 import { generateIndianInvoiceNumber } from '../utils/invoiceNumbering'
 import { exportToTallyExcel, exportToTallyCSV, downloadTallyXML } from '../utils/exportUtils'
 import { calculateGSTBreakdown, isIntraStateTransaction, isB2BTransaction, isHSNRequired, formatGSTDisplay } from '../utils/gstCalculations'
-import { validateCustomerName, validateBusinessName, validateItemName, validatePhoneNumber, validateGSTIN } from '../utils/inputValidation'
+import { validateCustomerName, validateBusinessName, validateItemName, validatePhoneNumber, validateGSTIN, validateHSNCode, validateBarcode } from '../utils/inputValidation'
 import { getCompanySettings, getTaxSettings, getInvoiceTableColumnSettings } from '../services/settingsService'
 import { calculateTax } from '../utils/gstTaxCalculator'
 import { getUnitPrice, getBaseQtyForSale, getStockDisplay, hasEnoughStock, getAvailableStockMessage } from '../utils/multiUnitUtils'
@@ -81,6 +83,8 @@ import ModernPOS, { QuickCheckoutData } from '../components/ModernPOS'
 import POSCheckoutWizard, { CheckoutData } from '../components/POSCheckoutWizard'
 import BarcodeScanner from '../components/BarcodeScanner'
 import { findItemByBarcode } from '../services/itemService'
+import { searchItems, type MasterItem } from '../services/itemMasterService'
+import { getItemSettings } from '../services/settingsService'
 import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../services/firebase'
 
@@ -161,12 +165,12 @@ interface InvoiceItem {
   baseUnit?: string // e.g., 'Pcs'
   purchaseUnit?: string // e.g., 'Box'
   piecesPerPurchaseUnit?: number // e.g., 12
-  purchasePricePerPiece?: number // Price per single piece
+  sellingPricePerPiece?: number // Price per single piece
   selectedUnit?: string // Current selected unit for this line item
   qtyInBaseUnits?: number // Quantity converted to base units for stock deduction
 }
 
-const Purchases = () => {
+const Sales = () => {
   // Language support
   const { t, language } = useLanguage()
 
@@ -190,7 +194,7 @@ const Purchases = () => {
   // Tab system for multiple simultaneous invoices
   interface InvoiceTab {
     id: string
-    type: 'purchase' | 'credit'
+    type: 'sale' | 'credit'
     mode: 'invoice' | 'pos' // Track which mode this tab belongs to
     customerName: string
     customerPhone: string
@@ -216,21 +220,34 @@ const Purchases = () => {
   const [customDateTo, setCustomDateTo] = useState<string>(() => new Date().toISOString().split('T')[0])
   const [showCustomDatePicker, setShowCustomDatePicker] = useState(false)
 
+  // Detect if we just navigated with a converted quotation draft to skip list-mode render flicker
+  const hasConvertedDraft = (() => {
+    try {
+      return !!sessionStorage.getItem('converted_invoice')
+    } catch {
+      return false
+    }
+  })()
+
   // View mode: 'list' shows invoice list, 'create' shows create invoice form
   // Use lazy initialization to load from localStorage immediately
   const [viewMode, setViewMode] = useState<'list' | 'create'>(() => {
     try {
-      const saved = localStorage.getItem('purchases_viewMode')
-      return (saved as 'list' | 'create') || 'list'
-    } catch {
+      if (hasConvertedDraft) return 'create'
+      const saved = localStorage.getItem('sales_viewMode')
+      if (saved === 'list' || saved === 'create') return saved as 'list' | 'create'
+      // Default to create mode when landing directly on /sales to avoid mode flip animations
+      if (typeof window !== 'undefined' && window.location.pathname === '/sales') return 'create'
       return 'list'
+    } catch {
+      return 'create'
     }
   })
 
   // Lazy initialization for tabs - load from localStorage immediately
   const [invoiceTabs, setInvoiceTabs] = useState<InvoiceTab[]>(() => {
     try {
-      const saved = localStorage.getItem('purchases_invoiceTabs')
+      const saved = localStorage.getItem('sales_invoiceTabs')
       if (saved) {
         const parsed = JSON.parse(saved)
         if (parsed && parsed.length > 0) {
@@ -249,7 +266,7 @@ const Purchases = () => {
     // Default initial tab
     return [{
       id: '1',
-      type: 'purchase',
+      type: 'sale',
       mode: 'invoice', // Default to invoice mode
       customerName: '',
       customerPhone: '',
@@ -278,6 +295,9 @@ const Purchases = () => {
   // Invoice Number and Date State
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0])
+  const hasProcessedConvertedInvoice = useRef(false)
+  // Flag to avoid feedback loop when syncing tab -> form -> tab
+  const isApplyingTabRef = useRef(false)
 
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -310,32 +330,39 @@ const Purchases = () => {
   const [invoiceDiscount, setInvoiceDiscount] = useState(0)
   const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent')
   const [roundOff, setRoundOff] = useState(true)
-  const [notes, setNotes] = useState('')
+  const [notes, setNotes] = useState('Thank you')
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false)
 
-  // Load bank accounts from Banking module
+  // Banking accounts (subscribe for live updates)
   const [bankAccounts, setBankAccounts] = useState<any[]>([])
+  const { accounts: bankingAccountsObj, refresh: refreshBanking } = useBanking()
 
   useEffect(() => {
-    const loadBankAccounts = async () => {
-      try {
-        const { getBankingPageData } = await import('../services/bankingService')
-        const bankingData = await getBankingPageData()
-        console.log('🏦 Loading bank accounts from Firebase:', bankingData)
-
-        if (bankingData && bankingData.bankAccounts && Array.isArray(bankingData.bankAccounts)) {
-          setBankAccounts(bankingData.bankAccounts)
-          console.log('✅ Loaded', bankingData.bankAccounts.length, 'bank accounts from Firebase')
-        } else {
-          console.log('⚠️ No bank accounts array found in Firebase data')
-          setBankAccounts([])
+    try {
+      if (bankingAccountsObj && bankingAccountsObj.bankAccounts) {
+        setBankAccounts(bankingAccountsObj.bankAccounts)
+      } else if (bankingAccountsObj) {
+        // If banking object present but no bankAccounts array, try mapping
+        const banks = (bankingAccountsObj.accounts || [])
+        setBankAccounts(banks)
+      } else {
+        // Fallback: read from localStorage once
+        const raw = localStorage.getItem('bankingAccounts')
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          setBankAccounts(parsed.bankAccounts || parsed.accounts || [])
         }
-      } catch (error) {
-        console.error('Failed to load bank accounts from Firebase:', error)
-        setBankAccounts([])
       }
+    } catch (e) {
+      console.warn('Failed to parse bankingAccounts in Sales page', e)
+      setBankAccounts([])
     }
-    loadBankAccounts()
+  }, [bankingAccountsObj])
+
+  // Load custom units from Item Settings
+  useEffect(() => {
+    const itemSettings = getItemSettings()
+    setCustomUnits(itemSettings.itemUnits || [])
   }, [])
 
   // Split Payment State
@@ -343,10 +370,6 @@ const Purchases = () => {
     { type: 'cash', amount: 0, reference: '' }
   ])
 
-  // Attachments State
-  const [attachments, setAttachments] = useState<{ name: string; type: 'image' | 'document'; url: string }[]>([])
-  const imageInputRef = useRef<HTMLInputElement>(null)
-  const documentInputRef = useRef<HTMLInputElement>(null)
 
   // Invoice Preview Modal State
   const [showInvoicePreview, setShowInvoicePreview] = useState(false)
@@ -362,6 +385,7 @@ const Purchases = () => {
   const [loadingParties, setLoadingParties] = useState(false)
   const [loadingItems, setLoadingItems] = useState(false)
   const [highlightedItemIndex, setHighlightedItemIndex] = useState(-1)
+  const [highlightedCustomerIndex, setHighlightedCustomerIndex] = useState(-1)
 
   // Add Customer Modal State
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false)
@@ -373,12 +397,16 @@ const Purchases = () => {
   const [newCustomerState, setNewCustomerState] = useState('')
   const [newCustomerType, setNewCustomerType] = useState('Regular')
   const [newCustomerNotes, setNewCustomerNotes] = useState('')
+  const [newCustomerOpeningBalance, setNewCustomerOpeningBalance] = useState('')
+  const [newCustomerCreditDays, setNewCustomerCreditDays] = useState(30)
   const [showAddressField, setShowAddressField] = useState(false)
   const [showStateField, setShowStateField] = useState(false)
   const [showGstField, setShowGstField] = useState(false)
   const [showEmailField, setShowEmailField] = useState(false)
   const [showCustomerTypeField, setShowCustomerTypeField] = useState(false)
   const [showNotesField, setShowNotesField] = useState(false)
+  const [showOpeningBalanceField, setShowOpeningBalanceField] = useState(false)
+  const [showCreditDaysField, setShowCreditDaysField] = useState(false)
   const [savingCustomer, setSavingCustomer] = useState(false)
 
   // POS Preview Modal State
@@ -409,9 +437,16 @@ const Purchases = () => {
   const [showNewItemBarcode, setShowNewItemBarcode] = useState(false)
   const [savingItem, setSavingItem] = useState(false)
 
+  // Add Item Modal - Autocomplete States (matching Inventory page)
+  const [newItemSuggestions, setNewItemSuggestions] = useState<MasterItem[]>([])
+  const [showNewItemSuggestions, setShowNewItemSuggestions] = useState(false)
+  const [selectedNewItemIndex, setSelectedNewItemIndex] = useState(-1)
+  const [customUnits, setCustomUnits] = useState<string[]>([])
+
   // Refs for click-outside detection
   const customerDropdownRef = useRef<HTMLDivElement>(null)
   const itemDropdownRef = useRef<HTMLDivElement>(null)
+  const desktopItemDropdownRef = useRef<HTMLDivElement>(null)
   const itemSearchInputRef = useRef<HTMLInputElement>(null)
   const itemTableContainerRef = useRef<HTMLDivElement>(null)
   const mobileItemsContainerRef = useRef<HTMLDivElement>(null)
@@ -467,7 +502,7 @@ const Purchases = () => {
   // Sale Return Modal states
   const [showSaleReturnModal, setShowSaleReturnModal] = useState(false)
   const [selectedInvoiceForReturn, setSelectedInvoiceForReturn] = useState<any>(null)
-  const [returnItems, setReturnItems] = useState<{id: string, itemId?: string, name: string, qty: number, maxQty: number, price: number, tax?: number, selected: boolean}[]>([])
+  const [returnItems, setReturnItems] = useState<{id: string, itemId?: string, name: string, qty: number, maxQty: number, price: number, tax?: number, taxMode?: 'inclusive' | 'exclusive', basePrice?: number, total?: number, selected: boolean}[]>([])
   const [returnReason, setReturnReason] = useState('')
   const [returnNotes, setReturnNotes] = useState('')
   const [isProcessingReturn, setIsProcessingReturn] = useState(false)
@@ -629,48 +664,95 @@ const Purchases = () => {
 
   // Sync current form state with active tab (read from tab)
   useEffect(() => {
-    if (activeTab && viewMode === 'create') {
-      setCustomerName(activeTab.customerName)
-      setCustomerPhone(activeTab.customerPhone)
-      setCustomerEmail(activeTab.customerEmail)
-      setCustomerGST(activeTab.customerGST)
-      setCustomerState(activeTab.customerState || '')
-      setCustomerVehicleNo(activeTab.customerVehicleNo || '')
-      setInvoiceItems(activeTab.invoiceItems)
-      setPaymentMode(activeTab.paymentMode)
-      setInvoiceDiscount(activeTab.invoiceDiscount)
-      setDiscountType(activeTab.discountType || 'percent')
-      setNotes(activeTab.notes)
-      setCustomerSearch(activeTab.customerSearch)
-    }
-  }, [activeTabId, viewMode])
+    if (!activeTab || viewMode !== 'create') return
+
+    // Mark that we're applying the tab values so the "save to tab" effect
+    // doesn't immediately write them back and cause a loop.
+    isApplyingTabRef.current = true
+
+    setCustomerName(activeTab.customerName)
+    setCustomerPhone(activeTab.customerPhone)
+    setCustomerEmail(activeTab.customerEmail)
+    setCustomerGST(activeTab.customerGST)
+    setCustomerState(activeTab.customerState || '')
+    setCustomerVehicleNo(activeTab.customerVehicleNo || '')
+    setInvoiceItems(activeTab.invoiceItems)
+    setPaymentMode(activeTab.paymentMode)
+    setInvoiceDiscount(activeTab.invoiceDiscount)
+    setDiscountType(activeTab.discountType || 'percent')
+    setNotes(activeTab.notes)
+    setCustomerSearch(activeTab.customerSearch)
+
+    // Release the flag after this event loop tick so subsequent user edits
+    // can be saved back to the tab by the other effect.
+    setTimeout(() => {
+      isApplyingTabRef.current = false
+    }, 0)
+  }, [activeTab, viewMode])
 
   // Save current form state to active tab whenever it changes
   useEffect(() => {
-    if (viewMode === 'create' && activeTab) {
-      setInvoiceTabs(tabs =>
-        tabs.map(tab =>
-          tab.id === activeTabId
-            ? {
-                ...tab,
-                customerName,
-                customerPhone,
-                customerEmail,
-                customerGST,
-                customerState,
-                customerVehicleNo,
-                invoiceItems,
-                paymentMode,
-                invoiceDiscount,
-                discountType,
-                notes,
-                customerSearch
-              }
-            : tab
-        )
+    if (viewMode !== 'create' || !activeTab) return
+
+    // If we're currently applying values from the tab to the form,
+    // skip saving back to the tab to avoid an infinite update loop.
+    if (isApplyingTabRef.current) return
+
+    // Prevent unnecessary tab updates that can cascade into re-renders
+    const tabAlreadyCurrent =
+      activeTab.customerName === customerName &&
+      activeTab.customerPhone === customerPhone &&
+      activeTab.customerEmail === customerEmail &&
+      activeTab.customerGST === customerGST &&
+      (activeTab.customerState || '') === customerState &&
+      (activeTab.customerVehicleNo || '') === customerVehicleNo &&
+      activeTab.invoiceItems === invoiceItems &&
+      activeTab.paymentMode === paymentMode &&
+      activeTab.invoiceDiscount === invoiceDiscount &&
+      (activeTab.discountType || 'percent') === discountType &&
+      activeTab.notes === notes &&
+      activeTab.customerSearch === customerSearch
+
+    if (tabAlreadyCurrent) return
+
+    setInvoiceTabs(tabs =>
+      tabs.map(tab =>
+        tab.id === activeTabId
+          ? {
+              ...tab,
+              customerName,
+              customerPhone,
+              customerEmail,
+              customerGST,
+              customerState,
+              customerVehicleNo,
+              invoiceItems,
+              paymentMode,
+              invoiceDiscount,
+              discountType,
+              notes,
+              customerSearch
+            }
+          : tab
       )
-    }
-  }, [customerName, customerPhone, customerEmail, customerGST, customerState, customerVehicleNo, invoiceItems, paymentMode, invoiceDiscount, discountType, notes, customerSearch, viewMode])
+    )
+  }, [
+    activeTab,
+    activeTabId,
+    customerName,
+    customerPhone,
+    customerEmail,
+    customerGST,
+    customerState,
+    customerVehicleNo,
+    invoiceItems,
+    paymentMode,
+    invoiceDiscount,
+    discountType,
+    notes,
+    customerSearch,
+    viewMode
+  ])
 
   // Generate invoice number on mount
   useEffect(() => {
@@ -682,12 +764,12 @@ const Purchases = () => {
 
   // Persist viewMode to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('purchases_viewMode', viewMode)
+    localStorage.setItem('sales_viewMode', viewMode)
   }, [viewMode])
 
   // Persist tabs to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('purchases_invoiceTabs', JSON.stringify(invoiceTabs))
+    localStorage.setItem('sales_invoiceTabs', JSON.stringify(invoiceTabs))
   }, [invoiceTabs])
 
   // Persist active tab ID to localStorage whenever it changes
@@ -770,7 +852,7 @@ const Purchases = () => {
   }, [invoiceItems.length])
 
   // Add new tab
-  const addNewTab = (type: 'purchase' | 'credit' = 'purchase') => {
+  const addNewTab = (type: 'sale' | 'credit' = 'sale') => {
     const newTab: InvoiceTab = {
       id: Date.now().toString(),
       type,
@@ -830,7 +912,7 @@ const Purchases = () => {
     } else {
       // Regular sales - just switch to list view
       setViewMode('list')
-      localStorage.setItem('purchases_viewMode', 'list')
+      localStorage.setItem('sales_viewMode', 'list')
       console.log('✅ Sales: Set viewMode to list')
     }
 
@@ -849,7 +931,7 @@ const Purchases = () => {
 
       const resetTab: InvoiceTab = {
         id: activeTabId,
-        type: 'purchase',
+        type: 'sale',
         mode: 'invoice',
         customerName: '',
         customerPhone: '',
@@ -881,7 +963,7 @@ const Purchases = () => {
       setInvoiceDate(newDate)
 
       // Save to localStorage
-      localStorage.setItem('purchases_invoiceTabs', JSON.stringify([resetTab]))
+      localStorage.setItem('sales_invoiceTabs', JSON.stringify([resetTab]))
       return
     }
 
@@ -910,11 +992,12 @@ const Purchases = () => {
     setInvoiceItems(newActiveTab.invoiceItems)
     setPaymentMode(newActiveTab.paymentMode)
     setInvoiceDiscount(newActiveTab.invoiceDiscount || 0)
+    setDiscountType(newActiveTab.discountType || 'percent')
     setNotes(newActiveTab.notes || '')
     setCustomerSearch(newActiveTab.customerSearch || '')
 
     // Save to localStorage
-    localStorage.setItem('purchases_invoiceTabs', JSON.stringify(updatedTabs))
+    localStorage.setItem('sales_invoiceTabs', JSON.stringify(updatedTabs))
     localStorage.setItem('sales_activeTabId', newActiveTab.id)
   }
 
@@ -922,7 +1005,7 @@ const Purchases = () => {
   const loadInvoicesFromDatabase = async () => {
     try {
       setIsLoadingInvoices(true)
-      const invoicesData = await getInvoices('purchase')
+      const invoicesData = await getInvoices('sale')
 
       if (invoicesData && Array.isArray(invoicesData) && invoicesData.length > 0) {
         // STEP 1: Calculate customer outstanding directly from invoice data (2025 Standard)
@@ -953,7 +1036,7 @@ const Purchases = () => {
           const customerOutstanding = customerOutstandingMap.get(customerKey) || 0
 
           // Debug: Log items for converted invoices
-          if (invoice?.convertedFrom || invoice?.invoiceNumber?.includes('BILL/2025-26/380')) {
+          if (invoice?.convertedFrom || invoice?.invoiceNumber?.includes('INV/2025-26/380')) {
             console.log('📊 Sales - Loading invoice:', invoice?.invoiceNumber)
             console.log('📊 Sales - Invoice items:', invoice?.items)
             console.log('📊 Sales - Invoice items isArray:', Array.isArray(invoice?.items))
@@ -972,7 +1055,10 @@ const Purchases = () => {
             date: invoice?.invoiceDate || new Date().toISOString().split('T')[0],
             total: invoice?.grandTotal || 0,
             paidAmount: invoice?.paidAmount ?? invoice?.payment?.paidAmount ?? 0,
-            paymentStatus: (invoice?.paymentStatus || invoice?.payment?.status || 'pending') as any,
+            // Auto-fix status for fully returned invoices (total = 0 with returns)
+            paymentStatus: ((invoice?.grandTotal === 0 || invoice?.total === 0) && (invoice?.hasReturns || invoice?.returnedAmount > 0))
+              ? 'returned'
+              : (invoice?.paymentStatus || invoice?.payment?.status || 'pending') as any,
             itemsCount: invoice?.items?.length || 0,
             items: invoice?.items || [], // Keep full items array for duplication
             subtotal: invoice?.subtotal || 0,
@@ -1026,7 +1112,7 @@ const Purchases = () => {
       processingToast = toast.loading('Processing invoice... Creating/updating customer and items')
 
       // Auto-process the invoice: create/update party and items
-      const result = await processScannedInvoice(invoiceData, 'purchase')
+      const result = await processScannedInvoice(invoiceData, 'sale')
 
       if (result?.invoice && result?.party) {
         // Reload invoices list to show the new invoice
@@ -1073,6 +1159,9 @@ const Purchases = () => {
   // /pos → Check if coming from Back button (show list) or fresh navigation (show ModernPOS)
   // /sales → Direct to invoice creation view
   useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const forceOpen = params.get('open')
+
     if (location.pathname === '/pos') {
       setSalesMode('pos')
       // Check if user clicked Back to see POS list
@@ -1090,7 +1179,13 @@ const Purchases = () => {
       // Go directly to invoice creation view
       setSalesMode('invoice')
       setShowCafePOS(false)
-      setViewMode('create')
+      // If caller explicitly requested create via query param, respect it.
+      if (forceOpen === 'create') {
+        setViewMode('create')
+        try { localStorage.setItem('sales_viewMode', 'create') } catch {}
+      } else {
+        setViewMode('create')
+      }
       // Clear POS viewMode when navigating to sales
       localStorage.removeItem('pos_viewMode')
     }
@@ -1098,11 +1193,12 @@ const Purchases = () => {
 
   // Handle converted invoice from Quotations page
   useEffect(() => {
+    if (hasProcessedConvertedInvoice.current) return
     const state = location.state as { convertedInvoice?: any } | null
-    if (state?.convertedInvoice) {
-      console.log('📥 Received converted invoice from Quotations:', state.convertedInvoice)
-
-      const converted = state.convertedInvoice
+    const stored = sessionStorage.getItem('converted_invoice')
+    const converted = state?.convertedInvoice || (stored ? JSON.parse(stored) : null)
+    if (converted) {
+      console.log('📥 Received converted invoice from Quotations:', converted)
 
       // Map the converted invoice items to InvoiceItem format
       const mappedItems: InvoiceItem[] = (converted.items || []).map((item: any, index: number) => ({
@@ -1111,6 +1207,8 @@ const Purchases = () => {
         qty: item.quantity || item.qty || 1,
         unit: item.unit || 'Pcs',
         price: item.rate || item.price || 0,
+        basePrice: item.basePrice || undefined,
+        taxMode: item.taxMode || 'exclusive',
         discount: item.discount || 0,
         discountAmount: item.discountAmount || 0,
         tax: item.taxRate || item.tax || 0,
@@ -1129,11 +1227,11 @@ const Purchases = () => {
 
       console.log('📥 Mapped items for Sales form:', mappedItems)
 
-      // Create a new tab with the converted invoice data
-      const newTabId = `converted_${Date.now()}`
+      // Create a new tab with the converted invoice data (stable id for dedupe)
+      const newTabId = converted.invoiceNumber || `converted_${Date.now()}`
       const newTab: InvoiceTab = {
         id: newTabId,
-        type: 'purchase',
+        type: 'sale',
         mode: 'invoice',
         customerName: converted.partyName || '',
         customerPhone: converted.partyPhone || '',
@@ -1143,6 +1241,7 @@ const Purchases = () => {
         invoiceItems: mappedItems,
         paymentMode: converted.paymentMode || 'cash',
         invoiceDiscount: converted.discount || 0,
+        discountType: 'percent',
         notes: converted.notes || '',
         customerSearch: converted.partyName || ''
       }
@@ -1164,16 +1263,23 @@ const Purchases = () => {
       setInvoiceDiscount(converted.discount || 0)
       setNotes(converted.notes || '')
 
-      // Add the new tab and activate it
+      // Add the new tab and activate it (force new entry to avoid empty items)
       setInvoiceTabs(prev => {
-        // Check if we already have this converted invoice tab (prevent duplicates on refresh)
-        const existingIndex = prev.findIndex(t => t.customerName === converted.partyName && t.invoiceItems.length === mappedItems.length)
-        if (existingIndex === -1) {
-          return [...prev, newTab]
+        if (prev.some(tab => tab.id === newTabId || (converted.invoiceNumber && tab.customerSearch === converted.invoiceNumber))) {
+          return prev
         }
-        return prev
+        return [...prev, newTab]
       })
       setActiveTabId(newTabId)
+      localStorage.setItem('sales_activeTabId', newTabId)
+      // Ensure the Sales page stays in `create` mode when loading a converted quotation
+      // This avoids immediately falling back to the invoice list view.
+      try {
+        localStorage.setItem('sales_viewMode', 'create')
+        localStorage.removeItem('pos_viewMode')
+      } catch (e) {
+        // ignore localStorage errors
+      }
 
       // Ensure we're in create mode
       setViewMode('create')
@@ -1181,6 +1287,8 @@ const Purchases = () => {
 
       // Clear the navigation state to prevent re-processing on refresh
       window.history.replaceState({}, document.title)
+      sessionStorage.removeItem('converted_invoice')
+      hasProcessedConvertedInvoice.current = true
 
       toast.success(`Quotation loaded! ${mappedItems.length} item(s) added to invoice.`)
     }
@@ -1197,25 +1305,27 @@ const Purchases = () => {
     baseUnit?: string;
     purchaseUnit?: string;
     piecesPerPurchaseUnit?: number;
-    purchasePricePerPiece?: number;
+    sellingPricePerPiece?: number;
     purchasePricePerBox?: number;
     stockBase?: number;
   }>>([])
 
   // Normalize invoice items to ensure CGST/SGST/IGST percentages are always calculated
   // This is MANDATORY for GST compliance - percentages must always show if GST rate > 0
+  // CRITICAL: Recalculate ALL items when customerState changes (interstate vs intrastate)
   useEffect(() => {
     const companySettings = getCompanySettings()
     const sellerState = companySettings.state || 'Tamil Nadu'
+
+    console.log(`🔄 useEffect TRIGGERED - Recalculating items | Seller: ${sellerState}, Customer: ${customerState || '(none)'}`)
 
     setInvoiceItems(prevItems =>
       prevItems.map(item => {
         const taxPercent = Number(item.tax) || 0
 
-        // If item has GST rate > 0 but CGST/SGST/IGST percentages are missing/zero, recalculate
-        if (taxPercent > 0 && (
-          !item.cgstPercent && !item.sgstPercent && !item.igstPercent
-        )) {
+        // Recalculate GST breakdown for items with tax rate > 0
+        // This ensures CGST/SGST/IGST updates when customer state changes
+        if (taxPercent > 0) {
           const price = Number(item.price) || 0
           const qty = Number(item.qty) || 1
           const discountPercent = Number(item.discount) || 0
@@ -1242,12 +1352,16 @@ const Purchases = () => {
             customerGSTIN: customerGST
           })
 
+          console.log(`🔧 Recalculating ${item.name}:`, {
+            seller: sellerState,
+            customer: customerState,
+            breakdown: `CGST=${gstBreakdown.cgstAmount}, SGST=${gstBreakdown.sgstAmount}, IGST=${gstBreakdown.igstAmount}`
+          })
+
           // Calculate total based on taxMode
           const total = taxMode === 'inclusive'
             ? price * qty  // For inclusive, total = MRP × qty
             : taxableAmount + gstBreakdown.totalTaxAmount  // For exclusive, total = base + GST
-
-          console.log('🔧 Normalizing item GST breakdown:', item.name, { taxMode, taxablePerUnit, taxableAmount, gst: gstBreakdown.totalTaxAmount, total })
 
           return {
             ...item,
@@ -1280,7 +1394,7 @@ const Purchases = () => {
           items.map(i => ({
             id: i.id,
             name: i.name || 'Unnamed Item',
-            price: (i.purchasePrice as any) || (i.purchasePrice as any) || 0,
+            price: (i.sellingPrice as any) || (i.purchasePrice as any) || 0,
             tax: i.tax?.gstRate || 0,
             unit: i.unit,
             // Multi-unit fields
@@ -1288,7 +1402,7 @@ const Purchases = () => {
             baseUnit: i.baseUnit || 'Pcs',
             purchaseUnit: i.purchaseUnit || 'Box',
             piecesPerPurchaseUnit: i.piecesPerPurchaseUnit || 12,
-            purchasePricePerPiece: i.purchasePricePerPiece,
+            sellingPricePerPiece: i.sellingPricePerPiece,
             purchasePricePerBox: i.purchasePricePerBox,
             stockBase: i.stockBase || i.stock || 0
           }))
@@ -1456,6 +1570,7 @@ const Purchases = () => {
     setCustomerState(party.billingAddress?.state || party.state || '')
     setCustomerSearch(customerName)
     setShowCustomerDropdown(false)
+    setHighlightedCustomerIndex(-1)
   }
 
   // Listen for AI Assistant actions
@@ -1547,7 +1662,7 @@ const Purchases = () => {
 
   // Handle item selection from search
   const handleItemSelect = (item: any) => {
-    const originalPrice = item.purchasePrice || item.purchasePrice || 0
+    const originalPrice = item.sellingPrice || item.purchasePrice || 0
     const qty = 1
     const discountPercent = 0
     // Get tax rate from inventory - check multiple possible locations
@@ -1558,14 +1673,14 @@ const Purchases = () => {
     const baseUnit = item.baseUnit || 'Pcs'
     const purchaseUnit = item.purchaseUnit || 'Box'
     const piecesPerPurchaseUnit = item.piecesPerPurchaseUnit || 12
-    const purchasePricePerPiece = item.purchasePricePerPiece || originalPrice
+    const sellingPricePerPiece = item.sellingPricePerPiece || originalPrice
 
     // For sales, default to base unit (Pcs) so customers can buy individual items
     const selectedUnit = hasMultiUnitEnabled ? baseUnit : (item.unit || 'NONE')
 
     // Calculate the actual unit price - KEY FIX for multi-unit pricing!
     const unitPrice = hasMultiUnitEnabled
-      ? getUnitPrice(selectedUnit, purchasePricePerPiece, piecesPerPurchaseUnit)
+      ? getUnitPrice(selectedUnit, sellingPricePerPiece, piecesPerPurchaseUnit)
       : originalPrice
 
     // Stock notification when adding item (informational only - doesn't block)
@@ -1654,7 +1769,7 @@ const Purchases = () => {
       baseUnit,
       purchaseUnit,
       piecesPerPurchaseUnit,
-      purchasePricePerPiece,
+      sellingPricePerPiece,
       selectedUnit,
       qtyInBaseUnits: hasMultiUnitEnabled ? getBaseQtyForSale(selectedUnit, qty, piecesPerPurchaseUnit) : undefined
     })
@@ -1666,7 +1781,10 @@ const Purchases = () => {
     setTimeout(() => {
       itemSearchInputRef.current?.focus()
       setShowItemDropdown(true)
-      itemSearchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      // Avoid smooth scrolling on mobile to prevent viewport shaking
+      if (typeof window !== 'undefined' && window.innerWidth > 768) {
+        itemSearchInputRef.current?.scrollIntoView({ behavior: 'auto', block: 'center' })
+      }
     }, 100)
   }
 
@@ -1680,12 +1798,16 @@ const Purchases = () => {
     setNewCustomerState('')
     setNewCustomerType('Regular')
     setNewCustomerNotes('')
+    setNewCustomerOpeningBalance('')
+    setNewCustomerCreditDays(30)
     setShowAddressField(false)
     setShowStateField(false)
     setShowGstField(false)
     setShowEmailField(false)
     setShowCustomerTypeField(false)
     setShowNotesField(false)
+    setShowOpeningBalanceField(false)
+    setShowCreditDaysField(false)
   }
 
   // Handle saving new customer
@@ -1698,6 +1820,7 @@ const Purchases = () => {
     setSavingCustomer(true)
     try {
       const { createParty } = await import('../services/partyService')
+      const openingBal = parseFloat(newCustomerOpeningBalance) || 0
       const newParty = await createParty({
         name: newCustomerName.trim(),
         type: 'customer',
@@ -1706,8 +1829,9 @@ const Purchases = () => {
         gstin: newCustomerGST.trim() || undefined,
         billingAddress: newCustomerAddress.trim() || undefined,
         state: newCustomerState.trim() || undefined,
-        openingBalance: 0,
-        balance: 0
+        openingBalance: openingBal,
+        balance: openingBal,
+        creditDays: newCustomerCreditDays
       })
 
       if (newParty) {
@@ -1803,6 +1927,121 @@ const Purchases = () => {
     setShowNewItemLowStockAlert(false)
     setShowNewItemBrand(false)
     setShowNewItemBarcode(false)
+    // Reset autocomplete
+    setNewItemSuggestions([])
+    setShowNewItemSuggestions(false)
+    setSelectedNewItemIndex(-1)
+  }
+
+  // Handle item name change with autocomplete (matching Inventory page)
+  const handleNewItemNameChange = (value: string) => {
+    setNewItemName(value)
+    
+    if (value.length >= 2) {
+      const suggestions = searchItems(value)
+      setNewItemSuggestions(suggestions)
+      setShowNewItemSuggestions(suggestions.length > 0)
+      setSelectedNewItemIndex(-1)
+    } else {
+      setNewItemSuggestions([])
+      setShowNewItemSuggestions(false)
+    }
+  }
+
+  // Auto-fill all fields when item is selected from suggestions (matching Inventory page)
+  const handleSelectNewItemSuggestion = (masterItem: MasterItem) => {
+    // Fill item name
+    setNewItemName(masterItem.name)
+
+    // Auto-fill Category with proper mapping
+    const categoryMap: { [key: string]: string } = {
+      'Dairy & Milk Products': 'grocery',
+      'Biscuits & Cookies': 'grocery',
+      'Atta & Flour': 'grocery',
+      'Oil & Ghee': 'grocery',
+      'Rice & Pulses': 'grocery',
+      'Instant Noodles': 'grocery',
+      'Salt & Spices': 'grocery',
+      'Health Drinks': 'grocery',
+      'Beverages': 'grocery',
+      'Toothpaste & Oral Care': 'cosmetics',
+      'Soap & Body Wash': 'cosmetics',
+      'Personal Care': 'cosmetics',
+      'Sanitary Napkins': 'cosmetics',
+      'Baby Care': 'cosmetics',
+      'Condoms & Contraceptives': 'cosmetics',
+      'Detergent & Laundry': 'home',
+      'Medicines & Health': 'cosmetics',
+      'Electronics': 'electronics',
+      'Stationery': 'stationery'
+    }
+    setNewItemCategory(categoryMap[masterItem.category] || 'other')
+
+    // Auto-fill Unit Type
+    const unitMap: { [key: string]: string } = {
+      'Pieces': 'pcs',
+      'Kilograms': 'kg',
+      'Grams': 'g',
+      'Litres': 'l',
+      'Millilitres': 'ml',
+      'Packets': 'pack',
+      'Jars': 'pcs',
+      'Meters': 'm'
+    }
+    setNewItemUnit(unitMap[masterItem.unit] || 'pcs')
+
+    // Auto-fill Description
+    setNewItemDescription(masterItem.description || `${masterItem.name} - Premium Quality`)
+
+    // Auto-fill Retail Price (MRP)
+    setNewItemRetailPrice(masterItem.mrp.toString())
+
+    // Auto-fill Purchase Price
+    setNewItemPurchasePrice(masterItem.purchase_price.toString())
+    setShowNewItemPurchasePrice(true)
+
+    // Auto-fill Wholesale Price (70% of MRP)
+    const wholesalePrice = (masterItem.mrp * 0.7).toFixed(2)
+    setNewItemWholesalePrice(wholesalePrice)
+    setShowNewItemWholesalePrice(true)
+
+    // Auto-fill GST Rate
+    setNewItemGstRate(masterItem.gst_rate.toString())
+
+    // Auto-fill HSN Code
+    setNewItemHsnCode(masterItem.hsn)
+    setShowNewItemHSN(true)
+
+    // Close suggestions
+    setShowNewItemSuggestions(false)
+    setNewItemSuggestions([])
+
+    // Show success toast
+    toast.success('🎉 All fields auto-filled! Like magic!', {
+      description: `${masterItem.name} ready to add`,
+      duration: 2000
+    })
+  }
+
+  // Handle keyboard navigation in autocomplete
+  const handleNewItemKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showNewItemSuggestions || newItemSuggestions.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedNewItemIndex(prev => prev < newItemSuggestions.length - 1 ? prev + 1 : 0)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedNewItemIndex(prev => prev > 0 ? prev - 1 : newItemSuggestions.length - 1)
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (selectedNewItemIndex >= 0 && selectedNewItemIndex < newItemSuggestions.length) {
+        handleSelectNewItemSuggestion(newItemSuggestions[selectedNewItemIndex])
+      }
+    } else if (e.key === 'Escape') {
+      setShowNewItemSuggestions(false)
+      setSelectedNewItemIndex(-1)
+    }
   }
 
   const handleSaveNewItem = async () => {
@@ -1816,7 +2055,7 @@ const Purchases = () => {
       const { createItem } = await import('../services/itemService')
 
       const gst = parseInt(newItemGstRate || '0', 10) || 0
-      const retailPrice = parseFloat(newItemRetailPrice) || 0
+      const sellingPrice = parseFloat(newItemRetailPrice) || 0
       const purchasePrice = newItemPurchasePrice ? parseFloat(newItemPurchasePrice) : 0
       const stockQty = newItemStockQty ? parseInt(newItemStockQty) : 0
 
@@ -1825,7 +2064,7 @@ const Purchases = () => {
         description: newItemDescription?.trim() || '',
         itemCode: `ITEM${Date.now()}`,
         unit: newItemUnit,
-        sellingPrice: retailPrice,
+        sellingPrice,
         purchasePrice,
         taxPreference: gst > 0 ? 'taxable' : 'non-taxable',
         tax: {
@@ -1861,7 +2100,7 @@ const Purchases = () => {
           {
             id: savedItem.id,
             name: savedItem.name || savedItem.description || 'Unnamed Item',
-            price: savedItem.purchasePrice || savedItem.retailPrice || savedItem.purchasePrice || 0,
+            price: savedItem.sellingPrice || savedItem.retailPrice || savedItem.purchasePrice || 0,
             tax: savedItem.tax?.gstRate ?? (
               savedItem.tax
                 ? (savedItem.tax.cgst || 0) + (savedItem.tax.sgst || 0) + (savedItem.tax.igst || 0)
@@ -2053,7 +2292,8 @@ const Purchases = () => {
     paid: { icon: CheckCircle, color: 'success', label: 'Paid' },
     partial: { icon: Clock, color: 'warning', label: 'Partial' },
     pending: { icon: Clock, color: 'destructive', label: 'Pending' },
-    overdue: { icon: XCircle, color: 'destructive', label: 'Overdue' }
+    overdue: { icon: XCircle, color: 'destructive', label: 'Overdue' },
+    returned: { icon: ArrowUUpLeft, color: 'slate', label: 'Returned' }
   }
 
   const addItem = (item: InvoiceItem | typeof availableItems[0]) => {
@@ -2154,14 +2394,14 @@ const Purchases = () => {
       const baseUnit = itemWithMultiUnit.baseUnit || 'Pcs'
       const purchaseUnit = itemWithMultiUnit.purchaseUnit || 'Box'
       const piecesPerPurchaseUnit = itemWithMultiUnit.piecesPerPurchaseUnit || 12
-      const purchasePricePerPiece = itemWithMultiUnit.purchasePricePerPiece || originalPrice
+      const sellingPricePerPiece = itemWithMultiUnit.sellingPricePerPiece || originalPrice
 
       // For sales, default to base unit (Pcs) so customers can buy individual items
       const selectedUnit = hasMultiUnitEnabled ? baseUnit : (oldItem.unit || 'NONE')
 
       // Calculate the actual unit price BEFORE other calculations
       const unitPrice = hasMultiUnitEnabled
-        ? getUnitPrice(selectedUnit, purchasePricePerPiece, piecesPerPurchaseUnit)
+        ? getUnitPrice(selectedUnit, sellingPricePerPiece, piecesPerPurchaseUnit)
         : originalPrice
 
       // Check for existing item with same properties (use unitPrice for comparison)
@@ -2231,7 +2471,7 @@ const Purchases = () => {
         baseUnit,
         purchaseUnit,
         piecesPerPurchaseUnit,
-        purchasePricePerPiece,
+        sellingPricePerPiece,
         selectedUnit,
         qtyInBaseUnits: hasMultiUnitEnabled ? getBaseQtyForSale(selectedUnit, qty, piecesPerPurchaseUnit) : undefined
       }
@@ -2254,7 +2494,7 @@ const Purchases = () => {
         // Check for both 'unit' and 'selectedUnit' field changes
         if ((field === 'selectedUnit' || field === 'unit') && item.hasMultiUnit) {
           const newUnit = value as string
-          const pricePerPiece = item.purchasePricePerPiece || item.price
+          const pricePerPiece = item.sellingPricePerPiece || item.price
           const conversionFactor = item.piecesPerPurchaseUnit || 12
           updated.price = getUnitPrice(newUnit, pricePerPiece, conversionFactor)
           updated.unit = newUnit
@@ -2433,12 +2673,15 @@ const Purchases = () => {
     setInvoiceItems(invoiceItems.filter(item => item.id !== id))
   }
 
+  // Add empty manual row at the top of the items list
   const addEmptyRow = () => {
+    const taxSettings = getTaxSettings()
+    const defaultTaxMode = taxSettings.defaultTaxMode || 'exclusive'
     const newEmptyItem: InvoiceItem = {
-      id: `empty_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `manual_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       name: '',
       qty: 1,
-      unit: 'NONE',
+      unit: 'PCS',
       price: 0,
       discount: 0,
       discountAmount: 0,
@@ -2450,14 +2693,18 @@ const Purchases = () => {
       sgstAmount: 0,
       igstPercent: 0,
       igstAmount: 0,
-      total: 0
+      total: 0,
+      taxMode: defaultTaxMode
     }
+    // Add at the end (bottom) of the list
     setInvoiceItems([...invoiceItems, newEmptyItem])
   }
 
   const calculateTotals = () => {
     const companySettings = getCompanySettings()
     const sellerState = companySettings.state || 'Tamil Nadu'
+
+    console.log(`💰 Calculating Totals - Seller: ${sellerState}, Customer: ${customerState || '(none)'}`)
 
     // Calculate GST breakdown totals and taxable subtotal
     // Use basePrice (taxable value) for subtotal - NOT item.price which may include GST
@@ -2466,6 +2713,8 @@ const Purchases = () => {
     let totalIGST = 0
     let taxableSubtotal = 0
 
+    // IMPORTANT: Always recalculate GST based on current transaction type
+    // This ensures consistent CGST/SGST OR IGST (never mixed)
     invoiceItems.forEach(item => {
       // Use basePrice for taxable amount (this is the value without GST)
       // For inclusive items: basePrice = price / (1 + tax/100)
@@ -2475,24 +2724,20 @@ const Purchases = () => {
       const lineTaxable = discountedBase * item.qty
       taxableSubtotal += lineTaxable
 
-      if (item.cgstAmount !== undefined && item.sgstAmount !== undefined && item.igstAmount !== undefined) {
-        // New items with breakdown already calculated
-        totalCGST += item.cgstAmount
-        totalSGST += item.sgstAmount
-        totalIGST += item.igstAmount
-      } else {
-        // Old items without breakdown - calculate on the fly
-        const gstBreakdown = calculateGSTBreakdown({
-          taxableAmount: lineTaxable,
-          gstRate: item.tax,
-          sellerState,
-          customerState: customerState,
-          customerGSTIN: customerGST
-        })
-        totalCGST += gstBreakdown.cgstAmount
-        totalSGST += gstBreakdown.sgstAmount
-        totalIGST += gstBreakdown.igstAmount
-      }
+      // ALWAYS recalculate GST breakdown based on current seller/customer state
+      // This prevents mixed CGST/SGST + IGST when items were added at different times
+      const gstBreakdown = calculateGSTBreakdown({
+        taxableAmount: lineTaxable,
+        gstRate: item.tax || 0,
+        sellerState,
+        customerState: customerState,
+        customerGSTIN: customerGST
+      })
+      
+      console.log(`  Item: ${item.name} - CGST: ₹${gstBreakdown.cgstAmount}, SGST: ₹${gstBreakdown.sgstAmount}, IGST: ₹${gstBreakdown.igstAmount}`)
+      totalCGST += gstBreakdown.cgstAmount
+      totalSGST += gstBreakdown.sgstAmount
+      totalIGST += gstBreakdown.igstAmount
     })
 
     // Apply invoice-level discount on taxable subtotal
@@ -2518,7 +2763,7 @@ const Purchases = () => {
     const roundOffAmount = roundOff ? (Math.round(totalBeforeRound) - totalBeforeRound) : 0
     const total = roundOff ? Math.round(totalBeforeRound) : totalBeforeRound
 
-    return {
+    const result = {
       subtotal: Math.round(taxableSubtotal * 100) / 100,
       discount: Math.round(discount * 100) / 100,
       totalTax: Math.round(totalTax * 100) / 100,
@@ -2528,9 +2773,14 @@ const Purchases = () => {
       totalIGST: Math.round(adjustedIGST * 100) / 100,
       roundOffAmount: Math.round(roundOffAmount * 100) / 100
     }
+
+    console.log(`📊 FINAL TOTALS: CGST=₹${result.totalCGST}, SGST=₹${result.totalSGST}, IGST=₹${result.totalIGST}, Tax=₹${result.totalTax}`)
+
+    return result
   }
 
-  // Use useMemo to prevent race conditions with useEffect
+  // Use useMemo to ensure totals are recalculated only after invoiceItems are updated by useEffect
+  // This prevents race conditions where calculateTotals() runs before useEffect finishes updating items
   const totals = useMemo(() => calculateTotals(), [
     invoiceItems,
     invoiceDiscount,
@@ -2714,7 +2964,7 @@ const Purchases = () => {
 
     return {
       id: `preview_${Date.now()}`,
-      type: 'purchase' as const,
+      type: 'sale' as const,
       invoiceNumber,
       invoiceDate,
       date: invoiceDate,
@@ -2793,7 +3043,7 @@ const Purchases = () => {
 
       // Create invoice data
       const invoiceData = {
-        type: 'purchase' as const,
+        type: 'sale' as const,
         source: (location.pathname === '/pos' || salesMode === 'pos') ? 'pos' as const : 'invoice' as const,
         invoiceNumber,
         invoiceDate,
@@ -2851,59 +3101,35 @@ const Purchases = () => {
       const savedInvoice = await createInvoiceService(invoiceData)
 
       if (savedInvoice) {
-        // Update Banking - Process split payments array - PURCHASES REDUCE Cash (Firebase real-time sync)
+        // Update Banking - Process split payments array (Firebase real-time sync)
         if (totalPaidAmount > 0) {
           try {
-            const { updateCashInHand, updateBankAccountBalance, getBankingPageData, saveBankingPageTransactions, getBankingPageTransactions } = await import('../services/bankingService')
+            const { updateCashInHand, updateBankAccountBalance, getBankingPageData } = await import('../services/bankingService')
             const bankingData = await getBankingPageData()
-            const transactions = await getBankingPageTransactions()
 
-            // Process each payment in the payments array - PURCHASES REDUCE Cash in Hand
+            // Process each payment in the payments array
             for (const payment of payments) {
               if (payment.amount > 0) {
-                let accountName = ''
-
                 if (payment.type === 'cash') {
-                  // Update Cash in Hand - REDUCE for purchases (money going out)
-                  await updateCashInHand(-payment.amount, `Purchase Payment - Bill #${invoiceNumber} (${customerName})`)
-                  accountName = 'Cash in Hand'
-                  console.log('💰 Purchase: Cash in Hand reduced by ₹', payment.amount, '(Firebase)')
-                } else if (payment.type === 'bank' && payment.reference && bankingData?.bankAccounts) {
-                  // Extract bank account from reference (format: "Account Name (*1234)")
-                  const bankAccount = bankingData.bankAccounts.find((acc: any) =>
+                  // Update Cash in Hand via Firebase
+                  await updateCashInHand(payment.amount, `Invoice #${invoiceNumber} (${customerName})`)
+                } else if (payment.type === 'bank' && payment.reference && bankingData) {
+                  // Find bank account and update via Firebase
+                  const bankAccount = bankingData.bankAccounts?.find((acc: any) =>
                     payment.reference.includes(acc.accountNo.slice(-4))
                   )
                   if (bankAccount) {
-                    await updateBankAccountBalance(bankAccount.id, -payment.amount) // REDUCE for purchases
-                    accountName = bankAccount.name
-                    console.log('🏦 Purchase: Bank account', accountName, 'reduced by ₹', payment.amount, '(Firebase)')
+                    await updateBankAccountBalance(bankAccount.id, payment.amount)
                   }
-                }
-
-                if (accountName) {
-                  // Add transaction for this payment - DEBIT for purchases
-                  const newTransaction = {
-                    id: Date.now() + Math.random(),
-                    type: 'debit' as const,
-                    description: `Purchase Payment - Bill #${invoiceNumber} (${customerName}) - ${payment.type.toUpperCase()}`,
-                    amount: payment.amount,
-                    date: invoiceDate,
-                    account: accountName
-                  }
-                  transactions.unshift(newTransaction)
                 }
               }
             }
-
-            // Save transactions to Firebase
-            await saveBankingPageTransactions(transactions)
-            console.log('💰 Purchase: Banking transactions saved to Firebase')
           } catch (error) {
             console.error('Failed to update banking:', error)
           }
         }
 
-        toast.success(`Bill ${invoiceNumber} created successfully!${totalPaidAmount > 0 ? ' Cash reduced.' : ''}`)
+        toast.success(`Invoice ${invoiceNumber} created successfully!${totalPaidAmount > 0 ? ' Banking updated.' : ''}`)
 
         // Reload invoices list
         await loadInvoicesFromDatabase()
@@ -2969,7 +3195,7 @@ const Purchases = () => {
 
       // Create invoice data
       const invoiceData = {
-        type: 'purchase' as const,
+        type: 'sale' as const,
         source: (location.pathname === '/pos' || salesMode === 'pos') ? 'pos' as const : 'invoice' as const,
         invoiceNumber,
         invoiceDate,
@@ -3061,59 +3287,35 @@ const Purchases = () => {
       const savedInvoice = await createInvoiceService(invoiceData)
 
       if (savedInvoice) {
-        // Update Banking - Process split payments array - PURCHASES REDUCE Cash (Firebase real-time sync)
+        // Update Banking - Process split payments array (Firebase real-time sync)
         if (totalPaidAmount > 0) {
           try {
-            const { updateCashInHand, updateBankAccountBalance, getBankingPageData, saveBankingPageTransactions, getBankingPageTransactions } = await import('../services/bankingService')
+            const { updateCashInHand, updateBankAccountBalance, getBankingPageData } = await import('../services/bankingService')
             const bankingData = await getBankingPageData()
-            const transactions = await getBankingPageTransactions()
 
-            // Process each payment in the payments array - PURCHASES REDUCE Cash in Hand
+            // Process each payment in the payments array
             for (const payment of payments) {
               if (payment.amount > 0) {
-                let accountName = ''
-
                 if (payment.type === 'cash') {
-                  // Update Cash in Hand - REDUCE for purchases (money going out)
-                  await updateCashInHand(-payment.amount, `Purchase POS Payment - Bill #${invoiceNumber} (${customerName})`)
-                  accountName = 'Cash in Hand'
-                  console.log('💰 Purchase POS: Cash in Hand reduced by ₹', payment.amount, '(Firebase)')
-                } else if (payment.type === 'bank' && payment.reference && bankingData?.bankAccounts) {
-                  // Extract bank account from reference (format: "Account Name (*1234)")
-                  const bankAccount = bankingData.bankAccounts.find((acc: any) =>
+                  // Update Cash in Hand via Firebase
+                  await updateCashInHand(payment.amount, `Invoice #${invoiceNumber} (${customerName})`)
+                } else if (payment.type === 'bank' && payment.reference && bankingData) {
+                  // Find bank account and update via Firebase
+                  const bankAccount = bankingData.bankAccounts?.find((acc: any) =>
                     payment.reference.includes(acc.accountNo.slice(-4))
                   )
                   if (bankAccount) {
-                    await updateBankAccountBalance(bankAccount.id, -payment.amount) // REDUCE for purchases
-                    accountName = bankAccount.name
-                    console.log('🏦 Purchase POS: Bank account', accountName, 'reduced by ₹', payment.amount, '(Firebase)')
+                    await updateBankAccountBalance(bankAccount.id, payment.amount)
                   }
-                }
-
-                if (accountName) {
-                  // Add transaction for this payment - DEBIT for purchases
-                  const newTransaction = {
-                    id: Date.now() + Math.random(),
-                    type: 'debit' as const,
-                    description: `Purchase POS Payment - Bill #${invoiceNumber} (${customerName}) - ${payment.type.toUpperCase()}`,
-                    amount: payment.amount,
-                    date: invoiceDate,
-                    account: accountName
-                  }
-                  transactions.unshift(newTransaction)
                 }
               }
             }
-
-            // Save transactions to Firebase
-            await saveBankingPageTransactions(transactions)
-            console.log('💰 Purchase POS: Banking transactions saved to Firebase')
           } catch (error) {
             console.error('Failed to update banking:', error)
           }
         }
 
-        toast.success(`Purchase completed! Bill ${invoiceNumber} created.${totalPaidAmount > 0 ? ' Cash reduced.' : ''}`)
+        toast.success(`Sale completed! Invoice ${invoiceNumber} created.${totalPaidAmount > 0 ? ' Banking updated.' : ''}`)
 
         // Reload invoices list
         await loadInvoicesFromDatabase()
@@ -3141,7 +3343,7 @@ const Purchases = () => {
   const handlePOSCheckoutComplete = async (checkoutData: CheckoutData) => {
     try {
       // Generate invoice number
-      const newInvoiceNumber = await generateIndianInvoiceNumber('PUR')
+      const newInvoiceNumber = generateIndianInvoiceNumber('PUR')
       const today = new Date().toISOString().split('T')[0]
 
       // Calculate totals from checkout data
@@ -3158,7 +3360,7 @@ const Purchases = () => {
 
       // Create invoice data
       const invoiceData = {
-        type: 'purchase' as const,
+        type: 'sale' as const,
         source: 'pos' as const,
         invoiceNumber: newInvoiceNumber,
         invoiceDate: today,
@@ -3212,47 +3414,12 @@ const Purchases = () => {
       const savedInvoice = await createInvoiceService(invoiceData)
 
       if (savedInvoice) {
-        // Update Banking for paid transactions
+        // Update Banking for paid transactions (Firebase real-time sync)
         if (paidAmount > 0) {
           try {
-            const bankingData = localStorage.getItem('bankingAccounts')
-            if (bankingData) {
-              const accounts = JSON.parse(bankingData)
-              const bankingTransactions = localStorage.getItem('bankingTransactions')
-              const transactions = bankingTransactions ? JSON.parse(bankingTransactions) : []
-
-              let accountName = ''
-
-              if (checkoutData.payment.method === 'cash') {
-                // Update Cash in Hand
-                const newCashBalance = (accounts.cashInHand?.balance || 0) + paidAmount
-                accounts.cashInHand = { balance: newCashBalance }
-                accountName = 'Cash in Hand'
-              } else if (checkoutData.payment.method === 'upi' || checkoutData.payment.method === 'card') {
-                // For UPI/Card, add to default bank or cash
-                const newCashBalance = (accounts.cashInHand?.balance || 0) + paidAmount
-                accounts.cashInHand = { balance: newCashBalance }
-                accountName = 'Cash in Hand (Digital)'
-              }
-
-              if (accountName) {
-                // Add transaction
-                const newTransaction = {
-                  id: Date.now() + Math.random(),
-                  type: 'credit',
-                  description: `POS Sale - Invoice #${newInvoiceNumber} (${checkoutData.customer.name}) - ${checkoutData.payment.method.toUpperCase()}`,
-                  amount: paidAmount,
-                  date: today,
-                  account: accountName
-                }
-                transactions.unshift(newTransaction)
-
-                // Save
-                localStorage.setItem('bankingAccounts', JSON.stringify(accounts))
-                localStorage.setItem('bankingTransactions', JSON.stringify(transactions))
-                console.log('💰 POS Banking updated: +₹', paidAmount, 'to', accountName)
-              }
-            }
+            const { updateCashInHand } = await import('../services/bankingService')
+            // All POS payments go to Cash in Hand
+            await updateCashInHand(paidAmount, `POS Sale - Invoice #${newInvoiceNumber} (${checkoutData.customer.name})`)
           } catch (error) {
             console.error('Failed to update banking:', error)
           }
@@ -3291,7 +3458,7 @@ const Purchases = () => {
   const handleQuickCheckout = async (data: QuickCheckoutData) => {
     try {
       // Generate invoice number
-      const newInvoiceNumber = await generateIndianInvoiceNumber('PUR')
+      const newInvoiceNumber = generateIndianInvoiceNumber('PUR')
       const today = new Date().toISOString().split('T')[0]
 
       // Calculate totals from checkout data
@@ -3308,7 +3475,7 @@ const Purchases = () => {
 
       // Create invoice data with source: 'pos'
       const invoiceData = {
-        type: 'purchase' as const,
+        type: 'sale' as const,
         source: 'pos' as const, // IMPORTANT: Mark as POS sale
         invoiceNumber: newInvoiceNumber,
         invoiceDate: today,
@@ -3359,43 +3526,12 @@ const Purchases = () => {
       const savedInvoice = await createInvoiceService(invoiceData)
 
       if (savedInvoice) {
-        // Update Banking for paid transactions
+        // Update Banking for paid transactions (Firebase real-time sync)
         if (paidAmount > 0) {
           try {
-            const bankingData = localStorage.getItem('bankingAccounts')
-            if (bankingData) {
-              const accounts = JSON.parse(bankingData)
-              const bankingTransactions = localStorage.getItem('bankingTransactions')
-              const transactions = bankingTransactions ? JSON.parse(bankingTransactions) : []
-
-              let accountName = ''
-
-              if (data.payment.method === 'cash') {
-                const newCashBalance = (accounts.cashInHand?.balance || 0) + paidAmount
-                accounts.cashInHand = { balance: newCashBalance }
-                accountName = 'Cash in Hand'
-              } else if (data.payment.method === 'upi' || data.payment.method === 'card') {
-                const newCashBalance = (accounts.cashInHand?.balance || 0) + paidAmount
-                accounts.cashInHand = { balance: newCashBalance }
-                accountName = 'Cash in Hand (Digital)'
-              }
-
-              if (accountName) {
-                const newTransaction = {
-                  id: Date.now() + Math.random(),
-                  type: 'credit',
-                  description: `POS Sale - Invoice #${newInvoiceNumber} (${data.customer.name}) - ${data.payment.method.toUpperCase()}`,
-                  amount: paidAmount,
-                  date: today,
-                  account: accountName
-                }
-                transactions.unshift(newTransaction)
-
-                localStorage.setItem('bankingAccounts', JSON.stringify(accounts))
-                localStorage.setItem('bankingTransactions', JSON.stringify(transactions))
-                console.log('💰 POS Quick Checkout Banking updated: +₹', paidAmount, 'to', accountName)
-              }
-            }
+            const { updateCashInHand } = await import('../services/bankingService')
+            // All POS payments go to Cash in Hand
+            await updateCashInHand(paidAmount, `POS Quick Checkout - Invoice #${newInvoiceNumber} (${data.customer.name})`)
           } catch (error) {
             console.error('Failed to update banking:', error)
           }
@@ -3485,7 +3621,7 @@ const Purchases = () => {
         sgstAmount: item.sgstAmount || 0,
         igstAmount: item.igstAmount || 0
       })) : [{
-        name: 'Purchase Item',
+        name: 'Sale Item',
         quantity: 1,
         price: invoice.subtotal || invoice.total || 0,
         total: invoice.total || 0,
@@ -3557,9 +3693,28 @@ const Purchases = () => {
 
   // Open payment modal
   const openPaymentModal = async (invoice: any) => {
-    setSelectedInvoiceForPayment(invoice)
-    const balanceDue = (invoice.total || invoice.grandTotal || 0) - (invoice.paidAmount || 0)
-    setPaymentAmount(balanceDue.toString())
+    // IMPORTANT: Fetch fresh invoice data from database to get latest totals after any edits
+    // This ensures the payment modal shows correct balance due after invoice was edited
+    let freshInvoice = invoice
+    try {
+      const latestInvoice = await getInvoiceById(invoice.id)
+      if (latestInvoice) {
+        freshInvoice = latestInvoice
+        console.log('💰 Payment modal: Using fresh invoice data from database')
+      }
+    } catch (error) {
+      console.warn('Failed to fetch fresh invoice, using cached data:', error)
+    }
+
+    setSelectedInvoiceForPayment(freshInvoice)
+
+    // Calculate balance due using fresh data
+    const invoiceTotal = freshInvoice.grandTotal || freshInvoice.total || 0
+    const paidAmount = freshInvoice.paidAmount || freshInvoice.payment?.paidAmount || 0
+    const balanceDue = invoiceTotal - paidAmount
+
+    // Round to 2 decimal places to avoid floating point precision issues
+    setPaymentAmount(Math.round(balanceDue * 100) / 100 + '')
     setPaymentMethodSelected('cash')
     setPaymentBankAccountId('') // Reset bank account selection
     setPaymentDate(new Date().toISOString().split('T')[0])
@@ -3587,7 +3742,7 @@ const Purchases = () => {
     }
 
     // Load existing payments for this invoice
-    const payments = await getInvoicePayments(invoice.id)
+    const payments = await getInvoicePayments(freshInvoice.id)
     setInvoicePayments(payments)
 
     setShowPaymentModal(true)
@@ -3601,9 +3756,12 @@ const Purchases = () => {
     }
 
     const amount = parseFloat(paymentAmount)
-    const balanceDue = (selectedInvoiceForPayment.total || selectedInvoiceForPayment.grandTotal || 0) - (selectedInvoiceForPayment.paidAmount || 0)
+    // Use grandTotal first (updated value after edit), then fall back to total
+    const invoiceTotal = selectedInvoiceForPayment.grandTotal || selectedInvoiceForPayment.total || 0
+    const paidAmount = selectedInvoiceForPayment.paidAmount || selectedInvoiceForPayment.payment?.paidAmount || 0
+    const balanceDue = Math.round((invoiceTotal - paidAmount) * 100) / 100
 
-    if (amount > balanceDue) {
+    if (amount > balanceDue + 1) { // Allow 1 rupee tolerance for rounding
       toast.error(`Payment amount cannot exceed balance due (₹${balanceDue.toLocaleString('en-IN')})`)
       return
     }
@@ -3643,73 +3801,61 @@ const Purchases = () => {
       console.log('✅ Payment result:', result)
 
       if (result) {
-        // Update Cash in Hand if payment method is cash (purchase payment reduces cash)
+        // Update Cash in Hand if payment method is cash (Firebase real-time sync)
         if (paymentMethodSelected === 'cash') {
           try {
-            const bankingData = localStorage.getItem('bankingAccounts')
-            if (bankingData) {
-              const accounts = JSON.parse(bankingData)
-              const newCashBalance = (accounts.cashInHand?.balance || 0) - amount
+            const { updateCashInHand, saveBankingPageTransactions, getBankingPageTransactions } = await import('../services/bankingService')
+            await updateCashInHand(amount, `Cash received - Invoice #${selectedInvoiceForPayment.invoiceNumber} (${selectedInvoiceForPayment.partyName})`)
 
-              // Update cash balance
-              accounts.cashInHand = { balance: newCashBalance }
-              localStorage.setItem('bankingAccounts', JSON.stringify(accounts))
-
-              // Add transaction to banking
-              const bankingTransactions = localStorage.getItem('bankingTransactions')
-              const transactions = bankingTransactions ? JSON.parse(bankingTransactions) : []
-              const newTransaction = {
-                id: Date.now(),
-                type: 'debit',
-                description: `Cash paid - Purchase #${selectedInvoiceForPayment.invoiceNumber} (${selectedInvoiceForPayment.partyName})`,
-                amount: amount,
-                date: paymentDate,
-                account: 'Cash in Hand'
-              }
-              transactions.unshift(newTransaction)
-              localStorage.setItem('bankingTransactions', JSON.stringify(transactions))
-
-              console.log('Cash in Hand updated (purchase payment): -₹', amount)
+            // Add transaction to banking (Firebase)
+            const transactions = await getBankingPageTransactions()
+            const newTransaction = {
+              id: Date.now(),
+              type: 'credit' as const,
+              description: `Cash received - Invoice #${selectedInvoiceForPayment.invoiceNumber} (${selectedInvoiceForPayment.partyName})`,
+              amount: amount,
+              date: paymentDate,
+              account: 'Cash in Hand'
             }
+            transactions.unshift(newTransaction)
+            await saveBankingPageTransactions(transactions)
+
+            console.log('💰 Cash in Hand updated (Firebase): +₹', amount)
           } catch (error) {
             console.error('Failed to update Cash in Hand:', error)
             // Don't block payment success even if banking update fails
           }
         }
 
-        // Update Bank Account balance if payment method is bank
+        // Update Bank Account balance if payment method is bank (Firebase real-time sync)
         if (paymentMethodSelected === 'bank' && paymentBankAccountId) {
           try {
-            const bankingData = localStorage.getItem('bankingAccounts')
-            if (bankingData) {
-              const accounts = JSON.parse(bankingData)
+            const { updateBankAccountBalance, getBankingPageData, saveBankingPageTransactions, getBankingPageTransactions } = await import('../services/bankingService')
+            const bankingData = await getBankingPageData()
 
-              // Find and update the selected bank account
-              const bankAccountIndex = accounts.bankAccounts?.findIndex(
+            if (bankingData && bankingData.bankAccounts) {
+              // Find the bank account name for transaction description
+              const bankAccount = bankingData.bankAccounts.find(
                 (acc: any) => acc.id.toString() === paymentBankAccountId
               )
 
-              if (bankAccountIndex !== -1) {
-                const bankAccount = accounts.bankAccounts[bankAccountIndex]
-                accounts.bankAccounts[bankAccountIndex].balance += amount
+              if (bankAccount) {
+                await updateBankAccountBalance(parseInt(paymentBankAccountId), amount)
 
-                localStorage.setItem('bankingAccounts', JSON.stringify(accounts))
-
-                // Add transaction to banking
-                const bankingTransactions = localStorage.getItem('bankingTransactions')
-                const transactions = bankingTransactions ? JSON.parse(bankingTransactions) : []
+                // Add transaction to banking (Firebase)
+                const transactions = await getBankingPageTransactions()
                 const newTransaction = {
                   id: Date.now(),
-                  type: 'credit',
+                  type: 'credit' as const,
                   description: `Bank Transfer received - Invoice #${selectedInvoiceForPayment.invoiceNumber} (${selectedInvoiceForPayment.partyName})`,
                   amount: amount,
                   date: paymentDate,
                   account: bankAccount.name
                 }
                 transactions.unshift(newTransaction)
-                localStorage.setItem('bankingTransactions', JSON.stringify(transactions))
+                await saveBankingPageTransactions(transactions)
 
-                console.log('🏦 Bank account updated:', bankAccount.name, '+₹', amount)
+                console.log('🏦 Bank account updated (Firebase):', bankAccount.name, '+₹', amount)
               }
             }
           } catch (error) {
@@ -3727,41 +3873,6 @@ const Purchases = () => {
             console.warn('Could not clear isReversed flag:', e)
           }
         }
-
-        // Update invoice paid amount + status (match Sales behavior)
-        const currentPaid = Number(selectedInvoiceForPayment.paidAmount || 0)
-        const invoiceTotal = Number(selectedInvoiceForPayment.total || selectedInvoiceForPayment.grandTotal || 0)
-        const newPaidAmount = currentPaid + amount
-        const newBalance = Math.max(invoiceTotal - newPaidAmount, 0)
-        const newStatus: 'paid' | 'partial' | 'pending' = newBalance <= 0.009 ? 'paid' : (newPaidAmount > 0 ? 'partial' : 'pending')
-
-        // Persist to Firestore if available
-        if (db) {
-          try {
-            const invoiceRef = doc(db, 'invoices', selectedInvoiceForPayment.id)
-            await updateDoc(invoiceRef, {
-              paidAmount: newPaidAmount,
-              paymentStatus: newStatus,
-              'payment.paidAmount': newPaidAmount,
-              'payment.paymentStatus': newStatus,
-              updatedAt: new Date().toISOString()
-            })
-          } catch (err) {
-            console.warn('Failed to update invoice payment status in Firestore:', err)
-          }
-        }
-
-        // Update local modal + list state immediately so icons/status refresh
-        setSelectedInvoiceForPayment(prev => prev ? {
-          ...prev,
-          paidAmount: newPaidAmount,
-          paymentStatus: newStatus
-        } : prev)
-        setInvoices(prev => prev.map(inv =>
-          inv.id === selectedInvoiceForPayment.id
-            ? { ...inv, paidAmount: newPaidAmount, paymentStatus: newStatus }
-            : inv
-        ))
 
         // Success message with banking update info
         let bankingUpdateMsg = ''
@@ -3931,13 +4042,19 @@ const Purchases = () => {
         return
       }
 
-      // Use grandTotal or total, whichever is available
-      const amount = invoice.grandTotal || invoice.total || 0
+      // Format phone number - add country code if not present
+      let formattedPhone = phone.replace(/[^\d+]/g, '')
+      // If phone doesn't start with + or country code, add India country code
+      if (!formattedPhone.startsWith('+') && !formattedPhone.startsWith('91') && formattedPhone.length === 10) {
+        formattedPhone = '91' + formattedPhone
+      } else if (formattedPhone.startsWith('+')) {
+        formattedPhone = formattedPhone.substring(1)
+      }
 
       shareViaWhatsApp(
-        phone,
+        formattedPhone,
         invoice.invoiceNumber,
-        amount,
+        invoice.total || invoice.grandTotal,
         'ThisAI CRM'
       )
       toast.success('Opening WhatsApp...')
@@ -3977,7 +4094,7 @@ const Purchases = () => {
             }
           })
         : [{
-            name: 'Purchase Item',
+            name: 'Sale Item',
             quantity: 1,
             unit: 'pcs',
             rate: invoiceData.subtotal || invoiceData.total || 0,
@@ -3994,7 +4111,7 @@ const Purchases = () => {
 
         invoiceNumber: invoiceData.invoiceNumber || invoice.invoiceNumber,
         invoiceDate: invoiceData.invoiceDate || invoiceData.date || invoice.date,
-        type: 'purchase',
+        type: 'sale',
 
         partyName: invoiceData.partyName || invoiceData.customerName || invoice.partyName || 'Walk-in Customer',
         partyPhone: invoiceData.partyPhone || invoice.partyPhone || '',
@@ -4093,14 +4210,22 @@ const Purchases = () => {
       console.log('Quick Edit - Items array:', itemsArray)
 
       // Parse items from the invoice
-      const items = itemsArray.map((item: any, index: number) => ({
-        id: item.id || `item-${index}`,
-        name: item.description || item.name || item.itemName || '',
-        qty: item.quantity || item.qty || 1,
-        rate: item.rate || item.price || 0,
-        tax: item.taxRate || item.tax || item.gst || 0,
-        amount: (item.quantity || item.qty || 1) * (item.rate || item.price || 0)
-      }))
+      // IMPORTANT: Use basePrice (taxable amount) for rate to ensure correct calculations
+      // basePrice is the price without GST for inclusive items, or same as price for exclusive items
+      const items = itemsArray.map((item: any, index: number) => {
+        const qty = item.quantity || item.qty || 1
+        // Prefer basePrice for accurate calculations, fallback to rate/price
+        const rate = item.basePrice || item.rate || item.price || 0
+        const tax = item.taxRate || item.tax || item.gst || 0
+        return {
+          id: item.id || `item-${index}`,
+          name: item.description || item.name || item.itemName || '',
+          qty,
+          rate,
+          tax,
+          amount: qty * rate
+        }
+      })
 
       // If no items found, add a blank one
       if (items.length === 0) {
@@ -4133,7 +4258,7 @@ const Purchases = () => {
   }
 
   const saveQuickEdit = async () => {
-    if (!quickEditInvoice || !db) return
+    if (!quickEditInvoice) return
 
     setIsSavingQuickEdit(true)
     try {
@@ -4170,15 +4295,24 @@ const Purchases = () => {
       const discountAmount = subtotal * (quickEditDiscount / 100)
       const grandTotal = subtotal - discountAmount + totalTax
 
-      // Determine payment status after edit (if total increased beyond previous payments)
-      const existingPaid = Number(quickEditInvoice.paidAmount || quickEditInvoice.payment?.paidAmount || 0)
-      const balanceAfterEdit = grandTotal - existingPaid
-      const updatedPaymentStatus: 'paid' | 'partial' | 'pending' =
-        balanceAfterEdit <= 0.009 ? 'paid' : (existingPaid > 0 ? 'partial' : 'pending')
+      // Preserve the existing paidAmount and recalculate dueAmount and paymentStatus
+      const existingPaidAmount = quickEditInvoice.paidAmount ?? quickEditInvoice.payment?.paidAmount ?? 0
+      const newDueAmount = Math.max(0, grandTotal - existingPaidAmount)
 
-      // Update the invoice in Firestore
-      const invoiceRef = doc(db, 'invoices', quickEditInvoice.id)
-      await updateDoc(invoiceRef, {
+      // Recalculate payment status based on new total
+      let newPaymentStatus: 'pending' | 'partial' | 'paid' = 'pending'
+      if (existingPaidAmount >= grandTotal) {
+        newPaymentStatus = 'paid'
+      } else if (existingPaidAmount > 0) {
+        newPaymentStatus = 'partial'
+      }
+
+      // Use updateInvoice from invoiceService - this properly updates:
+      // 1. IndexedDB (offline storage)
+      // 2. localStorage (for payment validation)
+      // 3. Firebase (when online)
+      // This ensures all storage layers have the correct grandTotal
+      const invoiceUpdates = {
         invoiceDate: quickEditDate,
         partyName: quickEditPartyName,
         items: updatedItems,
@@ -4187,13 +4321,26 @@ const Purchases = () => {
         discountPercent: quickEditDiscount,
         discountAmount: discountAmount,
         grandTotal: grandTotal,
-        notes: quickEditNotes,
-        paidAmount: existingPaid,
-        paymentStatus: updatedPaymentStatus,
-        'payment.paidAmount': existingPaid,
-        'payment.paymentStatus': updatedPaymentStatus,
-        updatedAt: new Date().toISOString()
-      })
+        total: grandTotal,
+        // Preserve existing paid amount and recalculate due amount
+        paidAmount: existingPaidAmount,
+        dueAmount: newDueAmount,
+        paymentStatus: newPaymentStatus,
+        payment: {
+          paidAmount: existingPaidAmount,
+          dueAmount: newDueAmount,
+          status: newPaymentStatus
+        },
+        notes: quickEditNotes
+      }
+
+      const success = await updateInvoice(quickEditInvoice.id, invoiceUpdates as any)
+
+      if (!success) {
+        throw new Error('Failed to update invoice in storage')
+      }
+
+      console.log('✅ Invoice updated via invoiceService (IndexedDB + localStorage + Firebase)')
 
       toast.success('Invoice updated successfully!')
       setShowQuickEditModal(false)
@@ -4237,17 +4384,32 @@ const Purchases = () => {
 
   // Handle item selection from dropdown in Quick Edit modal
   const handleQuickEditItemSelect = (itemId: string, inventoryItem: any) => {
-    const price = inventoryItem.purchasePrice || inventoryItem.purchasePrice || 0
-    const taxPercent = inventoryItem.tax?.gstRate || inventoryItem.tax?.igst || 
+    const price = inventoryItem.sellingPrice || inventoryItem.purchasePrice || 0
+    const taxPercent = inventoryItem.tax?.gstRate || inventoryItem.tax?.igst ||
       ((inventoryItem.tax?.cgst || 0) + (inventoryItem.tax?.sgst || 0)) || 0
+
+    // Get tax mode to calculate base price correctly
+    const taxSettings = getTaxSettings()
+    const itemTaxMode = inventoryItem.taxMode || taxSettings.defaultTaxMode || 'exclusive'
+
+    // Calculate base price (taxable amount) based on tax mode
+    // For inclusive: price includes GST, so extract base price
+    // For exclusive: price is already the base price
+    let basePrice: number
+    if (itemTaxMode === 'inclusive' && taxPercent > 0) {
+      basePrice = price / (1 + taxPercent / 100)
+      basePrice = Math.round(basePrice * 100) / 100
+    } else {
+      basePrice = price
+    }
 
     setQuickEditItems(prev => prev.map(item => {
       if (item.id === itemId) {
-        const amount = item.qty * price
+        const amount = item.qty * basePrice
         return {
           ...item,
           name: inventoryItem.name,
-          rate: price,
+          rate: basePrice, // Use base price for correct calculations
           tax: taxPercent,
           amount: amount
         }
@@ -4278,7 +4440,7 @@ const Purchases = () => {
   const handleDuplicateInvoice = async (invoice: any) => {
     try {
       // Generate new invoice number
-      const newInvoiceNumber = await generateIndianInvoiceNumber('PUR')
+      const newInvoiceNumber = generateIndianInvoiceNumber('PUR')
       
       // Get items array - handle both array and non-array cases
       const itemsArray = Array.isArray(invoice.items) ? invoice.items : []
@@ -4315,14 +4477,14 @@ const Purchases = () => {
         baseUnit: item.baseUnit || '',
         purchaseUnit: item.purchaseUnit || '',
         piecesPerPurchaseUnit: item.piecesPerPurchaseUnit || 0,
-        purchasePricePerPiece: item.purchasePricePerPiece || 0,
+        sellingPricePerPiece: item.sellingPricePerPiece || 0,
         selectedUnit: item.selectedUnit || item.unit || 'Pcs',
       }))
 
       // Create new tab with duplicated invoice data
       const newTab: InvoiceTab = {
         id: Date.now().toString(),
-        type: 'purchase',
+        type: 'sale',
         mode: salesMode,
         customerName: invoice.partyName || '',
         customerPhone: invoice.partyPhone || '',
@@ -4333,6 +4495,7 @@ const Purchases = () => {
         invoiceItems: duplicatedItems,
         paymentMode: invoice.paymentMode || 'cash',
         invoiceDiscount: invoice.invoiceDiscount || invoice.discount || 0,
+        discountType: invoice.discountType || 'percent',
         notes: invoice.notes || '',
         customerSearch: invoice.partyName || ''
       }
@@ -4346,7 +4509,7 @@ const Purchases = () => {
       
       // Switch to create mode
       setViewMode('create')
-      localStorage.setItem('purchases_viewMode', 'create')
+      localStorage.setItem('sales_viewMode', 'create')
 
       toast.success(`Invoice duplicated! New invoice number: ${newInvoiceNumber}`)
       console.log('Duplicated invoice:', { original: invoice, newTab, newInvoiceNumber })
@@ -4577,9 +4740,15 @@ TOTAL:       ₹${invoice.total}
     setIsProcessingReturn(true)
 
     try {
-      // Calculate return totals
-      const returnSubtotal = selectedItems.reduce((sum, item) => sum + (item.price * item.qty), 0)
-      const returnTax = selectedItems.reduce((sum, item) => sum + (item.price * item.qty * (item.tax || 0) / 100), 0)
+      // Calculate return totals - use basePrice for correct taxable amount
+      const returnSubtotal = selectedItems.reduce((sum, item) => {
+        const taxablePerUnit = item.basePrice || (item.taxMode === 'inclusive' ? item.price / (1 + (item.tax || 0) / 100) : item.price)
+        return sum + (taxablePerUnit * item.qty)
+      }, 0)
+      const returnTax = selectedItems.reduce((sum, item) => {
+        const taxablePerUnit = item.basePrice || (item.taxMode === 'inclusive' ? item.price / (1 + (item.tax || 0) / 100) : item.price)
+        return sum + (taxablePerUnit * item.qty * (item.tax || 0) / 100)
+      }, 0)
       const returnTotal = returnSubtotal + returnTax
 
       // Generate return number
@@ -4616,24 +4785,24 @@ TOTAL:       ₹${invoice.total}
 
       // Save sale return to database
       const docRef = await addDoc(collection(db, 'sale_returns'), saleReturnData)
-      console.log('Purchase return created with ID:', docRef.id)
+      console.log('Sale return created with ID:', docRef.id)
 
-      // Update inventory - purchase return sends stock BACK to supplier (reduce our stock)
+      // Update inventory - add returned quantities back to stock
       for (const item of selectedItems) {
         if (item.itemId) {
           try {
-            console.log('Updating stock for item:', item.itemId, 'Reducing qty:', item.qty)
+            console.log('Updating stock for item:', item.itemId, 'Adding qty:', item.qty)
             const itemRef = doc(db, 'items', item.itemId)
             const itemDoc = await getDoc(itemRef)
             if (itemDoc.exists()) {
               const currentStock = itemDoc.data().stock || itemDoc.data().currentStock || 0
-              const newStock = Math.max(currentStock - item.qty, 0)
+              const newStock = currentStock + item.qty
               await updateDoc(itemRef, {
                 stock: newStock,
                 currentStock: newStock,
                 updatedAt: new Date().toISOString()
               })
-              console.log('Stock updated for purchase return:', item.name, 'from', currentStock, 'to', newStock)
+              console.log('Stock updated successfully:', item.name, 'from', currentStock, 'to', newStock)
             } else {
               console.warn('Item not found in inventory:', item.itemId)
             }
@@ -4643,6 +4812,52 @@ TOTAL:       ₹${invoice.total}
         } else {
           console.log('No itemId found for item:', item.name, '- skipping inventory update')
         }
+      }
+
+      // Update original invoice - reduce totals and mark items as returned
+      try {
+        const invoiceRef = doc(db, 'invoices', selectedInvoiceForReturn.id)
+        const invoiceDoc = await getDoc(invoiceRef)
+        
+        if (invoiceDoc.exists()) {
+          const invoiceData = invoiceDoc.data()
+          const currentTotal = invoiceData.total || invoiceData.grandTotal || 0
+          const currentPaidAmount = invoiceData.paidAmount || 0
+          const newTotal = Math.max(0, currentTotal - returnTotal)
+          const newDueAmount = Math.max(0, newTotal - currentPaidAmount)
+          
+          // Calculate new payment status
+          let newPaymentStatus = invoiceData.paymentStatus
+          if (newTotal === 0) {
+            newPaymentStatus = 'returned' // Fully returned - all items returned
+          } else if (currentPaidAmount >= newTotal && newTotal > 0) {
+            newPaymentStatus = 'paid'
+          } else if (currentPaidAmount > 0 && currentPaidAmount < newTotal) {
+            newPaymentStatus = 'partial'
+          }
+          
+          // Track returned amounts on the invoice
+          const returnedAmount = (invoiceData.returnedAmount || 0) + returnTotal
+          const returnedCount = (invoiceData.returnedCount || 0) + 1
+          
+          await updateDoc(invoiceRef, {
+            total: newTotal,
+            grandTotal: newTotal,
+            dueAmount: newDueAmount,
+            paymentStatus: newPaymentStatus,
+            returnedAmount: returnedAmount,
+            returnedCount: returnedCount,
+            hasReturns: true,
+            isFullyReturned: newTotal === 0,
+            lastReturnId: docRef.id,
+            lastReturnDate: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
+          
+          console.log('✅ Invoice updated - New Total:', newTotal, 'Returned:', returnedAmount)
+        }
+      } catch (invoiceUpdateError) {
+        console.error('Could not update invoice totals:', invoiceUpdateError)
       }
 
       // Update party balance if exists (optional)
@@ -4662,47 +4877,42 @@ TOTAL:       ₹${invoice.total}
         }
       }
 
-      // Update Cash in Hand - INCREASE for purchase return (money coming back from supplier)
-      if (returnSubtotal > 0) {
+      // Update Cash in Hand - reduce balance for refund (Firebase real-time sync)
+      if (returnTotal > 0) {
         try {
-          const bankingData = localStorage.getItem('bankingAccounts')
-          if (bankingData) {
-            const accounts = JSON.parse(bankingData)
-            const bankingTransactions = localStorage.getItem('bankingTransactions')
-            const transactions = bankingTransactions ? JSON.parse(bankingTransactions) : []
+          const { updateCashInHand, saveBankingPageTransactions, getBankingPageTransactions } = await import('../services/bankingService')
 
-            // Increase Cash in Hand - money coming back from supplier
-            const newCashBalance = (accounts.cashInHand?.balance || 0) + returnSubtotal
-            accounts.cashInHand = { balance: newCashBalance }
+          // Reduce Cash in Hand (negative amount for deduction)
+          await updateCashInHand(-returnTotal, `Sales Return Refund - ${returnNumber} (${saleReturnData.partyName})`)
 
-            // Add transaction record - CREDIT for purchase return
-            const newTransaction = {
-              id: Date.now() + Math.random(),
-              type: 'credit',
-              description: `Purchase Return Refund - ${returnNumber} (${saleReturnData.partyName})`,
-              amount: returnSubtotal,
-              date: new Date().toISOString().split('T')[0],
-              account: 'Cash in Hand'
-            }
-            transactions.unshift(newTransaction)
-
-            // Save updated accounts and transactions
-            localStorage.setItem('bankingAccounts', JSON.stringify(accounts))
-            localStorage.setItem('bankingTransactions', JSON.stringify(transactions))
-
-            console.log('Purchase Return: Cash in Hand increased by', returnSubtotal, '(excluding tax)')
+          // Add transaction record to Firebase
+          const transactions = await getBankingPageTransactions()
+          const newTransaction = {
+            id: Date.now() + Math.random(),
+            type: 'debit' as const,
+            description: `Sales Return Refund - ${returnNumber} (${saleReturnData.partyName})`,
+            amount: returnTotal,
+            date: new Date().toISOString().split('T')[0],
+            account: 'Cash in Hand'
           }
+          transactions.unshift(newTransaction)
+          await saveBankingPageTransactions(transactions)
+
+          console.log('💰 Sales Return: Cash in Hand reduced by ₹', returnTotal, '(Firebase)')
         } catch (bankingError) {
-          console.error('Failed to update banking for purchase return:', bankingError)
+          console.error('Failed to update banking for sales return:', bankingError)
         }
       }
 
-      toast.success(`Purchase Return ${returnNumber} created successfully! ₹${returnSubtotal.toFixed(2)} (excluding tax) added to Cash in Hand.`)
+      toast.success(`Sale Return ${returnNumber} created successfully! ₹${returnTotal.toFixed(2)} refunded from Cash in Hand.`)
       setShowSaleReturnModal(false)
       setSelectedInvoiceForReturn(null)
       setReturnItems([])
       setReturnReason('')
       setReturnNotes('')
+
+      // Refresh the invoices list to show updated totals
+      await loadInvoicesFromDatabase()
 
       // Refresh the returns map to show the indicator immediately
       const invoiceIds = invoices.map(inv => inv.id)
@@ -4716,42 +4926,41 @@ TOTAL:       ₹${invoice.total}
     }
   }
 
+  const desktopTableStyle = {
+    maxHeight: '55vh',
+    minHeight: invoiceItems.length > 0 ? '120px' : '0'
+  }
+
   return (
     <div className={cn(
-      "h-screen overflow-hidden overflow-x-hidden flex flex-col max-w-[100vw] w-full",
-      viewMode === 'list' ? "p-2 sm:p-3 lg:p-4 bg-[#F8F5FF]" : "bg-white"
+      "overflow-x-hidden flex flex-col max-w-[100vw] w-full",
+      viewMode === 'list' ? "px-3 py-2 bg-slate-50/50 min-h-screen" : "bg-white"
     )}>
       {/* Header - Only show in list mode */}
       {viewMode === 'list' && (
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-1 flex-shrink-0"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <h1 className="flex items-center gap-1.5 text-base font-bold text-slate-800">
-              {location.pathname === '/pos' ? (
-                <>
-                  <Storefront size={20} weight="duotone" className="text-orange-500" />
-                  <span>POS</span>
-                </>
-              ) : (
-                <>
-                  <Receipt size={20} weight="duotone" className="text-primary" />
-                  <span>Invoice</span>
-                </>
-              )}
-            </h1>
-          </div>
-          <div className="flex gap-2">
-                {/* AI Bill - Neo AI Gradient */}
+      <div className="flex-shrink-0">
+        {/* Top Row: Title + Actions */}
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
+            {location.pathname === '/pos' ? (
+              <>
+                <Storefront size={22} weight="duotone" className="text-orange-500" />
+                <span>POS</span>
+              </>
+            ) : (
+              <>
+                <Receipt size={22} weight="duotone" className="text-blue-600" />
+                <span>Invoice</span>
+              </>
+            )}
+          </h1>
+          <div className="flex items-center gap-2">
+                {/* AI Bill */}
                 <button
                   onClick={() => setShowAIAssistant(true)}
-                  className="h-8 px-2.5 rounded-full text-[10px] text-white font-semibold flex items-center gap-1 shadow-md hover:shadow-lg transition-all"
-                  style={{ background: 'linear-gradient(135deg, #7A35FF 0%, #9B63FF 100%)' }}
+                  className="h-8 px-3 rounded-lg text-xs text-white font-semibold flex items-center gap-1.5 shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-violet-600 to-purple-600"
                 >
-                  <Sparkle size={12} weight="fill" />
+                  <Sparkle size={14} weight="fill" />
                   <span>Bill</span>
                 </button>
                 {/* Tally Export Dropdown */}
@@ -4765,11 +4974,11 @@ TOTAL:       ₹${invoice.total}
                       })
                       setShowTallyDropdown(!showTallyDropdown)
                     }}
-                    className="h-8 px-2.5 rounded-full border border-emerald-200 bg-white text-[10px] text-emerald-600 font-semibold flex items-center gap-1 shadow-sm hover:border-emerald-400 hover:bg-emerald-50 transition-all"
+                    className="h-8 px-3 rounded-lg border border-emerald-200 bg-white text-xs text-emerald-600 font-semibold flex items-center gap-1.5 hover:border-emerald-400 hover:bg-emerald-50 transition-all"
                   >
-                    <Download size={12} weight="bold" />
+                    <Download size={14} weight="bold" />
                     <span>Tally</span>
-                    <CaretDown size={10} />
+                    <CaretDown size={12} />
                   </button>
                   {showTallyDropdown && (
                     <>
@@ -4818,29 +5027,28 @@ TOTAL:       ₹${invoice.total}
                     </>
                   )}
                 </div>
-                {/* Add Sale/New POS Bill - Light style */}
+                {/* Add Sale/New POS Bill */}
                 <button
                   onClick={() => {
                     if (location.pathname === '/pos') {
                       setShowCafePOS(true)
-                      // Clear the saved viewMode so next visit opens in create mode
                       localStorage.removeItem('pos_viewMode')
                     }
                     setViewMode('create')
                   }}
-                  className="h-8 px-2.5 rounded-full border border-[#E1D7FF] bg-white text-[10px] text-[#3B82F6] font-semibold flex items-center gap-1 shadow-sm hover:border-[#7A35FF]/30 transition-all"
+                  className="h-8 px-3 rounded-lg border border-blue-200 bg-white text-xs text-blue-600 font-semibold flex items-center gap-1.5 hover:border-blue-400 hover:bg-blue-50 transition-all"
                 >
-                  <Plus size={12} weight="bold" />
+                  <Plus size={14} weight="bold" />
                   <span>{location.pathname === '/pos' ? 'POS' : 'Purchase'}</span>
                 </button>
           </div>
         </div>
 
-        {/* Sales Summary - Neo AI Premium Theme */}
-          <div className="mt-3 md:mt-3 space-y-3">
-            {/* Period Filter Tabs - All in one line */}
-            <div className="flex items-center justify-center gap-2">
-              <div className="inline-flex items-center gap-1 text-xs bg-white/80 backdrop-blur-sm rounded-xl p-1 shadow-sm border border-[#E1D7FF]/50">
+        {/* Period Filter & Stats - Compact Modern */}
+          <div className="space-y-2">
+            {/* Period Filter Tabs */}
+            <div className="flex items-center justify-center">
+              <div className="inline-flex items-center gap-0.5 text-xs bg-white rounded-lg p-0.5 shadow-sm border border-slate-200">
                 {[
                   { value: 'today', label: t.common.today },
                   { value: 'week', label: t.common.week },
@@ -4860,138 +5068,118 @@ TOTAL:       ₹${invoice.total}
                       }
                     }}
                     className={cn(
-                      "px-2 py-1 rounded-lg text-[10px] font-medium transition-all whitespace-nowrap",
+                      "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap",
                       statsFilter === filter.value
-                        ? "bg-gradient-to-r from-[#7A35FF] to-[#9B63FF] text-white shadow-sm"
-                        : "text-[#7C729A] hover:text-[#7A35FF] hover:bg-[rgba(122,53,255,0.08)]"
+                        ? "bg-slate-800 text-white shadow-sm"
+                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                     )}
                   >
                     {filter.label}
                   </button>
                 ))}
               </div>
-              
+            </div>
+
               {/* Custom Date Range Picker */}
               {(statsFilter === 'custom' || showCustomDatePicker) && (
-                <div className="flex flex-wrap items-center justify-center gap-2 bg-white/90 backdrop-blur-sm rounded-xl p-2 shadow-sm border border-[#E1D7FF]/50">
+                <div className="flex flex-wrap items-center justify-center gap-2 bg-white rounded-lg p-2 shadow-sm border border-slate-200">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-[#7C729A] font-medium">{t.common.from}:</span>
+                    <span className="text-[10px] text-slate-500 font-medium">{t.common.from}:</span>
                     <input
                       type="date"
                       value={customDateFrom}
                       onChange={(e) => setCustomDateFrom(e.target.value)}
-                      className="px-2 py-1 text-[11px] rounded-lg border border-[#E1D7FF] bg-white text-[#1A1633] focus:ring-2 focus:ring-[#7A35FF]/20 focus:border-[#7A35FF] outline-none"
+                      className="px-2 py-1 text-[11px] rounded-md border border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                     />
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-[#7C729A] font-medium">{t.common.to}:</span>
+                    <span className="text-[10px] text-slate-500 font-medium">{t.common.to}:</span>
                     <input
                       type="date"
                       value={customDateTo}
                       onChange={(e) => setCustomDateTo(e.target.value)}
-                      className="px-2 py-1 text-[11px] rounded-lg border border-[#E1D7FF] bg-white text-[#1A1633] focus:ring-2 focus:ring-[#7A35FF]/20 focus:border-[#7A35FF] outline-none"
+                      className="px-2 py-1 text-[11px] rounded-md border border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                     />
                   </div>
                   {statsFilter === 'custom' && customDateFrom && customDateTo && (
-                    <span className="text-[9px] text-[#7A35FF] font-medium bg-[rgba(122,53,255,0.08)] px-2 py-1 rounded-lg">
+                    <span className="text-[9px] text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-md">
                       {new Date(customDateFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - {new Date(customDateTo).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                   )}
                 </div>
               )}
-            </div>
 
-            {/* Stats Grid - Premium white cards with gradient strips */}
-            <div className="grid grid-cols-2 gap-3 md:flex md:items-center md:gap-2 max-w-[360px] mx-auto md:max-w-none px-1">
+            {/* Stats Grid - Clean Modern Cards */}
+            <div className="grid grid-cols-4 gap-2 max-w-2xl mx-auto">
 
-              {/* Sales Card - Purple gradient strip */}
+              {/* Sales Card */}
               <button
                 onClick={() => setFilterStatus('all')}
-                className="relative overflow-hidden bg-white rounded-2xl shadow-md p-3 md:px-3 md:py-2 md:flex-1 text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]"
               >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#7A35FF] to-[#9B63FF]" />
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-[#7C729A] font-medium">{t.nav.sales}</span>
-                  <div className="w-6 h-6 rounded-full bg-[rgba(122,53,255,0.12)] flex items-center justify-center text-[10px] text-[#7A35FF] font-bold">₹</div>
-                </div>
-                <div className="text-[17px] font-semibold text-[#1A1633]">₹{dashboardStats.periodSales.toLocaleString('en-IN')}</div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.nav.sales}</div>
+                <div className="text-base font-bold text-slate-800">₹{dashboardStats.periodSales.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               </button>
 
-              {/* Collected Card - Green gradient strip */}
+              {/* Collected Card */}
               <button
                 onClick={() => setFilterStatus('paid')}
-                className="relative overflow-hidden bg-white rounded-2xl shadow-md p-3 md:px-3 md:py-2 md:flex-1 text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-emerald-200 active:scale-[0.98]"
               >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00C9A7] to-[#3B82F6]" />
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-[#7C729A] font-medium">{t.sales.collected}</span>
-                  <div className="w-6 h-6 rounded-full bg-[rgba(0,201,167,0.12)] flex items-center justify-center text-[10px] text-[#00C9A7] font-bold">✓</div>
-                </div>
-                <div className="text-[17px] font-semibold text-[#1A1633]">₹{dashboardStats.totalPaid.toLocaleString('en-IN')}</div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.collected}</div>
+                <div className="text-base font-bold text-emerald-600">₹{dashboardStats.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               </button>
 
-              {/* Pending Card - Red gradient strip */}
+              {/* Pending Card */}
               <button
                 onClick={() => setFilterStatus('pending')}
-                className="relative overflow-hidden bg-white rounded-2xl shadow-md p-3 md:px-3 md:py-2 md:flex-1 text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-red-200 active:scale-[0.98]"
               >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#EF4444] to-[#DC2626]" />
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-[#7C729A] font-medium">{t.sales.pending}</span>
-                  <div className="w-6 h-6 rounded-full bg-[rgba(239,68,68,0.15)] flex items-center justify-center text-[10px] text-[#DC2626] font-bold">!</div>
-                </div>
-                <div className="text-[17px] font-semibold text-[#1A1633]">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN')}</div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.pending}</div>
+                <div className="text-base font-bold text-red-500">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               </button>
 
-              {/* Invoices Card - Blue gradient strip */}
+              {/* Invoices Card */}
               <button
                 onClick={() => setFilterStatus('all')}
-                className="relative overflow-hidden bg-white rounded-2xl shadow-md p-3 md:px-3 md:py-2 md:flex-1 text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]"
               >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#3B82F6] to-[#7A35FF]" />
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-[#7C729A] font-medium">{t.sales.invoice}</span>
-                  <div className="w-6 h-6 rounded-full bg-[rgba(59,130,246,0.12)] flex items-center justify-center text-[10px] text-[#3B82F6] font-bold">#</div>
-                </div>
-                <div className="text-[17px] font-semibold text-[#1A1633]">{dashboardStats.invoiceCount}</div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.invoice}</div>
+                <div className="text-base font-bold text-blue-600">{dashboardStats.invoiceCount}</div>
               </button>
             </div>
           </div>
-      </motion.div>
+      </div>
       )}
 
-      {/* Filters - Neo AI Premium Theme */}
+      {/* Filters - Modern Clean */}
       {viewMode === 'list' && (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="bg-white rounded-2xl px-3 py-2.5 mb-2 border border-[#E1D7FF] shadow-sm flex-shrink-0"
-      >
+      <div className="bg-white rounded-xl px-3 py-2 mb-2 border border-slate-200 shadow-sm flex-shrink-0">
         {/* Mobile: Stack vertically, Desktop: Single row */}
-        <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:gap-3">
-          {/* Search Bar - Neo AI style */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+          {/* Search Bar */}
           <div className="flex-1 relative">
             <MagnifyingGlass
               size={16}
               weight="bold"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A59AC5]"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
             />
             <input
               type="text"
               placeholder={language === 'ta' ? 'பில், வாடிக்கையாளர், மொபைல் தேடு...' : 'Search invoice, customer, mobile...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2.5 text-[12px] bg-transparent border border-[#E1D7FF] rounded-full outline-none focus:ring-2 focus:ring-[#7A35FF]/20 focus:border-[#7A35FF]/50 transition-all text-[#1A1633] placeholder:text-[#A59AC5]"
+              className="w-full pl-9 pr-3 py-2 text-[12px] bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-slate-800 placeholder:text-slate-400"
             />
           </div>
-          {/* Filter Chips - Neo AI style */}
+          {/* Filter Chips */}
           <div className="flex gap-2 justify-center md:justify-end flex-shrink-0">
             {[
               { key: 'all', label: t.common.all },
               { key: 'paid', label: t.sales.paid },
               { key: 'pending', label: t.sales.pending },
-              { key: 'partial', label: t.sales.partial }
+              { key: 'partial', label: t.sales.partial },
+              { key: 'returned', label: 'Returned' }
             ].map((status) => (
               <motion.button
                 key={status.key}
@@ -5000,8 +5188,8 @@ TOTAL:       ₹${invoice.total}
                 className={cn(
                   "px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all duration-200",
                   filterStatus === status.key
-                    ? "bg-[#7A35FF] text-white border-transparent shadow-sm"
-                    : "border-[#E1D7FF] text-[#7C729A] bg-white hover:border-[#7A35FF]/30"
+                    ? "bg-slate-800 text-white border-transparent shadow-sm"
+                    : "border-slate-200 text-slate-600 bg-white hover:border-slate-400"
                 )}
               >
                 {status.label}
@@ -5009,7 +5197,7 @@ TOTAL:       ₹${invoice.total}
             ))}
           </div>
         </div>
-      </motion.div>
+      </div>
       )}
 
       {/* Invoices List - Only show in list mode */}
@@ -5017,18 +5205,18 @@ TOTAL:       ₹${invoice.total}
       <div ref={listContainerRef} className="flex-1 overflow-y-auto space-y-1">
         {isLoadingInvoices ? (
           // Loading skeleton
-          <div className="space-y-3">
+          <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-card rounded-lg p-4 border border-border/50 animate-pulse">
+              <div key={i} className="bg-white rounded-lg p-3 border border-slate-200 animate-pulse">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1">
-                    <div className="hidden sm:block w-12 h-12 bg-muted rounded-lg"></div>
+                    <div className="hidden sm:block w-10 h-10 bg-slate-100 rounded-lg"></div>
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-muted rounded w-32"></div>
-                      <div className="h-3 bg-muted rounded w-48"></div>
+                      <div className="h-4 bg-slate-100 rounded w-32"></div>
+                      <div className="h-3 bg-slate-100 rounded w-48"></div>
                     </div>
                   </div>
-                  <div className="h-6 w-24 bg-muted rounded"></div>
+                  <div className="h-6 w-24 bg-slate-100 rounded"></div>
                 </div>
               </div>
             ))}
@@ -5038,24 +5226,24 @@ TOTAL:       ₹${invoice.total}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-12 bg-card rounded-lg border border-border/50"
+            className="text-center py-10 bg-white rounded-lg border border-slate-200"
           >
-            <Receipt size={48} weight="duotone" className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{language === 'ta' ? 'விற்பனை பில்கள் இல்லை' : 'No Sales Invoices Yet'}</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <Receipt size={40} weight="duotone" className="mx-auto text-slate-400 mb-3" />
+            <h3 className="text-base font-semibold mb-1.5 text-slate-700">{language === 'ta' ? 'விற்பனை பில்கள் இல்லை' : 'No Sales Invoices Yet'}</h3>
+            <p className="text-sm text-slate-500 mb-3">
               {language === 'ta' ? 'பில் ஸ்கேன் செய்யவும் அல்லது புதிய விற்பனை உருவாக்கவும்' : 'Start by scanning an invoice or creating a new sale'}
             </p>
             <div className="flex gap-2 justify-center">
               <button
                 onClick={() => setShowScanner(true)}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-2 text-sm font-medium"
               >
                 <Camera size={16} weight="bold" />
                 {t.dashboard.aiScan}
               </button>
               <button
                 onClick={() => setViewMode('create')}
-                className="px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-medium text-slate-700"
               >
                 <Plus size={16} weight="bold" />
                 {t.sales.newSale}
@@ -5064,17 +5252,17 @@ TOTAL:       ₹${invoice.total}
           </motion.div>
         ) : (
           <>
-          {/* Sticky Header Row - Premium 2025 Big Icons */}
-          <div className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-t-lg px-3 py-3 border-b-2 border-primary/30 sticky top-0 z-10 hidden md:flex shadow-sm">
-            <div style={{ width: '9%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t.common.date}</div>
-            <div style={{ width: '14%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t.sales.invoice}</div>
-            <div style={{ width: '16%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t.sales.customer}</div>
-            <div style={{ width: '11%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t.parties.phone}</div>
-            <div style={{ width: '8%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center">{t.inventory.items}</div>
-            <div style={{ width: '9%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center">{t.common.status}</div>
-            <div style={{ width: '9%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-right">{language === 'ta' ? 'பில் நிலுவை' : 'Inv Bal'}</div>
-            <div style={{ width: '9%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-right">{language === 'ta' ? 'கஸ்ட் நிலுவை' : 'Cust Bal'}</div>
-            <div style={{ width: '15%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center">{t.common.actions}</div>
+          {/* Sticky Header Row */}
+          <div className="bg-slate-100 rounded-lg px-3 py-2 border border-slate-200 sticky top-0 z-10 hidden md:flex">
+            <div style={{ width: '9%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{t.common.date}</div>
+            <div style={{ width: '14%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{t.sales.invoice}</div>
+            <div style={{ width: '16%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{t.sales.customer}</div>
+            <div style={{ width: '11%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{t.parties.phone}</div>
+            <div style={{ width: '8%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide text-center">{t.inventory.items}</div>
+            <div style={{ width: '9%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide text-center">{t.common.status}</div>
+            <div style={{ width: '9%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide text-right">{language === 'ta' ? 'பில் நிலுவை' : 'Inv Bal'}</div>
+            <div style={{ width: '9%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide text-right">{language === 'ta' ? 'கஸ்ட் நிலுவை' : 'Cust Bal'}</div>
+            <div style={{ width: '15%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide text-center">{t.common.actions}</div>
           </div>
           <AnimatePresence>
             {filteredInvoices.map((invoice, index) => {
@@ -5161,35 +5349,36 @@ TOTAL:       ₹${invoice.total}
                 className="md:border-b md:border-border/30 md:hover:bg-blue-50/50 dark:hover:bg-slate-800/50 transition-all cursor-pointer group"
               >
                 {/* MOBILE CARD VIEW - Clean & Nice */}
-                <div className="md:hidden bg-white rounded-xl px-3 py-2.5 border border-slate-100 shadow-sm mb-1.5">
-                  <div className="flex items-center gap-3">
+                <div className="md:hidden bg-white rounded-xl px-2.5 py-2.5 border border-slate-100 shadow-sm mb-1.5 overflow-hidden">
+                  <div className="flex items-center gap-2">
                     {/* Left: Customer & Invoice Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[13px] font-semibold text-slate-800 truncate">{invoice.partyName || 'Walk-in'}</span>
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-[13px] font-semibold text-slate-800 truncate max-w-[120px]">{invoice.partyName || 'Walk-in'}</span>
                         <span className={cn(
-                          "text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0",
+                          "text-[9px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap",
                           invoice.paymentStatus === 'paid' ? "bg-emerald-100 text-emerald-700" :
                           invoice.paymentStatus === 'partial' ? "bg-blue-100 text-blue-700" :
+                          invoice.paymentStatus === 'returned' ? "bg-slate-200 text-slate-700" :
                           "bg-amber-100 text-amber-700"
                         )}>
-                          {invoice.paymentStatus === 'paid' ? 'Paid' : invoice.paymentStatus === 'partial' ? 'Partial' : 'Pending'}
+                          {invoice.paymentStatus === 'paid' ? 'Paid' : invoice.paymentStatus === 'partial' ? 'Partial' : invoice.paymentStatus === 'returned' ? 'Returned' : 'Pending'}
                         </span>
-                        {/* Returned Items Indicator */}
-                        {invoiceReturnsMap[invoice.id] && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 bg-red-100 text-red-700 flex items-center gap-1" title={`${invoiceReturnsMap[invoice.id].totalReturned} items returned (₹${invoiceReturnsMap[invoice.id].totalAmount.toLocaleString('en-IN')})`}>
-                            <ArrowCounterClockwise size={10} weight="bold" />
-                            {invoiceReturnsMap[invoice.id].totalReturned} Ret
+                        {/* Returned Items Indicator - hide if fully returned */}
+                        {invoiceReturnsMap[invoice.id] && invoice.paymentStatus !== 'returned' && (
+                          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 bg-red-100 text-red-700 flex items-center gap-0.5 whitespace-nowrap" title={`${invoiceReturnsMap[invoice.id].totalReturned} items returned (₹${invoiceReturnsMap[invoice.id].totalAmount.toLocaleString('en-IN')})`}>
+                            <ArrowCounterClockwise size={9} weight="bold" />
+                            {invoiceReturnsMap[invoice.id].totalReturned}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                        <span>{invoice.invoiceNumber}</span>
-                        <span>•</span>
-                        <span>{new Date(invoice.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
-                        <span>•</span>
+                      <div className="flex items-center gap-1 text-[10px] text-slate-400 overflow-hidden">
+                        <span className="truncate max-w-[80px]">{invoice.invoiceNumber}</span>
+                        <span className="flex-shrink-0">•</span>
+                        <span className="flex-shrink-0 whitespace-nowrap">{new Date(invoice.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                        <span className="flex-shrink-0">•</span>
                         <span className={cn(
-                          "px-1.5 py-0.5 rounded text-[9px] font-semibold",
+                          "px-1 py-0.5 rounded text-[8px] font-semibold flex-shrink-0 whitespace-nowrap",
                           invoiceType === 'Cash' && "bg-emerald-100 text-emerald-700",
                           invoiceType === 'Bank' && "bg-blue-100 text-blue-700",
                           invoiceType === 'UPI' && "bg-purple-100 text-purple-700",
@@ -5205,15 +5394,15 @@ TOTAL:       ₹${invoice.total}
                     </div>
 
                     {/* Amount */}
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-[14px] font-bold text-slate-800">₹{invoice.total.toLocaleString('en-IN')}</div>
+                    <div className="text-right flex-shrink-0 min-w-[70px]">
+                      <div className="text-[13px] font-bold text-slate-800 whitespace-nowrap">₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       {invoice.paymentStatus !== 'paid' && (
-                        <div className="text-[10px] text-amber-600 font-medium">Due ₹{(invoice.dueAmount || invoice.total).toLocaleString('en-IN')}</div>
+                        <div className="text-[9px] text-amber-600 font-medium whitespace-nowrap">Due ₹{(invoice.dueAmount || invoice.total).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       )}
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <button
                         onClick={(e) => { e.stopPropagation(); openPaymentModal(invoice) }}
                         className={cn(
@@ -5248,15 +5437,15 @@ TOTAL:       ₹${invoice.total}
                 </div>
 
                 {/* DESKTOP TABLE VIEW */}
-                <div className="hidden md:flex items-center px-3 py-3.5">
+                <div className="hidden md:flex items-center px-3 py-2 bg-white rounded-lg border border-slate-100 mb-1 hover:border-blue-200 hover:shadow-sm transition-all">
                 {/* Date (9%) */}
-                <div style={{ width: '9%' }} className="text-sm text-foreground">
+                <div style={{ width: '9%' }} className="text-xs text-slate-600">
                   {new Date(invoice.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                 </div>
 
                 {/* Invoice + Type Badge (14%) */}
                 <div style={{ width: '14%' }} className="flex items-center gap-1 pr-1">
-                  <span className="font-medium text-sm text-foreground truncate">{invoice.invoiceNumber}</span>
+                  <span className="font-medium text-xs text-slate-800 truncate">{invoice.invoiceNumber}</span>
                   <span className={cn(
                     "px-1 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap",
                     invoiceType === 'Cash' && "bg-emerald-100 text-emerald-700",
@@ -5274,36 +5463,37 @@ TOTAL:       ₹${invoice.total}
 
                 {/* Customer (16%) */}
                 <div style={{ width: '16%' }} className="pr-1 overflow-hidden">
-                  <span className="font-medium text-sm truncate block">{invoice.partyName || 'Walk-in'}</span>
+                  <span className="font-medium text-xs truncate block text-slate-800">{invoice.partyName || 'Walk-in'}</span>
                 </div>
 
                 {/* Phone (11%) */}
-                <div style={{ width: '11%' }} className="text-[13px] text-muted-foreground">
+                <div style={{ width: '11%' }} className="text-xs text-slate-500">
                   {invoice.partyPhone || '-'}
                 </div>
 
                 {/* Items (8%) */}
-                <div style={{ width: '8%' }} className="text-center text-[13px] text-muted-foreground">
+                <div style={{ width: '8%' }} className="text-center text-xs text-slate-500">
                   {invoice.itemsCount} item{invoice.itemsCount !== 1 ? 's' : ''}
                 </div>
 
                 {/* Status (9%) */}
-                <div style={{ width: '9%' }} className="flex flex-col items-center gap-1">
+                <div style={{ width: '9%' }} className="flex flex-col items-center gap-0.5">
                   <span className={cn(
-                    "px-2 py-1 rounded-full text-[11px] font-semibold",
+                    "px-2 py-0.5 rounded-full text-[10px] font-semibold",
                     invoice.paymentStatus === 'paid' && "bg-emerald-100 text-emerald-700",
                     invoice.paymentStatus === 'pending' && "bg-red-100 text-red-700",
-                    invoice.paymentStatus === 'partial' && "bg-amber-100 text-amber-700"
+                    invoice.paymentStatus === 'partial' && "bg-amber-100 text-amber-700",
+                    invoice.paymentStatus === 'returned' && "bg-slate-200 text-slate-700"
                   )}>
                     {statusInfo.label}
                   </span>
                   {/* Returned Items Indicator */}
-                  {invoiceReturnsMap[invoice.id] && (
+                  {invoiceReturnsMap[invoice.id] && invoice.paymentStatus !== 'returned' && (
                     <span
-                      className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-red-100 text-red-700 flex items-center gap-0.5 cursor-help"
+                      className="px-1.5 py-0.5 rounded-full text-[8px] font-semibold bg-red-100 text-red-700 flex items-center gap-0.5 cursor-help"
                       title={`${invoiceReturnsMap[invoice.id].totalReturned} items returned in ${invoiceReturnsMap[invoice.id].returnCount} return(s) - ₹${invoiceReturnsMap[invoice.id].totalAmount.toLocaleString('en-IN')}`}
                     >
-                      <ArrowCounterClockwise size={10} weight="bold" />
+                      <ArrowCounterClockwise size={9} weight="bold" />
                       {invoiceReturnsMap[invoice.id].totalReturned} Ret
                     </span>
                   )}
@@ -5311,82 +5501,65 @@ TOTAL:       ₹${invoice.total}
 
                 {/* Invoice Balance (9%) */}
                 <div style={{ width: '9%' }} className="text-right pr-1">
-                  <div className="font-semibold text-sm">₹{balance > 0 ? balance.toLocaleString('en-IN') : invoice.total.toLocaleString('en-IN')}</div>
+                  <div className="font-semibold text-xs text-slate-800">₹{(balance > 0 ? balance : invoice.total).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
 
                 {/* Customer Balance (9%) */}
                 <div style={{ width: '9%' }} className="text-right pr-1">
                   <div className={cn(
-                    "font-semibold text-sm",
+                    "font-semibold text-xs",
                     invoice.customerOutstanding > 0 ? "text-emerald-600" :
-                    invoice.customerOutstanding < 0 ? "text-red-600" : "text-gray-500"
+                    invoice.customerOutstanding < 0 ? "text-red-600" : "text-slate-500"
                   )}>
-                    {invoice.customerOutstanding > 0 ? '+' : invoice.customerOutstanding < 0 ? '' : ''}₹{Math.abs(invoice.customerOutstanding || 0).toLocaleString('en-IN')}
+                    {invoice.customerOutstanding > 0 ? '+' : invoice.customerOutstanding < 0 ? '' : ''}₹{Math.abs(invoice.customerOutstanding || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
 
-                {/* Actions (15%) - BIG ICONS */}
-                <div style={{ width: '15%' }} className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-                      <motion.button
-                        whileHover={{ scale: 1.15, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                        whileTap={{ scale: 0.95 }}
+                {/* Actions (15%) - Compact */}
+                <div style={{ width: '15%' }} className="flex items-center justify-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+                      <button
                         onClick={(e) => { e.stopPropagation(); viewInvoice(invoice) }}
-                        className="w-9 h-9 flex items-center justify-center bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
+                        className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
                         title="View"
                       >
-                        <Eye size={24} weight="duotone" className="text-blue-600" />
-                      </motion.button>
-                      {(() => {
-                        const balanceDue = (invoice.total || invoice.grandTotal || 0) - (invoice.paidAmount || 0)
-                        const hasBalance = balanceDue > 0.009
-                        return (
-                          <motion.button
-                            whileHover={{ scale: 1.15, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={(e) => { e.stopPropagation(); openPaymentModal(invoice) }}
-                            className={cn(
-                              "w-9 h-9 flex items-center justify-center rounded-lg transition-all",
-                              invoice.isReversed
-                                ? "bg-amber-50 hover:bg-amber-100" // Reversed - yellow/amber
-                                : hasBalance
-                                  ? "bg-emerald-50 hover:bg-emerald-100" // Balance due - green
-                                  : "bg-amber-50 hover:bg-amber-100" // Paid - amber
-                            )}
-                            title={
-                              invoice.isReversed
-                                ? (language === 'ta' ? "பணம் திருப்பப்பட்டது - புதிய பணம் பதிவு செய்ய கிளிக் செய்யவும்" : "Payment Reversed - Click to record new payment")
-                                : hasBalance
-                                  ? (language === 'ta' ? "பணம் பதிவு" : "Record Payment")
-                                  : (language === 'ta' ? "பணத்தை திருப்பு" : "Reverse Payment")
-                            }
-                          >
-                            {invoice.isReversed
-                              ? <ArrowCounterClockwise size={24} weight="duotone" className="text-amber-600" /> // Reversed icon in yellow/amber
-                              : hasBalance
-                                ? <Money size={24} weight="duotone" className="text-emerald-600" />
-                                : <ArrowCounterClockwise size={24} weight="duotone" className="text-amber-600" />
-                            }
-                          </motion.button>
-                        )
-                      })()}
-                      <motion.button
-                        whileHover={{ scale: 1.15, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                        whileTap={{ scale: 0.95 }}
+                        <Eye size={16} weight="duotone" className="text-blue-600" />
+                      </button>
+                      {/* Hide payment button for fully returned invoices */}
+                      {invoice.paymentStatus !== 'returned' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openPaymentModal(invoice) }}
+                        className={cn(
+                          "w-7 h-7 flex items-center justify-center rounded-lg transition-all",
+                          invoice.isReversed
+                            ? "bg-amber-50 hover:bg-amber-100"
+                            : invoice.paymentStatus === 'paid'
+                              ? "bg-amber-50 hover:bg-amber-100"
+                              : "bg-emerald-50 hover:bg-emerald-100"
+                        )}
+                        title={invoice.isReversed ? (language === 'ta' ? "பணம் திருப்பப்பட்டது - புதிய பணம் பதிவு செய்ய கிளிக் செய்யவும்" : "Payment Reversed - Click to record new payment") : invoice.paymentStatus === 'paid' ? (language === 'ta' ? "பணத்தை திருப்பு" : "Reverse Payment") : (language === 'ta' ? "பணம் பதிவு" : "Record Payment")}
+                      >
+                        {invoice.isReversed
+                          ? <ArrowCounterClockwise size={16} weight="duotone" className="text-amber-600" />
+                          : invoice.paymentStatus === 'paid'
+                            ? <ArrowCounterClockwise size={16} weight="duotone" className="text-amber-600" />
+                            : <CheckCircle size={16} weight="duotone" className="text-emerald-600" />
+                        }
+                      </button>
+                      )}
+                      <button
                         onClick={(e) => { e.stopPropagation(); handlePrintInvoice(invoice) }}
-                        className="w-9 h-9 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-all"
+                        className="w-7 h-7 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-all"
                         title="Print"
                       >
-                        <Printer size={24} weight="duotone" className="text-amber-600" />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.15, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                        whileTap={{ scale: 0.95 }}
+                        <Printer size={16} weight="duotone" className="text-amber-600" />
+                      </button>
+                      <button
                         onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(invoice) }}
-                        className="w-9 h-9 flex items-center justify-center bg-green-50 hover:bg-green-100 rounded-lg transition-all"
+                        className="w-7 h-7 flex items-center justify-center bg-green-50 hover:bg-green-100 rounded-lg transition-all"
                         title="WhatsApp"
                       >
-                        <WhatsappLogo size={24} weight="duotone" className="text-green-600" />
-                      </motion.button>
+                        <WhatsappLogo size={16} weight="duotone" className="text-green-600" />
+                      </button>
 
                       {/* 3-dot menu for additional actions */}
                       <div
@@ -5524,7 +5697,8 @@ TOTAL:       ₹${invoice.total}
                         <span>{language === 'ta' ? 'வாட்ஸ்அப்' : 'WhatsApp'}</span>
                       </button>
 
-                      {/* Record/Reverse Payment */}
+                      {/* Record/Reverse Payment - Hide for fully returned */}
+                      {invoice.paymentStatus !== 'returned' && (
                       <button
                         onClick={() => {
                           if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current)
@@ -5545,6 +5719,7 @@ TOTAL:       ₹${invoice.total}
                           : (language === 'ta' ? 'பணம் பதிவு' : 'Record Payment')
                         }</span>
                       </button>
+                      )}
 
                       <div className="border-t border-slate-100 dark:border-slate-700 my-1.5 mx-2" />
 
@@ -5598,7 +5773,8 @@ TOTAL:       ₹${invoice.total}
                         <span>{t.sales.pos}</span>
                       </button>
 
-                      {/* Create Sale Return */}
+                      {/* Create Sale Return - Hide for fully returned */}
+                      {invoice.paymentStatus !== 'returned' && (
                       <button
                         onClick={() => {
                           if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current)
@@ -5610,9 +5786,10 @@ TOTAL:       ₹${invoice.total}
                         }}
                         className="w-full px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200"
                       >
-                        <ArrowCounterClockwise size={18} weight="duotone" className="text-amber-500" />
-                        <span>{language === 'ta' ? 'திருப்பி' : 'Purchase Return'}</span>
+                        <ArrowUUpLeft size={18} weight="duotone" className="text-orange-500" />
+                        <span>{language === 'ta' ? 'திருப்பி' : 'Sale Return'}</span>
                       </button>
+                      )}
 
                       <div className="border-t border-slate-100 dark:border-slate-700 my-1.5 mx-2" />
 
@@ -5646,10 +5823,10 @@ TOTAL:       ₹${invoice.total}
 
       {/* Create Invoice Form - Show when in create mode */}
       {viewMode === 'create' && (
-        <div className="flex-1 flex flex-col min-h-0 h-full">
+        <div className="flex flex-col h-[calc(100vh-64px)]">
           {/* Modern Café POS View */}
           {showCafePOS ? (
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden h-full">
               <ModernPOS
                 key={`pos-${posResetKey}`}
                 onAddCustomer={() => setShowAddCustomerModal(true)}
@@ -5720,7 +5897,7 @@ TOTAL:       ₹${invoice.total}
 
               {/* Add new tab button - color based on current mode */}
               <button
-                onClick={() => addNewTab('purchase')}
+                onClick={() => addNewTab('sale')}
                 className="p-1 hover:bg-muted rounded transition-colors group"
                 title={`Add ${salesMode === 'pos' ? 'POS' : 'Invoice'} Tab`}
               >
@@ -5740,10 +5917,10 @@ TOTAL:       ₹${invoice.total}
             {/* Back Button */}
             <button
               onClick={handleBackToList}
-              className="flex items-center gap-1 px-2.5 py-1 bg-gray-700 text-white hover:bg-gray-600 rounded-lg font-medium transition-colors text-xs"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white hover:bg-slate-600 rounded-lg font-semibold transition-colors text-sm shadow-sm"
             >
-              <ArrowLeft size={14} weight="bold" />
-              <span className="hidden md:inline">Back</span>
+              <ArrowLeft size={18} weight="bold" />
+              <span>Back to List</span>
             </button>
           </div>
 
@@ -5821,24 +5998,11 @@ TOTAL:       ₹${invoice.total}
                       onClick={(e) => e.stopPropagation()}
                       className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-[100] max-h-60 overflow-y-auto"
                     >
-                      {/* Add New Customer Button */}
-                      <div
-                        onMouseDown={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          setShowCustomerDropdown(false)
-                          setShowAddCustomerModal(true)
-                        }}
-                        className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-b border-border flex items-center gap-2 text-primary font-medium cursor-pointer"
-                      >
-                        <Plus size={14} weight="bold" />
-                        Add New Supplier
-                      </div>
                       {loadingParties ? (
-                        <div className="px-4 py-3 text-sm text-muted-foreground">Loading suppliers...</div>
+                        <div className="px-4 py-3 text-sm text-muted-foreground">Loading customers...</div>
                       ) : filteredCustomers.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-muted-foreground">
-                          {customerSearch ? 'No suppliers found' : 'Type to search...'}
+                          {customerSearch ? 'No customers found' : 'Type to search...'}
                         </div>
                       ) : (
                         filteredCustomers.slice(0, 10).map((party) => (
@@ -5849,10 +6013,10 @@ TOTAL:       ₹${invoice.total}
                               e.stopPropagation()
                               handleCustomerSelect(party)
                             }}
-                            className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
+                            className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 cursor-pointer"
                           >
                             <div className="flex items-center justify-between">
-                              <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Supplier'}</div>
+                              <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
                               {(party.outstanding !== undefined || party.currentBalance !== undefined) && (() => {
                                 const outstanding = party.outstanding ?? party.currentBalance ?? 0
                                 const colorClass = outstanding > 0 ? 'text-emerald-600' : outstanding < 0 ? 'text-red-600' : 'text-gray-500'
@@ -5871,6 +6035,19 @@ TOTAL:       ₹${invoice.total}
                           </div>
                         ))
                       )}
+                      {/* Add New Customer Button - At Bottom */}
+                      <div
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setShowCustomerDropdown(false)
+                          setShowAddCustomerModal(true)
+                        }}
+                        className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium cursor-pointer sticky bottom-0 bg-card"
+                      >
+                        <Plus size={14} weight="bold" />
+                        Add New Customer
+                      </div>
                     </motion.div>
                   </>
                 )}
@@ -5891,10 +6068,16 @@ TOTAL:       ₹${invoice.total}
                     className="w-full pl-7 pr-3 py-2 text-sm bg-amber-50 border-2 border-amber-400 rounded-lg outline-none focus:ring-2 focus:ring-amber-400 placeholder:text-amber-600/60"
                   />
                   {/* Mobile Item Search Dropdown */}
-                  {showItemDropdown && (
-                    <>
-                      <div className="fixed inset-0 z-[199]" onClick={() => setShowItemDropdown(false)} />
-                      <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-60 overflow-y-auto">
+                  {showItemDropdown && itemDropdownRef.current && createPortal(
+                      <div 
+                        className="item-search-dropdown fixed bg-white border border-slate-200 rounded-lg shadow-2xl max-h-60 overflow-y-auto"
+                        style={{
+                          zIndex: 999999,
+                          top: itemDropdownRef.current.getBoundingClientRect().bottom + 4,
+                          left: itemDropdownRef.current.getBoundingClientRect().left,
+                          width: itemDropdownRef.current.getBoundingClientRect().width,
+                        }}
+                      >
                       <div
                         onMouseDown={(e) => {
                           e.preventDefault()
@@ -5934,14 +6117,14 @@ TOTAL:       ₹${invoice.total}
                                 </div>
                               </div>
                               <div className="text-sm font-bold text-emerald-600 whitespace-nowrap">
-                                ₹{item.purchasePrice || item.purchasePrice || 0}
+                                ₹{item.sellingPrice || item.purchasePrice || 0}
                               </div>
                             </div>
                           </div>
                         ))
                       )}
-                    </div>
-                    </>
+                    </div>,
+                    document.body
                   )}
                 </div>
                 <button
@@ -5955,27 +6138,174 @@ TOTAL:       ₹${invoice.total}
               </div>
             </div>
 
-            {/* Desktop Header - Original layout */}
-            <div className="hidden md:flex items-start gap-2 mb-2">
-              {/* Customer Search */}
-              <div className="flex-1" ref={customerDropdownRef}>
-                <div className="relative">
-                  <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10" />
+            {/* Desktop Header - Item Search on Left, Customer on Right - 50/50 split */}
+            <div className="hidden md:grid md:grid-cols-2 gap-6 mb-4 px-1">
+              {/* Left: Item Search Bar - 50% width */}
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-lg">
+                  <MagnifyingGlass size={18} className="text-amber-600" />
+                </div>
+                <div ref={desktopItemDropdownRef} className="relative flex-1">
+                  <input
+                    ref={itemSearchInputRef}
+                    type="text"
+                    placeholder="Search & add item..."
+                    value={itemSearch}
+                    onChange={(e) => {
+                      setItemSearch(e.target.value)
+                      setShowItemDropdown(true)
+                      setHighlightedItemIndex(-1)
+                    }}
+                    onFocus={() => {
+                      setShowItemDropdown(true)
+                      setHighlightedItemIndex(-1)
+                    }}
+                    onClick={() => setShowItemDropdown(true)}
+                    onBlur={(e) => {
+                      const relatedTarget = e.relatedTarget as HTMLElement
+                      if (!relatedTarget?.closest('.item-search-dropdown')) {
+                        setTimeout(() => setShowItemDropdown(false), 150)
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (!showItemDropdown) return
+                      const itemCount = filteredItems.slice(0, 10).length
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault()
+                        setHighlightedItemIndex(prev => prev < itemCount - 1 ? prev + 1 : 0)
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault()
+                        setHighlightedItemIndex(prev => prev > 0 ? prev - 1 : itemCount - 1)
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault()
+                        if (highlightedItemIndex >= 0 && highlightedItemIndex < itemCount) {
+                          handleItemSelect(filteredItems.slice(0, 10)[highlightedItemIndex])
+                        } else if (itemCount > 0) {
+                          handleItemSelect(filteredItems[0])
+                        }
+                      } else if (e.key === 'Escape') {
+                        setShowItemDropdown(false)
+                        setHighlightedItemIndex(-1)
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 placeholder:text-slate-400 shadow-sm transition-all"
+                  />
+                  {/* Desktop Item Search Dropdown - Top Header */}
+                  {showItemDropdown && desktopItemDropdownRef.current && createPortal(
+                      <div 
+                        className="item-search-dropdown fixed bg-white border border-slate-200 rounded-lg shadow-2xl max-h-72 overflow-y-auto"
+                        style={{
+                          zIndex: 999999,
+                          top: desktopItemDropdownRef.current.getBoundingClientRect().bottom + 4,
+                          left: desktopItemDropdownRef.current.getBoundingClientRect().left,
+                          width: desktopItemDropdownRef.current.getBoundingClientRect().width,
+                        }}
+                      >
+                      {loadingItems ? (
+                        <div className="px-4 py-3 text-sm text-slate-500">Loading items...</div>
+                      ) : filteredItems.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-slate-500">
+                          {itemSearch ? `No items found for "${itemSearch}"` : 'Start typing to search...'}
+                        </div>
+                      ) : (
+                        filteredItems.slice(0, 10).map((item, index) => (
+                          <div
+                            key={item.id}
+                            onMouseDown={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleItemSelect(item)
+                              setItemSearch('')
+                            }}
+                            className={cn(
+                              "w-full px-4 py-2.5 text-left border-b border-slate-100 cursor-pointer",
+                              highlightedItemIndex === index ? "bg-blue-50" : "hover:bg-slate-50"
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-sm text-slate-800 truncate">{item.name}</div>
+                                <div className="text-xs text-slate-500 flex items-center gap-2">
+                                  {item.barcode && <span>{item.barcode}</span>}
+                                  {item.stock !== undefined && <span>Stock: {item.stock}</span>}
+                                </div>
+                              </div>
+                              <div className="text-sm font-bold text-emerald-600 whitespace-nowrap">
+                                ₹{item.sellingPrice || item.purchasePrice || 0}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      {/* Create New Item - At Bottom */}
+                      <div
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setShowItemDropdown(false)
+                          setShowAddItemModal(true)
+                        }}
+                        className="w-full px-4 py-2.5 text-left hover:bg-emerald-50 border-t border-slate-200 flex items-center gap-2 text-emerald-600 font-medium cursor-pointer sticky bottom-0 bg-white"
+                      >
+                        <Plus size={16} weight="bold" />
+                        Create New Item
+                      </div>
+                    </div>,
+                    document.body
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowBarcodeScanner(true)}
+                  className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl flex items-center gap-1.5 transition-all hover:scale-105 font-medium text-sm shadow-sm"
+                  title="Scan Barcode"
+                >
+                  <Barcode size={16} weight="bold" />
+                </button>
+              </div>
+
+              {/* Right: Customer Search + Details - 50% width */}
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <User size={18} className="text-blue-600" />
+                </div>
+                {/* Customer Search Input */}
+                <div className={cn("relative", customerName ? "w-40" : "flex-1")} ref={customerDropdownRef}>
                   <input
                     type="text"
-                    placeholder={salesMode === 'pos' ? "Search customer..." : "Search customer..."}
+                    placeholder="Search customer..."
                     value={customerSearch}
                     onChange={(e) => {
                       setCustomerSearch(e.target.value)
                       setShowCustomerDropdown(true)
+                      setHighlightedCustomerIndex(-1)
                     }}
-                    onFocus={() => setShowCustomerDropdown(true)}
-                    className={cn(
-                      "w-full pl-10 pr-3 py-2 text-sm outline-none transition-all",
-                      salesMode === 'pos'
-                        ? "bg-white border border-slate-200 rounded-lg focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500"
-                        : "bg-background border border-border rounded-lg focus:ring-1 focus:ring-primary/30 focus:border-primary"
-                    )}
+                    onFocus={() => {
+                      setShowCustomerDropdown(true)
+                      setHighlightedCustomerIndex(-1)
+                    }}
+                    onKeyDown={(e) => {
+                      if (!showCustomerDropdown) return
+                      const customerCount = filteredCustomers.slice(0, 10).length
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault()
+                        setHighlightedCustomerIndex(prev => prev < customerCount - 1 ? prev + 1 : 0)
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault()
+                        setHighlightedCustomerIndex(prev => prev > 0 ? prev - 1 : customerCount - 1)
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault()
+                        if (highlightedCustomerIndex >= 0 && highlightedCustomerIndex < customerCount) {
+                          handleCustomerSelect(filteredCustomers.slice(0, 10)[highlightedCustomerIndex])
+                        } else if (customerCount > 0) {
+                          handleCustomerSelect(filteredCustomers[0])
+                        }
+                      } else if (e.key === 'Escape') {
+                        setShowCustomerDropdown(false)
+                        setHighlightedCustomerIndex(-1)
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 placeholder:text-slate-400 shadow-sm transition-all"
                   />
                   {/* Desktop Customer Dropdown */}
                   {showCustomerDropdown && (
@@ -5985,29 +6315,16 @@ TOTAL:       ₹${invoice.total}
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-[100] max-h-64 overflow-y-auto"
+                        className="absolute top-full left-0 mt-1 bg-white border border-slate-200/60 rounded-xl shadow-xl z-[100] max-h-64 overflow-y-auto min-w-[320px]"
                       >
-                        {/* Add New Supplier Button */}
-                        <div
-                          onMouseDown={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            setShowCustomerDropdown(false)
-                            setShowAddCustomerModal(true)
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-b border-border flex items-center gap-2 text-primary font-medium cursor-pointer"
-                        >
-                          <Plus size={14} weight="bold" />
-                          Add New Supplier
-                        </div>
                         {loadingParties ? (
-                          <div className="px-4 py-3 text-sm text-muted-foreground">Loading suppliers...</div>
+                          <div className="px-4 py-3 text-sm text-muted-foreground">Loading customers...</div>
                         ) : filteredCustomers.length === 0 ? (
                           <div className="px-4 py-3 text-sm text-muted-foreground">
-                            {customerSearch ? 'No suppliers found' : 'Type to search...'}
+                            {customerSearch ? 'No customers found' : 'Type to search...'}
                           </div>
                         ) : (
-                          filteredCustomers.slice(0, 10).map((party) => (
+                          filteredCustomers.slice(0, 10).map((party, index) => (
                             <div
                               key={party.id}
                               onMouseDown={(e) => {
@@ -6015,10 +6332,14 @@ TOTAL:       ₹${invoice.total}
                                 e.stopPropagation()
                                 handleCustomerSelect(party)
                               }}
-                              className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 last:border-b-0 cursor-pointer"
+                              onMouseEnter={() => setHighlightedCustomerIndex(index)}
+                              className={cn(
+                                "w-full px-4 py-3 text-left transition-colors border-b border-border/50 cursor-pointer",
+                                highlightedCustomerIndex === index ? "bg-blue-50" : "hover:bg-muted"
+                              )}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Supplier'}</div>
+                                <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
                                 {(party.outstanding !== undefined || party.currentBalance !== undefined) && (() => {
                                   const outstanding = party.outstanding ?? party.currentBalance ?? 0
                                   const colorClass = outstanding > 0 ? 'text-emerald-600' : outstanding < 0 ? 'text-red-600' : 'text-gray-500'
@@ -6037,82 +6358,80 @@ TOTAL:       ₹${invoice.total}
                             </div>
                           ))
                         )}
+                        {/* Add New Customer Button - At Bottom */}
+                        <div
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setShowCustomerDropdown(false)
+                            setShowAddCustomerModal(true)
+                          }}
+                          className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium cursor-pointer sticky bottom-0 bg-card"
+                        >
+                          <Plus size={14} weight="bold" />
+                          Add New Customer
+                        </div>
                       </motion.div>
                     </>
                   )}
                 </div>
-              </div>
 
-              {/* Selected Customer Details */}
-              {customerName && (
-                <div className="flex-1 px-3 py-1.5 bg-primary/5 border border-primary/20 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs flex-1">
-                      <div className="font-semibold text-foreground">{customerName}</div>
-                      {customerPhone && (
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Phone size={10} /> {customerPhone}
+                {/* Selected Customer Details - 2 Rows Layout */}
+                {customerName && (
+                  <div className="flex-1 px-3 py-0.5 border-l border-blue-300 ml-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                        {/* Row 1: Name & Phone */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-800">
+                            <User size={12} className="text-blue-600 flex-shrink-0" />
+                            <span className="truncate">{customerName}</span>
+                          </div>
+                          {customerPhone && (
+                            <div className="flex items-center gap-1 text-xs text-slate-600">
+                              <Phone size={11} className="text-blue-500 flex-shrink-0" /> {customerPhone}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {customerEmail && (
-                        <div className="flex items-center gap-1 text-muted-foreground truncate">
-                          <Envelope size={10} /> {customerEmail}
+                        {/* Row 2: GSTN & Email */}
+                        <div className="flex items-center gap-4">
+                          {customerGST && (
+                            <div className="flex items-center gap-1 text-xs text-slate-600">
+                              <Buildings size={11} className="text-blue-500 flex-shrink-0" /> {customerGST}
+                            </div>
+                          )}
+                          {customerEmail && (
+                            <div className="flex items-center gap-1 text-xs text-slate-600 truncate">
+                              <Envelope size={11} className="text-blue-500 flex-shrink-0" /> {customerEmail}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {customerGST && (
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Buildings size={10} /> {customerGST}
-                        </div>
-                      )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomerName('')
+                          setCustomerPhone('')
+                          setCustomerEmail('')
+                          setCustomerGST('')
+                          setCustomerState('')
+                          setCustomerSearch('')
+                        }}
+                        className="text-slate-400 hover:text-red-500 hover:bg-red-50 rounded p-1 transition-colors flex-shrink-0"
+                      >
+                        <X size={14} weight="bold" />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCustomerName('')
-                        setCustomerPhone('')
-                        setCustomerEmail('')
-                        setCustomerGST('')
-                        setCustomerState('')
-                        setCustomerSearch('')
-                      }}
-                      className="text-xs text-destructive hover:underline ml-2"
-                    >
-                      ✕
-                    </button>
                   </div>
-                </div>
-              )}
-
-              {/* Invoice Number */}
-              <div className="flex items-center gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Inv#</label>
-                <input
-                  type="text"
-                  value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                  placeholder="BILL/2024-25/001"
-                  className="w-32 px-2 py-2 text-xs bg-background border border-border rounded-lg outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary"
-                />
-              </div>
-
-              {/* Invoice Date */}
-              <div className="flex items-center gap-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Date</label>
-                <input
-                  type="date"
-                  value={invoiceDate}
-                  onChange={(e) => setInvoiceDate(e.target.value)}
-                  className="w-28 px-2 py-2 text-xs bg-background border border-border rounded-lg outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary"
-                />
+                )}
               </div>
             </div>
             </div>
-
 
               {/* Items List - Scrollable Table for All Devices */}
               <div>
                 {/* Mobile Card Layout - Clean & Consistent */}
-                <div ref={mobileItemsContainerRef} className="md:hidden space-y-1.5 max-h-[55vh] overflow-y-auto">
+                <div ref={mobileItemsContainerRef} className="md:hidden space-y-1.5 max-h-[35vh] overflow-y-auto">
                   {invoiceItems.length === 0 ? (
                     <div className="text-center py-8 text-slate-400 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
                       <Package size={24} className="mx-auto mb-1 text-slate-300" />
@@ -6277,53 +6596,59 @@ TOTAL:       ₹${invoice.total}
                 {/* Scrollable Items Table - Desktop */}
                 <div
                   ref={itemTableContainerRef}
-                  className="hidden md:block border border-slate-300 rounded-t overflow-x-auto overflow-y-auto"
-                  style={{
-                    maxHeight: '48vh',
-                    minHeight: '120px'
-                  }}
+                  className="hidden md:block border border-slate-200/60 rounded-xl overflow-x-auto overflow-y-auto bg-white shadow-sm"
+                  style={desktopTableStyle}
                 >
-                  <table className="w-full text-xs border-collapse" style={{ minWidth: '720px' }}>
-                    <thead className="bg-blue-600 sticky top-0 z-10">
+                  <table className="w-full text-sm border-collapse" style={{ minWidth: '720px' }}>
+                    <thead className="bg-gradient-to-r from-slate-50 to-slate-100/80 sticky top-0 z-10">
                       <tr>
-                        <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '28px', minWidth: '28px' }}>{columnLabels.serialNoLabel || t.sales.sNo}</th>
-                        <th className="px-1 py-1.5 text-left text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '180px', minWidth: '180px' }}>{columnLabels.itemNameLabel || t.sales.itemName}</th>
+                        <th className="px-2 py-2.5 text-center" style={{ width: '28px', minWidth: '28px' }}>
+                          <button
+                            type="button"
+                            onClick={() => addEmptyRow()}
+                            className="w-6 h-6 flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-full transition-all hover:scale-110 shadow-sm"
+                            title="Add manual item row"
+                          >
+                            <Plus size={14} weight="bold" />
+                          </button>
+                        </th>
+                        <th className="px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '170px', minWidth: '170px' }}>ITEM NAME</th>
                         {visibleColumns.hsnCode && (
-                          <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '70px', minWidth: '70px' }}>{columnLabels.hsnCodeLabel || t.sales.hsnCode}</th>
+                          <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '65px', minWidth: '65px' }}>HSN</th>
                         )}
                         {visibleColumns.description && (
-                          <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '50px', minWidth: '50px' }}>{columnLabels.descriptionLabel || t.common.description}</th>
+                          <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '45px', minWidth: '45px' }}>DESC</th>
                         )}
-                        <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '32px', minWidth: '32px' }}>{columnLabels.qtyLabel || t.sales.qty}</th>
-                        <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '42px', minWidth: '42px' }}>{columnLabels.unitLabel || t.common.unit}</th>
-                        <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '65px', minWidth: '65px' }}>{columnLabels.taxModeLabel || t.sales.taxMode}</th>
-                        <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '48px', minWidth: '48px' }}>{columnLabels.mrpLabel || t.sales.mrp}</th>
-                        <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '55px', minWidth: '55px' }}>{columnLabels.taxableLabel || t.sales.taxable}</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '30px', minWidth: '30px' }}>QTY</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '48px', minWidth: '48px' }}>UNIT</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '58px', minWidth: '58px' }}>TAX</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '60px', minWidth: '60px' }}>MRP</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '60px', minWidth: '60px' }}>TAXABLE</th>
                         {visibleColumns.discount && (
                           <>
-                            <th className="px-0.5 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '30px', minWidth: '30px' }}>{columnLabels.discountPercentLabel || t.sales.discPercent}</th>
-                            <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '55px', minWidth: '55px' }}>{columnLabels.discountAmountLabel || t.sales.discAmount}</th>
+                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>Dis%</th>
+                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>Dis₹</th>
                           </>
                         )}
                         {/* Single GST % column - always visible */}
-                        <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '35px', minWidth: '35px' }}>{columnLabels.gstPercentLabel || t.sales.gstPercent}</th>
-                        <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '42px', minWidth: '42px' }}>{columnLabels.gstAmountLabel || t.sales.gstAmount}</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>GST%</th>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>GST₹</th>
                         {/* CGST/SGST/IGST breakdown - optional */}
                         {visibleColumns.gstBreakdown && (
                           <>
-                            <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '38px', minWidth: '38px' }}>{t.sales.cgst}%</th>
-                            <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '38px', minWidth: '38px' }}>{t.sales.sgst}%</th>
-                            <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '38px', minWidth: '38px' }}>{t.sales.igst}%</th>
+                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider" style={{ width: '35px', minWidth: '35px' }}>CGST%</th>
+                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider" style={{ width: '35px', minWidth: '35px' }}>SGST%</th>
+                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider" style={{ width: '35px', minWidth: '35px' }}>IGST%</th>
                           </>
                         )}
-                        <th className="px-1 py-1.5 text-center text-[9px] font-bold text-white uppercase border-r border-blue-500/50" style={{ width: '55px', minWidth: '55px' }}>{t.common.total}</th>
-                        <th className="px-0.5 py-1.5 relative" style={{ width: '28px', minWidth: '28px' }}>
+                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-emerald-600 uppercase tracking-wider" style={{ width: '65px', minWidth: '65px' }}>TOTAL</th>
+                        <th className="px-1 py-2.5 relative" style={{ width: '28px', minWidth: '28px' }}>
                           <button
                             onClick={() => setShowColumnMenu(!showColumnMenu)}
-                            className="p-1 bg-white/20 hover:bg-white/30 text-white rounded transition-colors"
+                            className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 rounded-full transition-all"
                             title={language === 'ta' ? 'நெடுவரிசைகளைக் காட்டு/மறை' : 'Show/Hide Columns'}
                           >
-                            <Plus size={14} weight="bold" />
+                            <Plus size={12} weight="bold" />
                           </button>
                           {showColumnMenu && (
                             <div
@@ -6399,52 +6724,49 @@ TOTAL:       ₹${invoice.total}
                       {invoiceItems.length > 0 && invoiceItems.map((item, index) => (
                             <tr
                               key={item.id}
-                              className={cn(
-                                "hover:bg-blue-50/50 transition-colors",
-                                index % 2 === 0 ? "bg-white" : "bg-slate-50/70"
-                              )}
+                              className="hover:bg-gradient-to-r hover:from-blue-50/60 hover:to-indigo-50/40 transition-all duration-200 border-b border-slate-100/60 group"
                             >
-                              <td className="px-1 py-1 text-center align-middle text-[11px] font-medium text-slate-700 border-r border-slate-200" style={{ width: '28px', minWidth: '28px' }}>
-                                {index + 1}
+                              <td className="px-2 py-2 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-slate-100 to-slate-200/80 text-[10px] font-bold text-slate-500">{index + 1}</span>
                               </td>
-                              <td className="px-1 py-1 align-middle border-r border-slate-200" style={{ width: '180px', minWidth: '180px' }}>
+                              <td className="px-1 py-1.5 align-middle" style={{ width: '170px', minWidth: '170px' }}>
                                 <input
                                   type="text"
                                   value={item.name}
                                   onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                                  className="w-full h-7 px-1.5 bg-transparent border-0 text-xs font-medium text-gray-900 focus:ring-0 focus:outline-none"
-                                  style={{ minWidth: '150px' }}
+                                  className="w-full h-7 px-1 bg-transparent border-0 text-sm font-semibold text-slate-700 focus:ring-0 focus:outline-none placeholder:text-slate-300 tracking-tight"
+                                  style={{ minWidth: '140px' }}
                                   placeholder="Item name"
                                 />
                               </td>
                               {visibleColumns.hsnCode && (
-                                <td className="px-1 py-0.5 align-middle border-r border-slate-200" style={{ width: '70px', minWidth: '70px' }}>
+                                <td className="px-1 py-1.5 align-middle" style={{ width: '65px', minWidth: '65px' }}>
                                   <input
                                     type="text"
                                     value={item.hsnCode || ''}
                                     onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
                                     className={cn(
-                                      "w-full h-5 px-1 bg-transparent border-0 text-[10px] text-center focus:ring-0 focus:outline-none",
+                                      "w-full h-6 px-1 bg-transparent border-0 text-xs text-center font-medium focus:ring-0 focus:outline-none placeholder:text-slate-300/70 font-mono tracking-wide",
                                       isHSNRequired(customerGST) && (!item.hsnCode || item.hsnCode.trim() === '')
-                                        ? "text-red-500"
-                                        : "text-gray-700"
+                                        ? "text-orange-500 placeholder:text-orange-300"
+                                        : "text-slate-600"
                                     )}
                                     placeholder="HSN"
                                   />
                                 </td>
                               )}
                               {visibleColumns.description && (
-                                <td className="px-1 py-0.5 align-middle border-r border-slate-200" style={{ width: '50px', minWidth: '50px' }}>
+                                <td className="px-1 py-1.5 align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                   <input
                                     type="text"
                                     value={item.description || ''}
                                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                    className="w-full h-5 px-1 bg-transparent border-0 text-[10px] focus:ring-0 focus:outline-none text-gray-700"
+                                    className="w-full h-6 px-1.5 bg-transparent border-0 text-xs focus:ring-0 focus:outline-none text-slate-600 placeholder:text-slate-300"
                                     placeholder="Desc"
                                   />
                                 </td>
                               )}
-                              <td className="px-1 py-0.5 text-center align-middle border-r border-slate-200" style={{ width: '32px', minWidth: '32px' }}>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '30px', minWidth: '30px' }}>
                                 <input
                                   type="number"
                                   min="1"
@@ -6468,15 +6790,15 @@ TOTAL:       ₹${invoice.total}
                                       updateItem(item.id, 'qty', 1)
                                     }
                                   }}
-                                  className="w-full h-5 px-0.5 bg-transparent border-0 text-[10px] text-center font-medium focus:ring-0 focus:outline-none text-gray-800"
+                                  className="w-full h-6 px-0.5 bg-transparent border-0 text-xs text-center font-semibold focus:ring-0 focus:outline-none text-slate-700"
                                 />
                               </td>
-                              <td className="px-1 py-0.5 align-middle border-r border-slate-200" style={{ width: '42px', minWidth: '42px' }}>
+                              <td className="px-1 py-1.5 align-middle" style={{ width: '48px', minWidth: '48px' }}>
                                 {item.hasMultiUnit ? (
                                   <select
                                     value={item.unit || item.baseUnit || 'Pcs'}
                                     onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                                    className="w-full h-5 px-0 bg-transparent border-0 text-[10px] font-medium text-blue-700 focus:ring-0 focus:outline-none"
+                                    className="w-full h-6 px-0 bg-transparent border-0 text-xs font-medium text-slate-600 focus:ring-0 focus:outline-none cursor-pointer"
                                     title={`1 ${item.purchaseUnit || 'Box'} = ${item.piecesPerPurchaseUnit || 12} ${item.baseUnit || 'Pcs'}`}
                                   >
                                     <option value={item.baseUnit || 'Pcs'}>{item.baseUnit || 'Pcs'}</option>
@@ -6486,7 +6808,7 @@ TOTAL:       ₹${invoice.total}
                                   <select
                                     value={item.unit || 'NONE'}
                                     onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                                    className="w-full h-5 px-0 bg-transparent border-0 text-[10px] focus:ring-0 focus:outline-none text-gray-700"
+                                    className="w-full h-6 px-0.5 bg-transparent border-0 text-xs font-medium focus:ring-0 focus:outline-none text-slate-600 cursor-pointer"
                                   >
                                     <option value="NONE">-</option>
                                     <option value="PCS">PCS</option>
@@ -6499,18 +6821,18 @@ TOTAL:       ₹${invoice.total}
                                   </select>
                                 )}
                               </td>
-                              <td className="px-0.5 py-0.5 text-center align-middle border-r border-slate-200" style={{ width: '65px', minWidth: '65px' }}>
+                              <td className="px-0.5 py-1.5 text-center align-middle" style={{ width: '58px', minWidth: '58px' }}>
                                 <select
                                   value={item.taxMode || 'exclusive'}
                                   onChange={(e) => updateItem(item.id, 'taxMode', e.target.value)}
-                                  className="h-5 text-[9px] px-0.5 bg-violet-50 border-0 rounded text-violet-700 font-semibold focus:ring-0 focus:outline-none"
+                                  className="h-6 text-[9px] px-0.5 bg-transparent border-0 rounded font-medium text-slate-600 focus:ring-0 focus:outline-none cursor-pointer"
                                   title="GST Tax Mode"
                                 >
                                   <option value="exclusive">Without GST</option>
                                   <option value="inclusive">With GST</option>
                                 </select>
                               </td>
-                              <td className="px-1 py-0.5 text-center align-middle border-r border-slate-200" style={{ width: '48px', minWidth: '48px' }}>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '60px', minWidth: '60px' }}>
                                 <input
                                   type="number"
                                   step="0.01"
@@ -6521,16 +6843,16 @@ TOTAL:       ₹${invoice.total}
                                     // Simply store what user enters - updateItem handles tax calculation based on mode
                                     updateItem(item.id, 'price', enteredPrice)
                                   }}
-                                  className="w-full h-5 px-0.5 bg-green-50 border border-green-300 rounded text-[10px] text-right font-semibold text-gray-800 focus:ring-0 focus:outline-none"
+                                  className="w-full h-6 px-1 bg-transparent border-0 text-xs text-center font-semibold text-slate-700 focus:ring-0 focus:outline-none"
                                   placeholder="0"
                                 />
                               </td>
-                              <td className="px-1 py-0.5 text-right align-middle border-r border-slate-200" style={{ width: '55px', minWidth: '55px' }}>
-                                <span className="text-[10px] font-medium text-gray-800">₹{(item.basePrice || item.price).toFixed(2)}</span>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '60px', minWidth: '60px' }}>
+                                <span className="text-xs font-semibold text-slate-600">₹{(item.basePrice || item.price).toFixed(2)}</span>
                               </td>
                               {visibleColumns.discount && (
                                 <>
-                                  <td className="px-0.5 py-1 text-center align-middle border-r border-slate-200" style={{ width: '30px', minWidth: '30px' }}>
+                                  <td className="px-0.5 py-1.5 text-center align-middle" style={{ width: '32px', minWidth: '32px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -6543,16 +6865,31 @@ TOTAL:       ₹${invoice.total}
                                           parseFloat(e.target.value) || 0
                                         )
                                       }
-                                      className="w-full h-6 px-0 bg-transparent border-0 text-[10px] text-center text-gray-800 focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-0.5 bg-transparent border-0 text-xs text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
                                     />
                                   </td>
-                                  <td className="px-1 py-1 text-right align-middle border-r border-slate-200" style={{ width: '55px', minWidth: '55px' }}>
-                                    <span className="text-[10px] font-medium text-gray-800">₹{(item.discountAmount || 0).toFixed(2)}</span>
+                                  <td className="px-1 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      value={item.discountAmount ? Math.round(item.discountAmount * 100) / 100 : ''}
+                                      onChange={(e) => {
+                                        const discAmt = parseFloat(e.target.value) || 0
+                                        // Calculate discount % from amount
+                                        const basePrice = item.basePrice || item.price
+                                        const totalBase = basePrice * item.qty
+                                        const discPercent = totalBase > 0 ? (discAmt / totalBase) * 100 : 0
+                                        updateItem(item.id, 'discount', Math.round(discPercent * 100) / 100)
+                                      }}
+                                      placeholder="0"
+                                      className="w-full h-6 px-1 bg-transparent border-0 text-xs text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
+                                    />
                                   </td>
                                 </>
                               )}
                               {/* Single GST % - Always visible */}
-                              <td className="px-1 py-0.5 text-center align-middle border-r border-slate-200" style={{ width: '35px', minWidth: '35px' }}>
+                              <td className="px-0.5 py-1.5 text-center align-middle" style={{ width: '35px', minWidth: '35px' }}>
                                 <input
                                   type="number"
                                   min="0"
@@ -6564,19 +6901,19 @@ TOTAL:       ₹${invoice.total}
                                     // Update the main tax field for calculations
                                     updateItem(item.id, 'tax', totalGst)
                                   }}
-                                  className="w-full h-5 px-0.5 bg-transparent border-0 text-[10px] font-semibold text-center text-gray-800 focus:ring-0 focus:outline-none"
+                                  className="w-full h-6 px-0.5 bg-transparent border-0 text-xs font-semibold text-center text-slate-700 focus:ring-0 focus:outline-none"
                                   title="GST % (Total)"
                                 />
                               </td>
                               {/* GST ₹ - Always visible */}
-                              <td className="px-1 py-0.5 text-right align-middle border-r border-slate-200" style={{ width: '42px', minWidth: '42px' }}>
-                                <span className="text-[10px] font-medium text-gray-800">₹{(item.taxAmount || 0).toFixed(2)}</span>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '42px', minWidth: '42px' }}>
+                                <span className="text-xs font-medium text-slate-600">₹{(item.taxAmount || 0).toFixed(2)}</span>
                               </td>
                               {/* CGST/SGST/IGST breakdown - Optional */}
                               {visibleColumns.gstBreakdown && (
                                 <>
                                   {/* CGST% */}
-                                  <td className="px-1 py-1 text-center align-middle border-r border-slate-200" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-2 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -6590,12 +6927,12 @@ TOTAL:       ₹${invoice.total}
                                           parseFloat(e.target.value) || 0
                                         )
                                       }
-                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-medium text-center focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-semibold text-center text-slate-500 focus:ring-0 focus:outline-none"
                                       title="CGST %"
                                     />
                                   </td>
                                   {/* SGST% */}
-                                  <td className="px-1 py-1 text-center align-middle border-r border-slate-200" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-2 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -6609,12 +6946,12 @@ TOTAL:       ₹${invoice.total}
                                           parseFloat(e.target.value) || 0
                                         )
                                       }
-                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-medium text-center focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-semibold text-center text-slate-500 focus:ring-0 focus:outline-none"
                                       title="SGST %"
                                     />
                                   </td>
                                   {/* IGST% */}
-                                  <td className="px-1 py-1 text-center align-middle border-r border-slate-200" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-2 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -6628,22 +6965,22 @@ TOTAL:       ₹${invoice.total}
                                           parseFloat(e.target.value) || 0
                                         )
                                       }
-                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-medium text-center focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-1 bg-transparent border-0 text-[11px] font-semibold text-center text-slate-500 focus:ring-0 focus:outline-none"
                                       title="IGST %"
                                     />
                                   </td>
                                 </>
                               )}
-                              <td className="px-1 py-0.5 text-right align-middle border-r border-slate-200" style={{ width: '55px', minWidth: '55px' }}>
-                                <span className="text-[10px] font-bold text-gray-900">₹{item.total.toFixed(2)}</span>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '65px', minWidth: '65px' }}>
+                                <span className="text-sm font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">₹{item.total.toFixed(2)}</span>
                               </td>
-                              <td className="px-0.5 py-0.5 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
+                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
                                 <button
                                   type="button"
                                   onClick={() => removeItem(item.id)}
-                                  className="p-0.5 hover:bg-red-50 text-red-500 rounded"
+                                  className="p-1 opacity-0 group-hover:opacity-100 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-full transition-all"
                                 >
-                                  <Trash size={12} weight="bold" />
+                                  <Trash size={14} weight="bold" />
                                 </button>
                               </td>
                             </tr>
@@ -6651,160 +6988,293 @@ TOTAL:       ₹${invoice.total}
                     </tbody>
                   </table>
                 </div>
-                {/* Fixed Total Row - Desktop only (Search moved to top) */}
-                <div className="hidden md:flex bg-slate-50 border border-slate-300 border-t-0 rounded-b px-2 py-1.5 items-center gap-3" style={{ minWidth: '720px' }}>
-                  {/* Item search moved to top - spacer */}
-                  <div className="flex-1"></div>
-                  {/* Desktop only: Total bar + Round checkbox */}
-                  <div className="hidden md:flex items-center justify-end gap-3 ml-auto">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) */}
+                <div className="hidden md:grid md:grid-cols-2 gap-4 mt-3 px-2 items-stretch">
+                {/* Left Column - Invoice Details + Discount/Payment/Notes */}
+                <div className="p-4 bg-background border border-border rounded-lg flex flex-col justify-between overflow-hidden">
+                {/* Line 1: Invoice #, Date and Discount */}
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-1">
+                      <label className="text-xs text-slate-600 whitespace-nowrap">Inv #</label>
                       <input
-                        type="checkbox"
-                        checked={roundOff}
-                        onChange={(e) => setRoundOff(e.target.checked)}
-                        className="w-3 h-3 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        type="text"
+                        value={invoiceNumber}
+                        onChange={(e) => setInvoiceNumber(e.target.value)}
+                        placeholder="INV/2024-25/001"
+                        className="w-36 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary"
                       />
-                      <span className="text-[10px] font-medium text-slate-500">Round Off</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <label className="text-xs text-slate-600">Date</label>
+                      <input
+                        type="date"
+                        value={invoiceDate}
+                        onChange={(e) => setInvoiceDate(e.target.value)}
+                        className="px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary"
+                      />
+                    </div>
+                  </div>
+                  {/* Discount */}
+                  <div className="flex items-center gap-1">
+                    <label className="text-xs text-slate-600 flex items-center gap-0.5">
+                      <Percent size={10} className="text-orange-500" />
+                      Discount
                     </label>
-                    {roundOff && totals.roundOffAmount !== 0 && (
-                      <span className="text-[10px] font-semibold text-blue-600 px-1 py-0.5 bg-blue-50 rounded">
-                        {totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}
-                      </span>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-semibold text-muted-foreground">Total:</span>
-                      <span className="text-[11px] font-bold text-blue-600 bg-primary/10 px-2 py-0.5 rounded">
-                        ₹{totals.total.toFixed(2)}
-                      </span>
+                    <div className="flex items-center bg-white border border-slate-300 rounded">
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
+                        className={`px-1.5 py-1 text-xs font-medium border-r border-slate-300 transition-colors ${
+                          discountType === 'percent'
+                            ? 'bg-orange-50 text-orange-600'
+                            : 'bg-green-50 text-green-600'
+                        }`}
+                        title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
+                      >
+                        {discountType === 'percent' ? '%' : '₹'}
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={invoiceDiscount === 0 ? '' : invoiceDiscount}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '')
+                          setInvoiceDiscount(parseFloat(val) || 0)
+                        }}
+                        placeholder="0"
+                        className="w-10 px-1 py-1 text-xs text-center bg-transparent outline-none"
+                      />
                     </div>
                   </div>
                 </div>
-                {/* Item Search Bar - Desktop (below total) */}
-                <div className="hidden md:flex bg-amber-50 border-2 border-amber-400 rounded-lg px-3 py-2 mt-2 items-center gap-3 md:w-[calc(50%-8px)]">
-                  <MagnifyingGlass size={18} className="text-amber-600 flex-shrink-0" />
-                  <div ref={itemDropdownRef} className="relative flex-1">
-                    <input
-                      ref={itemSearchInputRef}
-                      type="text"
-                      placeholder="Search & add item..."
-                      value={itemSearch}
-                      onChange={(e) => {
-                        setItemSearch(e.target.value)
-                        setShowItemDropdown(true)
-                        setHighlightedItemIndex(-1)
-                      }}
-                      onFocus={() => {
-                        setShowItemDropdown(true)
-                        setHighlightedItemIndex(-1)
-                      }}
-                      onBlur={(e) => {
-                        const relatedTarget = e.relatedTarget as HTMLElement
-                        if (!relatedTarget?.closest('.item-search-dropdown')) {
-                          setTimeout(() => setShowItemDropdown(false), 150)
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (!showItemDropdown) return
-                        const itemCount = filteredItems.slice(0, 10).length
-                        if (e.key === 'ArrowDown') {
-                          e.preventDefault()
-                          setHighlightedItemIndex(prev => prev < itemCount - 1 ? prev + 1 : 0)
-                        } else if (e.key === 'ArrowUp') {
-                          e.preventDefault()
-                          setHighlightedItemIndex(prev => prev > 0 ? prev - 1 : itemCount - 1)
-                        } else if (e.key === 'Enter') {
-                          e.preventDefault()
-                          if (highlightedItemIndex >= 0 && highlightedItemIndex < itemCount) {
-                            handleItemSelect(filteredItems.slice(0, 10)[highlightedItemIndex])
-                          } else if (itemCount > 0) {
-                            handleItemSelect(filteredItems[0])
+                
+                {/* Line 2: Terms & Conditions */}
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-slate-600 flex items-center gap-0.5 whitespace-nowrap">
+                    <Pencil size={10} className="text-purple-500" />
+                    Terms & Conditions
+                  </label>
+                  <input
+                    type="text"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Thank you"
+                    className="flex-1 min-w-0 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none"
+                  />
+                </div>
+
+                {/* Line 3: Payment */}
+                <div className="space-y-1.5">
+                  {payments.map((payment, index) => (
+                    <div key={index} className="flex items-center gap-1 flex-wrap">
+                      <label className={cn("text-xs text-slate-600 flex items-center gap-0.5", index > 0 && "invisible")}>
+                        <CreditCard size={10} className="text-green-600" />
+                        Payment
+                      </label>
+                      <select
+                        value={payment.type}
+                        onChange={(e) => {
+                          const newPayments = [...payments]
+                          newPayments[index].type = e.target.value
+                          setPayments(newPayments)
+                          if (e.target.value !== 'bank') {
+                            setSelectedBankAccountId('')
                           }
-                        } else if (e.key === 'Escape') {
-                          setShowItemDropdown(false)
-                          setHighlightedItemIndex(-1)
-                        }
-                      }}
-                      className="w-full px-3 py-2 bg-white border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 placeholder:text-slate-400"
-                    />
-                    {/* Item Search Dropdown */}
-                    {showItemDropdown && (
-                      <>
-                        <div className="fixed inset-0 z-[199]" onClick={() => setShowItemDropdown(false)} />
-                        <div className="item-search-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[200] max-h-72 overflow-y-auto">
-                        <div
-                          onMouseDown={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            setShowItemDropdown(false)
-                            setShowAddItemModal(true)
-                          }}
-                          className="w-full px-4 py-2.5 text-left hover:bg-blue-50 border-b border-slate-200 flex items-center gap-2 text-blue-600 font-medium cursor-pointer"
-                        >
-                          <Plus size={16} weight="bold" />
-                          Create New Item
-                        </div>
-                        {loadingItems ? (
-                          <div className="px-4 py-3 text-sm text-slate-500">Loading items...</div>
-                        ) : filteredItems.length === 0 ? (
-                          <div className="px-4 py-3 text-sm text-slate-500">
-                            {itemSearch ? `No items found for "${itemSearch}"` : 'Start typing to search...'}
-                          </div>
-                        ) : (
-                          filteredItems.slice(0, 10).map((item, index) => (
-                            <div
-                              key={item.id}
-                              onMouseDown={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                handleItemSelect(item)
-                                setItemSearch('')
-                              }}
-                              className={cn(
-                                "w-full px-4 py-2.5 text-left border-b border-slate-100 last:border-b-0 cursor-pointer",
-                                highlightedItemIndex === index ? "bg-blue-50" : "hover:bg-slate-50"
-                              )}
+                        }}
+                        className="px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none"
+                      >
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                        <option value="upi">UPI</option>
+                        <option value="bank">Bank</option>
+                        <option value="credit">Credit</option>
+                        <option value="cheque">Cheque</option>
+                      </select>
+                      {payment.type === 'bank' && (
+                        <>
+                          <select
+                            value={payment.reference}
+                            onChange={(e) => {
+                              const newPayments = [...payments]
+                              const selectedAccount = bankAccounts.find(acc => acc.id.toString() === e.target.value)
+                              if (selectedAccount) {
+                                newPayments[index].reference = `${selectedAccount.name} (*${selectedAccount.accountNo.slice(-4)})`
+                                setPayments(newPayments)
+                                setSelectedBankAccountId(e.target.value)
+                              } else {
+                                newPayments[index].reference = ''
+                                setPayments(newPayments)
+                                setSelectedBankAccountId('')
+                              }
+                            }}
+                            className="px-1.5 py-1 text-xs bg-blue-50 border border-blue-300 rounded outline-none min-w-[80px]"
+                          >
+                            <option value="">{bankAccounts.length > 0 ? '-- Select --' : 'No accounts'}</option>
+                            {bankAccounts.map((account) => (
+                              <option key={account.id} value={account.id}>
+                                {account.name} {account.accountNo ? `(*${account.accountNo.slice(-4)})` : ''}
+                              </option>
+                            ))}
+                          </select>
+                          {bankAccounts.length === 0 && (
+                            <button
+                              type="button"
+                              onClick={() => navigate('/banking')}
+                              className="px-1.5 py-1 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600"
                             >
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-sm text-slate-800 truncate">{item.name}</div>
-                                  <div className="text-xs text-slate-500 flex items-center gap-2">
-                                    {item.barcode && <span>{item.barcode}</span>}
-                                    {item.stock !== undefined && <span>Stock: {item.stock}</span>}
-                                  </div>
-                                </div>
-                                <div className="text-sm font-bold text-emerald-600 whitespace-nowrap">
-                                  ₹{item.purchasePrice || 0}
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        )}
+                              Add Bank
+                            </button>
+                          )}
+                        </>
+                      )}
+                      <input
+                        type="number"
+                        value={payment.amount || ''}
+                        onChange={(e) => {
+                          const newPayments = [...payments]
+                          newPayments[index].amount = parseFloat(e.target.value) || 0
+                          setPayments(newPayments)
+                        }}
+                        placeholder="₹0"
+                        className="w-12 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none"
+                      />
+                      <input
+                        type="text"
+                        value={payment.reference}
+                        onChange={(e) => {
+                          const newPayments = [...payments]
+                          newPayments[index].reference = e.target.value
+                          setPayments(newPayments)
+                        }}
+                        placeholder="Ref No."
+                        className="flex-1 min-w-0 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none"
+                      />
+                      {payments.length > 1 && (
+                        <button type="button" onClick={() => setPayments(payments.filter((_, i) => i !== index))} className="p-0.5 text-red-500 hover:bg-red-50 rounded">
+                          <X size={10} />
+                        </button>
+                      )}
+                      {index === payments.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setPayments([...payments, { type: 'cash', amount: 0, reference: '' }])}
+                          className="w-5 h-5 flex-shrink-0 flex items-center justify-center text-primary border border-primary/30 rounded hover:bg-primary/10"
+                          title="Add Payment"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                </div>
+                {/* Right Side - Totals Summary */}
+                <div className="p-4 bg-gradient-to-br from-slate-50 to-white border border-slate-200/60 rounded-xl">
+                  {invoiceItems.length > 0 ? (
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">Subtotal:</span>
+                        <span className="font-semibold text-slate-700">₹{totals.subtotal.toFixed(2)}</span>
                       </div>
-                      </>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowBarcodeScanner(true)}
-                    className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg flex items-center gap-2 transition-colors font-medium"
-                    title="Scan Barcode"
-                  >
-                    <Barcode size={18} weight="bold" />
-                  </button>
+                      {invoiceDiscount > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
+                          <span className="font-semibold text-orange-500">-₹{totals.discount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {/* Tax Row - Consolidated with CGST/SGST/IGST breakdown inline */}
+                      {totals.totalTax > 0 && (
+                        <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400">Tax</span>
+                            {totals.totalIGST > 0 ? (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded font-medium">Interstate</span>
+                            ) : (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded font-medium">Intra</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {totals.totalIGST > 0 ? (
+                              <span className="text-xs text-slate-600">IGST ₹{totals.totalIGST.toFixed(2)}</span>
+                            ) : (
+                              <>
+                                <span className="text-[11px] text-slate-500">CGST</span>
+                                <span className="text-xs font-medium text-slate-700">₹{totals.totalCGST.toFixed(2)}</span>
+                                <span className="text-slate-300">|</span>
+                                <span className="text-[11px] text-slate-500">SGST</span>
+                                <span className="text-xs font-medium text-slate-700">₹{totals.totalSGST.toFixed(2)}</span>
+                              </>
+                            )}
+                          </div>
+                          <span className="text-sm font-semibold text-slate-700">₹{totals.totalTax.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-emerald-200">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-800">TOTAL</span>
+                          <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-1 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={roundOff}
+                              onChange={(e) => setRoundOff(e.target.checked)}
+                              className="w-3 h-3 rounded accent-emerald-600"
+                            />
+                            <span className="text-[10px] text-slate-400">Round Off</span>
+                          </label>
+                          {roundOff && totals.roundOffAmount !== 0 && (
+                            <span className="text-[10px] text-emerald-600">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
+                          )}
+                        </div>
+                        <span className="font-bold text-2xl text-emerald-600">₹{totals.total.toFixed(0)}</span>
+                      </div>
+                      {totals.received > 0 && (
+                        <>
+                          <div className="flex justify-between text-xs pt-1 border-t border-border/50">
+                            <span className="text-muted-foreground">Paid:</span>
+                            <span className="font-medium text-emerald-600">₹{totals.received.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Balance:</span>
+                            <span className={cn("font-semibold", totals.balance > 0 ? "text-red-600" : "text-emerald-600")}>
+                              ₹{Math.abs(totals.balance).toFixed(2)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted-foreground text-sm py-4">
+                      Add items to see totals
+                    </div>
+                  )}
                 </div>
               </div>
+              </div>
             {/* FOOTER - Mobile Only */}
-            <div className="md:hidden flex flex-col gap-2 mt-1">
+            <div className="md:hidden flex flex-col gap-2">
               {/* Totals Summary - First */}
               <div className="p-2 bg-gradient-to-r from-slate-50 via-blue-50 to-blue-100 border border-blue-200 rounded-lg shadow-sm">
                 {invoiceItems.length > 0 ? (
                   <div className="flex items-center justify-between text-[11px]">
+                    {/* Add Row Button - Far Left */}
+                    <button
+                      type="button"
+                      onClick={() => addEmptyRow()}
+                      className="flex items-center justify-center w-7 h-7 bg-green-500 hover:bg-green-600 text-white rounded transition-colors flex-shrink-0"
+                      title="Add manual item row"
+                    >
+                      <Plus size={14} weight="bold" />
+                    </button>
                     {/* LEFT - Subtotal, Discount & Round */}
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-0.5 ml-2">
                       <div className="flex items-center gap-2">
                         <span className="text-gray-500">Subtotal: <strong className="text-gray-800">₹{totals.subtotal.toFixed(2)}</strong></span>
                         {invoiceDiscount > 0 && (
-                          <span className="text-orange-600 text-[10px]">-₹{totals.discount.toFixed(2)} <span className="text-orange-400">({invoiceDiscount}%)</span></span>
+                          <span className="text-orange-600 text-[10px]">-₹{totals.discount.toFixed(2)} <span className="text-orange-400">({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`})</span></span>
                         )}
                       </div>
                       <label className="flex items-center gap-1 cursor-pointer">
@@ -6842,27 +7312,7 @@ TOTAL:       ₹${invoice.total}
 
               {/* Discount & Payment - Clean Compact */}
               <div className="px-2 py-1.5 bg-gradient-to-r from-slate-50 to-white border border-slate-200 rounded-lg space-y-1">
-                {/* Hidden file inputs */}
-                <input type="file" ref={imageInputRef} accept="image/*" className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) {
-                      setAttachments([...attachments, { name: file.name, type: 'image', url: URL.createObjectURL(file) }])
-                    }
-                    e.target.value = ''
-                  }}
-                />
-                <input type="file" ref={documentInputRef} accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) {
-                      setAttachments([...attachments, { name: file.name, type: 'document', url: URL.createObjectURL(file) }])
-                    }
-                    e.target.value = ''
-                  }}
-                />
-
-                {/* ROW 1: Discount + Payment + Attach - All same size */}
+                {/* ROW 1: Discount + Payment */}
                 <div className="flex items-center gap-2 text-[11px]">
                   {/* Discount */}
                   <div className="flex items-center gap-1">
@@ -6890,9 +7340,9 @@ TOTAL:       ₹${invoice.total}
                       className="w-10 h-6 px-1 text-[11px] text-center bg-white border border-slate-200 rounded outline-none text-gray-800"
                     />
                   </div>
-
+                  
                   <div className="w-px h-5 bg-slate-200" />
-
+                  
                   {/* Payment */}
                   <div className="flex items-center gap-1">
                     <CreditCard size={12} className="text-green-600" />
@@ -6949,21 +7399,6 @@ TOTAL:       ₹${invoice.total}
                     >
                       <Plus size={12} />
                     </button>
-                  </div>
-                  
-                  <div className="w-px h-5 bg-slate-200" />
-                  
-                  {/* Attach */}
-                  <div className="flex items-center gap-1">
-                    <button type="button" onClick={() => imageInputRef.current?.click()} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-slate-100 border border-slate-200 rounded" title="Image">
-                      <Camera size={12} />
-                    </button>
-                    <button type="button" onClick={() => documentInputRef.current?.click()} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-slate-100 border border-slate-200 rounded" title="Doc">
-                      <FileText size={12} />
-                    </button>
-                    {attachments.length > 0 && (
-                      <span className="text-[9px] bg-blue-100 text-blue-600 px-1 rounded">{attachments.length}</span>
-                    )}
                   </div>
                 </div>
 
@@ -7024,266 +7459,9 @@ TOTAL:       ₹${invoice.total}
 
             </div>
 
-            {/* FOOTER - Desktop Only - Inline Row Layout: Left (Discount/Payment/Notes) | Right (Totals) */}
-            <div className="hidden md:grid md:grid-cols-2 gap-4 mt-1 px-2 items-start">
-              {/* Left Side - Discount, Payment, Attachments & Notes */}
-              <div className="space-y-2">
-                {/* Discount Row */}
-                <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <Percent size={12} className="text-orange-500" />
-                    Discount
-                  </label>
-                  <div className="flex items-center bg-background border border-border rounded-md w-fit">
-                    <button
-                      type="button"
-                      onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
-                      className={`px-2 py-1.5 text-xs font-medium border-r border-border transition-colors ${
-                        discountType === 'percent'
-                          ? 'bg-orange-50 text-orange-600'
-                          : 'bg-green-50 text-green-600'
-                      }`}
-                      title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
-                    >
-                      {discountType === 'percent' ? '%' : '₹'}
-                    </button>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={invoiceDiscount === 0 ? '' : invoiceDiscount}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '')
-                        setInvoiceDiscount(parseFloat(val) || 0)
-                      }}
-                      placeholder="0"
-                      className="w-14 px-2 py-1.5 text-xs text-center bg-transparent outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Payment Row */}
-                <div className="grid grid-cols-[80px_1fr] items-start gap-2">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 pt-1.5">
-                    <CreditCard size={12} className="text-green-600" />
-                    Payment
-                  </label>
-                  <div className="space-y-2">
-                    {payments.map((payment, index) => (
-                      <div key={index} className="flex items-center gap-2 flex-wrap">
-                        <select
-                          value={payment.type}
-                          onChange={(e) => {
-                            const newPayments = [...payments]
-                            newPayments[index].type = e.target.value
-                            setPayments(newPayments)
-                            // Reset bank account when not bank
-                            if (e.target.value !== 'bank') {
-                              setSelectedBankAccountId('')
-                            }
-                          }}
-                          className="px-2 py-1.5 text-xs bg-background border border-border rounded-md outline-none"
-                        >
-                          <option value="cash">Cash</option>
-                          <option value="card">Card</option>
-                          <option value="upi">UPI</option>
-                          <option value="bank">Bank</option>
-                          <option value="credit">Credit</option>
-                          <option value="cheque">Cheque</option>
-                        </select>
-                        {/* Bank Account Dropdown - Show when Bank is selected */}
-                        {payment.type === 'bank' && (
-                          <>
-                            <select
-                              value={payment.reference}
-                              onChange={(e) => {
-                                const newPayments = [...payments]
-                                const selectedAccount = bankAccounts.find(acc => acc.id.toString() === e.target.value)
-                                if (selectedAccount) {
-                                  // Store bank account ID and name in reference for later retrieval
-                                  newPayments[index].reference = `${selectedAccount.name} (*${selectedAccount.accountNo.slice(-4)})`
-                                  setPayments(newPayments)
-                                  setSelectedBankAccountId(e.target.value)
-                                } else {
-                                  newPayments[index].reference = ''
-                                  setPayments(newPayments)
-                                  setSelectedBankAccountId('')
-                                }
-                              }}
-                              className="px-2 py-1.5 text-xs bg-blue-50 border border-blue-300 rounded-md outline-none min-w-[140px]"
-                            >
-                              <option value="">{bankAccounts.length > 0 ? '-- Select Account --' : 'No accounts found'}</option>
-                              {bankAccounts.map((account) => (
-                                <option key={account.id} value={account.id}>
-                                  {account.name} {account.accountNo ? `(*${account.accountNo.slice(-4)})` : ''}
-                                </option>
-                              ))}
-                            </select>
-                            {bankAccounts.length === 0 && (
-                              <button
-                                type="button"
-                                onClick={() => navigate('/banking')}
-                                className="px-2 py-1 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600"
-                              >
-                                Add Bank
-                              </button>
-                            )}
-                          </>
-                        )}
-                        <input
-                          type="number"
-                          value={payment.amount || ''}
-                          onChange={(e) => {
-                            const newPayments = [...payments]
-                            newPayments[index].amount = parseFloat(e.target.value) || 0
-                            setPayments(newPayments)
-                          }}
-                          placeholder="₹0"
-                          className="w-20 px-2 py-1.5 text-xs bg-background border border-border rounded-md outline-none"
-                        />
-                        <input
-                          type="text"
-                          value={payment.reference}
-                          onChange={(e) => {
-                            const newPayments = [...payments]
-                            newPayments[index].reference = e.target.value
-                            setPayments(newPayments)
-                          }}
-                          placeholder="Ref No."
-                          className="flex-1 px-2 py-1.5 text-xs bg-background border border-border rounded-md outline-none"
-                        />
-                        {payments.length > 1 && (
-                          <button type="button" onClick={() => setPayments(payments.filter((_, i) => i !== index))} className="p-1 text-red-500 hover:bg-red-50 rounded">
-                            <X size={12} />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setPayments([...payments, { type: 'cash', amount: 0, reference: '' }])}
-                      className="text-xs text-primary hover:underline flex items-center gap-1"
-                    >
-                      <Plus size={12} /> Add Payment
-                    </button>
-                  </div>
-                </div>
-
-                {/* Attachments Row */}
-                <div className="grid grid-cols-[80px_1fr] items-center gap-2">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <UploadSimple size={12} className="text-blue-500" />
-                    Attach
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => imageInputRef.current?.click()} className="px-2 py-1 text-xs bg-background border border-border rounded-md hover:bg-muted flex items-center gap-1">
-                      <Camera size={12} /> Image
-                    </button>
-                    <button type="button" onClick={() => documentInputRef.current?.click()} className="px-2 py-1 text-xs bg-background border border-border rounded-md hover:bg-muted flex items-center gap-1">
-                      <FileText size={12} /> Document
-                    </button>
-                    {attachments.length > 0 && <span className="text-xs text-muted-foreground">{attachments.length} file(s)</span>}
-                  </div>
-                </div>
-
-                {/* Notes Row */}
-                <div className="grid grid-cols-[80px_1fr] items-start gap-2">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 pt-1.5">
-                    <Pencil size={12} className="text-purple-500" />
-                    Notes
-                  </label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add notes..."
-                    rows={2}
-                    className="w-full px-2 py-1.5 text-xs bg-background border border-border rounded-md outline-none resize-none"
-                  />
-                </div>
-              </div>
-
-              {/* Right Side - Totals Summary */}
-              <div className="p-3 bg-background border border-border rounded-lg">
-                {invoiceItems.length > 0 ? (
-                  <div className="space-y-1.5 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-700">Subtotal:</span>
-                      <span className="font-medium">₹{totals.subtotal.toFixed(2)}</span>
-                    </div>
-                    {invoiceDiscount > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-slate-700">Discount ({invoiceDiscount}%):</span>
-                        <span className="font-medium text-orange-600">-₹{totals.discount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {totals.totalCGST > 0 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-700">CGST:</span>
-                        <span className="font-medium text-emerald-600">₹{totals.totalCGST.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {totals.totalSGST > 0 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-700">SGST:</span>
-                        <span className="font-medium text-emerald-600">₹{totals.totalSGST.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {totals.totalIGST > 0 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-700">IGST:</span>
-                        <span className="font-medium text-blue-600">₹{totals.totalIGST.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between pt-1.5 border-t border-border">
-                      <span className="text-slate-700">Tax:</span>
-                      <span className="font-medium">₹{totals.totalTax.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-1.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={roundOff}
-                          onChange={(e) => setRoundOff(e.target.checked)}
-                          className="w-3.5 h-3.5 rounded accent-primary"
-                        />
-                        <span className="text-xs text-slate-700">Round Off</span>
-                      </label>
-                      {roundOff && totals.roundOffAmount !== 0 && (
-                        <span className="text-xs text-primary">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
-                      )}
-                    </div>
-                    <div className="flex justify-between items-center pt-2 mt-1 border-t-2 border-primary/30">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-foreground">TOTAL</span>
-                        <span className="text-xs text-muted-foreground">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
-                      </div>
-                      <span className="font-bold text-2xl text-primary">₹{totals.total.toFixed(0)}</span>
-                    </div>
-                    {totals.received > 0 && (
-                      <>
-                        <div className="flex justify-between text-xs pt-1.5 border-t border-border/50">
-                          <span className="text-muted-foreground">Paid:</span>
-                          <span className="font-medium text-emerald-600">₹{totals.received.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">Balance:</span>
-                          <span className={cn("font-semibold", totals.balance > 0 ? "text-red-600" : "text-emerald-600")}>
-                            ₹{Math.abs(totals.balance).toFixed(2)}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center text-muted-foreground text-sm py-4">
-                    Add items to see totals
-                  </div>
-                )}
-              </div>
-            </div>
-
           </div>
           {/* Bottom Action Bar */}
-          <div className="px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white mt-2">
+          <div className="px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white flex-shrink-0">
             
             {/* Mobile Search Bar - MOVED TO TOP (near customer search) */}
             <div className="hidden">
@@ -7350,7 +7528,7 @@ TOTAL:       ₹${invoice.total}
                               {item.barcode && <div className="text-xs text-slate-500">{item.barcode}</div>}
                             </div>
                             <div className="text-base font-bold text-green-600 whitespace-nowrap">
-                              ₹{item.purchasePrice || item.purchasePrice || 0}
+                              ₹{item.sellingPrice || item.purchasePrice || 0}
                             </div>
                           </div>
                         </div>
@@ -7409,22 +7587,6 @@ TOTAL:       ₹${invoice.total}
 
             {/* Action Buttons - Mobile: Compact icon buttons, Desktop: Full buttons */}
             <div className="flex items-center gap-1.5 md:gap-2 w-full md:w-fit md:ml-auto">
-              {/* Live Preview Toggle - Desktop only (for Invoice mode) */}
-              {salesMode !== 'pos' && (
-                <button
-                  onClick={() => setShowPosPreview(!showPosPreview)}
-                  className={cn(
-                    "hidden lg:flex px-4 py-2 rounded-lg font-medium transition-colors text-sm items-center justify-center gap-2 border",
-                    showPosPreview
-                      ? "bg-purple-600 text-white border-purple-700 hover:bg-purple-700"
-                      : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
-                  )}
-                >
-                  <Eye size={16} weight="bold" />
-                  {showPosPreview ? 'Hide Preview' : 'Live Preview'}
-                </button>
-              )}
-
               {/* Mobile: Compact Button Row */}
               <div className="flex md:hidden items-center gap-1.5 flex-1">
                 {/* Bill Button with Dropdown */}
@@ -7462,7 +7624,7 @@ TOTAL:       ₹${invoice.total}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           transition={{ duration: 0.15 }}
-                          className="absolute bottom-full left-0 mb-1 w-44 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-1"
+                          className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-1"
                         >
                           <button
                             type="button"
@@ -7475,7 +7637,7 @@ TOTAL:       ₹${invoice.total}
                                 toast.error('Please add customer and items first')
                               }
                             }}
-                            className="w-full px-3 py-2.5 text-left text-[11px] hover:bg-slate-50 transition-colors"
+                            className="w-full px-3 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors"
                           >
                             Generate e-Invoice
                           </button>
@@ -7490,7 +7652,7 @@ TOTAL:       ₹${invoice.total}
                                 toast.error('Please add customer and items first')
                               }
                             }}
-                            className="w-full px-3 py-2.5 text-left text-[11px] hover:bg-slate-50 transition-colors"
+                            className="w-full px-3 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors"
                           >
                             Generate Eway Bill
                           </button>
@@ -7505,9 +7667,10 @@ TOTAL:       ₹${invoice.total}
                                 toast.error('Please add customer and items first')
                               }
                             }}
-                            className="w-full px-3 py-2.5 text-left text-[11px] hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+                            className="w-full px-3 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors flex items-center gap-2"
                           >
-                            Share <Share size={10} />
+                            <Share size={12} />
+                            <span>Share</span>
                           </button>
                           <button
                             type="button"
@@ -7520,16 +7683,18 @@ TOTAL:       ₹${invoice.total}
                                 toast.error('Please add customer and items first')
                               }
                             }}
-                            className="w-full px-3 py-2.5 text-left text-[11px] hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+                            className="w-full px-3 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors flex items-center gap-2"
                           >
-                            Print <Printer size={10} />
+                            <Printer size={12} />
+                            <span>Print</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => { setShowPosPreview(!showPosPreview); setShowBillDropdown(false) }}
-                            className="w-full px-3 py-2.5 text-left text-[11px] text-orange-600 hover:bg-orange-50 transition-colors flex items-center gap-1.5"
+                            className="w-full px-3 py-2.5 text-left text-xs text-orange-600 hover:bg-orange-50 transition-colors flex items-center gap-2"
                           >
-                            POS Preview <Receipt size={10} />
+                            <Receipt size={12} />
+                            <span>POS Preview</span>
                           </button>
                           <div className="border-t border-slate-100 my-1" />
                           <button
@@ -7539,7 +7704,7 @@ TOTAL:       ₹${invoice.total}
                               await createInvoiceOnly()
                               clearCurrentTab()
                             }}
-                            className="w-full px-3 py-2.5 text-left text-[11px] hover:bg-slate-50 transition-colors"
+                            className="w-full px-3 py-2.5 text-left text-xs hover:bg-slate-50 transition-colors"
                           >
                             Save & New
                           </button>
@@ -7586,6 +7751,17 @@ TOTAL:       ₹${invoice.total}
                   <Printer size={14} weight="bold" />
                 </button>
               </div>
+
+              {/* Desktop: Back Button - Before Generate Bill */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleBackToList}
+                className="hidden md:flex px-4 py-2.5 rounded-lg font-semibold text-sm transition-all items-center gap-2 bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
+              >
+                <ArrowLeft size={16} weight="bold" />
+                Back
+              </motion.button>
 
               {/* Desktop: Generate Bill with dropdown */}
               <div className="relative hidden md:block flex-none">
@@ -7739,7 +7915,7 @@ TOTAL:       ₹${invoice.total}
                 </motion.button>
               )}
 
-              {/* Save Button (without print) - Hidden on mobile, combined with Save & Print */}
+              {/* Save Button (without print) */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -7778,11 +7954,11 @@ TOTAL:       ₹${invoice.total}
         {/* Right Column - Live POS Bill Preview (Fixed Width) - Show in Invoice mode with Live Preview only (not in café POS mode) */}
         {!showCafePOS && showPosPreview && (
         <div className={cn(
-          "print-area-container rounded-2xl border-2 overflow-hidden flex-col shadow-2xl sticky top-4 self-start flex-shrink-0",
+          "print-area-container rounded-2xl border-2 overflow-hidden flex-col shadow-2xl flex-shrink-0",
           "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-slate-700",
           "hidden lg:flex w-[350px] xl:w-[400px]"
         )}
-        style={{ maxHeight: 'calc(100vh - 40px)' }}>
+        style={{ height: 'calc(100vh - 60px)' }}>
           <div className="px-4 py-3 border-b-2 border-slate-700 bg-gradient-to-r from-slate-800/50 via-slate-800/30 to-slate-800/50">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-sm flex items-center gap-2 uppercase tracking-wide text-white">
@@ -7920,7 +8096,11 @@ TOTAL:       ₹${invoice.total}
                       <div className="totals-section border-t-2 border-dashed border-black pt-2 space-y-1">
                         <div className="flex justify-between">
                           <span>Subtotal:</span>
-                          <span>₹{activeTab.invoiceItems.reduce((sum, item) => sum + (item.price * item.qty - item.discountAmount), 0).toFixed(2)}</span>
+                          <span>₹{activeTab.invoiceItems.reduce((sum, item) => {
+                            // Use basePrice (taxable amount) for correct subtotal calculation
+                            const taxablePerUnit = item.basePrice || (item.taxMode === 'inclusive' ? item.price / (1 + (item.tax || 0) / 100) : item.price)
+                            return sum + (taxablePerUnit * item.qty - item.discountAmount)
+                          }, 0).toFixed(2)}</span>
                         </div>
                         {(() => {
                           const totalTax = activeTab.invoiceItems.reduce((sum, item) => sum + item.taxAmount, 0);
@@ -8227,7 +8407,11 @@ TOTAL:       ₹${invoice.total}
                     <div className="border-t-2 border-gray-400 pt-2 mt-2 text-[10px]">
                       <div className="flex justify-between">
                         <span>Subtotal:</span>
-                        <span>₹{activeTab.invoiceItems.reduce((sum, item) => sum + (item.price * item.qty - item.discountAmount), 0).toFixed(2)}</span>
+                        <span>₹{activeTab.invoiceItems.reduce((sum, item) => {
+                          // Use basePrice (taxable amount) for correct subtotal calculation
+                          const taxablePerUnit = item.basePrice || (item.taxMode === 'inclusive' ? item.price / (1 + (item.tax || 0) / 100) : item.price)
+                          return sum + (taxablePerUnit * item.qty - item.discountAmount)
+                        }, 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Tax:</span>
@@ -8357,7 +8541,11 @@ TOTAL:       ₹${invoice.total}
                       <div className="flex justify-between mb-2">
                         <span>Subtotal:</span>
                         <span className="font-semibold">
-                          ₹{activeTab.invoiceItems.reduce((sum, item) => sum + (item.price * item.qty - item.discountAmount), 0).toFixed(2)}
+                          ₹{activeTab.invoiceItems.reduce((sum, item) => {
+                            // Use basePrice (taxable amount) for correct subtotal calculation
+                            const taxablePerUnit = item.basePrice || (item.taxMode === 'inclusive' ? item.price / (1 + (item.tax || 0) / 100) : item.price)
+                            return sum + (taxablePerUnit * item.qty - item.discountAmount)
+                          }, 0).toFixed(2)}
                         </span>
                       </div>
                       {(() => {
@@ -8465,26 +8653,14 @@ TOTAL:       ₹${invoice.total}
 
                     {/* Customer Dropdown */}
                     {showCustomerDropdown && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto"
-                      >
-                        {/* Add New Customer */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            console.log('🔴🔴🔴 ADD CUSTOMER BUTTON CLICKED 🔴🔴🔴')
-                            setShowCustomerDropdown(false)
-                            setShowAddCustomerModal(true)
-                            console.log('🟢🟢🟢 showAddCustomerModal set to TRUE 🟢🟢🟢')
-                          }}
-                          className="w-full px-4 py-3 text-left hover:bg-primary/10 border-b border-border flex items-center gap-2 text-primary font-medium"
+                      <>
+                        <div className="fixed inset-0 z-[99]" onClick={() => setShowCustomerDropdown(false)} />
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-2xl z-[100] max-h-64 overflow-y-auto"
                         >
-                          <Plus size={16} weight="bold" />
-                          Add New Customer
-                        </button>
-
                         {/* Loading State */}
                         {loadingParties ? (
                           <div className="px-4 py-3 text-sm text-muted-foreground">
@@ -8500,7 +8676,7 @@ TOTAL:       ₹${invoice.total}
                               key={party.id}
                               type="button"
                               onClick={() => handleCustomerSelect(party)}
-                              className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 last:border-b-0"
+                              className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50"
                             >
                               <div className="flex items-center justify-between">
                                 <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
@@ -8524,7 +8700,20 @@ TOTAL:       ₹${invoice.total}
                             </button>
                           ))
                         )}
+                        {/* Add New Customer - At Bottom */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCustomerDropdown(false)
+                            setShowAddCustomerModal(true)
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium sticky bottom-0 bg-card"
+                        >
+                          <Plus size={16} weight="bold" />
+                          Add New Customer
+                        </button>
                       </motion.div>
+                      </>
                     )}
                   </div>
 
@@ -8864,7 +9053,7 @@ TOTAL:       ₹${invoice.total}
                                   </div>
                                 </div>
                                 <div className="text-sm font-medium text-primary">
-                                  ₹{item.purchasePrice || item.purchasePrice || 0}
+                                  ₹{item.sellingPrice || item.purchasePrice || 0}
                                 </div>
                               </div>
                             </button>
@@ -9060,7 +9249,7 @@ TOTAL:       ₹${invoice.total}
                       </div>
                       {invoiceDiscount > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Discount ({invoiceDiscount}%):</span>
+                          <span className="text-muted-foreground">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
                           <span className="font-medium text-destructive">-₹{totals.discount.toFixed(2)}</span>
                         </div>
                       )}
@@ -9248,9 +9437,7 @@ TOTAL:       ₹${invoice.total}
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">
-                    {(selectedInvoiceForPayment.total - (selectedInvoiceForPayment.paidAmount || 0)) > 0
-                      ? 'Record Payment'
-                      : 'Payment History'}
+                    {selectedInvoiceForPayment.paymentStatus === 'paid' ? 'Payment History' : 'Record Payment'}
                   </h2>
                   <p className="text-sm text-slate-600">Invoice: {selectedInvoiceForPayment.invoiceNumber}</p>
                 </div>
@@ -9268,27 +9455,26 @@ TOTAL:       ₹${invoice.total}
                 <div className="bg-slate-50 rounded-lg p-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600">Customer:</span>
-                    <span className="font-semibold">{selectedInvoiceForPayment.partyName}</span>
+                    <span className="font-semibold">{selectedInvoiceForPayment.partyName || 'Customer'}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600">Invoice Total:</span>
-                    <span className="font-semibold">₹{selectedInvoiceForPayment.total.toLocaleString('en-IN')}</span>
+                    <span className="font-semibold">₹{(selectedInvoiceForPayment.grandTotal || selectedInvoiceForPayment.total || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600">Paid Amount:</span>
-                    <span className="font-semibold text-success">₹{(selectedInvoiceForPayment.paidAmount || 0).toLocaleString('en-IN')}</span>
+                    <span className="font-semibold text-success">₹{(selectedInvoiceForPayment.paidAmount || selectedInvoiceForPayment.payment?.paidAmount || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-slate-200">
                     <span className="font-semibold">Balance Due:</span>
                     <span className="text-lg font-bold text-destructive">
-                      ₹{(selectedInvoiceForPayment.total - (selectedInvoiceForPayment.paidAmount || 0)).toLocaleString('en-IN')}
+                      ₹{((selectedInvoiceForPayment.grandTotal || selectedInvoiceForPayment.total || 0) - (selectedInvoiceForPayment.paidAmount || selectedInvoiceForPayment.payment?.paidAmount || 0)).toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>
 
-                {/* Payment Form - show whenever there is any balance due (even if status is paid) */}
-                {(selectedInvoiceForPayment.paymentStatus !== 'paid' ||
-                  (selectedInvoiceForPayment.total - (selectedInvoiceForPayment.paidAmount || 0)) > 0) && (
+                {/* Payment Form - Only show if not fully paid */}
+                {selectedInvoiceForPayment.paymentStatus !== 'paid' && (
                   <>
                     {/* Payment Amount */}
                     <div>
@@ -9465,14 +9651,14 @@ TOTAL:       ₹${invoice.total}
               </div>
 
               {/* Footer */}
-              <div className="sticky mobile-sticky-offset bg-white border-t border-slate-200 px-6 py-4 flex gap-3">
+              <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 flex gap-3">
                 <button
                   onClick={() => setShowPaymentModal(false)}
                   className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors"
                 >
                   {selectedInvoiceForPayment.paymentStatus === 'paid' ? 'Close' : 'Cancel'}
                 </button>
-                {(selectedInvoiceForPayment.total - (selectedInvoiceForPayment.paidAmount || 0)) > 0 && (
+                {selectedInvoiceForPayment.paymentStatus !== 'paid' && (
                   <button
                     onClick={handleRecordPayment}
                     className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
@@ -9575,7 +9761,7 @@ TOTAL:       ₹${invoice.total}
                       type="text"
                       value={newCustomerName}
                       onChange={(e) => setNewCustomerName(validateCustomerName(e.target.value))}
-                      placeholder="Enter supplier name (letters only)"
+                      placeholder="Enter customer name (letters only)"
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                       autoFocus
                     />
@@ -9588,15 +9774,9 @@ TOTAL:       ₹${invoice.total}
                     <input
                       type="tel"
                       value={newCustomerPhone}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '')
-                        if (value.length <= 10) {
-                          setNewCustomerPhone(value)
-                        }
-                      }}
-                      placeholder="Enter 10-digit phone number"
-                      maxLength={10}
-                      pattern="[0-9]{10}"
+                      onChange={(e) => setNewCustomerPhone(validatePhoneNumber(e.target.value))}
+                      placeholder="Enter phone number (e.g., +919876543210)"
+                      maxLength={16}
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                     />
                   </div>
@@ -9782,6 +9962,67 @@ TOTAL:       ₹${invoice.total}
                       </motion.div>
                     )}
                   </div>
+
+                  {/* Opening Balance */}
+                  <div>
+                    {!showOpeningBalanceField ? (
+                      <button
+                        onClick={() => setShowOpeningBalanceField(true)}
+                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                      >
+                        <Plus size={14} weight="bold" />
+                        Opening Balance
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-2"
+                      >
+                        <label className="text-sm font-medium mb-1.5 block">Opening Balance (₹)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={newCustomerOpeningBalance}
+                          onChange={(e) => setNewCustomerOpeningBalance(e.target.value)}
+                          placeholder="Enter opening balance (e.g., 5000)"
+                          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        />
+                        <p className="text-xs text-muted-foreground">Positive = Customer owes you, Negative = You owe customer</p>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Credit Days */}
+                  <div>
+                    {!showCreditDaysField ? (
+                      <button
+                        onClick={() => setShowCreditDaysField(true)}
+                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                      >
+                        <Plus size={14} weight="bold" />
+                        Credit Period (Days)
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-2"
+                      >
+                        <label className="text-sm font-medium mb-1.5 block">Credit Period (Days)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="365"
+                          value={newCustomerCreditDays}
+                          onChange={(e) => setNewCustomerCreditDays(Number(e.target.value) || 0)}
+                          placeholder="Enter credit period in days"
+                          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        />
+                        <p className="text-xs text-muted-foreground">Default: 30 days</p>
+                      </motion.div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
@@ -9867,19 +10108,68 @@ TOTAL:       ₹${invoice.total}
                       </h3>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Item Name */}
-                        <div className="sm:col-span-2">
-                          <label className="text-xs font-medium mb-1.5 block">
+                        {/* Item Name with Magic Autocomplete (matching Inventory page) */}
+                        <div className="sm:col-span-2 relative">
+                          <label className="text-xs font-medium mb-1.5 block flex items-center gap-2">
                             Item Name <span className="text-destructive">*</span>
+                            <span className="text-[10px] bg-success/10 text-success px-2 py-0.5 rounded-full font-semibold">
+                              ✨ Auto-Fill Magic
+                            </span>
                           </label>
                           <input
                             type="text"
                             value={newItemName}
-                            onChange={(e) => setNewItemName(validateItemName(e.target.value))}
-                            placeholder="Enter item name (e.g., Ball Pen, Office Chair)"
+                            onChange={(e) => handleNewItemNameChange(validateItemName(e.target.value))}
+                            onKeyDown={handleNewItemKeyDown}
+                            onBlur={() => setTimeout(() => setShowNewItemSuggestions(false), 200)}
+                            placeholder="Start typing to see suggestions..."
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             autoFocus
                           />
+
+                          {/* Autocomplete Suggestions Dropdown */}
+                          {showNewItemSuggestions && newItemSuggestions.length > 0 && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-2xl max-h-80 overflow-y-auto"
+                            >
+                              <div className="p-2 bg-primary/5 border-b border-border">
+                                <p className="text-xs text-muted-foreground font-medium">
+                                  ✨ {newItemSuggestions.length} items found - Click to auto-fill all details
+                                </p>
+                              </div>
+                              {newItemSuggestions.map((suggestion, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => handleSelectNewItemSuggestion(suggestion)}
+                                  className={cn(
+                                    'w-full p-3 text-left hover:bg-primary/10 transition-colors border-b border-border/50 last:border-0',
+                                    selectedNewItemIndex === index && 'bg-primary/10'
+                                  )}
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-semibold text-sm truncate">{suggestion.name}</p>
+                                      <p className="text-xs text-muted-foreground truncate">{suggestion.category}</p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <p className="font-bold text-sm text-primary">₹{suggestion.mrp}</p>
+                                      <p className="text-xs text-muted-foreground">GST {suggestion.gst_rate}%</p>
+                                    </div>
+                                  </div>
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+
+                          {newItemName.length >= 2 && !showNewItemSuggestions && newItemSuggestions.length === 0 && (
+                            <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg p-3">
+                              <p className="text-xs text-muted-foreground">
+                                No suggestions found. Fill in the details manually below.
+                              </p>
+                            </div>
+                          )}
                         </div>
 
                         {/* Unit Type */}
@@ -9892,15 +10182,32 @@ TOTAL:       ₹${invoice.total}
                             onChange={(e) => setNewItemUnit(e.target.value)}
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           >
-                            <option value="pcs">Pieces (pcs)</option>
-                            <option value="kg">Kilogram (kg)</option>
-                            <option value="g">Gram (g)</option>
+                            <option value="NONE">None</option>
+                            <option value="pcs">Pieces (PCS)</option>
+                            <option value="kg">Kilogram (KG)</option>
+                            <option value="g">Gram (G)</option>
                             <option value="l">Liter (L)</option>
-                            <option value="ml">Milliliter (ml)</option>
-                            <option value="m">Meter (m)</option>
+                            <option value="ml">Milliliter (ML)</option>
+                            <option value="m">Meter (M)</option>
                             <option value="box">Box</option>
                             <option value="dozen">Dozen</option>
                             <option value="pack">Pack</option>
+                            <option value="set">Set</option>
+                            {/* Custom units from Item Settings */}
+                            {(() => {
+                              const defaultUnits = ['NONE', 'pcs', 'kg', 'g', 'l', 'ml', 'm', 'box', 'dozen', 'pack', 'set', 'pieces', 'kilogram', 'liter', 'meter']
+                              const filteredUnits = customUnits.filter(unit => {
+                                const unitLower = unit.toLowerCase()
+                                return !defaultUnits.some(def => unitLower.includes(def.toLowerCase()))
+                              })
+                              return filteredUnits.length > 0 ? (
+                                <optgroup label="Custom Units">
+                                  {filteredUnits.map((unit) => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                  ))}
+                                </optgroup>
+                              ) : null
+                            })()}
                           </select>
                         </div>
 
@@ -10714,12 +11021,12 @@ TOTAL:       ₹${invoice.total}
                       {returnItems.filter(i => i.selected && i.qty > 0).map(item => (
                         <div key={item.id} className="flex justify-between text-orange-700">
                           <span>{item.name} × {item.qty}</span>
-                          <span>₹{(item.price * item.qty).toFixed(2)}</span>
+                          <span>₹{(item.total || (item.price * item.qty)).toFixed(2)}</span>
                         </div>
                       ))}
                       <div className="border-t border-orange-300 pt-2 mt-2 flex justify-between font-bold text-orange-900">
                         <span>Refund Amount:</span>
-                        <span>₹{returnItems.filter(i => i.selected && i.qty > 0).reduce((sum, item) => sum + (item.price * item.qty), 0).toFixed(2)}</span>
+                        <span>₹{returnItems.filter(i => i.selected && i.qty > 0).reduce((sum, item) => sum + (item.total || (item.price * item.qty)), 0).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -10937,7 +11244,7 @@ TOTAL:       ₹${invoice.total}
                         >
                           <div className="font-medium text-sm">{inventoryItem.name}</div>
                           <div className="text-xs text-muted-foreground flex gap-2">
-                            <span>₹{inventoryItem.purchasePrice || inventoryItem.purchasePrice || 0}</span>
+                            <span>₹{inventoryItem.sellingPrice || inventoryItem.purchasePrice || 0}</span>
                             <span>•</span>
                             <span>Tax: {inventoryItem.tax?.gstRate || inventoryItem.tax?.igst || ((inventoryItem.tax?.cgst || 0) + (inventoryItem.tax?.sgst || 0)) || 0}%</span>
                           </div>
@@ -11157,7 +11464,11 @@ TOTAL:       ₹${invoice.total}
                   <div className="text-[10px] space-y-1">
                     <div className="flex justify-between">
                       <span>Subtotal:</span>
-                      <span>₹{activeTab.invoiceItems.reduce((sum, item) => sum + (item.price * item.qty - item.discountAmount), 0).toFixed(2)}</span>
+                      <span>₹{activeTab.invoiceItems.reduce((sum, item) => {
+                        // Use basePrice (taxable amount) for correct subtotal calculation
+                        const taxablePerUnit = item.basePrice || (item.taxMode === 'inclusive' ? item.price / (1 + (item.tax || 0) / 100) : item.price)
+                        return sum + (taxablePerUnit * item.qty - item.discountAmount)
+                      }, 0).toFixed(2)}</span>
                     </div>
                     {(() => {
                       const totalTax = activeTab.invoiceItems.reduce((sum, item) => sum + item.taxAmount, 0);
@@ -11385,5 +11696,4 @@ TOTAL:       ₹${invoice.total}
   )
 }
 
-export default Purchases
-
+export default Sales
