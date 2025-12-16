@@ -5004,39 +5004,33 @@ TOTAL:       ₹${invoice.total}
   return (
     <div className={cn(
       "overflow-x-hidden flex flex-col max-w-[100vw] w-full",
-      viewMode === 'list' ? "p-2 sm:p-3 lg:p-4 bg-[#F8F5FF] min-h-screen" : "bg-white"
+      viewMode === 'list' ? "px-3 py-2 bg-slate-50/50 min-h-screen" : "bg-white"
     )}>
       {/* Header - Only show in list mode */}
       {viewMode === 'list' && (
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-1 flex-shrink-0"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <h1 className="flex items-center gap-1.5 text-base font-bold text-slate-800">
-              {location.pathname === '/pos' ? (
-                <>
-                  <Storefront size={20} weight="duotone" className="text-orange-500" />
-                  <span>POS</span>
-                </>
-              ) : (
-                <>
-                  <Receipt size={20} weight="duotone" className="text-primary" />
-                  <span>Invoice</span>
-                </>
-              )}
-            </h1>
-          </div>
-          <div className="flex gap-2">
-                {/* AI Bill - Neo AI Gradient */}
+      <div className="flex-shrink-0">
+        {/* Top Row: Title + Actions */}
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
+            {location.pathname === '/pos' ? (
+              <>
+                <Storefront size={22} weight="duotone" className="text-orange-500" />
+                <span>POS</span>
+              </>
+            ) : (
+              <>
+                <Receipt size={22} weight="duotone" className="text-blue-600" />
+                <span>Invoice</span>
+              </>
+            )}
+          </h1>
+          <div className="flex items-center gap-2">
+                {/* AI Bill */}
                 <button
                   onClick={() => setShowAIAssistant(true)}
-                  className="h-8 px-2.5 rounded-full text-[10px] text-white font-semibold flex items-center gap-1 shadow-md hover:shadow-lg transition-all"
-                  style={{ background: 'linear-gradient(135deg, #7A35FF 0%, #9B63FF 100%)' }}
+                  className="h-8 px-3 rounded-lg text-xs text-white font-semibold flex items-center gap-1.5 shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-violet-600 to-purple-600"
                 >
-                  <Sparkle size={12} weight="fill" />
+                  <Sparkle size={14} weight="fill" />
                   <span>Bill</span>
                 </button>
                 {/* Tally Export Dropdown */}
@@ -5050,11 +5044,11 @@ TOTAL:       ₹${invoice.total}
                       })
                       setShowTallyDropdown(!showTallyDropdown)
                     }}
-                    className="h-8 px-2.5 rounded-full border border-emerald-200 bg-white text-[10px] text-emerald-600 font-semibold flex items-center gap-1 shadow-sm hover:border-emerald-400 hover:bg-emerald-50 transition-all"
+                    className="h-8 px-3 rounded-lg border border-emerald-200 bg-white text-xs text-emerald-600 font-semibold flex items-center gap-1.5 hover:border-emerald-400 hover:bg-emerald-50 transition-all"
                   >
-                    <Download size={12} weight="bold" />
+                    <Download size={14} weight="bold" />
                     <span>Tally</span>
-                    <CaretDown size={10} />
+                    <CaretDown size={12} />
                   </button>
                   {showTallyDropdown && (
                     <>
@@ -5103,29 +5097,28 @@ TOTAL:       ₹${invoice.total}
                     </>
                   )}
                 </div>
-                {/* Add Sale/New POS Bill - Light style */}
+                {/* Add Sale/New POS Bill */}
                 <button
                   onClick={() => {
                     if (location.pathname === '/pos') {
                       setShowCafePOS(true)
-                      // Clear the saved viewMode so next visit opens in create mode
                       localStorage.removeItem('pos_viewMode')
                     }
                     setViewMode('create')
                   }}
-                  className="h-8 px-2.5 rounded-full border border-[#E1D7FF] bg-white text-[10px] text-[#3B82F6] font-semibold flex items-center gap-1 shadow-sm hover:border-[#7A35FF]/30 transition-all"
+                  className="h-8 px-3 rounded-lg border border-blue-200 bg-white text-xs text-blue-600 font-semibold flex items-center gap-1.5 hover:border-blue-400 hover:bg-blue-50 transition-all"
                 >
-                  <Plus size={12} weight="bold" />
+                  <Plus size={14} weight="bold" />
                   <span>{location.pathname === '/pos' ? 'POS' : 'Sale'}</span>
                 </button>
           </div>
         </div>
 
-        {/* Sales Summary - Neo AI Premium Theme */}
-          <div className="mt-3 md:mt-3 space-y-3">
-            {/* Period Filter Tabs - All in one line */}
-            <div className="flex items-center justify-center gap-2">
-              <div className="inline-flex items-center gap-1 text-xs bg-white/80 backdrop-blur-sm rounded-xl p-1 shadow-sm border border-[#E1D7FF]/50">
+        {/* Period Filter & Stats - Compact Modern */}
+          <div className="space-y-2">
+            {/* Period Filter Tabs */}
+            <div className="flex items-center justify-center">
+              <div className="inline-flex items-center gap-0.5 text-xs bg-white rounded-lg p-0.5 shadow-sm border border-slate-200">
                 {[
                   { value: 'today', label: t.common.today },
                   { value: 'week', label: t.common.week },
@@ -5145,132 +5138,111 @@ TOTAL:       ₹${invoice.total}
                       }
                     }}
                     className={cn(
-                      "px-2 py-1 rounded-lg text-[10px] font-medium transition-all whitespace-nowrap",
+                      "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap",
                       statsFilter === filter.value
-                        ? "bg-gradient-to-r from-[#7A35FF] to-[#9B63FF] text-white shadow-sm"
-                        : "text-[#7C729A] hover:text-[#7A35FF] hover:bg-[rgba(122,53,255,0.08)]"
+                        ? "bg-slate-800 text-white shadow-sm"
+                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                     )}
                   >
                     {filter.label}
                   </button>
                 ))}
               </div>
+            </div>
 
               {/* Custom Date Range Picker */}
               {(statsFilter === 'custom' || showCustomDatePicker) && (
-                <div className="flex flex-wrap items-center justify-center gap-2 bg-white/90 backdrop-blur-sm rounded-xl p-2 shadow-sm border border-[#E1D7FF]/50">
+                <div className="flex flex-wrap items-center justify-center gap-2 bg-white rounded-lg p-2 shadow-sm border border-slate-200">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-[#7C729A] font-medium">{t.common.from}:</span>
+                    <span className="text-[10px] text-slate-500 font-medium">{t.common.from}:</span>
                     <input
                       type="date"
                       value={customDateFrom}
                       onChange={(e) => setCustomDateFrom(e.target.value)}
-                      className="px-2 py-1 text-[11px] rounded-lg border border-[#E1D7FF] bg-white text-[#1A1633] focus:ring-2 focus:ring-[#7A35FF]/20 focus:border-[#7A35FF] outline-none"
+                      className="px-2 py-1 text-[11px] rounded-md border border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                     />
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-[#7C729A] font-medium">{t.common.to}:</span>
+                    <span className="text-[10px] text-slate-500 font-medium">{t.common.to}:</span>
                     <input
                       type="date"
                       value={customDateTo}
                       onChange={(e) => setCustomDateTo(e.target.value)}
-                      className="px-2 py-1 text-[11px] rounded-lg border border-[#E1D7FF] bg-white text-[#1A1633] focus:ring-2 focus:ring-[#7A35FF]/20 focus:border-[#7A35FF] outline-none"
+                      className="px-2 py-1 text-[11px] rounded-md border border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
                     />
                   </div>
                   {statsFilter === 'custom' && customDateFrom && customDateTo && (
-                    <span className="text-[9px] text-[#7A35FF] font-medium bg-[rgba(122,53,255,0.08)] px-2 py-1 rounded-lg">
+                    <span className="text-[9px] text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-md">
                       {new Date(customDateFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - {new Date(customDateTo).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                   )}
                 </div>
               )}
-            </div>
 
-            {/* Stats Grid - Premium white cards with gradient strips */}
-            <div className="grid grid-cols-2 gap-3 md:flex md:items-center md:gap-2 max-w-[360px] mx-auto md:max-w-none px-1">
+            {/* Stats Grid - Clean Modern Cards */}
+            <div className="grid grid-cols-4 gap-2 max-w-2xl mx-auto">
 
-              {/* Sales Card - Purple gradient strip */}
+              {/* Sales Card */}
               <button
                 onClick={() => setFilterStatus('all')}
-                className="relative overflow-hidden bg-white rounded-2xl shadow-md p-3 md:px-3 md:py-2 md:flex-1 text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]"
               >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#7A35FF] to-[#9B63FF]" />
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-[#7C729A] font-medium">{t.nav.sales}</span>
-                  <div className="w-6 h-6 rounded-full bg-[rgba(122,53,255,0.12)] flex items-center justify-center text-[10px] text-[#7A35FF] font-bold">₹</div>
-                </div>
-                <div className="text-[17px] font-semibold text-[#1A1633]">₹{dashboardStats.periodSales.toLocaleString('en-IN')}</div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.nav.sales}</div>
+                <div className="text-base font-bold text-slate-800">₹{dashboardStats.periodSales.toLocaleString('en-IN')}</div>
               </button>
 
-              {/* Collected Card - Green gradient strip */}
+              {/* Collected Card */}
               <button
                 onClick={() => setFilterStatus('paid')}
-                className="relative overflow-hidden bg-white rounded-2xl shadow-md p-3 md:px-3 md:py-2 md:flex-1 text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-emerald-200 active:scale-[0.98]"
               >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00C9A7] to-[#3B82F6]" />
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-[#7C729A] font-medium">{t.sales.collected}</span>
-                  <div className="w-6 h-6 rounded-full bg-[rgba(0,201,167,0.12)] flex items-center justify-center text-[10px] text-[#00C9A7] font-bold">✓</div>
-                </div>
-                <div className="text-[17px] font-semibold text-[#1A1633]">₹{dashboardStats.totalPaid.toLocaleString('en-IN')}</div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.collected}</div>
+                <div className="text-base font-bold text-emerald-600">₹{dashboardStats.totalPaid.toLocaleString('en-IN')}</div>
               </button>
 
-              {/* Pending Card - Red gradient strip */}
+              {/* Pending Card */}
               <button
                 onClick={() => setFilterStatus('pending')}
-                className="relative overflow-hidden bg-white rounded-2xl shadow-md p-3 md:px-3 md:py-2 md:flex-1 text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-red-200 active:scale-[0.98]"
               >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#EF4444] to-[#DC2626]" />
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-[#7C729A] font-medium">{t.sales.pending}</span>
-                  <div className="w-6 h-6 rounded-full bg-[rgba(239,68,68,0.15)] flex items-center justify-center text-[10px] text-[#DC2626] font-bold">!</div>
-                </div>
-                <div className="text-[17px] font-semibold text-[#1A1633]">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN')}</div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.pending}</div>
+                <div className="text-base font-bold text-red-500">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN')}</div>
               </button>
 
-              {/* Invoices Card - Blue gradient strip */}
+              {/* Invoices Card */}
               <button
                 onClick={() => setFilterStatus('all')}
-                className="relative overflow-hidden bg-white rounded-2xl shadow-md p-3 md:px-3 md:py-2 md:flex-1 text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]"
               >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#3B82F6] to-[#7A35FF]" />
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-[#7C729A] font-medium">{t.sales.invoice}</span>
-                  <div className="w-6 h-6 rounded-full bg-[rgba(59,130,246,0.12)] flex items-center justify-center text-[10px] text-[#3B82F6] font-bold">#</div>
-                </div>
-                <div className="text-[17px] font-semibold text-[#1A1633]">{dashboardStats.invoiceCount}</div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.invoice}</div>
+                <div className="text-base font-bold text-blue-600">{dashboardStats.invoiceCount}</div>
               </button>
             </div>
           </div>
-      </motion.div>
+      </div>
       )}
 
-      {/* Filters - Neo AI Premium Theme */}
+      {/* Filters - Modern Clean */}
       {viewMode === 'list' && (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="bg-white rounded-2xl px-3 py-2.5 mb-2 border border-[#E1D7FF] shadow-sm flex-shrink-0"
-      >
+      <div className="bg-white rounded-xl px-3 py-2 mb-2 border border-slate-200 shadow-sm flex-shrink-0">
         {/* Mobile: Stack vertically, Desktop: Single row */}
-        <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:gap-3">
-          {/* Search Bar - Neo AI style */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+          {/* Search Bar */}
           <div className="flex-1 relative">
             <MagnifyingGlass
               size={16}
               weight="bold"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A59AC5]"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
             />
             <input
               type="text"
               placeholder={language === 'ta' ? 'பில், வாடிக்கையாளர், மொபைல் தேடு...' : 'Search invoice, customer, mobile...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2.5 text-[12px] bg-transparent border border-[#E1D7FF] rounded-full outline-none focus:ring-2 focus:ring-[#7A35FF]/20 focus:border-[#7A35FF]/50 transition-all text-[#1A1633] placeholder:text-[#A59AC5]"
+              className="w-full pl-9 pr-3 py-2 text-[12px] bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-slate-800 placeholder:text-slate-400"
             />
           </div>
-          {/* Filter Chips - Neo AI style */}
+          {/* Filter Chips */}
           <div className="flex gap-2 justify-center md:justify-end flex-shrink-0">
             {[
               { key: 'all', label: t.common.all },
@@ -5285,8 +5257,8 @@ TOTAL:       ₹${invoice.total}
                 className={cn(
                   "px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all duration-200",
                   filterStatus === status.key
-                    ? "bg-[#7A35FF] text-white border-transparent shadow-sm"
-                    : "border-[#E1D7FF] text-[#7C729A] bg-white hover:border-[#7A35FF]/30"
+                    ? "bg-slate-800 text-white border-transparent shadow-sm"
+                    : "border-slate-200 text-slate-600 bg-white hover:border-slate-400"
                 )}
               >
                 {status.label}
@@ -5294,7 +5266,7 @@ TOTAL:       ₹${invoice.total}
             ))}
           </div>
         </div>
-      </motion.div>
+      </div>
       )}
 
       {/* Invoices List - Only show in list mode */}
@@ -5302,18 +5274,18 @@ TOTAL:       ₹${invoice.total}
       <div ref={listContainerRef} className="flex-1 overflow-y-auto space-y-1">
         {isLoadingInvoices ? (
           // Loading skeleton
-          <div className="space-y-3">
+          <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-card rounded-lg p-4 border border-border/50 animate-pulse">
+              <div key={i} className="bg-white rounded-lg p-3 border border-slate-200 animate-pulse">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1">
-                    <div className="hidden sm:block w-12 h-12 bg-muted rounded-lg"></div>
+                    <div className="hidden sm:block w-10 h-10 bg-slate-100 rounded-lg"></div>
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-muted rounded w-32"></div>
-                      <div className="h-3 bg-muted rounded w-48"></div>
+                      <div className="h-4 bg-slate-100 rounded w-32"></div>
+                      <div className="h-3 bg-slate-100 rounded w-48"></div>
                     </div>
                   </div>
-                  <div className="h-6 w-24 bg-muted rounded"></div>
+                  <div className="h-6 w-24 bg-slate-100 rounded"></div>
                 </div>
               </div>
             ))}
@@ -5323,24 +5295,24 @@ TOTAL:       ₹${invoice.total}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-12 bg-card rounded-lg border border-border/50"
+            className="text-center py-10 bg-white rounded-lg border border-slate-200"
           >
-            <Receipt size={48} weight="duotone" className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{language === 'ta' ? 'விற்பனை பில்கள் இல்லை' : 'No Sales Invoices Yet'}</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <Receipt size={40} weight="duotone" className="mx-auto text-slate-400 mb-3" />
+            <h3 className="text-base font-semibold mb-1.5 text-slate-700">{language === 'ta' ? 'விற்பனை பில்கள் இல்லை' : 'No Sales Invoices Yet'}</h3>
+            <p className="text-sm text-slate-500 mb-3">
               {language === 'ta' ? 'பில் ஸ்கேன் செய்யவும் அல்லது புதிய விற்பனை உருவாக்கவும்' : 'Start by scanning an invoice or creating a new sale'}
             </p>
             <div className="flex gap-2 justify-center">
               <button
                 onClick={() => setShowScanner(true)}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-2 text-sm font-medium"
               >
                 <Camera size={16} weight="bold" />
                 {t.dashboard.aiScan}
               </button>
               <button
                 onClick={() => setViewMode('create')}
-                className="px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-medium text-slate-700"
               >
                 <Plus size={16} weight="bold" />
                 {t.sales.newSale}
@@ -5349,17 +5321,17 @@ TOTAL:       ₹${invoice.total}
           </motion.div>
         ) : (
           <>
-          {/* Sticky Header Row - Premium 2025 Big Icons */}
-          <div className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-t-lg px-3 py-3 border-b-2 border-primary/30 sticky top-0 z-10 hidden md:flex shadow-sm">
-            <div style={{ width: '9%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t.common.date}</div>
-            <div style={{ width: '14%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t.sales.invoice}</div>
-            <div style={{ width: '16%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t.sales.customer}</div>
-            <div style={{ width: '11%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{t.parties.phone}</div>
-            <div style={{ width: '8%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center">{t.inventory.items}</div>
-            <div style={{ width: '9%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center">{t.common.status}</div>
-            <div style={{ width: '9%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-right">{language === 'ta' ? 'பில் நிலுவை' : 'Inv Bal'}</div>
-            <div style={{ width: '9%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-right">{language === 'ta' ? 'கஸ்ட் நிலுவை' : 'Cust Bal'}</div>
-            <div style={{ width: '15%' }} className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center">{t.common.actions}</div>
+          {/* Sticky Header Row */}
+          <div className="bg-slate-100 rounded-lg px-3 py-2 border border-slate-200 sticky top-0 z-10 hidden md:flex">
+            <div style={{ width: '9%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{t.common.date}</div>
+            <div style={{ width: '14%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{t.sales.invoice}</div>
+            <div style={{ width: '16%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{t.sales.customer}</div>
+            <div style={{ width: '11%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{t.parties.phone}</div>
+            <div style={{ width: '8%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide text-center">{t.inventory.items}</div>
+            <div style={{ width: '9%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide text-center">{t.common.status}</div>
+            <div style={{ width: '9%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide text-right">{language === 'ta' ? 'பில் நிலுவை' : 'Inv Bal'}</div>
+            <div style={{ width: '9%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide text-right">{language === 'ta' ? 'கஸ்ட் நிலுவை' : 'Cust Bal'}</div>
+            <div style={{ width: '15%' }} className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide text-center">{t.common.actions}</div>
           </div>
           <AnimatePresence>
             {filteredInvoices.map((invoice, index) => {
@@ -5533,15 +5505,15 @@ TOTAL:       ₹${invoice.total}
                 </div>
 
                 {/* DESKTOP TABLE VIEW */}
-                <div className="hidden md:flex items-center px-3 py-3.5">
+                <div className="hidden md:flex items-center px-3 py-2 bg-white rounded-lg border border-slate-100 mb-1 hover:border-blue-200 hover:shadow-sm transition-all">
                 {/* Date (9%) */}
-                <div style={{ width: '9%' }} className="text-sm text-foreground">
+                <div style={{ width: '9%' }} className="text-xs text-slate-600">
                   {new Date(invoice.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                 </div>
 
                 {/* Invoice + Type Badge (14%) */}
                 <div style={{ width: '14%' }} className="flex items-center gap-1 pr-1">
-                  <span className="font-medium text-sm text-foreground truncate">{invoice.invoiceNumber}</span>
+                  <span className="font-medium text-xs text-slate-800 truncate">{invoice.invoiceNumber}</span>
                   <span className={cn(
                     "px-1 py-0.5 rounded text-[9px] font-semibold whitespace-nowrap",
                     invoiceType === 'Cash' && "bg-emerald-100 text-emerald-700",
@@ -5559,23 +5531,23 @@ TOTAL:       ₹${invoice.total}
 
                 {/* Customer (16%) */}
                 <div style={{ width: '16%' }} className="pr-1 overflow-hidden">
-                  <span className="font-medium text-sm truncate block">{invoice.partyName || 'Walk-in'}</span>
+                  <span className="font-medium text-xs truncate block text-slate-800">{invoice.partyName || 'Walk-in'}</span>
                 </div>
 
                 {/* Phone (11%) */}
-                <div style={{ width: '11%' }} className="text-[13px] text-muted-foreground">
+                <div style={{ width: '11%' }} className="text-xs text-slate-500">
                   {invoice.partyPhone || '-'}
                 </div>
 
                 {/* Items (8%) */}
-                <div style={{ width: '8%' }} className="text-center text-[13px] text-muted-foreground">
+                <div style={{ width: '8%' }} className="text-center text-xs text-slate-500">
                   {invoice.itemsCount} item{invoice.itemsCount !== 1 ? 's' : ''}
                 </div>
 
                 {/* Status (9%) */}
-                <div style={{ width: '9%' }} className="flex flex-col items-center gap-1">
+                <div style={{ width: '9%' }} className="flex flex-col items-center gap-0.5">
                   <span className={cn(
-                    "px-2 py-1 rounded-full text-[11px] font-semibold",
+                    "px-2 py-0.5 rounded-full text-[10px] font-semibold",
                     invoice.paymentStatus === 'paid' && "bg-emerald-100 text-emerald-700",
                     invoice.paymentStatus === 'pending' && "bg-red-100 text-red-700",
                     invoice.paymentStatus === 'partial' && "bg-amber-100 text-amber-700"
@@ -5585,10 +5557,10 @@ TOTAL:       ₹${invoice.total}
                   {/* Returned Items Indicator */}
                   {invoiceReturnsMap[invoice.id] && (
                     <span
-                      className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-red-100 text-red-700 flex items-center gap-0.5 cursor-help"
+                      className="px-1.5 py-0.5 rounded-full text-[8px] font-semibold bg-red-100 text-red-700 flex items-center gap-0.5 cursor-help"
                       title={`${invoiceReturnsMap[invoice.id].totalReturned} items returned in ${invoiceReturnsMap[invoice.id].returnCount} return(s) - ₹${invoiceReturnsMap[invoice.id].totalAmount.toLocaleString('en-IN')}`}
                     >
-                      <ArrowCounterClockwise size={10} weight="bold" />
+                      <ArrowCounterClockwise size={9} weight="bold" />
                       {invoiceReturnsMap[invoice.id].totalReturned} Ret
                     </span>
                   )}
@@ -5596,70 +5568,62 @@ TOTAL:       ₹${invoice.total}
 
                 {/* Invoice Balance (9%) */}
                 <div style={{ width: '9%' }} className="text-right pr-1">
-                  <div className="font-semibold text-sm">₹{balance > 0 ? balance.toLocaleString('en-IN') : invoice.total.toLocaleString('en-IN')}</div>
+                  <div className="font-semibold text-xs text-slate-800">₹{balance > 0 ? balance.toLocaleString('en-IN') : invoice.total.toLocaleString('en-IN')}</div>
                 </div>
 
                 {/* Customer Balance (9%) */}
                 <div style={{ width: '9%' }} className="text-right pr-1">
                   <div className={cn(
-                    "font-semibold text-sm",
+                    "font-semibold text-xs",
                     invoice.customerOutstanding > 0 ? "text-emerald-600" :
-                    invoice.customerOutstanding < 0 ? "text-red-600" : "text-gray-500"
+                    invoice.customerOutstanding < 0 ? "text-red-600" : "text-slate-500"
                   )}>
                     {invoice.customerOutstanding > 0 ? '+' : invoice.customerOutstanding < 0 ? '' : ''}₹{Math.abs(invoice.customerOutstanding || 0).toLocaleString('en-IN')}
                   </div>
                 </div>
 
-                {/* Actions (15%) - BIG ICONS */}
-                <div style={{ width: '15%' }} className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-                      <motion.button
-                        whileHover={{ scale: 1.15, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                        whileTap={{ scale: 0.95 }}
+                {/* Actions (15%) - Compact */}
+                <div style={{ width: '15%' }} className="flex items-center justify-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+                      <button
                         onClick={(e) => { e.stopPropagation(); viewInvoice(invoice) }}
-                        className="w-9 h-9 flex items-center justify-center bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
+                        className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-blue-100 rounded-lg transition-all"
                         title="View"
                       >
-                        <Eye size={24} weight="duotone" className="text-blue-600" />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.15, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                        whileTap={{ scale: 0.95 }}
+                        <Eye size={16} weight="duotone" className="text-blue-600" />
+                      </button>
+                      <button
                         onClick={(e) => { e.stopPropagation(); openPaymentModal(invoice) }}
                         className={cn(
-                          "w-9 h-9 flex items-center justify-center rounded-lg transition-all",
+                          "w-7 h-7 flex items-center justify-center rounded-lg transition-all",
                           invoice.isReversed
-                            ? "bg-amber-50 hover:bg-amber-100" // Reversed - yellow/amber
+                            ? "bg-amber-50 hover:bg-amber-100"
                             : invoice.paymentStatus === 'paid'
-                              ? "bg-amber-50 hover:bg-amber-100" // Paid - amber
-                              : "bg-emerald-50 hover:bg-emerald-100" // Pending - green
+                              ? "bg-amber-50 hover:bg-amber-100"
+                              : "bg-emerald-50 hover:bg-emerald-100"
                         )}
                         title={invoice.isReversed ? (language === 'ta' ? "பணம் திருப்பப்பட்டது - புதிய பணம் பதிவு செய்ய கிளிக் செய்யவும்" : "Payment Reversed - Click to record new payment") : invoice.paymentStatus === 'paid' ? (language === 'ta' ? "பணத்தை திருப்பு" : "Reverse Payment") : (language === 'ta' ? "பணம் பதிவு" : "Record Payment")}
                       >
                         {invoice.isReversed
-                          ? <ArrowCounterClockwise size={24} weight="duotone" className="text-amber-600" /> // Reversed icon in yellow/amber
+                          ? <ArrowCounterClockwise size={16} weight="duotone" className="text-amber-600" />
                           : invoice.paymentStatus === 'paid'
-                            ? <ArrowCounterClockwise size={24} weight="duotone" className="text-amber-600" />
-                            : <CheckCircle size={24} weight="duotone" className="text-emerald-600" />
+                            ? <ArrowCounterClockwise size={16} weight="duotone" className="text-amber-600" />
+                            : <CheckCircle size={16} weight="duotone" className="text-emerald-600" />
                         }
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.15, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                        whileTap={{ scale: 0.95 }}
+                      </button>
+                      <button
                         onClick={(e) => { e.stopPropagation(); handlePrintInvoice(invoice) }}
-                        className="w-9 h-9 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-all"
+                        className="w-7 h-7 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-all"
                         title="Print"
                       >
-                        <Printer size={24} weight="duotone" className="text-amber-600" />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.15, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                        whileTap={{ scale: 0.95 }}
+                        <Printer size={16} weight="duotone" className="text-amber-600" />
+                      </button>
+                      <button
                         onClick={(e) => { e.stopPropagation(); handleShareWhatsApp(invoice) }}
-                        className="w-9 h-9 flex items-center justify-center bg-green-50 hover:bg-green-100 rounded-lg transition-all"
+                        className="w-7 h-7 flex items-center justify-center bg-green-50 hover:bg-green-100 rounded-lg transition-all"
                         title="WhatsApp"
                       >
-                        <WhatsappLogo size={24} weight="duotone" className="text-green-600" />
-                      </motion.button>
+                        <WhatsappLogo size={16} weight="duotone" className="text-green-600" />
+                      </button>
 
                       {/* 3-dot menu for additional actions */}
                       <div
