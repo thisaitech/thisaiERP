@@ -2073,9 +2073,9 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
   }
 
   return (
-    <div className="h-full flex bg-slate-50">
+    <div className="h-full flex bg-slate-50 overflow-hidden">
       {/* Left Side - Items Grid */}
-      <div className="flex-1 flex flex-col p-1.5 md:p-2 pb-20 md:pb-2">
+      <div className="flex-1 flex flex-col p-1.5 md:p-2 pb-20 md:pb-2 min-w-0">
         {/* Header with Search - Compact */}
         <div className="flex items-center gap-2 mb-1.5 flex-shrink-0">
           {/* Search */}
@@ -2370,8 +2370,8 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
         </div>
       </div>
 
-      {/* Right Side - Cart / Bill - Hidden on mobile */}
-      <div className="hidden md:flex md:w-80 lg:md:w-96 h-full bg-white border-l border-gray-200 flex-col shadow-xl overflow-hidden">
+      {/* Right Side - Cart / Bill - Narrower for fit */}
+      <div className="hidden md:flex w-72 lg:w-80 h-full bg-white border-l border-gray-200 flex-col shadow-xl overflow-hidden flex-shrink-0">
         {/* ========== MULTI-CUSTOMER TABS BAR ========== */}
         <div className="bg-gray-100 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center overflow-x-auto scrollbar-hide">
@@ -2381,7 +2381,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 key={tab.id}
                 onClick={() => switchToTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-1 px-2 py-1.5 cursor-pointer border-r border-gray-200 min-w-[80px] transition-all relative group",
+                  "flex items-center gap-1 px-2 py-1.5 cursor-pointer border-r border-gray-200 min-w-[70px] transition-all relative group",
                   tab.id === activeTabId
                     ? "bg-white text-emerald-700 shadow-sm"
                     : "hover:bg-gray-50 text-gray-600",
