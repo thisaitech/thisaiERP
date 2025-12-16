@@ -4934,6 +4934,51 @@ TOTAL:       ₹${invoice.total}
         }
       }
 
+      // Update original invoice - reduce totals and mark items as returned
+      try {
+        const invoiceRef = doc(db, 'invoices', selectedInvoiceForReturn.id)
+        const invoiceDoc = await getDoc(invoiceRef)
+        
+        if (invoiceDoc.exists()) {
+          const invoiceData = invoiceDoc.data()
+          const currentTotal = invoiceData.total || invoiceData.grandTotal || 0
+          const currentPaidAmount = invoiceData.paidAmount || 0
+          const newTotal = Math.max(0, currentTotal - returnTotal)
+          const newDueAmount = Math.max(0, newTotal - currentPaidAmount)
+          
+          // Calculate new payment status
+          let newPaymentStatus = invoiceData.paymentStatus
+          if (currentPaidAmount >= newTotal && newTotal > 0) {
+            newPaymentStatus = 'paid'
+          } else if (currentPaidAmount > 0 && currentPaidAmount < newTotal) {
+            newPaymentStatus = 'partial'
+          } else if (newTotal === 0) {
+            newPaymentStatus = 'paid' // Fully returned
+          }
+          
+          // Track returned amounts on the invoice
+          const returnedAmount = (invoiceData.returnedAmount || 0) + returnTotal
+          const returnedCount = (invoiceData.returnedCount || 0) + 1
+          
+          await updateDoc(invoiceRef, {
+            total: newTotal,
+            grandTotal: newTotal,
+            dueAmount: newDueAmount,
+            paymentStatus: newPaymentStatus,
+            returnedAmount: returnedAmount,
+            returnedCount: returnedCount,
+            hasReturns: true,
+            lastReturnId: docRef.id,
+            lastReturnDate: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
+          
+          console.log('✅ Invoice updated - New Total:', newTotal, 'Returned:', returnedAmount)
+        }
+      } catch (invoiceUpdateError) {
+        console.error('Could not update invoice totals:', invoiceUpdateError)
+      }
+
       // Update party balance if exists (optional)
       if (selectedInvoiceForReturn.partyId) {
         try {
@@ -4984,6 +5029,11 @@ TOTAL:       ₹${invoice.total}
       setReturnItems([])
       setReturnReason('')
       setReturnNotes('')
+
+      // Refresh the invoices list to show updated totals
+      if (refreshInvoices) {
+        await refreshInvoices()
+      }
 
       // Refresh the returns map to show the indicator immediately
       const invoiceIds = invoices.map(inv => inv.id)
