@@ -5188,7 +5188,7 @@ TOTAL:       ₹${invoice.total}
                 className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]"
               >
                 <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.nav.sales}</div>
-                <div className="text-base font-bold text-slate-800">₹{dashboardStats.periodSales.toLocaleString('en-IN')}</div>
+                <div className="text-base font-bold text-slate-800">₹{dashboardStats.periodSales.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               </button>
 
               {/* Collected Card */}
@@ -5197,7 +5197,7 @@ TOTAL:       ₹${invoice.total}
                 className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-emerald-200 active:scale-[0.98]"
               >
                 <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.collected}</div>
-                <div className="text-base font-bold text-emerald-600">₹{dashboardStats.totalPaid.toLocaleString('en-IN')}</div>
+                <div className="text-base font-bold text-emerald-600">₹{dashboardStats.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               </button>
 
               {/* Pending Card */}
@@ -5206,7 +5206,7 @@ TOTAL:       ₹${invoice.total}
                 className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-red-200 active:scale-[0.98]"
               >
                 <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.pending}</div>
-                <div className="text-base font-bold text-red-500">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN')}</div>
+                <div className="text-base font-bold text-red-500">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               </button>
 
               {/* Invoices Card */}
@@ -5463,9 +5463,9 @@ TOTAL:       ₹${invoice.total}
 
                     {/* Amount */}
                     <div className="text-right flex-shrink-0 min-w-[70px]">
-                      <div className="text-[13px] font-bold text-slate-800 whitespace-nowrap">₹{invoice.total.toLocaleString('en-IN')}</div>
+                      <div className="text-[13px] font-bold text-slate-800 whitespace-nowrap">₹{invoice.total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       {invoice.paymentStatus !== 'paid' && (
-                        <div className="text-[9px] text-amber-600 font-medium whitespace-nowrap">Due ₹{(invoice.dueAmount || invoice.total).toLocaleString('en-IN')}</div>
+                        <div className="text-[9px] text-amber-600 font-medium whitespace-nowrap">Due ₹{(invoice.dueAmount || invoice.total).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                       )}
                     </div>
 
@@ -5568,7 +5568,7 @@ TOTAL:       ₹${invoice.total}
 
                 {/* Invoice Balance (9%) */}
                 <div style={{ width: '9%' }} className="text-right pr-1">
-                  <div className="font-semibold text-xs text-slate-800">₹{balance > 0 ? balance.toLocaleString('en-IN') : invoice.total.toLocaleString('en-IN')}</div>
+                  <div className="font-semibold text-xs text-slate-800">₹{(balance > 0 ? balance : invoice.total).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
 
                 {/* Customer Balance (9%) */}
@@ -5578,7 +5578,7 @@ TOTAL:       ₹${invoice.total}
                     invoice.customerOutstanding > 0 ? "text-emerald-600" :
                     invoice.customerOutstanding < 0 ? "text-red-600" : "text-slate-500"
                   )}>
-                    {invoice.customerOutstanding > 0 ? '+' : invoice.customerOutstanding < 0 ? '' : ''}₹{Math.abs(invoice.customerOutstanding || 0).toLocaleString('en-IN')}
+                    {invoice.customerOutstanding > 0 ? '+' : invoice.customerOutstanding < 0 ? '' : ''}₹{Math.abs(invoice.customerOutstanding || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
 
