@@ -5979,10 +5979,10 @@ TOTAL:       ₹${invoice.total}
 
       {/* Create Invoice Form - Show when in create mode */}
       {viewMode === 'create' && (
-        <div className="flex flex-col">
+        <div className="flex flex-col h-[calc(100vh-64px)]">
           {/* Modern Café POS View */}
           {showCafePOS ? (
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden h-full">
               <ModernPOS
                 key={`pos-${posResetKey}`}
                 onAddCustomer={() => setShowAddCustomerModal(true)}
