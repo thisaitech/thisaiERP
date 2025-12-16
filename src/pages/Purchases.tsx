@@ -1109,10 +1109,10 @@ const Sales = () => {
 
     try {
       // Show processing toast
-      processingToast = toast.loading('Processing invoice... Creating/updating customer and items')
+      processingToast = toast.loading('Processing purchase... Creating/updating supplier and items')
 
       // Auto-process the invoice: create/update party and items
-      const result = await processScannedInvoice(invoiceData, 'sale')
+      const result = await processScannedInvoice(invoiceData, 'purchase')
 
       if (result?.invoice && result?.party) {
         // Reload invoices list to show the new invoice
@@ -1120,14 +1120,14 @@ const Sales = () => {
 
         // Show comprehensive success message
         const successInfo = [
-          result.party ? `Customer: ${result.party.companyName}` : null,
+          result.party ? `Supplier: ${result.party.companyName}` : null,
           result.party?.gstDetails?.gstin && `GSTIN: ${result.party.gstDetails.gstin}`,
           result.items?.length > 0 && `${result.items.length} item(s) created/updated`,
-          `Invoice: ${invoiceData.invoiceNumber}`,
+          `Purchase: ${invoiceData.invoiceNumber}`,
           `Total: ₹${invoiceData.grandTotal.toLocaleString()}`
         ].filter(Boolean).join(' | ')
 
-        toast.success(`✓ Invoice processed! ${successInfo}`, {
+        toast.success(`✓ Purchase processed! ${successInfo}`, {
           duration: 5000
         })
 
