@@ -2289,7 +2289,8 @@ const Sales = () => {
     paid: { icon: CheckCircle, color: 'success', label: 'Paid' },
     partial: { icon: Clock, color: 'warning', label: 'Partial' },
     pending: { icon: Clock, color: 'destructive', label: 'Pending' },
-    overdue: { icon: XCircle, color: 'destructive', label: 'Overdue' }
+    overdue: { icon: XCircle, color: 'destructive', label: 'Overdue' },
+    returned: { icon: ArrowUUpLeft, color: 'slate', label: 'Returned' }
   }
 
   const addItem = (item: InvoiceItem | typeof availableItems[0]) => {
@@ -4948,12 +4949,12 @@ TOTAL:       ₹${invoice.total}
           
           // Calculate new payment status
           let newPaymentStatus = invoiceData.paymentStatus
-          if (currentPaidAmount >= newTotal && newTotal > 0) {
+          if (newTotal === 0) {
+            newPaymentStatus = 'returned' // Fully returned - all items returned
+          } else if (currentPaidAmount >= newTotal && newTotal > 0) {
             newPaymentStatus = 'paid'
           } else if (currentPaidAmount > 0 && currentPaidAmount < newTotal) {
             newPaymentStatus = 'partial'
-          } else if (newTotal === 0) {
-            newPaymentStatus = 'paid' // Fully returned
           }
           
           // Track returned amounts on the invoice
@@ -4968,6 +4969,7 @@ TOTAL:       ₹${invoice.total}
             returnedAmount: returnedAmount,
             returnedCount: returnedCount,
             hasReturns: true,
+            isFullyReturned: newTotal === 0,
             lastReturnId: docRef.id,
             lastReturnDate: new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -5477,12 +5479,13 @@ TOTAL:       ₹${invoice.total}
                           "text-[9px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap",
                           invoice.paymentStatus === 'paid' ? "bg-emerald-100 text-emerald-700" :
                           invoice.paymentStatus === 'partial' ? "bg-blue-100 text-blue-700" :
+                          invoice.paymentStatus === 'returned' ? "bg-slate-200 text-slate-700" :
                           "bg-amber-100 text-amber-700"
                         )}>
-                          {invoice.paymentStatus === 'paid' ? 'Paid' : invoice.paymentStatus === 'partial' ? 'Partial' : 'Pending'}
+                          {invoice.paymentStatus === 'paid' ? 'Paid' : invoice.paymentStatus === 'partial' ? 'Partial' : invoice.paymentStatus === 'returned' ? 'Returned' : 'Pending'}
                         </span>
-                        {/* Returned Items Indicator */}
-                        {invoiceReturnsMap[invoice.id] && (
+                        {/* Returned Items Indicator - hide if fully returned */}
+                        {invoiceReturnsMap[invoice.id] && invoice.paymentStatus !== 'returned' && (
                           <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 bg-red-100 text-red-700 flex items-center gap-0.5 whitespace-nowrap" title={`${invoiceReturnsMap[invoice.id].totalReturned} items returned (₹${invoiceReturnsMap[invoice.id].totalAmount.toLocaleString('en-IN')})`}>
                             <ArrowCounterClockwise size={9} weight="bold" />
                             {invoiceReturnsMap[invoice.id].totalReturned}
@@ -5599,12 +5602,13 @@ TOTAL:       ₹${invoice.total}
                     "px-2 py-0.5 rounded-full text-[10px] font-semibold",
                     invoice.paymentStatus === 'paid' && "bg-emerald-100 text-emerald-700",
                     invoice.paymentStatus === 'pending' && "bg-red-100 text-red-700",
-                    invoice.paymentStatus === 'partial' && "bg-amber-100 text-amber-700"
+                    invoice.paymentStatus === 'partial' && "bg-amber-100 text-amber-700",
+                    invoice.paymentStatus === 'returned' && "bg-slate-200 text-slate-700"
                   )}>
                     {statusInfo.label}
                   </span>
                   {/* Returned Items Indicator */}
-                  {invoiceReturnsMap[invoice.id] && (
+                  {invoiceReturnsMap[invoice.id] && invoice.paymentStatus !== 'returned' && (
                     <span
                       className="px-1.5 py-0.5 rounded-full text-[8px] font-semibold bg-red-100 text-red-700 flex items-center gap-0.5 cursor-help"
                       title={`${invoiceReturnsMap[invoice.id].totalReturned} items returned in ${invoiceReturnsMap[invoice.id].returnCount} return(s) - ₹${invoiceReturnsMap[invoice.id].totalAmount.toLocaleString('en-IN')}`}
