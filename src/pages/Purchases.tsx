@@ -1006,6 +1006,8 @@ const Sales = () => {
     try {
       setIsLoadingInvoices(true)
       const invoicesData = await getInvoices('purchase')
+      console.log('🛒 Purchases page received', invoicesData?.length || 0, 'purchase invoices')
+      console.log('🛒 First 3 invoices:', invoicesData?.slice(0, 3).map(inv => ({ number: inv.invoiceNumber, type: inv.type, party: inv.partyName })))
 
       if (invoicesData && Array.isArray(invoicesData) && invoicesData.length > 0) {
         // STEP 1: Calculate supplier outstanding directly from invoice data (2025 Standard)
