@@ -2162,7 +2162,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
         </div>
 
         {/* Categories - Wrap to show all categories */}
-        <div className="flex-shrink-0 mb-2 relative z-50" style={{ overflow: 'visible' }}>
+        <div className="hidden md:flex flex-shrink-0 mb-2 relative z-50" style={{ overflow: 'visible' }}>
           <div className="flex flex-wrap gap-1.5 pb-1">
             {/* All Category */}
             <button
