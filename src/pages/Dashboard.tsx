@@ -684,10 +684,10 @@ const Dashboard = () => {
     return () => clearInterval(interval)
   }, [smartAlerts.length])
 
-  // ==================== MOBILE DASHBOARD (Reverted) ====================
+  // ==================== MOBILE DASHBOARD (Neumorphic Soft UI Design) ====================
   const MobileDashboard = () => {
     return (
-      <div className="p-4 bg-slate-50 dark:bg-slate-900 min-h-screen">
+      <div className="p-4 bg-[#e4ebf5] dark:bg-slate-900 min-h-screen">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -698,13 +698,18 @@ const Dashboard = () => {
             <span>Settings</span>
           </button>
         </div>
-        {/* Period Filter */}
-        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
+        {/* Period Filter - Neumorphic */}
+        <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-2">
             {periods.map((period) => (
               <button
                 key={period.id}
                 onClick={() => setSelectedPeriod(period.id)}
-                className={`px-4 py-2 text-sm font-semibold rounded-full whitespace-nowrap transition-colors ${selectedPeriod === period.id ? "bg-blue-600 text-white shadow" : "text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"}`}
+                className={cn(
+                  "px-4 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-200",
+                  selectedPeriod === period.id
+                    ? "bg-blue-600 text-white shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]"
+                    : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]"
+                )}
               >
                 {period.label}
               </button>
@@ -712,7 +717,7 @@ const Dashboard = () => {
         </div>
 
         <motion.div
-          className="grid grid-cols-2 gap-4"
+          className="grid grid-cols-2 gap-5"
           initial="hidden"
           animate="visible"
           variants={{
@@ -736,14 +741,18 @@ const Dashboard = () => {
                 visible: { opacity: 1, y: 0 },
               }}
               onClick={() => navigate(stat.route)}
-              className="p-4 rounded-2xl cursor-pointer bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 shadow-sm"
+              className="p-5 rounded-3xl cursor-pointer bg-[#e4ebf5] dark:bg-slate-800
+                shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
+                dark:shadow-[8px_8px_16px_#1e293b,-8px_-8px_16px_#334155]
+                active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
+                transition-all duration-200"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className={cn("p-1.5 rounded-full",
-                    stat.color === 'green' && 'bg-green-100 dark:bg-green-900/50',
-                    stat.color === 'red' && 'bg-red-100 dark:bg-red-900/50',
-                    stat.color === 'amber' && 'bg-yellow-100 dark:bg-yellow-900/50',
-                    stat.color === 'blue' && 'bg-blue-100 dark:bg-blue-900/50',
+              <div className="flex items-center gap-2 mb-3">
+                <div className={cn("p-2 rounded-xl shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.7)]",
+                    stat.color === 'green' && 'bg-green-100/80 dark:bg-green-900/50',
+                    stat.color === 'red' && 'bg-red-100/80 dark:bg-red-900/50',
+                    stat.color === 'amber' && 'bg-yellow-100/80 dark:bg-yellow-900/50',
+                    stat.color === 'blue' && 'bg-blue-100/80 dark:bg-blue-900/50',
                 )}>
                   <stat.icon size={20} weight="bold" className={cn(
                     stat.color === 'green' && 'text-green-600 dark:text-green-400',
@@ -769,8 +778,10 @@ const Dashboard = () => {
           ))}
         </motion.div>
 
-        {/* Weekly Chart */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 shadow-sm mt-4">
+        {/* Weekly Chart - Neumorphic */}
+        <div className="p-5 rounded-3xl bg-[#e4ebf5] dark:bg-slate-800 mt-5
+          shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
+          dark:shadow-[8px_8px_16px_#1e293b,-8px_-8px_16px_#334155]">
           <div className="flex justify-between items-center mb-3">
             <p className="text-base font-semibold text-slate-800 dark:text-slate-100">Weekly Overview</p>
             <div className="flex items-center gap-3 text-xs">
@@ -841,12 +852,15 @@ const Dashboard = () => {
                   hidden: { opacity: 0, y: 20 },
                   visible: { opacity: 1, y: 0 },
                 }}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+                className="flex items-center gap-3 p-4 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
+                  shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
+                  dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
+                  transition-all duration-200"
               >
-                <div className={cn('w-10 h-10 rounded-full flex items-center justify-center',
-                    tx.type === 'sale' ? 'bg-green-100 dark:bg-green-900/50' :
-                    tx.type === 'purchase' ? 'bg-red-100 dark:bg-red-900/50' :
-                    'bg-yellow-100 dark:bg-yellow-900/50'
+                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]',
+                    tx.type === 'sale' ? 'bg-green-100/80 dark:bg-green-900/50' :
+                    tx.type === 'purchase' ? 'bg-red-100/80 dark:bg-red-900/50' :
+                    'bg-yellow-100/80 dark:bg-yellow-900/50'
                 )}>
                    <tx.icon size={20} className={cn(
                       tx.type === 'sale' ? 'text-green-600 dark:text-green-400' :
@@ -874,105 +888,181 @@ const Dashboard = () => {
     )
   }
 
-  // ==================== DESKTOP DASHBOARD (Reverted) ====================
+  // ==================== DESKTOP DASHBOARD (Neumorphic Soft UI Design) ====================
     const DesktopDashboard = () => (
-      <div className="max-w-screen-xl mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100">{greeting}, {userData?.firstName || 'User'}!</h1>
-            <p className="text-base text-slate-500 dark:text-slate-400 mt-1">Here's your business overview for {getPeriodLabel()}.</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-                {periods.map((period) => (
-                  <button
-                    key={period.id}
-                    onClick={() => setSelectedPeriod(period.id)}
-                    className={cn(
-                      "px-4 py-2 text-sm font-semibold rounded-full transition-colors",
-                      selectedPeriod === period.id
-                        ? "bg-blue-600 text-white shadow"
-                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                    )}
-                  >
-                    {period.label}
-                  </button>
-                ))}
+      <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900 p-8">
+        <div className="max-w-screen-xl mx-auto space-y-8">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-700 dark:text-slate-100">{greeting}, {userData?.firstName || 'User'}!</h1>
+              <p className="text-base text-slate-500 dark:text-slate-400 mt-1">Here's your business overview for {getPeriodLabel()}.</p>
             </div>
-            <button 
-                onClick={() => { localStorage.setItem('sales_viewMode', 'create'); navigate('/sales') }} 
-                className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105"
-              >
-                <Plus size={20} weight="bold" />
-                <span>Create Invoice</span>
-              </button>
+            <div className="flex items-center gap-4">
+              {/* Neumorphic Period Filter */}
+              <div className="flex items-center gap-1 p-1.5 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
+                shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff] dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
+                  {periods.map((period) => (
+                    <button
+                      key={period.id}
+                      onClick={() => setSelectedPeriod(period.id)}
+                      className={cn(
+                        "px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300",
+                        selectedPeriod === period.id
+                          ? "bg-blue-600 text-white shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(0,0,0,0.1)] dark:shadow-[4px_4px_8px_#1e293b]"
+                          : "text-slate-600 dark:text-slate-300 hover:bg-[#dce3ed] dark:hover:bg-slate-700"
+                      )}
+                    >
+                      {period.label}
+                    </button>
+                  ))}
+              </div>
+              {/* Neumorphic Create Button */}
+              <button
+                  onClick={() => { localStorage.setItem('sales_viewMode', 'create'); navigate('/sales') }}
+                  className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 text-white font-semibold rounded-2xl
+                    shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff,inset_0_1px_0_rgba(255,255,255,0.2)]
+                    hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff,inset_0_1px_0_rgba(255,255,255,0.3)]
+                    active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)]
+                    transition-all duration-200"
+                >
+                  <Plus size={20} weight="bold" />
+                  <span>Create Invoice</span>
+                </button>
+            </div>
           </div>
-        </div>
+
+          {/* Stats Cards - Neumorphic Floating Style (4 Cards) */}
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: { transition: { staggerChildren: 0.1 } },
+            }}
+          >
+            {[
+              { label: 'Sales', sublabel: 'vs yesterday', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, color: 'green' },
+              { label: 'Purchases', sublabel: 'Total spend', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, color: 'red' },
+              { label: 'Expenses', sublabel: 'This period', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, color: 'amber' },
+              { label: 'Profit', sublabel: 'Net earnings', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, color: 'blue' },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                onClick={() => navigate(stat.route)}
+                className="relative p-6 rounded-3xl cursor-pointer bg-[#e4ebf5] dark:bg-slate-800
+                  shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff]
+                  dark:shadow-[10px_10px_20px_#1e293b,-10px_-10px_20px_#334155]
+                  hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff]
+                  dark:hover:shadow-[14px_14px_28px_#1e293b,-14px_-14px_28px_#334155]
+                  transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
+                  <div className={cn(
+                    "w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
+                    "shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]",
+                    stat.color === 'green' && 'bg-green-100/80 dark:bg-green-900/40',
+                    stat.color === 'red' && 'bg-red-100/80 dark:bg-red-900/40',
+                    stat.color === 'amber' && 'bg-amber-100/80 dark:bg-amber-900/40',
+                    stat.color === 'blue' && 'bg-blue-100/80 dark:bg-blue-900/40',
+                  )}>
+                    <stat.icon size={24} weight="bold" className={cn(
+                      stat.color === 'green' && 'text-green-600 dark:text-green-400',
+                      stat.color === 'red' && 'text-red-600 dark:text-red-400',
+                      stat.color === 'amber' && 'text-amber-600 dark:text-amber-400',
+                      stat.color === 'blue' && 'text-blue-600 dark:text-blue-400',
+                    )} />
+                  </div>
+                </div>
+                <p className={cn(
+                  "text-3xl font-bold mb-2",
+                  stat.color === 'green' && 'text-green-600 dark:text-green-400',
+                  stat.color === 'red' && 'text-red-600 dark:text-red-400',
+                  stat.color === 'amber' && 'text-amber-600 dark:text-amber-400',
+                  stat.color === 'blue' && 'text-blue-600 dark:text-blue-400',
+                )}>
+                  {`₹${(stat.value / 1000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}K`}
+                </p>
+                {stat.growth !== null ? (
+                  <p className={cn(
+                    "text-sm font-medium",
+                    stat.growth >= 0 ? 'text-green-500' : 'text-red-500',
+                  )}>
+                    {stat.growth >= 0 ? `+${stat.growth.toFixed(1)}%` : `${stat.growth.toFixed(1)}%`} {stat.sublabel}
+                  </p>
+                ) : (
+                  <p className="text-sm font-medium text-slate-400">{stat.sublabel}</p>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Quick Shortcuts - Neumorphic Panel */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="p-7 rounded-3xl bg-[#e4ebf5] dark:bg-slate-800
+              shadow-[12px_12px_24px_#c5ccd6,-12px_-12px_24px_#ffffff]
+              dark:shadow-[12px_12px_24px_#1e293b,-12px_-12px_24px_#334155]"
+          >
+            <h2 className="text-lg font-bold text-slate-700 dark:text-slate-100 mb-5">Quick Shortcuts</h2>
+            <div className="flex flex-wrap gap-4">
+              <button
+                onClick={() => navigate('/company-info')}
+                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-200
+                  bg-[#e4ebf5] dark:bg-slate-700
+                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
+                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
+                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
+                  active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
+                  transition-all duration-200"
+              >
+                <FileText size={18} className="text-slate-500" />
+                Edit Company Profile
+              </button>
+              <button
+                onClick={() => navigate('/parties')}
+                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-200
+                  bg-[#e4ebf5] dark:bg-slate-700
+                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
+                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
+                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
+                  active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
+                  transition-all duration-200"
+              >
+                <Users size={18} className="text-slate-500" />
+                View Parties
+              </button>
+              <button
+                onClick={() => navigate('/inventory')}
+                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-blue-600 dark:text-blue-400
+                  bg-[#e4ebf5] dark:bg-slate-700
+                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
+                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
+                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
+                  active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
+                  transition-all duration-200"
+              >
+                <Package size={18} />
+                Check Inventory
+              </button>
+            </div>
+          </motion.div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-8">
           {/* Left Column */}
-          <div className="col-span-3 lg:col-span-2 space-y-6">
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                visible: {
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
-            >
-              {[
-                { label: 'Sales', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, color: 'green' },
-                { label: 'Purchases', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, color: 'red' },
-                { label: 'Expenses', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, color: 'amber' },
-                { label: 'Profit', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, color: 'blue' },
-              ].map((stat, i) => (
-                <motion.div
-                  key={i}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                  onClick={() => navigate(stat.route)}
-                  className={cn(
-                    "relative p-6 rounded-2xl cursor-pointer bg-white dark:bg-slate-800/50 border border-transparent hover:border-blue-500/50 dark:hover:border-blue-500/30 shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden",
-                    `border-${stat.color}-500/10`
-                  )}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                      <p className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-2">
-                        {`₹${(stat.value / 1000).toLocaleString('en-IN', { maximumFractionDigits: stat.value > 10000 ? 0 : 1 })}K`}
-                      </p>
-                    </div>
-                    <div className={cn("absolute -top-4 -right-4 text-8xl", 
-                      stat.color === 'green' && 'text-green-500/10 dark:text-green-400/5',
-                      stat.color === 'red' && 'text-red-500/10 dark:text-red-400/5',
-                      stat.color === 'amber' && 'text-amber-500/10 dark:text-amber-400/5',
-                      stat.color === 'blue' && 'text-blue-500/10 dark:text-blue-400/5',
-                    )}>
-                      <stat.icon weight="bold" />
-                    </div>
-                  </div>
-                  {stat.growth !== null && (
-                    <div className="flex items-center gap-1 text-sm mt-4">
-                      <span className={cn("font-semibold", stat.growth >= 0 ? 'text-green-500' : 'text-red-500')}>
-                        {stat.growth >= 0 ? `+${stat.growth.toFixed(1)}%` : `${stat.growth.toFixed(1)}%`}
-                      </span>
-                      <span className="text-slate-500 dark:text-slate-400">vs yesterday</span>
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* Weekly Chart */}
-            <div className="p-6 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
+          <div className="col-span-3 lg:col-span-2 space-y-8">
+            {/* Weekly Chart - Neumorphic */}
+            <div className="p-7 rounded-3xl bg-[#e4ebf5] dark:bg-slate-800
+              shadow-[12px_12px_24px_#c5ccd6,-12px_-12px_24px_#ffffff]
+              dark:shadow-[12px_12px_24px_#1e293b,-12px_-12px_24px_#334155]">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Weekly Overview</h2>
                 <div className="flex items-center gap-4 text-sm">
@@ -1024,14 +1114,16 @@ const Dashboard = () => {
           </div>
 
           {/* Right Column */}
-          <div className="col-span-3 lg:col-span-1 space-y-6">
-            <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Recent Activity</h2>
+          <div className="col-span-3 lg:col-span-1 space-y-8">
+            <div className="p-7 rounded-3xl bg-[#e4ebf5] dark:bg-slate-800
+              shadow-[12px_12px_24px_#c5ccd6,-12px_-12px_24px_#ffffff]
+              dark:shadow-[12px_12px_24px_#1e293b,-12px_-12px_24px_#334155]">
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-xl font-bold text-slate-700 dark:text-slate-100">Recent Activity</h2>
                 <button onClick={() => navigate('/reports')} className="text-sm text-blue-600 dark:text-blue-400 font-semibold hover:underline">View All</button>
               </div>
               <motion.div
-                className="space-y-1"
+                className="space-y-3"
                 initial="hidden"
                 animate="visible"
                 variants={{
@@ -1045,12 +1137,16 @@ const Dashboard = () => {
                         hidden: { opacity: 0, x: -20 },
                         visible: { opacity: 1, x: 0 },
                       }}
-                      className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors duration-200"
+                      className="flex items-center gap-4 p-4 rounded-2xl bg-[#e4ebf5] dark:bg-slate-700
+                        shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
+                        dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]
+                        transition-all duration-200"
                     >
-                      <div className={cn('p-3 rounded-full',
-                          transaction.type === 'sale' ? 'bg-green-100 dark:bg-green-900/50' :
-                          transaction.type === 'purchase' ? 'bg-red-100 dark:bg-red-900/50' :
-                          'bg-yellow-100 dark:bg-yellow-900/50'
+                      <div className={cn('p-3 rounded-xl',
+                        'shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]',
+                          transaction.type === 'sale' ? 'bg-green-100/80 dark:bg-green-900/50' :
+                          transaction.type === 'purchase' ? 'bg-red-100/80 dark:bg-red-900/50' :
+                          'bg-yellow-100/80 dark:bg-yellow-900/50'
                       )}>
                         <transaction.icon size={20} className={cn(
                             transaction.type === 'sale' ? 'text-green-600 dark:text-green-400' :
@@ -1059,7 +1155,7 @@ const Dashboard = () => {
                         )} />
                       </div>
                       <div className="flex-grow">
-                        <p className="text-base font-semibold text-slate-800 dark:text-slate-100">{transaction.party}</p>
+                        <p className="text-base font-semibold text-slate-700 dark:text-slate-100">{transaction.party}</p>
                         <p className="text-sm text-slate-500 dark:text-slate-400">{transaction.date}</p>
                       </div>
                       <p className={cn('text-lg font-bold',
@@ -1074,11 +1170,12 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+        </div>
       </div>
     )
-  
+
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900">
         {/* Mobile Dashboard */}
         <div className="md:hidden">
           <MobileDashboard />
