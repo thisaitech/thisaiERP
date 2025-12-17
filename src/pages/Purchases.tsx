@@ -4952,7 +4952,7 @@ TOTAL:       ₹${invoice.total}
             ) : (
               <>
                 <Receipt size={22} weight="duotone" className="text-blue-600" />
-                <span>Invoice</span>
+                <span>Purchase</span>
               </>
             )}
           </h1>
