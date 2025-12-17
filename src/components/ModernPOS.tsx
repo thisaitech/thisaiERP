@@ -2112,21 +2112,21 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
   return (
     <div className="h-full flex bg-slate-50 overflow-hidden">
       {/* Left Side - Items Grid */}
-      <div className="flex-1 flex flex-col p-1.5 md:p-2 pb-20 md:pb-2 min-w-0">
-        {/* Header with Search - Compact */}
-        <div className="flex items-center gap-2 mb-1.5 flex-shrink-0">
+      <div className="flex-1 flex flex-col p-2 md:p-4 pb-20 md:pb-4 overflow-y-auto">
+        {/* Header with Search */}
+        <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
           {/* Search */}
           <div className="flex-1 relative">
             <MagnifyingGlass
-              size={16}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+              size={20}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <input
               type="text"
               placeholder={t.posPage.searchItems}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-10 py-2 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm shadow-sm"
+              className="w-full pl-9 md:pl-10 pr-12 md:pr-14 py-2.5 md:py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm md:text-base"
               autoFocus
             />
             {/* Barcode scanner icon button */}
@@ -2153,17 +2153,56 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           {onClose && (
             <button
               onClick={onClose}
-              className="h-8 px-3 rounded-lg bg-gradient-to-r from-red-500 to-rose-500 text-white font-semibold flex items-center gap-1.5 shadow-md hover:shadow-lg hover:from-red-600 hover:to-rose-600 transition-all text-xs"
+              className="h-9 md:h-10 px-3 md:px-4 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 text-white font-semibold flex items-center gap-1.5 md:gap-2 shadow-md hover:shadow-lg hover:from-red-600 hover:to-rose-600 transition-all text-sm md:text-base"
             >
-              <X size={14} weight="bold" />
-              <span className="hidden sm:inline">{t.posPage.back}</span>
+              <X size={16} weight="bold" className="md:hidden" />
+              <X size={18} weight="bold" className="hidden md:block" />
+              <span className="hidden md:inline">{t.posPage.back}</span>
             </button>
           )}
         </div>
 
-        {/* Categories - Wrap to show all categories */}
-        <div className="hidden md:flex flex-shrink-0 mb-2 relative z-50" style={{ overflow: 'visible' }}>
-          <div className="flex flex-wrap gap-1.5 pb-1">
+        {/* Categories - Simple horizontal scroll on mobile, wrap on desktop */}
+        <div className="flex-shrink-0 mb-3 md:mb-4">
+          {/* Mobile: Simple horizontal scroll */}
+          <div className="md:hidden flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+            <button
+              onClick={() => {
+                setSelectedCategory('All')
+                setSelectedSubcategory(null)
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0 border shadow-sm",
+                selectedCategory === 'All'
+                  ? "bg-emerald-500 text-white shadow-md border-emerald-500"
+                  : "bg-white text-gray-700 hover:bg-emerald-50 hover:border-emerald-300 border-gray-200"
+              )}
+            >
+              <Squares size={14} weight="fill" />
+              All
+            </button>
+            {categories.filter(c => c !== 'All').map(category => (
+              <button
+                key={category}
+                onClick={() => {
+                  setSelectedCategory(category)
+                  setSelectedSubcategory(null)
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0 border shadow-sm",
+                  selectedCategory === category
+                    ? "bg-emerald-500 text-white shadow-md border-emerald-500"
+                    : "bg-white text-gray-700 hover:bg-emerald-50 hover:border-emerald-300 border-gray-200"
+                )}
+              >
+                <span className="[&>svg]:w-4 [&>svg]:h-4">{categoryIcons[category] || categoryIcons['default']}</span>
+                {category}
+              </button>
+            ))}
+          </div>
+
+          {/* Desktop: Wrap with hover dropdowns */}
+          <div className="hidden md:flex flex-wrap gap-1.5 pb-1 relative z-50" style={{ overflow: 'visible' }}>
             {/* All Category */}
             <button
               onClick={() => {
@@ -2343,9 +2382,9 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           )}
         </div>
 
-        {/* Items Grid - Bigger Icons for Typical POS */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2">
+        {/* Items Grid - Original compact mobile layout */}
+        <div className="flex-1">
+          <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 md:gap-3">
             <AnimatePresence>
               {(selectedCategory === 'Popular' 
                 ? items.filter(item => item.stock > 0).slice(0, 50)
@@ -2359,57 +2398,81 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => addToCart(item)}
                   className={cn(
                     "bg-white cursor-pointer border transition-all group relative",
-                    "rounded-xl p-2",
-                    availableStock <= 0 
-                      ? "opacity-50 border-gray-200" 
-                      : inCart > 0 
-                        ? "border-emerald-400 shadow-lg ring-2 ring-emerald-400" 
-                        : "border-gray-200 hover:border-emerald-400 hover:shadow-lg"
+                    "rounded-lg md:rounded-xl p-1.5 md:p-3",
+                    "border-gray-100 hover:border-emerald-300 hover:shadow-lg",
+                    inCart > 0 && "md:border-emerald-200"
                   )}
                 >
-                  {/* Cart quantity badge */}
+                  {/* Cart quantity badge - Mobile only */}
                   {inCart > 0 && (
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg z-10">
+                    <div className="md:hidden absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-md z-10">
                       {inCart}
                     </div>
                   )}
 
-                  {/* Out of Stock Badge */}
-                  {availableStock <= 0 && (
-                    <div className="absolute top-1 left-1 z-10">
-                      <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">OUT</span>
+                  {/* Desktop: Original layout with icon */}
+                  <div className="hidden md:flex md:items-start md:gap-2">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 flex items-center justify-center text-emerald-600 group-hover:from-emerald-100 group-hover:to-teal-100 transition-all">
+                      {getCategoryIcon(item.category)}
                     </div>
-                  )}
+                    <h3 className="flex-1 font-semibold text-gray-800 text-sm leading-tight group-hover:text-emerald-600 transition-colors line-clamp-2 min-h-[2.25rem]">
+                      {item.name}
+                    </h3>
+                  </div>
 
-                  {/* Bigger Layout: Icon on top + Info below */}
-                  <div className="flex flex-col items-center text-center">
-                    {/* Icon/Image - Bigger */}
-                    <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center overflow-hidden border border-emerald-100 mb-1.5">
-                      {item.imageUrl ? (
-                        <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-emerald-500 [&>svg]:w-7 [&>svg]:h-7">{getCategoryIcon(item.category)}</span>
-                      )}
-                    </div>
-                    
-                    {/* Info - Below */}
-                    <div className="w-full">
-                      <h3 className="font-medium text-gray-800 text-xs leading-tight line-clamp-1 mb-0.5">
-                        {item.name}
-                      </h3>
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="font-bold text-emerald-600 text-sm">₹{item.sellingPrice}</span>
-                        <span className={cn(
-                          "text-[10px] font-semibold",
-                          availableStock <= 0 ? "text-red-500" : availableStock <= 5 ? "text-amber-500" : "text-gray-400"
-                        )}>
-                          {availableStock}
-                        </span>
-                      </div>
+                  {/* Mobile: Compact card */}
+                  <div className="md:hidden">
+                    <h3 className="font-semibold text-gray-800 text-[11px] leading-snug line-clamp-2 min-h-[2rem]">
+                      {item.name}
+                    </h3>
+                  </div>
+
+                  {/* Price - Desktop shows unit, mobile compact */}
+                  <div className="mt-1 md:mt-2 flex items-baseline gap-0.5 md:gap-1">
+                    <span className="font-bold text-emerald-600 text-sm md:text-xl">
+                      ₹{item.sellingPrice}
+                    </span>
+                    <span className="hidden md:inline text-xs text-gray-400">
+                      /{item.unit || 'pc'}
+                    </span>
+                  </div>
+
+                  {/* Stock & Add button */}
+                  <div className="mt-1 md:mt-2 flex items-center justify-between">
+                    {/* Stock badge - Mobile shows number only, Desktop shows with unit */}
+                    <span className={cn(
+                      "text-[9px] md:text-xs font-medium px-1 md:px-2 py-0.5 md:py-1 rounded-md",
+                      availableStock <= 0
+                        ? "bg-red-100 text-red-700 md:border md:border-red-300"
+                        : availableStock <= item.minStock
+                        ? "bg-red-50 text-red-600 md:border md:border-red-200"
+                        : availableStock <= item.minStock * 2
+                        ? "bg-amber-50 text-amber-600 md:border md:border-amber-200"
+                        : "bg-emerald-50 text-emerald-600 md:border md:border-emerald-200"
+                    )}>
+                      <span className="md:hidden">{availableStock}</span>
+                      <span className="hidden md:inline">
+                        {availableStock} {item.unit || 'pcs'}
+                        {inCart > 0 && (
+                          <span className="ml-1 text-purple-600">(-{inCart})</span>
+                        )}
+                      </span>
+                    </span>
+
+                    {/* Add button - Always visible on mobile, hover on desktop */}
+                    <div className={cn(
+                      "w-5 h-5 md:w-7 md:h-7 rounded-full flex items-center justify-center transition-all md:opacity-0 md:group-hover:opacity-100 md:shadow-md",
+                      availableStock <= 0
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-emerald-500"
+                    )}>
+                      <Plus size={12} className="text-white md:hidden" weight="bold" />
+                      <Plus size={16} className="text-white hidden md:block" weight="bold" />
                     </div>
                   </div>
                 </motion.div>

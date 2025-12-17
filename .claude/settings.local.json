@@ -62,7 +62,14 @@
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
       "Bash(taskkill:*)",
-      "Bash(start cmd /k \"npm run dev\")"
+      "Bash(start cmd /k \"npm run dev\")",
+      "Bash(for file in Login.tsx Setup.tsx PaymentSuccess.tsx Sales.tsx Quotations.tsx Purchases.tsx Expenses.tsx Parties.tsx PartyStatement.tsx CreditNotes.tsx Returns.tsx Inventory.tsx ReportsNew.tsx Banking.tsx Settings.tsx CompanyInfo.tsx Profile.tsx OnlineStore.tsx More.tsx)",
+      "Bash(do if [ -f \"$file\" ])",
+      "Bash(then echo \"✓ $file\")",
+      "Bash(else echo \"✗ MISSING: $file\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

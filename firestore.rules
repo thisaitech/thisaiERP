@@ -1,9 +1,129 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow authenticated users to read and write all documents
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user belongs to this business
+    function isBusinessMember(businessId) {
+      return isAuthenticated() &&
+             request.auth.token.businessId == businessId;
+    }
+
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() &&
+             request.auth.token.role == 'admin';
+    }
+
+    // Helper function to get user's business ID
+    function getUserBusinessId() {
+      return request.auth.token.businessId;
+    }
+
+    // Users collection - users can read/write their own data
+    match /users/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Businesses collection - members can read, admins can write
+    match /businesses/{businessId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+
+      // Subcollections within a business
+      match /{subcollection}/{docId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // Invoices - authenticated users within their business
+    match /invoices/{invoiceId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Items/Products - authenticated users within their business
+    match /items/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Parties (customers/vendors) - authenticated users
+    match /parties/{partyId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Expenses - authenticated users
+    match /expenses/{expenseId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Settings - authenticated users
+    match /settings/{settingId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Banking transactions - authenticated users
+    match /banking/{transactionId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Quotations - authenticated users
+    match /quotations/{quotationId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Credit notes - authenticated users
+    match /credit_notes/{noteId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Debit notes - authenticated users
+    match /debit_notes/{noteId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Delivery challans - authenticated users
+    match /delivery_challans/{challanId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Purchase orders - authenticated users
+    match /purchase_orders/{orderId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Proforma invoices - authenticated users
+    match /proforma_invoices/{invoiceId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // E-way bills - authenticated users
+    match /eway_bills/{billId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Payments in - authenticated users
+    match /payments_in/{paymentId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Payments out - authenticated users
+    match /payments_out/{paymentId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Price lists - authenticated users
+    match /price_lists/{listId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Catch-all for any other collections - require authentication
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAuthenticated();
     }
   }
 }
