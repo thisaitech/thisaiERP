@@ -211,241 +211,253 @@ const Expenses = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 pb-20 lg:pb-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Wallet size={32} weight="duotone" className="text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">{t.expenses?.title || 'Expenses'}</h1>
-              <p className="text-sm text-muted-foreground">{t.expenses?.trackExpenses || 'Track and manage all your business expenses'}</p>
-            </div>
+    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-3 py-2 bg-slate-50/50 min-h-screen">
+      {/* Header - Clean & Simple like Sales */}
+      <div className="flex-shrink-0">
+        {/* Top Row: Title + Actions */}
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
+            <Wallet size={22} weight="duotone" className="text-red-600" />
+            <span>{t.expenses?.title || 'Expenses'}</span>
+          </h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowNewExpense(true)}
+              className="h-8 px-3 rounded-lg border border-blue-200 bg-white text-xs text-blue-600 font-semibold flex items-center gap-1.5 hover:border-blue-400 hover:bg-blue-50 transition-all"
+            >
+              <Plus size={14} weight="bold" />
+              <span>Expense</span>
+            </button>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowNewExpense(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
-          >
-            <Plus size={20} weight="bold" />
-            <span className="hidden sm:inline">{t.expenses?.newExpense || 'New Expense'}</span>
-          </motion.button>
         </div>
-      </motion.div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        {[
-          { label: t.expenses?.totalExpenses || 'Total Expenses', value: `₹${stats.totalExpenses.toLocaleString()}`, icon: Wallet },
-          { label: t.expenses?.thisMonth || 'This Month', value: `₹${stats.thisMonth.toLocaleString()}`, icon: Calendar, color: 'primary' },
-          { label: t.common?.pending || 'Pending', value: `₹${stats.pending.toLocaleString()}`, icon: Receipt, color: 'warning' },
-          { label: t.expenses?.change || 'Change', value: `${stats.percentChange >= 0 ? '+' : ''}${stats.percentChange}%`, icon: stats.percentChange >= 0 ? TrendUp : TrendDown, color: stats.percentChange >= 0 ? 'success' : 'destructive' }
-        ].map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="relative overflow-hidden bg-card border border-border/50 rounded-lg p-4"
-          >
-            <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${['from-[#7A35FF] to-[#9B63FF]','from-[#00C9A7] to-[#3B82F6]','from-[#EF4444] to-[#DC2626]','from-[#3B82F6] to-[#7A35FF]'][index]}`} />
-            <div className="flex items-center gap-2 mb-2">
-              <stat.icon
-                size={18}
-                weight="duotone"
-                className="text-primary"
-              />
-              <p className="text-muted-foreground text-xs">{stat.label}</p>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Filters and Search */}
-      <div>
-        <div className="bg-card rounded-lg shadow-lg p-4 lg:p-6 border border-border mb-6 lg:mb-8">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-3 bg-muted rounded-lg">
-              <MagnifyingGlass size={20} weight="bold" className="text-muted-foreground lg:w-6 lg:h-6" />
-              <input
-                type="text"
-                placeholder={t.expenses?.searchExpenses || 'Search expenses...'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-sm lg:text-base"
-              />
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex items-center gap-2 overflow-x-auto">
+        {/* Category Filter & Stats - Compact Modern (matching Sales design) */}
+        <div className="space-y-2">
+          {/* Category Filter Tabs */}
+          <div className="flex items-center justify-center">
+            <div className="inline-flex items-center gap-0.5 text-xs bg-white rounded-lg p-0.5 shadow-sm border border-slate-200">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 lg:px-5 lg:py-3 rounded-lg whitespace-nowrap transition-all",
+                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1",
                     selectedCategory === cat.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      ? "bg-slate-800 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                   )}
                 >
-                  <cat.icon size={16} weight="duotone" className="lg:w-5 lg:h-5" />
-                  <span className="text-sm lg:text-base">{cat.label}</span>
+                  <cat.icon size={12} weight="duotone" />
+                  {cat.label}
                 </button>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Expenses List */}
-        <div className="mt-6 lg:mt-8">
-          {/* Empty State */}
-          {filteredExpenses.length === 0 ? (
-            <div className="text-center py-12 bg-card rounded-xl shadow-sm border border-border">
-              <Wallet size={48} weight="duotone" className="text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-2">
-                {expenses.length === 0 ? 'No expenses recorded yet' : 'No expenses match your search'}
-              </p>
-              <button
-                onClick={() => setShowNewExpense(true)}
-                className="text-primary font-medium hover:underline"
-              >
-                Add your first expense
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* Mobile Expense Cards - Only visible on mobile */}
-              <div className="md:hidden space-y-3">
-                {filteredExpenses.map((expense, index) => (
-                  <motion.div
-                    key={expense.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="bg-card rounded-xl shadow-sm border border-border p-4"
-                  >
-                    {/* Header Row */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm text-foreground truncate">{expense.expenseNumber}</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{expense.description}</p>
-                      </div>
-                      <span className={cn(
-                        "px-2 py-1 rounded-full text-[10px] font-bold uppercase ml-2 flex-shrink-0",
-                        expense.status === 'paid'
-                          ? "bg-success/10 text-success"
-                          : "bg-warning/10 text-warning"
-                      )}>
-                        {expense.status === 'paid' ? (t.common?.paid || 'Paid') : (t.common?.pending || 'Pending')}
-                      </span>
-                    </div>
-
-                    {/* Details Row */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar size={12} />
-                          {new Date(expense.date).toLocaleDateString()}
-                        </span>
-                        <span className="px-2 py-0.5 bg-muted rounded font-medium">{expense.category}</span>
-                      </div>
-                      <span className="text-lg font-bold text-foreground">₹{expense.amount.toLocaleString()}</span>
-                    </div>
-
-                    {/* Footer Row */}
-                    <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <CreditCard size={12} />
-                        {expense.paymentMode}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <button
-                          className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors active:scale-95"
-                          onClick={() => handleDeleteExpense(expense.id)}
-                        >
-                          <Trash size={16} weight="duotone" />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+          {/* Stats Cards - Compact */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
+                  <Wallet size={16} weight="duotone" className="text-red-600" />
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">{t.expenses?.totalExpenses || 'Total'}</span>
               </div>
+              <p className="text-lg font-bold text-slate-800">₹{stats.totalExpenses.toLocaleString()}</p>
+            </div>
 
-              {/* Desktop Table - Hidden on mobile */}
-              <div className="hidden md:block bg-card rounded-lg shadow-lg border border-border overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-muted/50 border-b border-border">
-                      <tr>
-                        <th className="px-4 py-3 lg:px-6 lg:py-4 text-left text-xs lg:text-sm font-medium text-muted-foreground">{t.expenses?.date || 'Date'}</th>
-                        <th className="px-4 py-3 lg:px-6 lg:py-4 text-left text-xs lg:text-sm font-medium text-muted-foreground">Expense</th>
-                        <th className="px-4 py-3 lg:px-6 lg:py-4 text-left text-xs lg:text-sm font-medium text-muted-foreground">{t.expenses?.category || 'Category'}</th>
-                        <th className="px-4 py-3 lg:px-6 lg:py-4 text-right text-xs lg:text-sm font-medium text-muted-foreground">{t.expenses?.amount || 'Amount'}</th>
-                        <th className="px-4 py-3 lg:px-6 lg:py-4 text-left text-xs lg:text-sm font-medium text-muted-foreground">{t.common?.payment || 'Payment'}</th>
-                        <th className="px-4 py-3 lg:px-6 lg:py-4 text-left text-xs lg:text-sm font-medium text-muted-foreground">{t.common?.status || 'Status'}</th>
-                        <th className="px-4 py-3 lg:px-6 lg:py-4 text-right text-xs lg:text-sm font-medium text-muted-foreground">{t.common?.actions || 'Actions'}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {filteredExpenses.map((expense, index) => (
-                        <motion.tr
-                          key={expense.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="hover:bg-muted/50 transition-colors"
+            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Calendar size={16} weight="duotone" className="text-blue-600" />
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">{t.expenses?.thisMonth || 'This Month'}</span>
+              </div>
+              <p className="text-lg font-bold text-slate-800">₹{stats.thisMonth.toLocaleString()}</p>
+            </div>
+
+            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+                  <Receipt size={16} weight="duotone" className="text-orange-600" />
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">{t.common?.pending || 'Pending'}</span>
+              </div>
+              <p className="text-lg font-bold text-slate-800">₹{stats.pending.toLocaleString()}</p>
+            </div>
+
+            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-1">
+                <div className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center",
+                  stats.percentChange >= 0 ? "bg-green-100" : "bg-red-100"
+                )}>
+                  {stats.percentChange >= 0 ?
+                    <TrendUp size={16} weight="duotone" className="text-green-600" /> :
+                    <TrendDown size={16} weight="duotone" className="text-red-600" />
+                  }
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">{t.expenses?.change || 'Change'}</span>
+              </div>
+              <p className={cn(
+                "text-lg font-bold",
+                stats.percentChange >= 0 ? "text-green-600" : "text-red-600"
+              )}>
+                {stats.percentChange >= 0 ? '+' : ''}{stats.percentChange.toFixed(1)}%
+              </p>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="bg-white rounded-lg p-2 shadow-sm border border-slate-200">
+            <div className="flex items-center gap-2">
+              <MagnifyingGlass size={16} weight="bold" className="text-slate-400" />
+              <input
+                type="text"
+                placeholder={t.expenses?.searchExpenses || 'Search expenses...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Expenses List */}
+      <div className="mt-4">
+
+        {/* Empty State */}
+        {filteredExpenses.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-slate-200">
+            <Wallet size={40} weight="duotone" className="text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-600 mb-2 text-sm">
+              {expenses.length === 0 ? 'No expenses recorded yet' : 'No expenses match your search'}
+            </p>
+            <button
+              onClick={() => setShowNewExpense(true)}
+              className="text-blue-600 font-medium hover:underline text-sm"
+            >
+              Add your first expense
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Mobile Expense Cards - Only visible on mobile */}
+            <div className="md:hidden space-y-2">
+              {filteredExpenses.map((expense, index) => (
+                <div
+                  key={expense.id}
+                  className="bg-white rounded-lg shadow-sm border border-slate-200 p-3"
+                >
+                  {/* Header Row */}
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm text-slate-800 truncate">{expense.expenseNumber}</h3>
+                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{expense.description}</p>
+                    </div>
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ml-2 flex-shrink-0",
+                      expense.status === 'paid'
+                        ? "bg-green-100 text-green-700"
+                        : "bg-orange-100 text-orange-700"
+                    )}>
+                      {expense.status === 'paid' ? (t.common?.paid || 'Paid') : (t.common?.pending || 'Pending')}
+                    </span>
+                  </div>
+
+                  {/* Details Row */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <Calendar size={12} />
+                        {new Date(expense.date).toLocaleDateString()}
+                      </span>
+                      <span className="px-2 py-0.5 bg-slate-100 rounded font-medium text-slate-700">{expense.category}</span>
+                    </div>
+                    <span className="text-base font-bold text-slate-800">₹{expense.amount.toLocaleString()}</span>
+                  </div>
+
+                  {/* Footer Row */}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <span className="text-xs text-slate-500 flex items-center gap-1">
+                      <CreditCard size={12} />
+                      {expense.paymentMode}
+                    </span>
+                    <button
+                      className="p-1.5 hover:bg-red-50 text-red-600 rounded transition-colors"
+                      onClick={() => handleDeleteExpense(expense.id)}
+                    >
+                      <Trash size={14} weight="duotone" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table - Hidden on mobile */}
+            <div className="hidden md:block bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.expenses?.date || 'Date'}</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">Expense #</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">Description</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.expenses?.category || 'Category'}</th>
+                      <th className="px-4 py-2 text-right text-xs font-semibold text-slate-600">{t.expenses?.amount || 'Amount'}</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.common?.payment || 'Payment'}</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.common?.status || 'Status'}</th>
+                      <th className="px-4 py-2 text-right text-xs font-semibold text-slate-600">{t.common?.actions || 'Actions'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredExpenses.map((expense, index) => (
+                      <tr
+                        key={expense.id}
+                        className="hover:bg-slate-50 transition-colors"
                         >
-                          <td className="px-4 py-3 text-sm">
+                          <td className="px-4 py-3 text-xs text-slate-600">
                             {new Date(expense.date).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3">
-                            <div>
-                              <p className="font-medium text-sm">{expense.expenseNumber}</p>
-                              <p className="text-xs text-muted-foreground">{expense.description}</p>
-                            </div>
+                            <p className="font-semibold text-sm text-slate-800">{expense.expenseNumber}</p>
                           </td>
                           <td className="px-4 py-3">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-muted rounded text-xs">
+                            <p className="text-xs text-slate-600">{expense.description || '-'}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded text-xs font-medium text-slate-700">
                               {expense.category}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right font-semibold text-sm">
+                          <td className="px-4 py-3 text-right font-bold text-sm text-slate-800">
                             ₹{expense.amount.toLocaleString()}
                           </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                          <td className="px-4 py-3 text-xs text-slate-600">
                             {expense.paymentMode}
                           </td>
                           <td className="px-4 py-3">
                             <span className={cn(
-                              "inline-flex px-2 py-1 rounded-full text-xs font-medium",
+                              "inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase",
                               expense.status === 'paid'
-                                ? "bg-success/10 text-success"
-                                : "bg-warning/10 text-warning"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-orange-100 text-orange-700"
                             )}>
                               {expense.status === 'paid' ? (t.common?.paid || 'Paid') : (t.common?.pending || 'Pending')}
                             </span>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-end gap-1">
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="p-2 hover:bg-muted rounded-lg transition-colors text-destructive"
+                              <button
+                                className="p-1.5 hover:bg-red-50 rounded transition-colors text-red-600"
                                 onClick={() => handleDeleteExpense(expense.id)}
                               >
-                                <Trash size={18} weight="duotone" />
-                              </motion.button>
+                                <Trash size={16} weight="duotone" />
+                              </button>
                             </div>
                           </td>
-                        </motion.tr>
+                        </tr>
                       ))}
                     </tbody>
                   </table>
@@ -454,7 +466,6 @@ const Expenses = () => {
             </>
           )}
         </div>
-      </div>
 
       {/* New Expense Modal */}
       <AnimatePresence>

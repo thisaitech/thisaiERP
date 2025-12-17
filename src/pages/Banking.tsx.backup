@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import {
   Plus,
@@ -23,8 +22,7 @@ import {
   Link,
   Copy,
   ArrowSquareOut,
-  WhatsappLogo,
-  DotsThreeVertical
+  WhatsappLogo
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn, formatDate } from '../lib/utils'
@@ -105,10 +103,6 @@ const Banking = () => {
   const [newLoanDueDate, setNewLoanDueDate] = useState('')
   const [emiPaymentAmount, setEmiPaymentAmount] = useState('')
   const [emiPaymentAccount, setEmiPaymentAccount] = useState('')
-
-  // Action menu dropdown state
-  const [openActionMenu, setOpenActionMenu] = useState<string | null>(null)
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null)
 
   // Load parties from Parties module
   const [allParties, setAllParties] = useState<any[]>([])
@@ -750,142 +744,180 @@ const Banking = () => {
   const netWorth = totalAssets - totalLoanOutstanding  // Assets - Liabilities
 
   return (
-    <div className="min-h-screen bg-slate-50 p-3 pb-20 lg:pb-6">
-      {/* Modern Header */}
+    <div className="min-h-screen p-4 sm:p-6 pb-20 lg:pb-6">
+      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-3"
+        className="mb-6"
       >
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-            <Bank size={22} weight="duotone" className="text-blue-600" />
-            <span>{t.banking.bankingAndFinance}</span>
-          </h1>
-          <button
-            onClick={() => setShowAddAccount(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors active:scale-[0.98]"
-          >
-            <Plus size={16} weight="bold" />
-            <span className="hidden sm:inline">{t.banking.addAccount}</span>
-          </button>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.banking.availableBalance}</div>
-            <div className="text-base font-bold text-slate-800">₹{(availableBalance / 100000).toFixed(2)}L</div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-green-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.banking.cashInHand}</div>
-            <div className="text-base font-bold text-green-600">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-amber-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.banking.pendingCheques}</div>
-            <div className="text-base font-bold text-amber-600">{accounts.cheques.filter(ch => ch.status === 'pending').length}</div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-purple-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.banking.netWorth}</div>
-            <div className={cn(
-              "text-base font-bold",
-              netWorth >= 0 ? "text-green-600" : "text-red-500"
-            )}>
-              {netWorth >= 0 ? '+' : '-'}₹{(Math.abs(netWorth) / 100000).toFixed(1)}L
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Bank size={32} weight="duotone" className="text-primary" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{t.banking.bankingAndFinance}</h1>
+              <p className="text-sm text-muted-foreground">{t.banking.manageAccountsCashCheques}</p>
             </div>
           </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowAddAccount(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
+          >
+            <Plus size={20} weight="bold" />
+            <span className="hidden sm:inline">{t.banking.addAccount}</span>
+          </motion.button>
         </div>
       </motion.div>
 
-      {/* Centered Filter Pills / Tabs */}
-      <div className="flex items-center justify-center gap-2 mb-3">
-        {[
-          { id: 'overview', label: t.banking.overview, icon: Bank },
-          { id: 'transactions', label: t.banking.transactions, icon: ArrowsLeftRight },
-          { id: 'razorpay', label: t.banking.razorpay, icon: CreditCard },
-          { id: 'cheques', label: t.banking.cheques, icon: Receipt },
-          { id: 'loans', label: t.banking.loans, icon: CreditCard }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setSelectedTab(tab.id)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
-              selectedTab === tab.id
-                ? "bg-slate-800 text-white shadow-md"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
-            )}
-          >
-            <tab.icon size={14} weight={selectedTab === tab.id ? "duotone" : "regular"} />
-            {tab.label}
-          </button>
-        ))}
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden bg-card border border-border/50 rounded-lg p-4"
+        >
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#7A35FF] to-[#9B63FF]" />
+          <div className="flex items-center gap-2 mb-2">
+            <Money size={18} weight="duotone" className="text-primary" />
+            <p className="text-muted-foreground text-xs">{t.banking.availableBalance}</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">₹{availableBalance.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t.banking.bankPlusCashMinusPending}</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="relative overflow-hidden bg-card border border-border/50 rounded-lg p-4"
+        >
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00C9A7] to-[#3B82F6]" />
+          <div className="flex items-center gap-2 mb-2">
+            <Wallet size={18} weight="duotone" className="text-primary" />
+            <p className="text-muted-foreground text-xs">{t.banking.cashInHand}</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">₹{accounts.cashInHand.balance.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t.banking.availableCash}</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="relative overflow-hidden bg-card border border-border/50 rounded-lg p-4"
+        >
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#EF4444] to-[#DC2626]" />
+          <div className="flex items-center gap-2 mb-2">
+            <Receipt size={18} weight="duotone" className="text-primary" />
+            <p className="text-muted-foreground text-xs">{t.banking.pendingCheques}</p>
+          </div>
+          <p className="text-2xl font-bold text-foreground">₹{pendingCheques.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mt-1">{accounts.cheques.filter(ch => ch.status === 'pending').length} {t.banking.cheques}</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="relative overflow-hidden bg-card border border-border/50 rounded-lg p-4"
+        >
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#3B82F6] to-[#7A35FF]" />
+          <div className="flex items-center gap-2 mb-2">
+            <TrendUp size={18} weight="duotone" className={netWorth >= 0 ? "text-success" : "text-destructive"} />
+            <p className="text-muted-foreground text-xs">{t.banking.netWorth}</p>
+          </div>
+          <p className={cn(
+            "text-2xl font-bold",
+            netWorth >= 0 ? "text-success" : "text-destructive"
+          )}>
+            {netWorth >= 0 ? '₹' : '-₹'}{Math.abs(netWorth).toLocaleString()}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">{t.banking.assetsMinusLoans} ({accounts.loans.length} {t.banking.active})</p>
+        </motion.div>
       </div>
 
       <div>
+        {/* Tabs */}
+        <div className="bg-card rounded-lg shadow-lg border border-border mb-6 lg:mb-8">
+          <div className="flex overflow-x-auto">
+            {[
+              { id: 'overview', label: t.banking.overview, icon: Bank },
+              { id: 'transactions', label: t.banking.transactions, icon: ArrowsLeftRight },
+              { id: 'razorpay', label: t.banking.razorpay, icon: CreditCard },
+              { id: 'cheques', label: t.banking.cheques, icon: Receipt },
+              { id: 'loans', label: t.banking.loans, icon: CreditCard }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 lg:px-6 lg:py-3 text-sm lg:text-base font-medium whitespace-nowrap transition-all border-b-2",
+                  selectedTab === tab.id
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <tab.icon size={18} weight={selectedTab === tab.id ? "duotone" : "regular"} className="lg:w-5 lg:h-5" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Overview Tab */}
         {selectedTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
             {/* Bank Accounts */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <Bank size={16} weight="duotone" className="text-blue-600" />
+            <div className="bg-card rounded-lg shadow-lg border border-border p-4 lg:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <Bank size={20} weight="duotone" />
                   {t.banking.bankAccounts}
                 </h3>
                 <button
                   onClick={() => setShowAddAccount(true)}
-                  className="text-xs text-blue-600 hover:underline font-medium"
+                  className="text-sm text-primary hover:underline"
                 >
                   {t.banking.add}
                 </button>
               </div>
-              <div className="space-y-2">
-                {accounts.bankAccounts.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <Bank size={32} className="mx-auto mb-2 opacity-30" />
-                    <p className="text-xs">No bank accounts added yet</p>
-                  </div>
-                ) : (
-                  accounts.bankAccounts.map((account, index) => (
-                    <motion.div
-                      key={account.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="p-3 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg border border-slate-200 hover:border-blue-300 transition-all"
-                    >
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div>
-                          <p className="font-medium text-sm text-slate-800">{account.name}</p>
-                          <p className="text-[10px] text-slate-500">{account.accountNo}</p>
-                        </div>
-                        <span className={cn(
-                          "px-2 py-0.5 rounded text-[10px] font-medium",
-                          account.type === 'current' ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
-                        )}>
-                          {account.type}
-                        </span>
+              <div className="space-y-3">
+                {accounts.bankAccounts.map((account, index) => (
+                  <motion.div
+                    key={account.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg border border-primary/10 hover:border-primary/30 transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium">{account.name}</p>
+                        <p className="text-xs text-muted-foreground">{account.accountNo}</p>
                       </div>
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-200">
-                        <p className="text-[10px] text-slate-500">Balance</p>
-                        <p className="text-sm font-bold text-slate-800">₹{account.balance.toLocaleString()}</p>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
+                      <span className={cn(
+                        "px-2 py-1 rounded text-xs font-medium",
+                        account.type === 'current' ? "bg-primary/10 text-primary" : "bg-success/10 text-success"
+                      )}>
+                        {account.type}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                      <p className="text-xs text-muted-foreground">Balance</p>
+                      <p className="text-lg font-bold">₹{account.balance.toLocaleString()}</p>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             </div>
 
             {/* Cash in Hand */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <Wallet size={16} weight="duotone" className="text-green-600" />
+            <div className="bg-card rounded-lg shadow-lg border border-border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <Wallet size={20} weight="duotone" />
                   {t.banking.cashInHand}
                 </h3>
                 <button
@@ -893,22 +925,22 @@ const Banking = () => {
                     setCashModalType('in')
                     setShowCashModal(true)
                   }}
-                  className="text-xs text-green-600 hover:underline font-medium"
+                  className="text-sm text-primary hover:underline"
                 >
                   {t.banking.add}
                 </button>
               </div>
-              <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200 text-center">
-                <Money size={32} weight="duotone" className="text-green-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold mb-1 text-slate-800">₹{accounts.cashInHand.balance.toLocaleString()}</p>
-                <p className="text-[10px] text-slate-500 mb-3">{t.banking.availableCash}</p>
+              <div className="p-6 bg-gradient-to-br from-success/5 to-success/10 rounded-lg border border-success/20 text-center">
+                <Money size={48} weight="duotone" className="text-success mx-auto mb-4" />
+                <p className="text-3xl font-bold mb-2">₹{accounts.cashInHand.balance.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground mb-4">{t.banking.availableCash}</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
                       setCashModalType('in')
                       setShowCashModal(true)
                     }}
-                    className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition-colors"
+                    className="flex-1 px-4 py-2 bg-success text-white rounded-lg text-sm font-medium hover:bg-success/90"
                   >
                     {t.banking.cashIn}
                   </button>
@@ -917,7 +949,7 @@ const Banking = () => {
                       setCashModalType('out')
                       setShowCashModal(true)
                     }}
-                    className="flex-1 px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-colors"
+                    className="flex-1 px-4 py-2 bg-destructive text-white rounded-lg text-sm font-medium hover:bg-destructive/90"
                   >
                     {t.banking.cashOut}
                   </button>
@@ -925,27 +957,23 @@ const Banking = () => {
               </div>
 
               {/* Recent Transactions */}
-              <div className="mt-3">
-                <p className="text-xs font-medium text-slate-700 mb-2">{t.banking.recentTransactions}</p>
-                <div className="space-y-1.5">
-                  {transactions.filter(t => t.account === 'Cash in Hand').slice(0, 3).length === 0 ? (
-                    <p className="text-[10px] text-slate-400 text-center py-2">No recent transactions</p>
-                  ) : (
-                    transactions.filter(t => t.account === 'Cash in Hand').slice(0, 3).map((txn) => (
-                      <div key={txn.id} className="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
-                        <div>
-                          <p className="text-[10px] text-slate-700 font-medium">{txn.description}</p>
-                          <p className="text-[9px] text-slate-400">{formatDate(txn.date)}</p>
-                        </div>
-                        <p className={cn(
-                          "text-xs font-medium",
-                          txn.type === 'credit' ? "text-green-600" : "text-red-500"
-                        )}>
-                          {txn.type === 'credit' ? '+' : '-'}₹{txn.amount.toLocaleString()}
-                        </p>
+              <div className="mt-4">
+                <p className="text-sm font-medium mb-2">{t.banking.recentTransactions}</p>
+                <div className="space-y-2">
+                  {transactions.filter(t => t.account === 'Cash in Hand').slice(0, 3).map((txn, index) => (
+                    <div key={txn.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                      <div>
+                        <p className="text-xs">{txn.description}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(txn.date)}</p>
                       </div>
-                    ))
-                  )}
+                      <p className={cn(
+                        "text-sm font-medium",
+                        txn.type === 'credit' ? "text-success" : "text-destructive"
+                      )}>
+                        {txn.type === 'credit' ? '+' : '-'}₹{txn.amount.toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -2088,60 +2116,6 @@ const Banking = () => {
           </>
         )}
       </AnimatePresence>
-
-      {/* Dropdown Menu Portal */}
-      {openActionMenu && dropdownPosition && createPortal(
-        <div
-          className="fixed bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-[9999] min-w-[140px]"
-          style={{
-            top: `${dropdownPosition.top}px`,
-            right: `${dropdownPosition.right}px`
-          }}
-        >
-          <button
-            onClick={() => {
-              const cheque = accounts.cheques.find((ch: any) => ch.id.toString() === openActionMenu)
-              if (cheque) handleViewCheque(cheque)
-              setOpenActionMenu(null)
-            }}
-            className="w-full px-3 py-2 text-left text-xs hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-          >
-            <Eye size={14} />
-            View
-          </button>
-          <button
-            onClick={() => {
-              const cheque = accounts.cheques.find((ch: any) => ch.id.toString() === openActionMenu)
-              if (cheque) handleEditCheque(cheque)
-              setOpenActionMenu(null)
-            }}
-            className="w-full px-3 py-2 text-left text-xs hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-          >
-            <Pencil size={14} />
-            Edit
-          </button>
-          <button
-            onClick={() => {
-              const chequeId = parseInt(openActionMenu || '')
-              handleDeleteCheque(chequeId)
-              setOpenActionMenu(null)
-            }}
-            className="w-full px-3 py-2 text-left text-xs hover:bg-red-50 flex items-center gap-2 text-red-600"
-          >
-            <Trash size={14} />
-            Delete
-          </button>
-        </div>,
-        document.body
-      )}
-
-      {/* Click outside to close dropdown */}
-      {openActionMenu && (
-        <div
-          className="fixed inset-0 z-[9998]"
-          onClick={() => setOpenActionMenu(null)}
-        />
-      )}
     </div>
   )
 }

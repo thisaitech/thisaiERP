@@ -5126,19 +5126,11 @@ TOTAL:       ₹${invoice.total}
             ) : (
               <>
                 <Receipt size={22} weight="duotone" className="text-blue-600" />
-                <span>Invoice</span>
+                <span>Quotation</span>
               </>
             )}
           </h1>
           <div className="flex items-center gap-2">
-                {/* AI Bill */}
-                <button
-                  onClick={() => setShowAIAssistant(true)}
-                  className="h-8 px-3 rounded-lg text-xs text-white font-semibold flex items-center gap-1.5 shadow-sm hover:shadow-md transition-all bg-gradient-to-r from-violet-600 to-purple-600"
-                >
-                  <Sparkle size={14} weight="fill" />
-                  <span>Bill</span>
-                </button>
                 {/* Tally Export Dropdown */}
                 <div className="relative">
                   <button
@@ -5203,7 +5195,7 @@ TOTAL:       ₹${invoice.total}
                     </>
                   )}
                 </div>
-                {/* Add Sale/New POS Bill */}
+                {/* Add Quotation/New POS Bill */}
                 <button
                   onClick={() => {
                     if (location.pathname === '/pos') {
@@ -5215,7 +5207,7 @@ TOTAL:       ₹${invoice.total}
                   className="h-8 px-3 rounded-lg border border-blue-200 bg-white text-xs text-blue-600 font-semibold flex items-center gap-1.5 hover:border-blue-400 hover:bg-blue-50 transition-all"
                 >
                   <Plus size={14} weight="bold" />
-                  <span>{location.pathname === '/pos' ? 'POS' : 'Sale'}</span>
+                  <span>{location.pathname === '/pos' ? 'POS' : 'Quotation'}</span>
                 </button>
           </div>
         </div>

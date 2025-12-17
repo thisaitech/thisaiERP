@@ -660,82 +660,102 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 pb-20 lg:pb-6">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-primary via-accent to-primary/80 p-6 sm:p-8">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{t.settings.title}</h1>
-          <p className="text-white/80 text-sm">{t.settings.configurePreferences}</p>
+    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-3 py-2 bg-slate-50/50 min-h-screen">
+      {/* Header - Clean & Simple like Sales */}
+      <div className="flex-shrink-0">
+        {/* Top Row: Title */}
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
+            <Gear size={22} weight="duotone" className="text-purple-600" />
+            <span>{t.settings.title}</span>
+          </h1>
+        </div>
+
+        {/* Category Tabs - Separate Boxes */}
+        <div className="mb-3">
+          <div className="flex flex-col gap-2">
+            {/* First Row */}
+            <div className="flex items-center justify-center flex-wrap gap-2">
+              {settingsSections.slice(0, Math.ceil(settingsSections.length / 2)).map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => {
+                    setSelectedSection(section.id)
+                    setUserSearchQuery('')
+                  }}
+                  className={cn(
+                    "px-3 py-2 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1.5 shadow-sm border",
+                    selectedSection === section.id
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-purple-300 hover:bg-purple-50"
+                  )}
+                >
+                  <section.icon size={14} weight={selectedSection === section.id ? "duotone" : "regular"} />
+                  {section.label}
+                </button>
+              ))}
+            </div>
+            {/* Second Row */}
+            <div className="flex items-center justify-center flex-wrap gap-2">
+              {settingsSections.slice(Math.ceil(settingsSections.length / 2)).map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => {
+                    setSelectedSection(section.id)
+                    setUserSearchQuery('')
+                  }}
+                  className={cn(
+                    "px-3 py-2 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1.5 shadow-sm border",
+                    selectedSection === section.id
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-purple-300 hover:bg-purple-50"
+                  )}
+                >
+                  <section.icon size={14} weight={selectedSection === section.id ? "duotone" : "regular"} />
+                  {section.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-card rounded-lg shadow-lg border border-border p-4 sticky top-4">
-              <nav className="space-y-1">
-                {settingsSections.map((section, index) => (
-                  <motion.button
-                    key={section.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => {
-                      setSelectedSection(section.id)
-                      setUserSearchQuery('') // Clear search when switching sections
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left",
-                      selectedSection === section.id
-                        ? "bg-primary text-primary-foreground font-medium"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    <section.icon size={20} weight={selectedSection === section.id ? "duotone" : "regular"} />
-                    <span className="text-sm">{section.label}</span>
-                  </motion.button>
-                ))}
-              </nav>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="lg:col-span-3">
-            <div className="bg-card rounded-lg shadow-lg border border-border p-6">
+      {/* Content */}
+      <div className="mt-2">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
               {/* General Settings */}
               {selectedSection === 'general' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">{t.settings.generalSettings}</h2>
-                  <div className="space-y-6">
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">{t.settings.generalSettings}</h2>
+                  <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium mb-2">{t.settings.businessName}</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.businessName}</label>
                       <input
                         type="text"
                         value={generalSettings.businessName}
                         onChange={(e) => setGeneralSettings({...generalSettings, businessName: e.target.value})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-sm font-medium mb-2">{t.settings.financialYear}</label>
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.financialYear}</label>
                         <select
                           value={generalSettings.financialYear}
                           onChange={(e) => setGeneralSettings({...generalSettings, financialYear: e.target.value})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         >
                           <option>2023-2024</option>
                           <option>2024-2025</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">{t.settings.currency}</label>
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.currency}</label>
                         <select
                           value={generalSettings.currency}
                           onChange={(e) => setGeneralSettings({...generalSettings, currency: e.target.value as 'INR' | 'USD' | 'EUR', currencySymbol: e.target.value === 'INR' ? '₹' : e.target.value === 'USD' ? '$' : '€'})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         >
                           <option value="INR">INR (₹)</option>
                           <option value="USD">USD ($)</option>
@@ -744,13 +764,13 @@ const Settings = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-sm font-medium mb-2">{t.settings.dateFormat}</label>
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.dateFormat}</label>
                         <select
                           value={generalSettings.dateFormat}
                           onChange={(e) => setGeneralSettings({...generalSettings, dateFormat: e.target.value as 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD'})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         >
                           <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                           <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -758,11 +778,11 @@ const Settings = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">{t.settings.timeFormat}</label>
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.timeFormat}</label>
                         <select
                           value={generalSettings.timeFormat}
                           onChange={(e) => setGeneralSettings({...generalSettings, timeFormat: e.target.value as '12' | '24'})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         >
                           <option value="12">{t.settings.hour12}</option>
                           <option value="24">{t.settings.hour24}</option>
@@ -770,14 +790,14 @@ const Settings = () => {
                       </div>
                     </div>
 
-                    <div className="p-4 bg-muted/50 rounded-lg">
-                      <h3 className="font-medium mb-3">{t.settings.appearance}</h3>
+                    <div className="p-2 bg-slate-50 rounded-lg border border-slate-200">
+                      <h3 className="font-medium mb-1.5 text-xs text-slate-700">{t.settings.appearance}</h3>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {isDarkMode ? <Moon size={20} weight="duotone" /> : <Sun size={20} weight="duotone" />}
-                          <span className="text-sm">{t.settings.darkMode}</span>
+                        <div className="flex items-center gap-1.5">
+                          {isDarkMode ? <Moon size={14} weight="duotone" className="text-slate-600" /> : <Sun size={14} weight="duotone" className="text-slate-600" />}
+                          <span className="text-[10px] text-slate-600">{t.settings.darkMode}</span>
                         </div>
-                        <label className="relative inline-block w-12 h-6">
+                        <label className="relative inline-block w-9 h-4.5">
                           <input
                             type="checkbox"
                             checked={isDarkMode}
@@ -785,15 +805,14 @@ const Settings = () => {
                               const newValue = !isDarkMode
                               setDarkMode(newValue)
                               setGeneralSettings({...generalSettings, darkMode: newValue})
-                              // Save immediately
                               saveGeneralSettings({...generalSettings, darkMode: newValue})
                             }}
                             className="sr-only peer"
                           />
-                          <div className="w-full h-full bg-muted rounded-full peer peer-checked:bg-primary transition-colors cursor-pointer"></div>
+                          <div className="w-full h-full bg-slate-300 rounded-full peer peer-checked:bg-purple-600 transition-colors cursor-pointer"></div>
                           <div className={cn(
-                            "absolute top-0.5 left-0.5 bg-white w-5 h-5 rounded-full transition-transform",
-                            isDarkMode && "translate-x-6"
+                            "absolute top-0.5 left-0.5 bg-white w-3.5 h-3.5 rounded-full transition-transform shadow-sm",
+                            isDarkMode && "translate-x-4.5"
                           )}></div>
                         </label>
                       </div>
@@ -801,7 +820,7 @@ const Settings = () => {
 
                     <button
                       onClick={handleSaveGeneralSettings}
-                      className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+                      className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
                     >
                       {t.settings.saveChanges}
                     </button>
@@ -817,50 +836,50 @@ const Settings = () => {
               {/* Company Info */}
               {selectedSection === 'company' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">{t.settings.companyInfo}</h2>
-                  <div className="space-y-4">
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">{t.settings.companyInfo}</h2>
+                  <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium mb-2">{t.settings.companyName}</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.companyName}</label>
                       <input
                         type="text"
                         value={companySettings.companyName}
                         onChange={(e) => setCompanySettings({...companySettings, companyName: e.target.value})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                       />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-sm font-medium mb-2">{t.settings.gstin}</label>
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.gstin}</label>
                         <input
                           type="text"
                           value={companySettings.gstin}
                           onChange={(e) => setCompanySettings({...companySettings, gstin: e.target.value})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">{t.settings.panNumber}</label>
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.panNumber}</label>
                         <input
                           type="text"
                           value={companySettings.pan}
                           onChange={(e) => setCompanySettings({...companySettings, pan: e.target.value})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">{t.settings.address}</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.address}</label>
                       <textarea
                         rows={3}
                         value={companySettings.address}
                         onChange={(e) => setCompanySettings({...companySettings, address: e.target.value})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                       ></textarea>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div>
-                        <label className="block text-sm font-medium mb-2 flex items-center gap-2">
-                          <MapPin size={16} />
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600 flex items-center gap-1">
+                          <MapPin size={12} />
                           City
                         </label>
                         <input
@@ -868,12 +887,12 @@ const Settings = () => {
                           value={companySettings.city || ''}
                           onChange={(e) => setCompanySettings({...companySettings, city: e.target.value})}
                           placeholder="Enter city"
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2 flex items-center gap-2">
-                          <MapPin size={16} />
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600 flex items-center gap-1">
+                          <MapPin size={12} />
                           State <span className="text-red-500">*</span>
                         </label>
                         <select
@@ -887,7 +906,7 @@ const Settings = () => {
                               stateCode: stateCode
                             })
                           }}
-                          className="w-full px-3 py-2 border border-border rounded-lg bg-background"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 bg-white"
                         >
                           <option value="">Select State</option>
                           {INDIAN_STATES_WITH_CODES.map((state) => (
@@ -897,51 +916,51 @@ const Settings = () => {
                           ))}
                         </select>
                         {companySettings.state && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-[10px] text-slate-500 mt-1">
                             State Code: {companySettings.stateCode || getStateCode(companySettings.state)}
                           </p>
                         )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Pincode</label>
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600">Pincode</label>
                         <input
                           type="text"
                           value={companySettings.pincode || ''}
                           onChange={(e) => setCompanySettings({...companySettings, pincode: e.target.value})}
                           placeholder="Enter pincode"
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-sm font-medium mb-2 flex items-center gap-2">
-                          <Phone size={16} />
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600 flex items-center gap-1">
+                          <Phone size={12} />
                           {t.settings.phone}
                         </label>
                         <input
                           type="tel"
                           value={companySettings.phone}
                           onChange={(e) => setCompanySettings({...companySettings, phone: e.target.value})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2 flex items-center gap-2">
-                          <Envelope size={16} />
+                        <label className="block text-[10px] font-medium mb-1 text-slate-600 flex items-center gap-1">
+                          <Envelope size={12} />
                           {t.settings.email}
                         </label>
                         <input
                           type="email"
                           value={companySettings.email}
                           onChange={(e) => setCompanySettings({...companySettings, email: e.target.value})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         />
                       </div>
                     </div>
                     <button
                       onClick={handleSaveCompanySettings}
-                      className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+                      className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
                     >
                       {t.settings.updateCompanyInfo}
                     </button>
@@ -991,7 +1010,7 @@ const Settings = () => {
                         API Credentials
                       </h3>
                       
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         {/* Key ID */}
                         <div>
                           <label className="text-sm font-medium mb-1.5 block">
@@ -1075,7 +1094,7 @@ const Settings = () => {
                     {/* Payment Methods */}
                     <div className="bg-muted/30 rounded-xl p-5 border border-border">
                       <h3 className="font-semibold mb-4">Enabled Payment Methods</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {[
                           { key: 'upi', label: 'UPI', icon: '📱' },
                           { key: 'card', label: 'Card', icon: '💳' },
@@ -1085,7 +1104,7 @@ const Settings = () => {
                           <label
                             key={method.key}
                             className={cn(
-                              "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
+                              "flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all",
                               razorpayConfig.enabledMethods[method.key as keyof typeof razorpayConfig.enabledMethods]
                                 ? "bg-primary/10 border-primary"
                                 : "bg-background border-border hover:border-primary/50"
@@ -1110,7 +1129,7 @@ const Settings = () => {
                     {/* Additional Options */}
                     <div className="bg-muted/30 rounded-xl p-5 border border-border">
                       <h3 className="font-semibold mb-4">Additional Options</h3>
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         <label className="flex items-center justify-between cursor-pointer">
                           <div>
                             <span className="font-medium">Auto-generate Payment Links</span>
@@ -1146,7 +1165,7 @@ const Settings = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-3 pt-2">
+                    <div className="flex items-center gap-2 pt-2">
                       <button
                         onClick={async () => {
                           setIsValidatingRazorpay(true)
@@ -1185,7 +1204,7 @@ const Settings = () => {
                           }
                         }}
                         disabled={!razorpayConfig.keyId || !razorpayConfig.keySecret}
-                        className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2.5 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Save Settings
                       </button>
@@ -1215,7 +1234,7 @@ const Settings = () => {
               {/* Offline & Sync Settings */}
               {selectedSection === 'offlineSync' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Offline & Sync Settings</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Offline & Sync Settings</h2>
                   <p className="text-sm text-muted-foreground mb-6">
                     Configure offline mode and data synchronization settings. Enable offline-first mode to work without internet and sync when connected.
                   </p>
@@ -1245,7 +1264,7 @@ const Settings = () => {
                   </div>
 
                   {/* Quick Actions */}
-                  <div className="flex flex-wrap gap-3 mb-6">
+                  <div className="flex flex-wrap gap-2 mb-6">
                     <button
                       onClick={handleCacheAllData}
                       disabled={isCaching}
@@ -1291,7 +1310,7 @@ const Settings = () => {
                     </div>
 
                     {/* Sync Settings */}
-                    <div className="p-6 border border-border rounded-lg space-y-4">
+                    <div className="p-6 border border-border rounded-lg space-y-3">
                       <h3 className="font-bold text-lg flex items-center gap-2">
                         <ArrowsClockwise size={20} weight="duotone" />
                         Sync Settings
@@ -1333,7 +1352,7 @@ const Settings = () => {
                           <select
                             value={offlineSyncSettings.syncInterval}
                             onChange={(e) => setOfflineSyncSettings({ ...offlineSyncSettings, syncInterval: parseInt(e.target.value) })}
-                            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 bg-background text-sm"
                           >
                             <option value={15}>Every 15 seconds</option>
                             <option value={30}>Every 30 seconds</option>
@@ -1345,7 +1364,7 @@ const Settings = () => {
                     </div>
 
                     {/* Cache Settings */}
-                    <div className="p-6 border border-border rounded-lg space-y-4">
+                    <div className="p-6 border border-border rounded-lg space-y-3">
                       <h3 className="font-bold text-lg flex items-center gap-2">
                         <HardDrive size={20} weight="duotone" />
                         Cache Settings
@@ -1387,7 +1406,7 @@ const Settings = () => {
                           <select
                             value={offlineSyncSettings.localCacheSize}
                             onChange={(e) => setOfflineSyncSettings({ ...offlineSyncSettings, localCacheSize: parseInt(e.target.value) })}
-                            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 bg-background text-sm"
                           >
                             <option value={100}>100 MB</option>
                             <option value={250}>250 MB</option>
@@ -1421,12 +1440,12 @@ const Settings = () => {
               {/* Backup & Export */}
               {selectedSection === 'backup' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Data Export & Backup</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Data Export & Backup</h2>
                   <p className="text-sm text-muted-foreground mb-6">
                     Export your business data for backup, migration, or analysis. All exports include complete data with proper formatting.
                   </p>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {/* Complete Data Export */}
                     <div className="p-6 bg-primary/5 border border-primary/20 rounded-lg">
                       <div className="flex items-start gap-4">
@@ -1448,7 +1467,7 @@ const Settings = () => {
                                 toast.error('Export failed. Please try again.')
                               }
                             }}
-                            className="w-full sm:w-auto px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 flex items-center justify-center gap-2"
+                            className="w-full sm:w-auto px-6 py-3 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
                           >
                             <Database size={20} />
                             Export Complete Data
@@ -1464,7 +1483,7 @@ const Settings = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Export Invoices */}
                       <div className="p-5 bg-card border border-border rounded-lg hover:border-primary/50 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-2 mb-3">
                           <Receipt size={24} weight="duotone" className="text-accent" />
                           <h3 className="font-semibold">Export Invoices</h3>
                         </div>
@@ -1489,7 +1508,7 @@ const Settings = () => {
 
                       {/* Export Parties */}
                       <div className="p-5 bg-card border border-border rounded-lg hover:border-primary/50 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-2 mb-3">
                           <Users size={24} weight="duotone" className="text-success" />
                           <h3 className="font-semibold">Export Customers & Suppliers</h3>
                         </div>
@@ -1514,7 +1533,7 @@ const Settings = () => {
 
                       {/* Export Items */}
                       <div className="p-5 bg-card border border-border rounded-lg hover:border-primary/50 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-2 mb-3">
                           <Package size={24} weight="duotone" className="text-warning" />
                           <h3 className="font-semibold">Export Inventory</h3>
                         </div>
@@ -1539,7 +1558,7 @@ const Settings = () => {
 
                       {/* JSON Backup */}
                       <div className="p-5 bg-card border border-border rounded-lg hover:border-primary/50 transition-colors">
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-2 mb-3">
                           <Database size={24} weight="duotone" className="text-info" />
                           <h3 className="font-semibold">JSON Backup</h3>
                         </div>
@@ -1613,7 +1632,7 @@ const Settings = () => {
               {/* Transaction Settings */}
               {selectedSection === 'transaction' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Transaction Settings</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Transaction Settings</h2>
                   <div className="space-y-6">
                     <div className="p-4 bg-muted/50 rounded-lg space-y-3">
                       <h3 className="font-medium">Invoice Preferences</h3>
@@ -1647,22 +1666,22 @@ const Settings = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Invoice Prefix</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">Invoice Prefix</label>
                       <input
                         type="text"
                         value={transactionSettings.invoicePrefix}
                         onChange={(e) => setTransactionSettings({...transactionSettings, invoicePrefix: e.target.value})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Next Invoice Number</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">Next Invoice Number</label>
                       <input
                         type="number"
                         value={transactionSettings.nextInvoiceNumber}
                         onChange={(e) => setTransactionSettings({...transactionSettings, nextInvoiceNumber: parseInt(e.target.value) || 0})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                       />
                     </div>
 
@@ -1673,7 +1692,7 @@ const Settings = () => {
                         <select
                           value={transactionSettings.defaultPaymentTerms}
                           onChange={(e) => setTransactionSettings({...transactionSettings, defaultPaymentTerms: e.target.value as 'due_on_receipt' | 'net_15' | 'net_30' | 'net_45' | 'net_60'})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         >
                           <option value="due_on_receipt">Due on Receipt</option>
                           <option value="net_15">Net 15 Days</option>
@@ -1686,7 +1705,7 @@ const Settings = () => {
 
                     <button
                       onClick={handleSaveTransactionSettings}
-                      className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+                      className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
                     >
                       Save Transaction Settings
                     </button>
@@ -1697,14 +1716,14 @@ const Settings = () => {
               {/* Invoice Print Settings */}
               {selectedSection === 'invoice' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Invoice Print Settings</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Invoice Print Settings</h2>
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Invoice Template</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">Invoice Template</label>
                       <select
                         value={invoicePrintSettings.template}
                         onChange={(e) => setInvoicePrintSettings({...invoicePrintSettings, template: e.target.value as 'classic' | 'modern' | 'minimal' | 'professional'})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                       >
                         <option value="classic">Classic</option>
                         <option value="modern">Modern</option>
@@ -1754,22 +1773,22 @@ const Settings = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Footer Text</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">Footer Text</label>
                       <textarea
                         rows={3}
                         value={invoicePrintSettings.footerText}
                         onChange={(e) => setInvoicePrintSettings({...invoicePrintSettings, footerText: e.target.value})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         placeholder="Thank you for your business!"
                       ></textarea>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Paper Size</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">Paper Size</label>
                       <select
                         value={invoicePrintSettings.paperSize}
                         onChange={(e) => setInvoicePrintSettings({...invoicePrintSettings, paperSize: e.target.value as 'a4' | 'letter' | 'thermal'})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                       >
                         <option value="a4">A4</option>
                         <option value="letter">Letter</option>
@@ -1779,7 +1798,7 @@ const Settings = () => {
 
                     <button
                       onClick={handleSaveInvoicePrintSettings}
-                      className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+                      className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
                     >
                       Save Print Settings
                     </button>
@@ -1790,7 +1809,7 @@ const Settings = () => {
               {/* Invoice Table Column Settings */}
               {selectedSection === 'invoiceTable' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Invoice Table Column Settings</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Invoice Table Column Settings</h2>
                   <p className="text-sm text-muted-foreground mb-6">Customize the column headings and visibility for the invoice item table in the Sales page.</p>
 
                   <div className="space-y-6">
@@ -1804,7 +1823,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.serialNoLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, serialNoLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="#"
                           />
                         </div>
@@ -1814,7 +1833,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.itemNameLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, itemNameLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="Item Name"
                           />
                         </div>
@@ -1824,7 +1843,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.hsnCodeLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, hsnCodeLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="HSN"
                           />
                         </div>
@@ -1834,7 +1853,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.descriptionLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, descriptionLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="Description"
                           />
                         </div>
@@ -1844,7 +1863,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.qtyLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, qtyLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="Qty"
                           />
                         </div>
@@ -1854,7 +1873,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.unitLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, unitLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="Unit"
                           />
                         </div>
@@ -1864,7 +1883,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.taxModeLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, taxModeLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="Tax Mode"
                           />
                         </div>
@@ -1874,7 +1893,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.mrpLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, mrpLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="MRP"
                           />
                         </div>
@@ -1884,7 +1903,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.taxableLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, taxableLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="Taxable"
                           />
                         </div>
@@ -1894,7 +1913,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.discountPercentLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, discountPercentLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="Disc %"
                           />
                         </div>
@@ -1904,7 +1923,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.discountAmountLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, discountAmountLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="Disc ₹"
                           />
                         </div>
@@ -1914,7 +1933,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.gstPercentLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, gstPercentLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="GST %"
                           />
                         </div>
@@ -1924,7 +1943,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.gstAmountLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, gstAmountLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="GST ₹"
                           />
                         </div>
@@ -1934,7 +1953,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.cgstLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, cgstLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="CGST%"
                           />
                         </div>
@@ -1944,7 +1963,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.sgstLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, sgstLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="SGST%"
                           />
                         </div>
@@ -1954,7 +1973,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.igstLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, igstLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="IGST%"
                           />
                         </div>
@@ -1964,7 +1983,7 @@ const Settings = () => {
                             type="text"
                             value={invoiceTableColumnSettings.totalLabel}
                             onChange={(e) => setInvoiceTableColumnSettings({...invoiceTableColumnSettings, totalLabel: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg text-sm"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 text-sm"
                             placeholder="Total"
                           />
                         </div>
@@ -2041,7 +2060,7 @@ const Settings = () => {
 
                     <button
                       onClick={handleSaveInvoiceTableColumnSettings}
-                      className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                      className="w-full py-3 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors transition-colors"
                     >
                       Save Invoice Table Settings
                     </button>
@@ -2052,7 +2071,7 @@ const Settings = () => {
               {/* Taxes & GST */}
               {selectedSection === 'taxes' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Taxes & GST Settings</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Taxes & GST Settings</h2>
                   <div className="space-y-6">
                     <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                       <h3 className="font-medium mb-3">GST Registration</h3>
@@ -2063,7 +2082,7 @@ const Settings = () => {
                             type="text"
                             value={taxSettings.gstin}
                             onChange={(e) => setTaxSettings({...taxSettings, gstin: e.target.value})}
-                            className="w-full px-3 py-2 border border-border rounded-lg"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                           />
                         </div>
                         <div>
@@ -2071,7 +2090,7 @@ const Settings = () => {
                           <select
                             value={taxSettings.registrationType}
                             onChange={(e) => setTaxSettings({...taxSettings, registrationType: e.target.value as 'regular' | 'composition'})}
-                            className="w-full px-3 py-2 border border-border rounded-lg"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                           >
                             <option value="regular">Regular</option>
                             <option value="composition">Composition</option>
@@ -2142,22 +2161,22 @@ const Settings = () => {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium mb-2">Selling Price (Default)</label>
+                          <label className="block text-[10px] font-medium mb-1 text-slate-600">Selling Price (Default)</label>
                           <select
                             value={taxSettings.defaultTaxMode}
                             onChange={(e) => setTaxSettings({...taxSettings, defaultTaxMode: e.target.value as 'inclusive' | 'exclusive'})}
-                            className="w-full px-3 py-2 border border-border rounded-lg"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                           >
                             <option value="exclusive">Without GST (GST alag se) - ₹100 + GST = ₹118</option>
                             <option value="inclusive">With GST (Final amount) - ₹100 with GST included</option>
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium mb-2">Purchase Price (Default)</label>
+                          <label className="block text-[10px] font-medium mb-1 text-slate-600">Purchase Price (Default)</label>
                           <select
                             value={taxSettings.defaultPurchaseTaxMode}
                             onChange={(e) => setTaxSettings({...taxSettings, defaultPurchaseTaxMode: e.target.value as 'inclusive' | 'exclusive'})}
-                            className="w-full px-3 py-2 border border-border rounded-lg"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                           >
                             <option value="exclusive">Without GST (GST alag se) - ₹100 + GST = ₹118</option>
                             <option value="inclusive">With GST (Final amount) - ₹100 with GST included</option>
@@ -2177,7 +2196,7 @@ const Settings = () => {
 
                     <button
                       onClick={handleSaveTaxSettings}
-                      className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+                      className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
                     >
                       Save Tax Settings
                     </button>
@@ -2201,7 +2220,7 @@ const Settings = () => {
                     <>
                       {/* Offline Banner */}
                       {isOffline && (
-                        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
+                        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
                           <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
                             <WifiHigh size={20} className="text-amber-600" weight="bold" />
                           </div>
@@ -2213,7 +2232,7 @@ const Settings = () => {
                       )}
 
                       {/* Header */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                         <div>
                           <h2 className="text-lg sm:text-xl font-bold">User Management</h2>
                           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">Add and manage staff members for your business</p>
@@ -2310,8 +2329,8 @@ const Settings = () => {
                                    (user.email || '').toLowerCase().includes(query)
                           }).map((user) => (
                             <div key={user.uid} className="p-3 sm:p-4 bg-card rounded-xl border shadow-sm hover:shadow-md transition-shadow">
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-                                <div className="flex items-center gap-3 sm:gap-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+                                <div className="flex items-center gap-2 sm:gap-4">
                                   {/* Avatar */}
                                   <div className={cn(
                                     "w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-base sm:text-lg font-bold flex-shrink-0",
@@ -2598,12 +2617,12 @@ const Settings = () => {
 
                         {/* Modal Body - Permissions Grid */}
                         <div className="p-6 overflow-y-auto max-h-[60vh]">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {PAGE_INFO.map((page) => (
                               <label
                                 key={page.key}
                                 className={cn(
-                                  "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
+                                  "flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all",
                                   userPermissions[page.key]
                                     ? "bg-green-50 border-green-300"
                                     : "bg-white border-slate-200 hover:border-slate-300"
@@ -2637,7 +2656,7 @@ const Settings = () => {
                           >
                             Reset to Defaults
                           </button>
-                          <div className="flex gap-3">
+                          <div className="flex gap-2">
                             <button
                               onClick={handleClosePermissionModal}
                               className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium transition-colors"
@@ -2692,7 +2711,7 @@ const Settings = () => {
                       </button>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {/* Name */}
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
@@ -2732,7 +2751,7 @@ const Settings = () => {
                       {/* Role */}
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">Select Role</label>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-2">
                           <button
                             type="button"
                             onClick={() => setNewUserRole('manager')}
@@ -2765,7 +2784,7 @@ const Settings = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-3 mt-6">
+                    <div className="flex gap-2 mt-6">
                       <button
                         onClick={() => setShowAddUserModal(false)}
                         className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg font-medium hover:bg-slate-50"
@@ -2820,7 +2839,7 @@ const Settings = () => {
                       </p>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Your Email</label>
                         <input
@@ -2845,7 +2864,7 @@ const Settings = () => {
 
                     <button
                       onClick={handleAdminReauth}
-                      className="w-full mt-6 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+                      className="w-full mt-6 px-4 py-2.5 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors"
                     >
                       Sign Back In
                     </button>
@@ -2871,7 +2890,7 @@ const Settings = () => {
                       </button>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1.5">Unit Name</label>
                         <input
@@ -2898,7 +2917,7 @@ const Settings = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-3 mt-5">
+                    <div className="flex gap-2 mt-5">
                       <button
                         onClick={() => {
                           setShowAddUnitModal(false)
@@ -2922,7 +2941,7 @@ const Settings = () => {
                           }
                         }}
                         disabled={!newUnitName.trim()}
-                        className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                       >
                         Add Unit
                       </button>
@@ -2949,7 +2968,7 @@ const Settings = () => {
                       </p>
                     </div>
 
-                    <div className="flex gap-3 mt-6">
+                    <div className="flex gap-2 mt-6">
                       <button
                         onClick={() => {
                           setShowDeleteUnitModal(false)
@@ -2993,7 +3012,7 @@ const Settings = () => {
                       </button>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1.5">Category Name</label>
                         <input
@@ -3020,7 +3039,7 @@ const Settings = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-3 mt-5">
+                    <div className="flex gap-2 mt-5">
                       <button
                         onClick={() => {
                           setShowAddCategoryModal(false)
@@ -3044,7 +3063,7 @@ const Settings = () => {
                           }
                         }}
                         disabled={!newCategoryName.trim()}
-                        className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                       >
                         Add Category
                       </button>
@@ -3071,7 +3090,7 @@ const Settings = () => {
                       </p>
                     </div>
 
-                    <div className="flex gap-3 mt-6">
+                    <div className="flex gap-2 mt-6">
                       <button
                         onClick={() => {
                           setShowDeleteCategoryModal(false)
@@ -3100,7 +3119,7 @@ const Settings = () => {
               {/* SMS Settings */}
               {selectedSection === 'sms' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Transactional SMS</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Transactional SMS</h2>
                   <div className="space-y-6">
                     <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                       <div className="flex items-center justify-between mb-3">
@@ -3144,12 +3163,12 @@ const Settings = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">SMS Template</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">SMS Template</label>
                       <textarea
                         rows={4}
                         value={smsSettings.smsTemplate}
                         onChange={(e) => setSmsSettings({...smsSettings, smsTemplate: e.target.value})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                       ></textarea>
                       <p className="text-xs text-muted-foreground mt-1">
                         Available variables: {'{customer}, {invoice_no}, {amount}, {link}'}
@@ -3158,7 +3177,7 @@ const Settings = () => {
 
                     <button
                       onClick={handleSaveSMSSettings}
-                      className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+                      className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
                     >
                       Save SMS Settings
                     </button>
@@ -3169,7 +3188,7 @@ const Settings = () => {
               {/* Reminders */}
               {selectedSection === 'reminders' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Reminder Settings</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Reminder Settings</h2>
                   <div className="space-y-6">
                     <div className="p-4 bg-muted/50 rounded-lg space-y-3">
                       <h3 className="font-medium">Payment Reminders</h3>
@@ -3188,7 +3207,7 @@ const Settings = () => {
                           type="number"
                           value={reminderSettings.remindBeforeDays}
                           onChange={(e) => setReminderSettings({...reminderSettings, remindBeforeDays: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         />
                       </div>
                     </div>
@@ -3210,7 +3229,7 @@ const Settings = () => {
                           type="number"
                           value={reminderSettings.lowStockThreshold}
                           onChange={(e) => setReminderSettings({...reminderSettings, lowStockThreshold: parseInt(e.target.value) || 0})}
-                          className="w-full px-3 py-2 border border-border rounded-lg"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                         />
                       </div>
                     </div>
@@ -3248,7 +3267,7 @@ const Settings = () => {
 
                     <button
                       onClick={handleSaveReminderSettings}
-                      className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+                      className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
                     >
                       Save Reminder Settings
                     </button>
@@ -3259,7 +3278,7 @@ const Settings = () => {
               {/* Party Settings */}
               {selectedSection === 'party' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Party Settings</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Party Settings</h2>
                   <div className="space-y-6">
                     <div className="p-4 bg-muted/50 rounded-lg space-y-3">
                       <h3 className="font-medium">Party Preferences</h3>
@@ -3293,12 +3312,12 @@ const Settings = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Default Credit Period (Days)</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">Default Credit Period (Days)</label>
                       <input
                         type="number"
                         value={partySettings.defaultCreditPeriod}
                         onChange={(e) => setPartySettings({...partySettings, defaultCreditPeriod: parseInt(e.target.value) || 0})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                       />
                     </div>
 
@@ -3333,7 +3352,7 @@ const Settings = () => {
 
                     <button
                       onClick={handleSavePartySettings}
-                      className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+                      className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
                     >
                       Save Party Settings
                     </button>
@@ -3344,7 +3363,7 @@ const Settings = () => {
               {/* Item Settings */}
               {selectedSection === 'items' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Item Settings</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Item Settings</h2>
                   <div className="space-y-6">
                     <div className="p-4 bg-muted/50 rounded-lg space-y-3">
                       <h3 className="font-medium">Item Preferences</h3>
@@ -3387,11 +3406,11 @@ const Settings = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Default Tax Rate</label>
+                      <label className="block text-[10px] font-medium mb-1 text-slate-600">Default Tax Rate</label>
                       <select
                         value={itemSettings.defaultTaxRate}
                         onChange={(e) => setItemSettings({...itemSettings, defaultTaxRate: parseFloat(e.target.value)})}
-                        className="w-full px-3 py-2 border border-border rounded-lg"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
                       >
                         <option value="0">GST 0%</option>
                         <option value="5">GST 5%</option>
@@ -3510,7 +3529,7 @@ const Settings = () => {
 
                     <button
                       onClick={handleSaveItemSettings}
-                      className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+                      className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
                     >
                       Save Item Settings
                     </button>
@@ -3521,11 +3540,11 @@ const Settings = () => {
               {/* Utilities */}
               {selectedSection === 'utilities' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Utilities</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Utilities</h2>
                   <div className="space-y-6">
                     {/* Bulk Update Tax Slab */}
                     <div className="p-4 sm:p-6 bg-amber-50 border border-amber-200 rounded-lg">
-                      <div className="flex items-start gap-3 mb-4">
+                      <div className="flex items-start gap-2 mb-4">
                         <Tag size={28} weight="duotone" className="text-amber-600 flex-shrink-0 mt-0.5" />
                         <div>
                           <h3 className="font-bold text-base sm:text-lg">Bulk Update Tax Slab</h3>
@@ -3534,7 +3553,7 @@ const Settings = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mb-4">
                         <div>
                           <label className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2">From Tax Rate</label>
                           <select className="w-full px-3 py-2.5 text-sm border border-border rounded-lg bg-white">
@@ -3568,7 +3587,7 @@ const Settings = () => {
 
                     {/* Team Sharing */}
                     <div className="p-4 sm:p-6 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-start gap-3 mb-4">
+                      <div className="flex items-start gap-2 mb-4">
                         <ShareNetwork size={28} weight="duotone" className="text-blue-600 flex-shrink-0 mt-0.5" />
                         <div>
                           <h3 className="font-bold text-base sm:text-lg">Team Sharing</h3>
@@ -3602,7 +3621,7 @@ const Settings = () => {
                     {/* Quick Actions */}
                     <div className="p-4 sm:p-6 bg-muted/50 rounded-lg">
                       <h3 className="font-bold text-base sm:text-lg mb-3 sm:mb-4">Quick Actions</h3>
-                      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                      <div className="grid grid-cols-2 gap-2 sm:gap-2">
                         <button
                           onClick={() => toast.info('Recalculating balances...')}
                           className="p-3 sm:p-4 bg-background border border-border rounded-lg text-xs sm:text-sm font-medium hover:bg-muted text-left"
@@ -3626,10 +3645,10 @@ const Settings = () => {
               {/* Developer Tools */}
               {selectedSection === 'developer' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="text-xl font-bold mb-6">Developer Tools</h2>
+                  <h2 className="text-sm font-semibold mb-2 text-slate-800">Developer Tools</h2>
                   <div className="space-y-6">
                     <div className="p-6 bg-primary/5 border border-primary/20 rounded-lg">
-                      <div className="flex items-center gap-3 mb-4">
+                      <div className="flex items-center gap-2 mb-4">
                         <Database size={32} weight="duotone" className="text-primary" />
                         <div>
                           <h3 className="font-bold text-lg">Generate Dummy Data</h3>
@@ -3639,7 +3658,7 @@ const Settings = () => {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
                         <div className="p-3 bg-background rounded-lg">
                           <p className="text-xs text-muted-foreground">Customers</p>
                           <p className="text-lg font-bold">15</p>
@@ -3669,7 +3688,7 @@ const Settings = () => {
                       <button
                         onClick={handleGenerateDummyData}
                         disabled={isGenerating}
-                        className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
                         <Database size={20} />
                         {isGenerating ? 'Generating...' : 'Generate Dummy Data'}
@@ -3681,7 +3700,7 @@ const Settings = () => {
                     </div>
 
                     <div className="p-6 bg-destructive/5 border border-destructive/20 rounded-lg">
-                      <div className="flex items-center gap-3 mb-4">
+                      <div className="flex items-center gap-2 mb-4">
                         <Trash size={32} weight="duotone" className="text-destructive" />
                         <div>
                           <h3 className="font-bold text-lg">Clear All Data</h3>
@@ -3733,8 +3752,6 @@ const Settings = () => {
               )}
             </div>
           </div>
-        </div>
-      </div>
     </div>
   )
 }
@@ -3790,7 +3807,7 @@ const LanguageSettingsSection = () => {
             {language === 'en' ? 'Language Preview' : 'மொழி முன்னோட்டம்'}
           </h3>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
             <div className="p-3 bg-background rounded-lg">
               <p className="text-muted-foreground text-xs mb-1">{t.nav.dashboard}</p>
               <p className="font-medium">{t.common.today}</p>

@@ -617,245 +617,244 @@ const ReportsNew = () => {
   ]
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 pb-20 lg:pb-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <ChartLine size={32} weight="duotone" className="text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{t.reports.businessReports}</h1>
-            <p className="text-sm text-muted-foreground">{t.reports.comprehensiveAnalytics}</p>
+    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-3 py-2 bg-slate-50/50 min-h-screen">
+      {/* Header - Clean & Simple like Sales/Purchase */}
+      <div className="flex-shrink-0">
+        {/* Top Row: Title + Actions */}
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
+            <ChartLine size={22} weight="duotone" className="text-blue-600" />
+            <span>{t.reports.businessReports}</span>
+          </h1>
+          {/* Export Buttons - show when report data available */}
+          {reportData && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportJSON}
+                className="h-8 px-3 rounded-lg border border-yellow-200 bg-white text-xs text-yellow-600 font-semibold flex items-center gap-1.5 hover:border-yellow-400 hover:bg-yellow-50 transition-all"
+              >
+                <FileJs size={14} weight="bold" />
+                <span>JSON</span>
+              </button>
+              <button
+                onClick={handleExportExcel}
+                className="h-8 px-3 rounded-lg border border-green-200 bg-white text-xs text-green-600 font-semibold flex items-center gap-1.5 hover:border-green-400 hover:bg-green-50 transition-all"
+              >
+                <Download size={14} weight="bold" />
+                <span>Excel</span>
+              </button>
+              <button
+                onClick={handleExportPDF}
+                className="h-8 px-3 rounded-lg border border-red-200 bg-white text-xs text-red-600 font-semibold flex items-center gap-1.5 hover:border-red-400 hover:bg-red-50 transition-all"
+              >
+                <Download size={14} weight="bold" />
+                <span>PDF</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Period Filter & Tabs - Compact Modern (matching Sales design) */}
+        <div className="space-y-2">
+          {/* Period Filter Tabs */}
+          <div className="flex items-center justify-center">
+            <div className="inline-flex items-center gap-0.5 text-xs bg-white rounded-lg p-0.5 shadow-sm border border-slate-200">
+              {[
+                { key: 'today', label: t.common.today },
+                { key: 'this-week', label: t.common.thisWeek },
+                { key: 'this-month', label: t.common.thisMonth },
+                { key: 'this-year', label: t.common.thisYear },
+                { key: 'all-time', label: t.reports.allTime }
+              ].map((filter) => (
+                <button
+                  key={filter.key}
+                  onClick={() => setSelectedPeriod(filter.key)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap",
+                    selectedPeriod === filter.key
+                      ? "bg-slate-800 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                  )}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Period Selector */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {[
-            { key: 'today', label: t.common.today },
-            { key: 'this-week', label: t.common.thisWeek },
-            { key: 'this-month', label: t.common.thisMonth },
-            { key: 'this-year', label: t.common.thisYear },
-            { key: 'all-time', label: t.reports.allTime }
-          ].map(period => (
-            <button
-              key={period.key}
-              onClick={() => setSelectedPeriod(period.key)}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
-                selectedPeriod === period.key
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground hover:bg-muted/80"
-              )}
-            >
-              {period.label}
-            </button>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Tabs and Export Buttons */}
-      <div className="bg-card rounded-lg shadow-lg border border-border mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b border-border">
-            <div className="flex overflow-x-auto">
+          {/* Category Tabs */}
+          <div className="flex items-center justify-center">
+            <div className="inline-flex items-center gap-0.5 text-xs bg-white rounded-lg p-0.5 shadow-sm border border-slate-200 overflow-x-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setSelectedTab(tab.id)}
                   className={cn(
-                    "flex items-center gap-2 px-6 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px",
+                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1",
                     selectedTab === tab.id
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                   )}
                 >
-                  <tab.icon size={18} weight={selectedTab === tab.id ? "duotone" : "regular"} />
+                  <tab.icon size={14} weight={selectedTab === tab.id ? "duotone" : "regular"} />
                   {tab.label}
                 </button>
               ))}
             </div>
-
-            {/* Export Buttons */}
-            {reportData && (
-              <div className="flex gap-2 shrink-0">
-                <button
-                  onClick={handleExportJSON}
-                  className="flex items-center gap-2 px-4 py-2 bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 rounded-lg text-sm font-medium transition-colors"
-                >
-                  <FileJs size={16} weight="bold" />
-                  <span className="hidden sm:inline">JSON</span>
-                </button>
-                <button
-                  onClick={handleExportPDF}
-                  className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-lg text-sm font-medium transition-colors"
-                >
-                  <Download size={16} weight="bold" />
-                  <span className="hidden sm:inline">PDF</span>
-                </button>
-                <button
-                  onClick={handleExportExcel}
-                  className="flex items-center gap-2 px-4 py-2 bg-success/10 text-success hover:bg-success/20 rounded-lg text-sm font-medium transition-colors"
-                >
-                  <Download size={16} weight="bold" />
-                  <span className="hidden sm:inline">Excel</span>
-                </button>
-              </div>
-            )}
           </div>
+        </div>
       </div>
 
       {/* Report Content */}
+      <div className="mt-4">
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">{t.reports.loadingReport}</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-slate-500 text-sm">{t.reports.loadingReport}</p>
           </div>
         </div>
       ) : (
         <div>
             {/* Every Day Tab */}
             {selectedTab === 'everyday' && (
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {/* Header with description */}
-                <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl p-6 border border-primary/20">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Calendar size={32} className="text-primary" weight="duotone" />
-                    <h2 className="text-2xl font-bold">{t.reports.everyDayReports}</h2>
+                <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Calendar size={20} className="text-blue-600" weight="duotone" />
+                    <h2 className="text-base font-semibold text-slate-800">{t.reports.everyDayReports}</h2>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-slate-500">
                     {t.reports.essentialDailyReports}
                   </p>
                 </div>
 
                 {/* Daily Reports Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   <button
                     onClick={() => loadReport('day-book')}
                     className={cn(
-                      "flex items-start gap-3 p-4 bg-card rounded-lg transition-all text-left",
+                      "flex items-start gap-2 p-3 bg-white rounded-lg transition-all text-left shadow-sm",
                       currentReportType === 'day-book'
-                        ? "border-2 border-primary bg-primary/5"
-                        : "border border-border hover:border-primary"
+                        ? "border-2 border-blue-500 bg-blue-50"
+                        : "border border-slate-200 hover:border-blue-300 hover:shadow"
                     )}
                   >
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Calendar size={20} className="text-primary" weight="duotone" />
+                    <div className="p-1.5 bg-blue-100 rounded-lg">
+                      <Calendar size={16} className="text-blue-600" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{t.reports.dayBook}</p>
-                      <p className="text-xs text-muted-foreground">{t.reports.whatHappenedToday}</p>
+                      <p className="font-medium text-sm text-slate-800">{t.reports.dayBook}</p>
+                      <p className="text-[10px] text-slate-500">{t.reports.whatHappenedToday}</p>
                     </div>
                   </button>
 
                   <button
                     onClick={() => loadReport('profit-loss')}
                     className={cn(
-                      "flex items-start gap-3 p-4 bg-card rounded-lg transition-all text-left",
+                      "flex items-start gap-2 p-3 bg-white rounded-lg transition-all text-left shadow-sm",
                       currentReportType === 'profit-loss'
-                        ? "border-2 border-primary bg-primary/5"
-                        : "border border-border hover:border-primary"
+                        ? "border-2 border-blue-500 bg-blue-50"
+                        : "border border-slate-200 hover:border-blue-300 hover:shadow"
                     )}
                   >
-                    <div className="p-2 bg-success/10 rounded-lg">
-                      <TrendUp size={20} className="text-success" weight="duotone" />
+                    <div className="p-1.5 bg-green-100 rounded-lg">
+                      <TrendUp size={16} className="text-green-600" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{t.reports.profitLossToday}</p>
-                      <p className="text-xs text-muted-foreground">{t.reports.didIEarnOrLose}</p>
+                      <p className="font-medium text-sm text-slate-800">{t.reports.profitLossToday}</p>
+                      <p className="text-[10px] text-slate-500">{t.reports.didIEarnOrLose}</p>
                     </div>
                   </button>
 
                   <button
                     onClick={() => loadReport('cash-bank-balance')}
                     className={cn(
-                      "flex items-start gap-3 p-4 bg-card rounded-lg transition-all text-left",
+                      "flex items-start gap-2 p-3 bg-white rounded-lg transition-all text-left shadow-sm",
                       currentReportType === 'cash-bank-balance'
-                        ? "border-2 border-primary bg-primary/5"
-                        : "border border-border hover:border-primary"
+                        ? "border-2 border-blue-500 bg-blue-50"
+                        : "border border-slate-200 hover:border-blue-300 hover:shadow"
                     )}
                   >
-                    <div className="p-2 bg-accent/10 rounded-lg">
-                      <CurrencyCircleDollar size={20} className="text-accent" weight="duotone" />
+                    <div className="p-1.5 bg-purple-100 rounded-lg">
+                      <CurrencyCircleDollar size={16} className="text-purple-600" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{t.reports.cashBankBalance}</p>
-                      <p className="text-xs text-muted-foreground">{t.reports.doIHaveMoney}</p>
+                      <p className="font-medium text-sm text-slate-800">{t.reports.cashBankBalance}</p>
+                      <p className="text-[10px] text-slate-500">{t.reports.doIHaveMoney}</p>
                     </div>
                   </button>
 
                   <button
                     onClick={() => loadReport('accounts-receivable')}
                     className={cn(
-                      "flex items-start gap-3 p-4 bg-card rounded-lg transition-all text-left",
+                      "flex items-start gap-2 p-3 bg-white rounded-lg transition-all text-left shadow-sm",
                       currentReportType === 'accounts-receivable'
-                        ? "border-2 border-primary bg-primary/5"
-                        : "border border-border hover:border-primary"
+                        ? "border-2 border-blue-500 bg-blue-50"
+                        : "border border-slate-200 hover:border-blue-300 hover:shadow"
                     )}
                   >
-                    <div className="p-2 bg-warning/10 rounded-lg">
-                      <TrendUp size={20} className="text-warning" weight="duotone" />
+                    <div className="p-1.5 bg-orange-100 rounded-lg">
+                      <TrendUp size={16} className="text-orange-600" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{t.reports.pendingToReceive}</p>
-                      <p className="text-xs text-muted-foreground">{t.reports.whoOwesMeMoney}</p>
+                      <p className="font-medium text-sm text-slate-800">{t.reports.pendingToReceive}</p>
+                      <p className="text-[10px] text-slate-500">{t.reports.whoOwesMeMoney}</p>
                     </div>
                   </button>
 
                   <button
                     onClick={() => loadReport('accounts-payable')}
                     className={cn(
-                      "flex items-start gap-3 p-4 bg-card rounded-lg transition-all text-left",
+                      "flex items-start gap-2 p-3 bg-white rounded-lg transition-all text-left shadow-sm",
                       currentReportType === 'accounts-payable'
-                        ? "border-2 border-primary bg-primary/5"
-                        : "border border-border hover:border-primary"
+                        ? "border-2 border-blue-500 bg-blue-50"
+                        : "border border-slate-200 hover:border-blue-300 hover:shadow"
                     )}
                   >
-                    <div className="p-2 bg-destructive/10 rounded-lg">
-                      <TrendDown size={20} className="text-destructive" weight="duotone" />
+                    <div className="p-1.5 bg-red-100 rounded-lg">
+                      <TrendDown size={16} className="text-red-600" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{t.reports.pendingToPay}</p>
-                      <p className="text-xs text-muted-foreground">{t.reports.whoDoIOwe}</p>
+                      <p className="font-medium text-sm text-slate-800">{t.reports.pendingToPay}</p>
+                      <p className="text-[10px] text-slate-500">{t.reports.whoDoIOwe}</p>
                     </div>
                   </button>
 
                   <button
                     onClick={() => loadReport('stock-alert')}
                     className={cn(
-                      "flex items-start gap-3 p-4 bg-card rounded-lg transition-all text-left",
+                      "flex items-start gap-2 p-3 bg-white rounded-lg transition-all text-left shadow-sm",
                       currentReportType === 'stock-alert'
-                        ? "border-2 border-primary bg-primary/5"
-                        : "border border-border hover:border-primary"
+                        ? "border-2 border-blue-500 bg-blue-50"
+                        : "border border-slate-200 hover:border-blue-300 hover:shadow"
                     )}
                   >
-                    <div className="p-2 bg-destructive/10 rounded-lg">
-                      <Package size={20} className="text-destructive" weight="duotone" />
+                    <div className="p-1.5 bg-red-100 rounded-lg">
+                      <Package size={16} className="text-red-600" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{t.reports.stockSummaryReport}</p>
-                      <p className="text-xs text-muted-foreground">{t.reports.whatNeedsReorder}</p>
+                      <p className="font-medium text-sm text-slate-800">{t.reports.stockSummaryReport}</p>
+                      <p className="text-[10px] text-slate-500">{t.reports.whatNeedsReorder}</p>
                     </div>
                   </button>
 
                   <button
                     onClick={() => loadReport('fast-moving-items')}
                     className={cn(
-                      "flex items-start gap-3 p-4 bg-card rounded-lg transition-all text-left",
+                      "flex items-start gap-2 p-3 bg-white rounded-lg transition-all text-left shadow-sm",
                       currentReportType === 'fast-moving-items'
-                        ? "border-2 border-primary bg-primary/5"
-                        : "border border-border hover:border-primary"
+                        ? "border-2 border-blue-500 bg-blue-50"
+                        : "border border-slate-200 hover:border-blue-300 hover:shadow"
                     )}
                   >
-                    <div className="p-2 bg-success/10 rounded-lg">
-                      <TrendUp size={20} className="text-success" weight="duotone" />
+                    <div className="p-1.5 bg-green-100 rounded-lg">
+                      <TrendUp size={16} className="text-green-600" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{t.reports.fastMovingItems}</p>
-                      <p className="text-xs text-muted-foreground">{t.reports.bestSellers}</p>
+                      <p className="font-medium text-sm text-slate-800">{t.reports.fastMovingItems}</p>
+                      <p className="text-[10px] text-slate-500">{t.reports.bestSellers}</p>
                     </div>
                   </button>
                 </div>
@@ -4700,6 +4699,7 @@ const ReportsNew = () => {
             )}
         </div>
       )}
+      </div>
     </div>
   )
 }

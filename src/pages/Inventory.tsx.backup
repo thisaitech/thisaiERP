@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import {
   Package,
@@ -30,8 +29,7 @@ import {
   FloppyDisk,
   Stack,
   Camera,
-  QrCode,
-  DotsThreeVertical
+  QrCode
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -204,10 +202,6 @@ const Inventory = () => {
   // HSN Suggestions
   const [hsnSuggestions, setHsnSuggestions] = useState<any[]>([])
   const [showHSNSuggestions, setShowHSNSuggestions] = useState(false)
-
-  // Dropdown menu state
-  const [openActionMenu, setOpenActionMenu] = useState<string | null>(null)
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null)
 
   const emitInventoryUpdate = (itemsData: any[]) => {
     if (typeof window === 'undefined') return
@@ -738,36 +732,6 @@ const Inventory = () => {
     }
   }
 
-  // Handle action menu click
-  const handleActionMenuClick = (e: React.MouseEvent, itemId: string) => {
-    e.stopPropagation()
-
-    if (openActionMenu === itemId) {
-      setOpenActionMenu(null)
-      setDropdownPosition(null)
-    } else {
-      const buttonRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-      setDropdownPosition({
-        top: buttonRect.bottom + 4,
-        right: window.innerWidth - buttonRect.right
-      })
-      setOpenActionMenu(itemId)
-    }
-  }
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const closeMenu = (e: MouseEvent) => {
-      if (openActionMenu) {
-        setOpenActionMenu(null)
-        setDropdownPosition(null)
-      }
-    }
-
-    document.addEventListener('click', closeMenu)
-    return () => document.removeEventListener('click', closeMenu)
-  }, [openActionMenu])
-
   // Inventory Summary - Calculate from real items data
   const inventorySummary = (() => {
     const totalItems = items.length
@@ -970,334 +934,384 @@ const Inventory = () => {
   })
 
   return (
-    <div className="min-h-screen p-2 sm:p-3 lg:p-4 pb-16 sm:pb-20 lg:pb-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-3"
-      >
-        {/* Top Row: Title + Actions */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-            <Package size={22} weight="duotone" className="text-blue-600" />
-            <span>{t.inventory.inventoryManagement}</span>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-screen px-2 py-3 sm:px-3 sm:py-4 lg:px-4 lg:py-4 pb-16 sm:pb-20 lg:pb-8"
+    >
+      <div className="max-w-[1920px] mx-auto space-y-6 lg:space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2 lg:gap-3">
+            <Package size={28} weight="duotone" className="text-primary lg:w-8 lg:h-8" />
+            {t.inventory.inventoryManagement}
           </h1>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
               console.log('🔴 ADD ITEM BUTTON CLICKED')
               setShowAddModal(true)
               console.log('🟢 showAddModal set to TRUE')
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 lg:px-6 lg:py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors text-sm lg:text-base"
           >
-            <Plus size={16} weight="bold" />
-            <span className="hidden sm:inline">{t.inventory.addItem}</span>
-          </button>
+            <Plus size={20} weight="bold" className="lg:w-6 lg:h-6" />
+            {t.inventory.addItem}
+          </motion.button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.inventory.totalItems}</div>
-            <div className="text-base font-bold text-slate-800">{inventorySummary.totalItems}</div>
-          </div>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="relative overflow-hidden bg-card rounded-xl p-4 lg:p-6 border border-border/50"
+          >
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#7A35FF] to-[#9B63FF]" />
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm lg:text-base text-muted-foreground">{t.inventory.totalItems}</span>
+              <Package size={18} weight="duotone" className="text-primary lg:w-6 lg:h-6" />
+            </div>
+            <p className="text-2xl lg:text-3xl font-bold">{inventorySummary.totalItems}</p>
+            <p className="text-xs lg:text-sm text-muted-foreground mt-1">{t.inventory.acrossCategories.replace('{count}', inventorySummary.categories.toString())}</p>
+          </motion.div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.inventory.stockValue}</div>
-            <div className="text-base font-bold text-blue-600">₹{(inventorySummary.totalValue / 100000).toFixed(2)}L</div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="relative overflow-hidden bg-card rounded-xl p-4 border border-border/50"
+          >
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#00C9A7] to-[#3B82F6]" />
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-muted-foreground">{t.inventory.stockValue}</span>
+              <TrendUp size={16} weight="duotone" className="text-success" />
+            </div>
+            <p className="text-2xl font-bold">₹{(inventorySummary.totalValue / 100000).toFixed(2)}L</p>
+            <p className="text-xs text-muted-foreground mt-1">{t.inventory.avgPerItem.replace('{amount}', inventorySummary.avgStockValue.toLocaleString())}</p>
+          </motion.div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-amber-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.inventory.lowStock}</div>
-            <div className="text-base font-bold text-amber-600">{inventorySummary.lowStockItems}</div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="relative overflow-hidden bg-card rounded-xl p-4 border border-border/50"
+          >
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#EF4444] to-[#DC2626]" />
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-muted-foreground">{t.inventory.lowStock}</span>
+              <WarningCircle size={16} weight="duotone" className="text-warning" />
+            </div>
+            <p className="text-2xl font-bold text-warning">{inventorySummary.lowStockItems}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t.inventory.reorderRequired}</p>
+          </motion.div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-red-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.inventory.outOfStock}</div>
-            <div className="text-base font-bold text-red-500">{inventorySummary.outOfStockItems}</div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="relative overflow-hidden bg-card rounded-xl p-4 border border-border/50"
+          >
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#3B82F6] to-[#7A35FF]" />
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-muted-foreground">{t.inventory.outOfStock}</span>
+              <WarningCircle size={16} weight="duotone" className="text-destructive" />
+            </div>
+            <p className="text-2xl font-bold text-destructive">{inventorySummary.outOfStockItems}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t.inventory.immediateActionNeeded}</p>
+          </motion.div>
         </div>
-      </motion.div>
 
-      {/* Search Bar */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="mb-3"
-      >
-        <div className="relative">
-          <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder={t.inventory.searchByNameSku}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
-          />
-        </div>
-      </motion.div>
-
-      {/* Category Filter Pills (Centered) */}
-      <div className="flex items-center justify-center gap-1.5 mb-2.5 overflow-x-auto pb-1">
-        <div className="inline-flex items-center gap-0.5 bg-white rounded-lg p-0.5 shadow-sm border border-slate-200">
-          {categories.slice(0, 6).map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={cn(
-                "px-2.5 py-1 rounded-md text-[10px] font-medium transition-all whitespace-nowrap",
-                selectedCategory === cat.id
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-500 hover:bg-slate-100"
-              )}
+        {/* Search, Filter & Tabs */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative">
+              <MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder={t.inventory.searchByNameSku}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-muted/50 border border-border rounded-lg outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-4 py-2 bg-muted/50 border border-border rounded-lg outline-none focus:border-primary transition-colors"
             >
-              {cat.name} ({cat.count})
-            </button>
-          ))}
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name} ({cat.count})</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            {[
+              { id: 'all', label: t.inventory.allItems, count: items.length },
+              { id: 'normal', label: t.inventory.inStock, count: items.filter(item => {
+                const stock = item.stock || 0
+                const reorderPoint = item.reorderPoint || 0
+                return stock > reorderPoint
+              }).length },
+              { id: 'low', label: t.inventory.lowStock, count: items.filter(item => {
+                const stock = item.stock || 0
+                const reorderPoint = item.reorderPoint || 0
+                return stock > 0 && stock <= reorderPoint
+              }).length },
+              { id: 'out', label: t.inventory.outOfStock, count: items.filter(item => (item.stock || 0) === 0).length }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap",
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Tab Filters */}
-      <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
-        {[
-          { id: 'all', label: t.inventory.allItems, count: items.length },
-          { id: 'normal', label: t.inventory.inStock, count: items.filter(item => {
-            const stock = item.stock || 0
-            const reorderPoint = item.reorderPoint || 0
-            return stock > reorderPoint
-          }).length },
-          { id: 'low', label: t.inventory.lowStock, count: items.filter(item => {
-            const stock = item.stock || 0
-            const reorderPoint = item.reorderPoint || 0
-            return stock > 0 && stock <= reorderPoint
-          }).length },
-          { id: 'out', label: t.inventory.outOfStock, count: items.filter(item => (item.stock || 0) === 0).length }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
-              activeTab === tab.id
-                ? "bg-blue-600 text-white shadow-sm"
-                : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300"
-            )}
-          >
-            {tab.label} ({tab.count})
-          </button>
-        ))}
-      </div>
-
-      {/* Desktop Table Header (Hidden on Mobile) */}
-      <div className="hidden md:flex items-center px-3 py-2 mb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-        <div style={{ width: '20%' }}>Item Name</div>
-        <div style={{ width: '12%' }}>Category</div>
-        <div style={{ width: '10%' }} className="text-right">Stock</div>
-        <div style={{ width: '10%' }} className="text-right">Unit</div>
-        <div style={{ width: '12%' }} className="text-right">Price</div>
-        <div style={{ width: '12%' }} className="text-right">Value</div>
-        <div style={{ width: '10%' }} className="text-center">Status</div>
-        <div style={{ width: '14%' }} className="text-center">Actions</div>
-      </div>
-
-      {/* Items List */}
-      <div className="space-y-1">
-        {isLoadingItems ? (
-          <div className="flex items-center justify-center py-20">
-            <ArrowsClockwise size={32} weight="duotone" className="text-blue-600 animate-spin" />
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="text-center py-20">
-            <Package size={48} weight="duotone" className="text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm">
-              {searchQuery ? t.inventory.noItemsFound : t.inventory.noItemsInInventory}
-            </p>
-          </div>
-        ) : (
-          filteredItems.map((item, index) => {
+        {/* Stock Items Grid */}
+        <div className="grid gap-3 md:gap-4 pb-20 md:pb-0">
+          {isLoadingItems ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">{t.inventory.loadingItems}</p>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center py-12 bg-card rounded-xl border border-border/50">
+              <Package size={48} weight="duotone" className="text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">
+                {searchQuery ? t.inventory.noItemsFound : t.inventory.noItemsInInventory}
+              </p>
+            </div>
+          ) : (
+            filteredItems.map((item, index) => {
             const status = getStockStatus(item)
+            const stockPercentage = getStockPercentage(item.stock || 0, item.maxStock || 0)
             const stockValue = (item.stock || 0) * (item.purchasePrice || 0)
+            const profitMargin = item.sellingPrice && item.purchasePrice
+              ? ((item.sellingPrice - item.purchasePrice) / item.sellingPrice * 100)
+              : 0
 
             return (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.02 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-card rounded-xl p-3 md:p-4 border border-border/50 hover:border-primary/50 transition-all"
               >
-                {/* Desktop Row */}
-                <div className="hidden md:flex items-center px-3 py-2 bg-white rounded-lg border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all">
-                  {/* Item Name */}
-                  <div style={{ width: '20%' }} className="flex items-center gap-2 min-w-0">
-                    <div className="p-1.5 rounded-lg flex-shrink-0 bg-blue-50">
-                      <Package size={16} weight="duotone" className="text-blue-600" />
+                {/* Mobile Compact Header */}
+                <div className="flex items-start justify-between mb-2 md:mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start gap-2 md:gap-3">
+                      <div className="p-2 md:p-3 bg-primary/10 rounded-lg flex-shrink-0">
+                        <Package size={20} weight="duotone" className="text-primary md:w-6 md:h-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm md:text-lg truncate">{item.name}</h3>
+                        <div className="flex flex-wrap items-center gap-1.5 md:gap-3 mt-0.5 md:mt-1 text-xs md:text-sm text-muted-foreground">
+                          {item.itemCode && (
+                            <span className="flex items-center gap-0.5 md:gap-1">
+                              <Barcode size={12} className="md:w-3.5 md:h-3.5" />
+                              <span className="truncate max-w-[80px]">{item.itemCode}</span>
+                            </span>
+                          )}
+                          <span className="hidden md:inline">•</span>
+                          <span className="truncate">{item.category}</span>
+                        </div>
+                      </div>
                     </div>
-                    <span className="font-medium text-xs text-slate-800 truncate">
-                      {item.name}
-                    </span>
                   </div>
-
-                  {/* Category */}
-                  <div style={{ width: '12%' }} className="text-xs text-slate-600 truncate capitalize">
-                    {item.category || '-'}
-                  </div>
-
-                  {/* Stock */}
-                  <div style={{ width: '10%' }} className="text-right text-xs text-slate-800 font-medium">
-                    {item.hasMultiUnit
-                      ? getStockDisplay(
-                          item.stock || 0,
-                          item.piecesPerPurchaseUnit || 12,
-                          item.purchaseUnit || 'Box',
-                          item.baseUnit || 'Pcs'
-                        ).displayText
-                      : `${item.stock || 0}`
-                    }
-                  </div>
-
-                  {/* Unit */}
-                  <div style={{ width: '10%' }} className="text-right text-xs text-slate-500">
-                    {item.unit || 'PCS'}
-                  </div>
-
-                  {/* Price */}
-                  <div style={{ width: '12%' }} className="text-right text-xs text-slate-800 font-semibold">
-                    ₹{(item.sellingPrice || 0).toLocaleString('en-IN')}
-                  </div>
-
-                  {/* Value */}
-                  <div style={{ width: '12%' }} className="text-right text-xs text-slate-600">
-                    ₹{stockValue.toLocaleString('en-IN')}
-                  </div>
-
-                  {/* Status Badge */}
-                  <div style={{ width: '10%' }} className="flex justify-center">
-                    <span className={cn(
-                      "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium",
-                      status.color === 'success' && "bg-emerald-50 text-emerald-700",
-                      status.color === 'warning' && "bg-amber-50 text-amber-700",
-                      status.color === 'destructive' && "bg-red-50 text-red-700"
-                    )}>
-                      <status.icon size={10} weight="fill" />
-                      <span>{status.label}</span>
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div style={{ width: '14%' }} className="flex items-center justify-center gap-0.5">
-                    <button
-                      onClick={() => handleViewItem(item)}
-                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                      title="View"
-                    >
-                      <Eye size={14} weight="duotone" className="text-blue-600" />
-                    </button>
-                    <button
-                      onClick={() => handleEditItem(item)}
-                      className="w-7 h-7 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
-                      title="Edit"
-                    >
-                      <Pencil size={14} weight="duotone" className="text-amber-600" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteItem(item)}
-                      className="w-7 h-7 flex items-center justify-center bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                      title="Delete"
-                    >
-                      <Trash size={14} weight="duotone" className="text-red-600" />
-                    </button>
-
-                    {/* More Actions Dropdown */}
-                    <button
-                      onClick={(e) => handleActionMenuClick(e, item.id)}
-                      className="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
-                      title="More"
-                    >
-                      <DotsThreeVertical size={14} weight="bold" className="text-slate-600" />
-                    </button>
+                  <div className={cn(
+                    "flex items-center gap-0.5 md:gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs font-medium flex-shrink-0 ml-2",
+                    status.color === 'success' && "bg-success/10 text-success",
+                    status.color === 'warning' && "bg-warning/10 text-warning",
+                    status.color === 'destructive' && "bg-destructive/10 text-destructive"
+                  )}>
+                    <status.icon size={12} weight="fill" className="md:w-3.5 md:h-3.5" />
+                    <span className="hidden sm:inline">{status.label}</span>
                   </div>
                 </div>
 
-                {/* Mobile Card */}
-                <div className="md:hidden bg-white rounded-lg border border-slate-100 p-3">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-start gap-2 flex-1 min-w-0">
-                      <div className="p-2 rounded-lg flex-shrink-0 bg-blue-50">
-                        <Package size={18} weight="duotone" className="text-blue-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm text-slate-800 truncate">
-                          {item.name}
-                        </h3>
-                        <p className="text-xs text-slate-500 capitalize">{item.category || '-'}</p>
-                      </div>
-                    </div>
-                    <span className={cn(
-                      "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ml-2",
-                      status.color === 'success' && "bg-emerald-50 text-emerald-700",
-                      status.color === 'warning' && "bg-amber-50 text-amber-700",
-                      status.color === 'destructive' && "bg-red-50 text-red-700"
-                    )}>
-                      <status.icon size={10} weight="fill" />
-                      <span>{status.label}</span>
+                {/* Stock Info - Compact on mobile */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-2 md:mb-3">
+                  <div className="bg-muted/30 rounded-lg p-2 md:p-0 md:bg-transparent">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">{t.inventory.stock}</p>
+                    <p className="font-semibold text-xs md:text-sm">
+                      {item.hasMultiUnit
+                        ? getStockDisplay(
+                            item.stock || 0,
+                            item.piecesPerPurchaseUnit || 12,
+                            item.purchaseUnit || 'Box',
+                            item.baseUnit || 'Pcs'
+                          ).displayText
+                        : `${item.stock || 0} ${item.unit || 'PCS'}`
+                      }
+                    </p>
+                  </div>
+                  <div className="bg-muted/30 rounded-lg p-2 md:p-0 md:bg-transparent">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">{t.inventory.value}</p>
+                    <p className="font-semibold text-xs md:text-sm">₹{stockValue.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-lg p-2 md:p-0 md:bg-transparent">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">{t.inventory.buy}</p>
+                    <p className="font-semibold text-xs md:text-sm">₹{(item.purchasePrice || 0).toLocaleString()}</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-lg p-2 md:p-0 md:bg-transparent">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">{t.inventory.sell}</p>
+                    <p className="font-semibold text-xs md:text-sm text-success">₹{(item.sellingPrice || 0).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                {/* Stock Level Bar - Hidden on mobile for compact view */}
+                <div className="hidden md:block mb-3">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                    <span>{t.inventory.stockLevel}</span>
+                    <span>
+                      {item.hasMultiUnit
+                        ? `${item.stock || 0} ${item.baseUnit || 'Pcs'}`
+                        : `${item.stock || 0}`
+                      } / {item.maxStock || 'N/A'}
                     </span>
                   </div>
+                  {(item.maxStock || 0) > 0 && (
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${stockPercentage}%` }}
+                        transition={{ delay: index * 0.05 + 0.3, duration: 0.5 }}
+                        className={cn(
+                          "h-full rounded-full",
+                          (item.stock || 0) === 0 && "bg-destructive",
+                          (item.stock || 0) <= (item.reorderPoint || 0) && (item.stock || 0) > 0 && "bg-warning",
+                          (item.stock || 0) > (item.reorderPoint || 0) && "bg-success"
+                        )}
+                      />
+                    </div>
+                  )}
+                  {(item.stock || 0) <= (item.reorderPoint || 0) && (item.stock || 0) > 0 && (
+                    <p className="text-xs text-warning mt-1">{t.inventory.reorderLevel.replace('{count}', (item.reorderPoint || 0).toString())}</p>
+                  )}
+                </div>
 
-                  <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-                    <div>
-                      <div className="text-slate-400 mb-0.5">Stock</div>
-                      <div className="font-semibold text-slate-800">
-                        {item.hasMultiUnit
-                          ? getStockDisplay(
-                              item.stock || 0,
-                              item.piecesPerPurchaseUnit || 12,
-                              item.purchaseUnit || 'Box',
-                              item.baseUnit || 'Pcs'
-                            ).displayText
-                          : `${item.stock || 0} ${item.unit || 'PCS'}`
-                        }
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400 mb-0.5">Price</div>
-                      <div className="font-semibold text-slate-800">₹{(item.sellingPrice || 0).toLocaleString('en-IN')}</div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400 mb-0.5">Unit</div>
-                      <div className="text-slate-600">{item.unit || 'PCS'}</div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400 mb-0.5">Value</div>
-                      <div className="text-slate-600">₹{stockValue.toLocaleString('en-IN')}</div>
-                    </div>
+                <div className="flex items-center justify-between pt-2 md:pt-3 border-t border-border/50">
+                  <div className="hidden md:flex items-center gap-4 text-xs text-muted-foreground">
+                    {item.brand && (
+                      <span>{t.inventory.brand}: {item.brand}</span>
+                    )}
+                    {item.tax?.gstRate && (
+                      <span>{t.inventory.gst}: {item.tax.gstRate}%</span>
+                    )}
+                    {profitMargin > 0 && (
+                      <span>{t.inventory.profitMargin}: {profitMargin.toFixed(2)}%</span>
+                    )}
                   </div>
-
-                  <div className="flex items-center justify-end gap-1 pt-2 border-t border-slate-100">
+                  {/* Mobile: Show profit margin */}
+                  <div className="md:hidden flex items-center gap-2 text-[10px] text-muted-foreground">
+                    {profitMargin > 0 && (
+                      <span className="bg-success/10 text-success px-1.5 py-0.5 rounded font-medium">
+                        {profitMargin.toFixed(0)}% margin
+                      </span>
+                    )}
+                    {item.tax?.gstRate && (
+                      <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
+                        {item.tax.gstRate}% GST
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 ml-auto">
                     <button
                       onClick={() => handleViewItem(item)}
-                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                      className="p-2 hover:bg-muted rounded-lg transition-colors active:scale-95"
+                      title={t.inventory.viewItem}
                     >
-                      <Eye size={16} weight="duotone" className="text-blue-600" />
+                      <Eye size={16} weight="duotone" />
                     </button>
                     <button
                       onClick={() => handleEditItem(item)}
-                      className="w-7 h-7 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                      className="p-2 hover:bg-muted rounded-lg transition-colors active:scale-95"
+                      title={t.inventory.editItem}
                     >
-                      <Pencil size={16} weight="duotone" className="text-amber-600" />
+                      <Pencil size={16} weight="duotone" />
                     </button>
                     <button
                       onClick={() => handleDeleteItem(item)}
-                      className="w-7 h-7 flex items-center justify-center bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                      className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors active:scale-95"
+                      title={t.inventory.deleteItem}
                     >
-                      <Trash size={16} weight="duotone" className="text-red-600" />
+                      <Trash size={16} weight="duotone" />
                     </button>
                   </div>
                 </div>
               </motion.div>
             )
           }))}
+        </div>
+
+        {/* Recent Stock Movements - Only shown when there are actual movements (hidden on mobile) */}
+        {recentMovements.length > 0 && (
+          <div className="hidden md:block bg-card rounded-xl border border-border/50 overflow-hidden">
+            <div className="p-4 border-b border-border/50">
+              <h2 className="font-semibold flex items-center gap-2">
+                <ArrowsClockwise size={18} weight="duotone" className="text-primary" />
+                {t.inventory.recentStockMovements}
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{t.inventory.type}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{t.inventory.item}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{t.inventory.quantity}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{t.inventory.reference}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{t.inventory.date}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{t.inventory.by}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentMovements.map((movement, index) => (
+                    <motion.tr
+                      key={movement.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="border-b border-border/50 hover:bg-muted/30 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <span className={cn(
+                          "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium w-fit",
+                          movement.type === 'in' ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                        )}>
+                          {movement.type === 'in' ? (
+                            <DownloadSimple size={12} weight="bold" />
+                          ) : (
+                            <UploadSimple size={12} weight="bold" />
+                          )}
+                          {movement.type === 'in' ? 'Stock In' : 'Stock Out'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-medium">{movement.item}</td>
+                      <td className="px-4 py-3">{movement.qty} {t.inventory.units}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{movement.reference}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{movement.date}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{movement.by}</td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add Item Modal - Professional & Comprehensive */}
@@ -3482,45 +3496,6 @@ const Inventory = () => {
         </div>
       )}
 
-      {/* Dropdown Menu Portal */}
-      {openActionMenu && dropdownPosition && createPortal(
-        <div
-          className="fixed bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-[9999] min-w-[140px]"
-          style={{
-            top: `${dropdownPosition.top}px`,
-            right: `${dropdownPosition.right}px`
-          }}
-        >
-          <button
-            onClick={() => {
-              const item = items.find(i => i.id === openActionMenu)
-              if (item) handleViewItem(item)
-              setOpenActionMenu(null)
-            }}
-            className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-          >
-            <Eye size={14} weight="duotone" />
-            View Details
-          </button>
-          <button
-            onClick={() => {
-              const item = items.find(i => i.id === openActionMenu)
-              if (item) {
-                // Copy item name to clipboard
-                navigator.clipboard.writeText(item.name)
-                toast.success('Item name copied!')
-              }
-              setOpenActionMenu(null)
-            }}
-            className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-          >
-            <Barcode size={14} weight="duotone" />
-            Copy Name
-          </button>
-        </div>,
-        document.body
-      )}
-
       {/* Camera Barcode Scanner Modal - Using proper BarcodeScanner component */}
       <BarcodeScanner
         isOpen={showBarcodeScanner}
@@ -3531,7 +3506,7 @@ const Inventory = () => {
         }}
         title="Scan Item Barcode"
       />
-    </div>
+    </motion.div>
   )
 }
 

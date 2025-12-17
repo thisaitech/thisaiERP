@@ -58,7 +58,11 @@
       "Bash(npx firebase deploy --only hosting)",
       "Bash(start cmd /k \"cd /d d:\\Project2\\Anna && npx firebase login --reauth\")",
       "Bash(firebase hosting:channel:list:*)",
-      "Bash(npx firebase deploy --only hosting --force)"
+      "Bash(npx firebase deploy --only hosting --force)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(taskkill:*)",
+      "Bash(start cmd /k \"npm run dev\")"
     ],
     "deny": [],
     "ask": []

@@ -394,208 +394,182 @@ const Reports = () => {
   }
 
   return (
-    <div className="min-h-screen pb-24 lg:pb-8">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-destructive via-destructive/90 to-warning px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-        <div className="max-w-[1920px] mx-auto">
-          <div className="flex items-center justify-between mb-6 lg:mb-8">
-            <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">{t.reports.businessReports}</h1>
-              <p className="text-white/80 text-sm lg:text-base">{t.reports.comprehensiveAnalytics}</p>
-            </div>
-            <div className="flex gap-2 lg:gap-3">
-              {/* Download Dropdown */}
-              <div className="relative">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                  className="flex items-center gap-1 px-3 py-2.5 lg:px-4 lg:py-3 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-                >
-                  <Download size={20} className="text-white lg:w-6 lg:h-6" weight="bold" />
-                  <CaretDown size={16} className="text-white" weight="bold" />
-                </motion.button>
-
-                <AnimatePresence>
-                  {showDownloadMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 bottom-full mb-2 w-48 bg-card rounded-lg shadow-xl border border-border overflow-hidden z-50"
-                    >
-                      <button
-                        onClick={downloadJSON}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors text-left"
-                      >
-                        <FileJs size={20} weight="duotone" className="text-yellow-500" />
-                        <span className="font-medium text-sm">{t.reports.downloadJSON}</span>
-                      </button>
-                      <button
-                        onClick={downloadExcel}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors text-left border-t border-border"
-                      >
-                        <FileXls size={20} weight="duotone" className="text-green-500" />
-                        <span className="font-medium text-sm">{t.reports.downloadExcel}</span>
-                      </button>
-                      <button
-                        onClick={downloadPDF}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors text-left border-t border-border"
-                      >
-                        <FilePdf size={20} weight="duotone" className="text-red-500" />
-                        <span className="font-medium text-sm">{t.reports.downloadPDF}</span>
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => toast.info('Print preview...')}
-                className="p-2.5 lg:p-3 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-3 py-2 bg-slate-50/50 min-h-screen">
+      {/* Header - Clean & Simple like Sales/Purchase */}
+      <div className="flex-shrink-0">
+        {/* Top Row: Title + Actions */}
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
+            <ChartLine size={22} weight="duotone" className="text-blue-600" />
+            <span>{t.reports.businessReports}</span>
+          </h1>
+          <div className="flex items-center gap-2">
+            {/* Export Dropdown */}
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  setShowDownloadMenu(!showDownloadMenu)
+                }}
+                className="h-8 px-3 rounded-lg border border-emerald-200 bg-white text-xs text-emerald-600 font-semibold flex items-center gap-1.5 hover:border-emerald-400 hover:bg-emerald-50 transition-all"
               >
-                <Printer size={20} className="text-white lg:w-6 lg:h-6" weight="bold" />
-              </motion.button>
+                <Download size={14} weight="bold" />
+                <span>Export</span>
+                <CaretDown size={12} />
+              </button>
+              {showDownloadMenu && (
+                <>
+                  <div className="fixed inset-0 z-[100]" onClick={() => setShowDownloadMenu(false)} />
+                  <div className="fixed bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-[101] min-w-[160px]"
+                    style={{
+                      top: '60px',
+                      right: '12px'
+                    }}
+                  >
+                    <button
+                      onClick={downloadJSON}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2"
+                    >
+                      <FileJs size={14} className="text-yellow-500" />
+                      Export JSON
+                    </button>
+                    <button
+                      onClick={downloadExcel}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2"
+                    >
+                      <FileXls size={14} className="text-green-500" />
+                      Export Excel
+                    </button>
+                    <button
+                      onClick={downloadPDF}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2"
+                    >
+                      <FilePdf size={14} className="text-red-500" />
+                      Export PDF
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white/10 backdrop-blur-lg rounded-lg p-4 lg:p-6 border border-white/20"
-            >
-              <p className="text-white/80 text-xs lg:text-sm mb-1">{t.reports.totalSales}</p>
-              <p className="text-2xl lg:text-3xl font-bold text-white">₹{(salesSummaryData.totalSales / 1000).toFixed(0)}k</p>
-              <div className="flex items-center gap-1 mt-1">
-                <TrendUp size={16} className="text-success lg:w-5 lg:h-5" />
-                <span className="text-xs lg:text-sm text-white/80">+{salesSummaryData.growth}%</span>
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white/10 backdrop-blur-lg rounded-lg p-4 border border-white/20"
-            >
-              <p className="text-white/80 text-xs mb-1">{t.reports.netProfit}</p>
-              <p className="text-2xl font-bold text-white">₹{(profitLossData.netProfit / 1000).toFixed(1)}k</p>
-              <p className="text-xs text-white/80 mt-1">{profitLossData.profitMargin}% {t.inventory.margin}</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white/10 backdrop-blur-lg rounded-lg p-4 border border-white/20"
-            >
-              <p className="text-white/80 text-xs mb-1">{t.reports.receivables}</p>
-              <p className="text-2xl font-bold text-white">₹{(receivablesData.reduce((sum, r) => sum + r.amount, 0) / 1000).toFixed(0)}k</p>
-              <p className="text-xs text-warning mt-1">₹15k {t.reports.overdue}</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white/10 backdrop-blur-lg rounded-lg p-4 border border-white/20"
-            >
-              <p className="text-white/80 text-xs mb-1">{t.reports.stockValue}</p>
-              <p className="text-2xl font-bold text-white">₹{(inventorySummary.totalValue / 1000).toFixed(0)}k</p>
-              <p className="text-xs text-warning mt-1">{inventorySummary.lowStockItems} {t.reports.lowStock}</p>
-            </motion.div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
-        {/* Date Range Filter */}
-        <div className="bg-card rounded-lg shadow-lg border border-border p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <Calendar size={20} weight="duotone" className="text-muted-foreground" />
-              <span className="text-sm font-medium">{t.reports.dateRange}:</span>
-            </div>
-            <div className="flex gap-2 overflow-x-auto">
+        {/* Period Filter & Stats - Compact Modern (matching Sales design) */}
+        <div className="space-y-2">
+          {/* Period Filter Tabs */}
+          <div className="flex items-center justify-center">
+            <div className="inline-flex items-center gap-0.5 text-xs bg-white rounded-lg p-0.5 shadow-sm border border-slate-200">
               {[
                 { key: 'today', label: t.common.today },
                 { key: 'this-week', label: t.common.thisWeek },
                 { key: 'this-month', label: t.common.thisMonth },
-                { key: 'this-quarter', label: t.common.thisQuarter },
                 { key: 'this-year', label: t.common.thisYear },
-                { key: 'custom', label: t.common.custom }
-              ].map((range) => (
+                { key: 'all', label: t.common.all },
+              ].map((filter) => (
                 <button
-                  key={range.key}
-                  onClick={() => setDateRange(range.key)}
+                  key={filter.key}
+                  onClick={() => setDateRange(filter.key)}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all",
-                    dateRange === range.key
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap",
+                    dateRange === filter.key
+                      ? "bg-slate-800 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                   )}
                 >
-                  {range.label}
+                  {filter.label}
                 </button>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Report Categories */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Quick Stats Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-2">
+            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                  <Receipt size={16} weight="duotone" className="text-green-600" />
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">{t.reports.totalSales}</span>
+              </div>
+              <p className="text-lg font-bold text-slate-800">₹{(salesSummaryData.totalSales / 1000).toFixed(0)}k</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <TrendUp size={12} className="text-green-600" />
+                <span className="text-[10px] text-green-600 font-medium">+{salesSummaryData.growth}%</span>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <CurrencyCircleDollar size={16} weight="duotone" className="text-blue-600" />
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">{t.reports.netProfit}</span>
+              </div>
+              <p className="text-lg font-bold text-slate-800">₹{(profitLossData.netProfit / 1000).toFixed(1)}k</p>
+              <span className="text-[10px] text-slate-500">{profitLossData.profitMargin}% margin</span>
+            </div>
+
+            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+                  <Wallet size={16} weight="duotone" className="text-orange-600" />
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">{t.reports.receivables}</span>
+              </div>
+              <p className="text-lg font-bold text-slate-800">₹{(receivablesData.reduce((sum, r) => sum + r.amount, 0) / 1000).toFixed(0)}k</p>
+              <span className="text-[10px] text-orange-600">₹15k overdue</span>
+            </div>
+
+            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                  <Package size={16} weight="duotone" className="text-purple-600" />
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">{t.reports.stockValue}</span>
+              </div>
+              <p className="text-lg font-bold text-slate-800">₹{(inventorySummary.totalValue / 1000).toFixed(0)}k</p>
+              <span className="text-[10px] text-orange-600">{inventorySummary.lowStockItems} low</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        {/* Report Categories - Clean layout */}
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Categories List */}
           <div className="lg:col-span-1">
-            <div className="bg-card rounded-lg shadow-lg border border-border p-4">
-              <h3 className="font-bold mb-4 flex items-center gap-2">
-                <FunnelSimple size={20} weight="duotone" />
-                {t.reports.reportCategories}
-              </h3>
-              <div className="space-y-2">
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+              <h3 className="font-semibold mb-3 text-sm text-slate-700">{t.reports.reportCategories}</h3>
+              <div className="space-y-1">
                 {reportCategories.map((category, index) => (
-                  <motion.button
+                  <button
                     key={category.category}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
                     onClick={() => setSelectedReport(category.category)}
                     className={cn(
-                      "w-full flex items-center justify-between p-3 rounded-lg transition-all text-left",
+                      "w-full flex items-center gap-2 p-2.5 rounded-lg transition-all text-left text-sm",
                       selectedReport === category.category
-                        ? "bg-primary/10 border-2 border-primary"
-                        : "bg-muted/50 hover:bg-muted border-2 border-transparent"
+                        ? "bg-blue-50 border border-blue-200 text-blue-700"
+                        : "hover:bg-slate-50 border border-transparent text-slate-700"
                     )}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "p-2 rounded-lg",
-                        category.color === 'success' && "bg-success/10",
-                        category.color === 'warning' && "bg-warning/10",
-                        category.color === 'primary' && "bg-primary/10",
-                        category.color === 'accent' && "bg-accent/10",
-                        category.color === 'destructive' && "bg-destructive/10"
-                      )}>
-                        <category.icon
-                          size={20}
-                          weight="duotone"
-                          className={cn(
-                            category.color === 'success' && "text-success",
-                            category.color === 'warning' && "text-warning",
-                            category.color === 'primary' && "text-primary",
-                            category.color === 'accent' && "text-accent",
-                            category.color === 'destructive' && "text-destructive"
-                          )}
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{category.category}</p>
-                        <p className="text-xs text-muted-foreground">{category.reports.length} {t.reports.reports}</p>
-                      </div>
+                    <category.icon
+                      size={18}
+                      weight="duotone"
+                      className={cn(
+                        category.color === 'success' && "text-green-600",
+                        category.color === 'warning' && "text-orange-600",
+                        category.color === 'primary' && "text-blue-600",
+                        category.color === 'accent' && "text-purple-600",
+                        category.color === 'destructive' && "text-red-600"
+                      )}
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{category.category}</p>
+                      <p className="text-[10px] text-slate-500">{category.reports.length} reports</p>
                     </div>
-                    <ArrowRight size={16} className="text-muted-foreground" />
-                  </motion.button>
+                    {selectedReport === category.category && (
+                      <ArrowRight size={14} className="text-blue-600" weight="bold" />
+                    )}
+                  </button>
                 ))}
               </div>
             </div>
@@ -604,71 +578,68 @@ const Reports = () => {
           {/* Report Details */}
           <div className="lg:col-span-2">
             {!selectedReport ? (
-              <div className="bg-card rounded-lg shadow-lg border border-border p-8 text-center">
-                <ChartBar size={64} weight="duotone" className="text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">{t.reports.selectReportCategory}</h3>
-                <p className="text-muted-foreground">{t.reports.chooseCategory}</p>
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8 text-center">
+                <ChartBar size={48} weight="duotone" className="text-slate-300 mx-auto mb-3" />
+                <h3 className="text-lg font-bold mb-1 text-slate-700">Select a report category</h3>
+                <p className="text-sm text-slate-500">Choose a category to view available reports</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {reportCategories
                   .find(cat => cat.category === selectedReport)
                   ?.reports.map((report, index) => (
-                    <motion.div
+                    <div
                       key={report.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="bg-card rounded-lg shadow-lg border border-border p-4 hover:border-primary transition-all cursor-pointer"
+                      className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 hover:border-blue-300 hover:shadow transition-all cursor-pointer"
                       onClick={() => toast.info(`Opening ${report.name}...`)}
                     >
                       <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-bold mb-1">{report.name}</h4>
-                          <p className="text-sm text-muted-foreground">{report.description}</p>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm text-slate-800 mb-0.5">{report.name}</h4>
+                          <p className="text-xs text-slate-500">{report.description}</p>
                         </div>
-                        <div className="flex gap-2">
-                          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                            <Eye size={18} weight="duotone" />
+                        <div className="flex gap-1 ml-2">
+                          <button className="p-1.5 hover:bg-slate-100 rounded transition-colors">
+                            <Eye size={16} weight="duotone" className="text-slate-600" />
                           </button>
-                          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                            <Download size={18} weight="duotone" />
+                          <button className="p-1.5 hover:bg-slate-100 rounded transition-colors">
+                            <Download size={16} weight="duotone" className="text-slate-600" />
                           </button>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
               </div>
             )}
 
             {/* Sample Report Data Display */}
             {selectedReport === t.reports.salesReports && (
-              <div className="bg-card rounded-lg shadow-lg border border-border p-6 mt-6">
-                <h3 className="font-bold mb-4">{t.reports.salesSummary} - {t.reports.thisMonth}</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-                  <div className="p-4 bg-success/5 rounded-lg border border-success/20">
-                    <p className="text-xs text-muted-foreground mb-1">{t.reports.totalSales}</p>
-                    <p className="text-2xl font-bold">₹{salesSummaryData.totalSales.toLocaleString()}</p>
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mt-3">
+                <h3 className="font-semibold text-sm mb-3 text-slate-700">{t.reports.salesSummary} - {t.reports.thisMonth}</h3>
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-100">
+                    <p className="text-[10px] text-slate-500 mb-0.5">{t.reports.totalSales}</p>
+                    <p className="text-lg font-bold text-slate-800">₹{salesSummaryData.totalSales.toLocaleString()}</p>
                   </div>
-                  <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                    <p className="text-xs text-muted-foreground mb-1">{t.reports.totalInvoices}</p>
-                    <p className="text-2xl font-bold">{salesSummaryData.totalInvoices}</p>
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <p className="text-[10px] text-slate-500 mb-0.5">{t.reports.totalInvoices}</p>
+                    <p className="text-lg font-bold text-slate-800">{salesSummaryData.totalInvoices}</p>
                   </div>
-                  <div className="p-4 bg-accent/5 rounded-lg border border-accent/20">
-                    <p className="text-xs text-muted-foreground mb-1">{t.reports.avgInvoiceValue}</p>
-                    <p className="text-2xl font-bold">₹{salesSummaryData.avgInvoiceValue.toLocaleString()}</p>
+                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
+                    <p className="text-[10px] text-slate-500 mb-0.5">{t.reports.avgInvoiceValue}</p>
+                    <p className="text-lg font-bold text-slate-800">₹{salesSummaryData.avgInvoiceValue.toLocaleString()}</p>
                   </div>
                 </div>
 
-                <h4 className="font-medium mb-3">{t.reports.top5Customers}</h4>
-                <div className="space-y-2">
+                <h4 className="font-medium text-xs mb-2 text-slate-600">{t.reports.top5Customers}</h4>
+                <div className="space-y-1.5">
                   {topCustomers.map((customer, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-2.5 bg-slate-50 rounded-lg border border-slate-100">
                       <div>
-                        <p className="font-medium text-sm">{customer.name}</p>
-                        <p className="text-xs text-muted-foreground">{customer.invoices} {t.sales.invoices}</p>
+                        <p className="font-medium text-sm text-slate-800">{customer.name}</p>
+                        <p className="text-[10px] text-slate-500">{customer.invoices} invoices</p>
                       </div>
-                      <p className="font-bold">₹{customer.sales.toLocaleString()}</p>
+                      <p className="font-bold text-sm text-slate-800">₹{customer.sales.toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
@@ -676,68 +647,68 @@ const Reports = () => {
             )}
 
             {selectedReport === t.reports.financialReports && (
-              <div className="bg-card rounded-lg shadow-lg border border-border p-6 mt-6">
-                <h3 className="font-bold mb-4">{t.reports.profitLossStatement}</h3>
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mt-3">
+                <h3 className="font-semibold text-sm mb-3 text-slate-700">{t.reports.profitLossStatement}</h3>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {/* Revenue */}
-                  <div className="p-4 bg-success/5 rounded-lg border border-success/20">
-                    <h4 className="font-medium mb-3 text-success">{t.reports.revenue}</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>{t.reports.salesRevenue}</span>
-                        <span className="font-medium">₹{profitLossData.revenue.sales.toLocaleString()}</span>
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-100">
+                    <h4 className="font-medium text-xs mb-2 text-green-700">{t.reports.revenue}</h4>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-600">{t.reports.salesRevenue}</span>
+                        <span className="font-medium text-slate-800">₹{profitLossData.revenue.sales.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span>{t.reports.otherIncome}</span>
-                        <span className="font-medium">₹{profitLossData.revenue.otherIncome.toLocaleString()}</span>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-600">{t.reports.otherIncome}</span>
+                        <span className="font-medium text-slate-800">₹{profitLossData.revenue.otherIncome.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between font-bold pt-2 border-t border-success/20">
-                        <span>{t.reports.totalRevenue}</span>
-                        <span>₹{profitLossData.revenue.total.toLocaleString()}</span>
+                      <div className="flex justify-between font-semibold pt-1.5 border-t border-green-200 text-xs">
+                        <span className="text-slate-700">{t.reports.totalRevenue}</span>
+                        <span className="text-slate-800">₹{profitLossData.revenue.total.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Expenses */}
-                  <div className="p-4 bg-destructive/5 rounded-lg border border-destructive/20">
-                    <h4 className="font-medium mb-3 text-destructive">{t.reports.expenses}</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>{t.reports.costOfGoodsSold}</span>
-                        <span className="font-medium">₹{profitLossData.expenses.purchases.toLocaleString()}</span>
+                  <div className="p-3 bg-red-50 rounded-lg border border-red-100">
+                    <h4 className="font-medium text-xs mb-2 text-red-700">{t.reports.expenses}</h4>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-600">{t.reports.costOfGoodsSold}</span>
+                        <span className="font-medium text-slate-800">₹{profitLossData.expenses.purchases.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span>{t.reports.operatingExpenses}</span>
-                        <span className="font-medium">₹{profitLossData.expenses.operatingExpenses.toLocaleString()}</span>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-600">{t.reports.operatingExpenses}</span>
+                        <span className="font-medium text-slate-800">₹{profitLossData.expenses.operatingExpenses.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span>{t.reports.salaries}</span>
-                        <span className="font-medium">₹{profitLossData.expenses.salary.toLocaleString()}</span>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-600">{t.reports.salaries}</span>
+                        <span className="font-medium text-slate-800">₹{profitLossData.expenses.salary.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span>{t.expenses.rent}</span>
-                        <span className="font-medium">₹{profitLossData.expenses.rent.toLocaleString()}</span>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-600">{t.expenses.rent}</span>
+                        <span className="font-medium text-slate-800">₹{profitLossData.expenses.rent.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span>{t.expenses.utilities}</span>
-                        <span className="font-medium">₹{profitLossData.expenses.utilities.toLocaleString()}</span>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-600">{t.expenses.utilities}</span>
+                        <span className="font-medium text-slate-800">₹{profitLossData.expenses.utilities.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between font-bold pt-2 border-t border-destructive/20">
-                        <span>{t.reports.totalExpenses}</span>
-                        <span>₹{profitLossData.expenses.total.toLocaleString()}</span>
+                      <div className="flex justify-between font-semibold pt-1.5 border-t border-red-200 text-xs">
+                        <span className="text-slate-700">{t.reports.totalExpenses}</span>
+                        <span className="text-slate-800">₹{profitLossData.expenses.total.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Net Profit */}
-                  <div className="p-4 bg-primary/5 rounded-lg border-2 border-primary">
+                  <div className="p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h4 className="font-bold text-lg">{t.reports.netProfit}</h4>
-                        <p className="text-sm text-muted-foreground">{t.reports.profitMargin}: {profitLossData.profitMargin}%</p>
+                        <h4 className="font-semibold text-sm text-blue-700">{t.reports.netProfit}</h4>
+                        <p className="text-[10px] text-slate-500">{t.reports.profitMargin}: {profitLossData.profitMargin}%</p>
                       </div>
-                      <p className="text-3xl font-bold text-primary">₹{profitLossData.netProfit.toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-blue-700">₹{profitLossData.netProfit.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -745,41 +716,41 @@ const Reports = () => {
             )}
 
             {selectedReport === t.reports.inventoryReports && (
-              <div className="bg-card rounded-lg shadow-lg border border-border p-6 mt-6">
-                <h3 className="font-bold mb-4">{t.reports.stockSummary}</h3>
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mt-3">
+                <h3 className="font-semibold text-sm mb-3 text-slate-700">{t.reports.stockSummary}</h3>
                 <div className="space-y-2">
                   {stockData.map((item, index) => (
                     <div key={index} className={cn(
-                      "p-4 rounded-lg border-2",
-                      item.status === 'healthy' && "bg-success/5 border-success/20",
-                      item.status === 'low' && "bg-warning/5 border-warning/20",
-                      item.status === 'critical' && "bg-destructive/5 border-destructive/20"
+                      "p-3 rounded-lg border",
+                      item.status === 'healthy' && "bg-green-50 border-green-200",
+                      item.status === 'low' && "bg-orange-50 border-orange-200",
+                      item.status === 'critical' && "bg-red-50 border-red-200"
                     )}>
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center justify-between mb-1.5">
                         <div>
-                          <p className="font-medium">{item.item}</p>
-                          <p className="text-xs text-muted-foreground">{t.reports.minStock}: {item.minStock}</p>
+                          <p className="font-medium text-sm text-slate-800">{item.item}</p>
+                          <p className="text-[10px] text-slate-500">Min: {item.minStock}</p>
                         </div>
                         <span className={cn(
-                          "px-2 py-1 rounded-full text-xs font-medium",
-                          item.status === 'healthy' && "bg-success/10 text-success",
-                          item.status === 'low' && "bg-warning/10 text-warning",
-                          item.status === 'critical' && "bg-destructive/10 text-destructive"
+                          "px-2 py-0.5 rounded-full text-[10px] font-medium",
+                          item.status === 'healthy' && "bg-green-100 text-green-700",
+                          item.status === 'low' && "bg-orange-100 text-orange-700",
+                          item.status === 'critical' && "bg-red-100 text-red-700"
                         )}>
-                          {item.status === 'critical' ? t.reports.criticalLow : item.status === 'low' ? t.reports.lowStock : t.reports.healthy}
+                          {item.status === 'critical' ? 'Critical' : item.status === 'low' ? 'Low' : 'Healthy'}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span>{t.reports.currentStock}: <strong>{item.stock}</strong></span>
-                        <span className="font-bold">{t.reports.value}: ₹{item.value.toLocaleString()}</span>
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="text-slate-600">Stock: <strong className="text-slate-800">{item.stock}</strong></span>
+                        <span className="font-semibold text-slate-800">₹{item.value.toLocaleString()}</span>
                       </div>
-                      <div className="w-full bg-muted rounded-full h-2 mt-2">
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
                         <div
                           className={cn(
-                            "h-2 rounded-full transition-all",
-                            item.status === 'healthy' && "bg-success",
-                            item.status === 'low' && "bg-warning",
-                            item.status === 'critical' && "bg-destructive"
+                            "h-1.5 rounded-full transition-all",
+                            item.status === 'healthy' && "bg-green-500",
+                            item.status === 'low' && "bg-orange-500",
+                            item.status === 'critical' && "bg-red-500"
                           )}
                           style={{ width: `${Math.min((item.stock / item.minStock) * 100, 100)}%` }}
                         />
@@ -791,44 +762,44 @@ const Reports = () => {
             )}
 
             {selectedReport === t.reports.partyReports && (
-              <div className="bg-card rounded-lg shadow-lg border border-border p-6 mt-6">
-                <h3 className="font-bold mb-4">{t.reports.accountsReceivable}</h3>
-                <div className="space-y-3">
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mt-3">
+                <h3 className="font-semibold text-sm mb-3 text-slate-700">{t.reports.accountsReceivable}</h3>
+                <div className="space-y-2">
                   {receivablesData.map((party, index) => (
-                    <div key={index} className="p-4 bg-muted/50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
+                    <div key={index} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                      <div className="flex items-center justify-between mb-1.5">
                         <div>
-                          <p className="font-medium">{party.party}</p>
-                          <p className="text-xs text-muted-foreground">{t.sales.due}: {new Date(party.dueDate).toLocaleDateString()}</p>
+                          <p className="font-medium text-sm text-slate-800">{party.party}</p>
+                          <p className="text-[10px] text-slate-500">Due: {new Date(party.dueDate).toLocaleDateString()}</p>
                         </div>
                         {party.overdue > 0 && (
-                          <span className="px-2 py-1 bg-destructive/10 text-destructive rounded-full text-xs font-medium">
-                            {t.reports.overdue}
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-[10px] font-medium">
+                            Overdue
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between text-xs">
                         <div>
-                          <p className="text-sm text-muted-foreground">{t.reports.totalOutstanding}</p>
-                          <p className="text-lg font-bold">₹{party.amount.toLocaleString()}</p>
+                          <p className="text-slate-500">Outstanding</p>
+                          <p className="text-base font-bold text-slate-800">₹{party.amount.toLocaleString()}</p>
                         </div>
                         {party.overdue > 0 && (
                           <div className="text-right">
-                            <p className="text-sm text-muted-foreground">{t.reports.overdueAmount}</p>
-                            <p className="text-lg font-bold text-destructive">₹{party.overdue.toLocaleString()}</p>
+                            <p className="text-slate-500">Overdue</p>
+                            <p className="text-base font-bold text-red-600">₹{party.overdue.toLocaleString()}</p>
                           </div>
                         )}
                       </div>
                     </div>
                   ))}
-                  <div className="p-4 bg-primary/5 rounded-lg border-2 border-primary mt-4">
+                  <div className="p-3 bg-blue-50 rounded-lg border-2 border-blue-200 mt-3">
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">{t.reports.totalReceivables}</span>
-                      <span className="text-2xl font-bold">₹{receivablesData.reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</span>
+                      <span className="font-medium text-sm text-slate-700">Total Receivables</span>
+                      <span className="text-xl font-bold text-blue-700">₹{receivablesData.reduce((sum, r) => sum + r.amount, 0).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between items-center mt-2 pt-2 border-t border-primary/20">
-                      <span className="text-sm text-muted-foreground">{t.reports.totalOverdue}</span>
-                      <span className="text-lg font-bold text-destructive">₹{receivablesData.reduce((sum, r) => sum + r.overdue, 0).toLocaleString()}</span>
+                    <div className="flex justify-between items-center mt-1.5 pt-1.5 border-t border-blue-200">
+                      <span className="text-xs text-slate-500">Total Overdue</span>
+                      <span className="text-base font-bold text-red-600">₹{receivablesData.reduce((sum, r) => sum + r.overdue, 0).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -836,52 +807,52 @@ const Reports = () => {
             )}
 
             {selectedReport === t.reports.gstReports && (
-              <div className="bg-card rounded-lg shadow-lg border border-border p-6 mt-6">
-                <h3 className="font-bold mb-4">{t.reports.gstSummary} (GSTR-3B)</h3>
-                <div className="space-y-4">
-                  <div className="p-4 bg-success/5 rounded-lg border border-success/20">
-                    <h4 className="font-medium mb-3 text-success">{t.reports.outputTax}</h4>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mt-3">
+                <h3 className="font-semibold text-sm mb-3 text-slate-700">{t.reports.gstSummary} (GSTR-3B)</h3>
+                <div className="space-y-2">
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-100">
+                    <h4 className="font-medium text-xs mb-2 text-green-700">{t.reports.outputTax}</h4>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
                       <div>
-                        <p className="text-muted-foreground mb-1">CGST</p>
-                        <p className="font-bold">₹{gstData.gstr1.cgst.toLocaleString()}</p>
+                        <p className="text-slate-500 mb-0.5">CGST</p>
+                        <p className="font-bold text-slate-800">₹{gstData.gstr1.cgst.toLocaleString()}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground mb-1">SGST</p>
-                        <p className="font-bold">₹{gstData.gstr1.sgst.toLocaleString()}</p>
+                        <p className="text-slate-500 mb-0.5">SGST</p>
+                        <p className="font-bold text-slate-800">₹{gstData.gstr1.sgst.toLocaleString()}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground mb-1">{t.common.total}</p>
-                        <p className="font-bold">₹{gstData.gstr1.total.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-warning/5 rounded-lg border border-warning/20">
-                    <h4 className="font-medium mb-3 text-warning">{t.reports.inputTax}</h4>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground mb-1">CGST</p>
-                        <p className="font-bold">₹{gstData.gstr2.cgst.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground mb-1">SGST</p>
-                        <p className="font-bold">₹{gstData.gstr2.sgst.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground mb-1">{t.common.total}</p>
-                        <p className="font-bold">₹{gstData.gstr2.total.toLocaleString()}</p>
+                        <p className="text-slate-500 mb-0.5">Total</p>
+                        <p className="font-bold text-slate-800">₹{gstData.gstr1.total.toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-primary/5 rounded-lg border-2 border-primary">
+                  <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
+                    <h4 className="font-medium text-xs mb-2 text-orange-700">{t.reports.inputTax}</h4>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <p className="text-slate-500 mb-0.5">CGST</p>
+                        <p className="font-bold text-slate-800">₹{gstData.gstr2.cgst.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500 mb-0.5">SGST</p>
+                        <p className="font-bold text-slate-800">₹{gstData.gstr2.sgst.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500 mb-0.5">Total</p>
+                        <p className="font-bold text-slate-800">₹{gstData.gstr2.total.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h4 className="font-bold">{t.reports.netGstPayable}</h4>
-                        <p className="text-xs text-muted-foreground">{t.reports.outputTaxMinusInputTax}</p>
+                        <h4 className="font-semibold text-sm text-blue-700">{t.reports.netGstPayable}</h4>
+                        <p className="text-[10px] text-slate-500">Output tax - Input tax</p>
                       </div>
-                      <p className="text-3xl font-bold text-primary">₹{gstData.gstr3b.netTax.toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-blue-700">₹{gstData.gstr3b.netTax.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
