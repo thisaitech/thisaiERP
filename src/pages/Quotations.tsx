@@ -179,6 +179,7 @@ const Sales = () => {
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [selectedPeriod, setSelectedPeriod] = useState('all')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showScanner, setShowScanner] = useState(false)
@@ -5110,27 +5111,43 @@ TOTAL:       ₹${invoice.total}
   return (
     <div className={cn(
       "overflow-x-hidden flex flex-col max-w-[100vw] w-full",
-      viewMode === 'list' ? "px-3 py-2 bg-slate-50/50 min-h-screen" : "bg-white"
+      viewMode === 'list' ? "px-3 py-2 bg-[#f5f7fa] min-h-screen" : "bg-white"
     )}>
       {/* Header - Only show in list mode */}
       {viewMode === 'list' && (
       <div className="flex-shrink-0">
-        {/* Top Row: Title + Actions */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-            {location.pathname === '/pos' ? (
-              <>
-                <Storefront size={22} weight="duotone" className="text-orange-500" />
-                <span>POS</span>
-              </>
-            ) : (
-              <>
-                <Receipt size={22} weight="duotone" className="text-blue-600" />
-                <span>Quotation</span>
-              </>
-            )}
-          </h1>
-          <div className="flex items-center gap-2">
+        {/* Top Row: Period Filter Left + Action Button Right */}
+        <div className="flex items-center justify-between mb-3">
+          {/* Period Filter Tabs - Left Side */}
+          <div className="flex-shrink-0">
+            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+              {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
+                <button
+                  key={period}
+                  onClick={() => {
+                    setSelectedPeriod(period)
+                    setStatsFilter(period as any)
+                    if (period === 'custom') {
+                      setShowCustomDatePicker(true)
+                    } else {
+                      setShowCustomDatePicker(false)
+                    }
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                    selectedPeriod === period
+                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  {period.charAt(0).toUpperCase() + period.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Buttons - Right Side */}
+          <div className="flex items-center gap-2 flex-shrink-0">
                 {/* Tally Export Dropdown */}
                 <div className="relative">
                   <button
@@ -5204,7 +5221,12 @@ TOTAL:       ₹${invoice.total}
                     }
                     setViewMode('create')
                   }}
-                  className="h-8 px-3 rounded-lg border border-blue-200 bg-white text-xs text-blue-600 font-semibold flex items-center gap-1.5 hover:border-blue-400 hover:bg-blue-50 transition-all"
+                  className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
+                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                    active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                    transition-all duration-200"
                 >
                   <Plus size={14} weight="bold" />
                   <span>{location.pathname === '/pos' ? 'POS' : 'Quotation'}</span>
@@ -5212,111 +5234,73 @@ TOTAL:       ₹${invoice.total}
           </div>
         </div>
 
-        {/* Period Filter & Stats - Compact Modern */}
-          <div className="space-y-2">
-            {/* Period Filter Tabs */}
-            <div className="flex items-center justify-center">
-              <div className="inline-flex items-center gap-0.5 text-xs bg-white rounded-lg p-0.5 shadow-sm border border-slate-200">
-                {[
-                  { value: 'today', label: t.common.today },
-                  { value: 'week', label: t.common.week },
-                  { value: 'month', label: t.common.month },
-                  { value: 'year', label: t.common.year },
-                  { value: 'all', label: t.common.all },
-                  { value: 'custom', label: t.common.custom },
-                ].map((filter) => (
-                  <button
-                    key={filter.value}
-                    onClick={() => {
-                      setStatsFilter(filter.value as any)
-                      if (filter.value === 'custom') {
-                        setShowCustomDatePicker(true)
-                      } else {
-                        setShowCustomDatePicker(false)
-                      }
-                    }}
-                    className={cn(
-                      "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap",
-                      statsFilter === filter.value
-                        ? "bg-slate-800 text-white shadow-sm"
-                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-                    )}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
+        {/* Stats Grid - Dashboard Style Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+
+          {/* Sales Card */}
+          <button
+            onClick={() => setFilterStatus('all')}
+            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.nav.sales}</span>
+              <div className="w-10 h-10 rounded-xl bg-green-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
               </div>
             </div>
+            <div className="text-2xl font-bold text-slate-800">₹{dashboardStats.periodSales.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          </button>
 
-              {/* Custom Date Range Picker */}
-              {(statsFilter === 'custom' || showCustomDatePicker) && (
-                <div className="flex flex-wrap items-center justify-center gap-2 bg-white rounded-lg p-2 shadow-sm border border-slate-200">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-500 font-medium">{t.common.from}:</span>
-                    <input
-                      type="date"
-                      value={customDateFrom}
-                      onChange={(e) => setCustomDateFrom(e.target.value)}
-                      className="px-2 py-1 text-[11px] rounded-md border border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-500 font-medium">{t.common.to}:</span>
-                    <input
-                      type="date"
-                      value={customDateTo}
-                      onChange={(e) => setCustomDateTo(e.target.value)}
-                      className="px-2 py-1 text-[11px] rounded-md border border-slate-200 bg-white text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                    />
-                  </div>
-                  {statsFilter === 'custom' && customDateFrom && customDateTo && (
-                    <span className="text-[9px] text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-md">
-                      {new Date(customDateFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - {new Date(customDateTo).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                  )}
-                </div>
-              )}
-
-            {/* Stats Grid - Clean Modern Cards */}
-            <div className="grid grid-cols-4 gap-2 max-w-2xl mx-auto">
-
-              {/* Sales Card */}
-              <button
-                onClick={() => setFilterStatus('all')}
-                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]"
-              >
-                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.nav.sales}</div>
-                <div className="text-base font-bold text-slate-800">₹{dashboardStats.periodSales.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-              </button>
-
-              {/* Collected Card */}
-              <button
-                onClick={() => setFilterStatus('paid')}
-                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-emerald-200 active:scale-[0.98]"
-              >
-                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.collected}</div>
-                <div className="text-base font-bold text-emerald-600">₹{dashboardStats.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-              </button>
-
-              {/* Pending Card */}
-              <button
-                onClick={() => setFilterStatus('pending')}
-                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-red-200 active:scale-[0.98]"
-              >
-                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.pending}</div>
-                <div className="text-base font-bold text-red-500">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-              </button>
-
-              {/* Invoices Card */}
-              <button
-                onClick={() => setFilterStatus('all')}
-                className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]"
-              >
-                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.sales.invoice}</div>
-                <div className="text-base font-bold text-blue-600">{dashboardStats.invoiceCount}</div>
-              </button>
+          {/* Collected Card */}
+          <button
+            onClick={() => setFilterStatus('paid')}
+            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.sales.collected}</span>
+              <div className="w-10 h-10 rounded-xl bg-emerald-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
             </div>
-          </div>
+            <div className="text-2xl font-bold text-emerald-600">₹{dashboardStats.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          </button>
+
+          {/* Pending Card */}
+          <button
+            onClick={() => setFilterStatus('pending')}
+            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.sales.pending}</span>
+              <div className="w-10 h-10 rounded-xl bg-orange-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-red-500">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          </button>
+
+          {/* Invoices Card */}
+          <button
+            onClick={() => setFilterStatus('all')}
+            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.sales.invoice}</span>
+              <div className="w-10 h-10 rounded-xl bg-blue-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-blue-600">{dashboardStats.invoiceCount}</div>
+          </button>
+        </div>
       </div>
       )}
 
@@ -6617,7 +6601,7 @@ TOTAL:       ₹${invoice.total}
                 {/* Mobile Card Layout - Clean & Consistent */}
                 <div ref={mobileItemsContainerRef} className="md:hidden space-y-1.5 max-h-[35vh] overflow-y-auto">
                   {invoiceItems.length === 0 ? (
-                    <div className="text-center py-8 text-slate-400 bg-slate-50/50 rounded-lg border border-dashed border-slate-200">
+                    <div className="text-center py-8 text-slate-400 bg-[#f5f7fa] rounded-lg border border-dashed border-slate-200">
                       <Package size={24} className="mx-auto mb-1 text-slate-300" />
                       <p className="text-xs">No items added</p>
                     </div>

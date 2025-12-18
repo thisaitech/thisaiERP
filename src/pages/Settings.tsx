@@ -660,69 +660,37 @@ const Settings = () => {
   }
 
   return (
-    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-3 py-2 bg-slate-50/50 min-h-screen">
-      {/* Header - Clean & Simple like Sales */}
+    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen">
+      {/* Header - Clean & Simple without Title */}
       <div className="flex-shrink-0">
-        {/* Top Row: Title */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-            <Gear size={22} weight="duotone" className="text-purple-600" />
-            <span>{t.settings.title}</span>
-          </h1>
-        </div>
-
-        {/* Category Tabs - Separate Boxes */}
+        {/* Category Tabs - Single Row Centered */}
         <div className="mb-3">
-          <div className="flex flex-col gap-2">
-            {/* First Row */}
-            <div className="flex items-center justify-center flex-wrap gap-2">
-              {settingsSections.slice(0, Math.ceil(settingsSections.length / 2)).map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => {
-                    setSelectedSection(section.id)
-                    setUserSearchQuery('')
-                  }}
-                  className={cn(
-                    "px-3 py-2 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1.5 shadow-sm border",
-                    selectedSection === section.id
-                      ? "bg-purple-600 text-white border-purple-600"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-purple-300 hover:bg-purple-50"
-                  )}
-                >
-                  <section.icon size={14} weight={selectedSection === section.id ? "duotone" : "regular"} />
-                  {section.label}
-                </button>
-              ))}
-            </div>
-            {/* Second Row */}
-            <div className="flex items-center justify-center flex-wrap gap-2">
-              {settingsSections.slice(Math.ceil(settingsSections.length / 2)).map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => {
-                    setSelectedSection(section.id)
-                    setUserSearchQuery('')
-                  }}
-                  className={cn(
-                    "px-3 py-2 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1.5 shadow-sm border",
-                    selectedSection === section.id
-                      ? "bg-purple-600 text-white border-purple-600"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-purple-300 hover:bg-purple-50"
-                  )}
-                >
-                  <section.icon size={14} weight={selectedSection === section.id ? "duotone" : "regular"} />
-                  {section.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center justify-center flex-wrap gap-2">
+            {settingsSections.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => {
+                  setSelectedSection(section.id)
+                  setUserSearchQuery('')
+                }}
+                className={cn(
+                  "px-3 py-2 rounded-xl text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1.5 duration-200",
+                  selectedSection === section.id
+                    ? "bg-purple-600 text-white shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]"
+                    : "bg-[#f5f7fa] dark:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155] hover:text-purple-600 dark:hover:text-purple-400"
+                )}
+              >
+                <section.icon size={14} weight={selectedSection === section.id ? "duotone" : "regular"} />
+                {section.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="mt-2">
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+        <div className="bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-4 shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff] dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
               {/* General Settings */}
               {selectedSection === 'general' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

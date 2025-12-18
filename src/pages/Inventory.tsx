@@ -50,6 +50,7 @@ const Inventory = () => {
   const { t, language } = useLanguage()
 
   const [activeTab, setActiveTab] = useState('all')
+  const [selectedPeriod, setSelectedPeriod] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
@@ -970,94 +971,160 @@ const Inventory = () => {
   })
 
   return (
-    <div className="min-h-screen p-2 sm:p-3 lg:p-4 pb-16 sm:pb-20 lg:pb-6">
+    <div className="min-h-screen p-3 sm:p-4 lg:p-4 pb-16 sm:pb-20 lg:pb-6 bg-[#f5f7fa] dark:bg-slate-900">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-3"
       >
-        {/* Top Row: Title + Actions */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-            <Package size={22} weight="duotone" className="text-blue-600" />
-            <span>{t.inventory.inventoryManagement}</span>
-          </h1>
-          <button
-            onClick={() => {
-              console.log('🔴 ADD ITEM BUTTON CLICKED')
-              setShowAddModal(true)
-              console.log('🟢 showAddModal set to TRUE')
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm"
-          >
-            <Plus size={16} weight="bold" />
-            <span className="hidden sm:inline">{t.inventory.addItem}</span>
-          </button>
+        {/* Top Row: Period Filter Left + Action Button Right */}
+        <div className="flex items-center justify-between mb-3">
+          {/* Period Filter Tabs - Left Side */}
+          <div className="flex-shrink-0">
+            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+              {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setSelectedPeriod(period)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                    selectedPeriod === period
+                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  {period.charAt(0).toUpperCase() + period.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Button - Right Side */}
+          <div className="flex-shrink-0">
+            <button
+              onClick={() => {
+                console.log('🔴 ADD ITEM BUTTON CLICKED')
+                setShowAddModal(true)
+                console.log('🟢 showAddModal set to TRUE')
+              }}
+              className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
+                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                transition-all duration-200"
+            >
+              <Plus size={14} weight="bold" />
+              <span className="hidden sm:inline">{t.inventory.addItem}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.inventory.totalItems}</div>
-            <div className="text-base font-bold text-slate-800">{inventorySummary.totalItems}</div>
-          </div>
+        {/* Stats Cards - Second Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+          {/* Stats Cards */}
+          <div className="contents">
+            {/* Total Items Card */}
+            <button
+              onClick={() => setActiveTab('all')}
+              className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-slate-500 font-medium">Total Items</span>
+                <div className="w-10 h-10 rounded-xl bg-blue-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                  <Package size={20} weight="duotone" className="text-blue-600" />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-slate-800">{inventorySummary.totalItems}</div>
+            </button>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.inventory.stockValue}</div>
-            <div className="text-base font-bold text-blue-600">₹{(inventorySummary.totalValue / 100000).toFixed(2)}L</div>
-          </div>
+            {/* Low Stock Card */}
+            <button
+              onClick={() => setActiveTab('low')}
+              className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-slate-500 font-medium">Low Stock</span>
+                <div className="w-10 h-10 rounded-xl bg-orange-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                  <WarningCircle size={20} weight="duotone" className="text-orange-600" />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-orange-600">{inventorySummary.lowStockItems}</div>
+            </button>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-amber-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.inventory.lowStock}</div>
-            <div className="text-base font-bold text-amber-600">{inventorySummary.lowStockItems}</div>
-          </div>
+            {/* Out of Stock Card */}
+            <button
+              onClick={() => setActiveTab('out')}
+              className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-slate-500 font-medium">Out of Stock</span>
+                <div className="w-10 h-10 rounded-xl bg-red-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                  <X size={20} weight="bold" className="text-red-600" />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-red-500">{inventorySummary.outOfStockItems}</div>
+            </button>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-red-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.inventory.outOfStock}</div>
-            <div className="text-base font-bold text-red-500">{inventorySummary.outOfStockItems}</div>
+            {/* Stock Value Card */}
+            <button
+              className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-slate-500 font-medium">Stock Value</span>
+                <div className="w-10 h-10 rounded-xl bg-emerald-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                  <CurrencyInr size={20} weight="duotone" className="text-emerald-600" />
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-emerald-600">₹{inventorySummary.totalValue.toLocaleString('en-IN')}</div>
+            </button>
           </div>
         </div>
+
       </motion.div>
 
-      {/* Search Bar */}
+      {/* Search Bar & Category Filter Row */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
         className="mb-3"
       >
-        <div className="relative">
-          <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder={t.inventory.searchByNameSku}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
-          />
+        <div className="flex items-center gap-3">
+          {/* Search Bar */}
+          <div className="flex-1 relative">
+            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
+            <input
+              type="text"
+              placeholder={t.inventory.searchByNameSku}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2.5 bg-[#f5f7fa] dark:bg-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 outline-none shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155] transition-all"
+            />
+          </div>
+
+          {/* Category Filter Pills - Right Side */}
+          <div className="flex-shrink-0">
+            <div className="inline-flex items-center gap-1 bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+              {categories.slice(0, 6).map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all whitespace-nowrap",
+                    selectedCategory === cat.id
+                      ? "bg-[#f5f7fa] dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  {cat.name} ({cat.count})
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </motion.div>
-
-      {/* Category Filter Pills (Centered) */}
-      <div className="flex items-center justify-center gap-1.5 mb-2.5 overflow-x-auto pb-1">
-        <div className="inline-flex items-center gap-0.5 bg-white rounded-lg p-0.5 shadow-sm border border-slate-200">
-          {categories.slice(0, 6).map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={cn(
-                "px-2.5 py-1 rounded-md text-[10px] font-medium transition-all whitespace-nowrap",
-                selectedCategory === cat.id
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-500 hover:bg-slate-100"
-              )}
-            >
-              {cat.name} ({cat.count})
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Tab Filters */}
       <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
@@ -1079,10 +1146,10 @@ const Inventory = () => {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
+              "px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap",
               activeTab === tab.id
-                ? "bg-blue-600 text-white shadow-sm"
-                : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300"
+                ? "bg-[#f5f7fa] dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             )}
           >
             {tab.label} ({tab.count})

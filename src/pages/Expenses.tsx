@@ -29,6 +29,7 @@ const Expenses = () => {
 
   const [showNewExpense, setShowNewExpense] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedPeriod, setSelectedPeriod] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -211,19 +212,41 @@ const Expenses = () => {
   }
 
   return (
-    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-3 py-2 bg-slate-50/50 min-h-screen">
-      {/* Header - Clean & Simple like Sales */}
+    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen">
+      {/* Header - Clean & Simple like Parties */}
       <div className="flex-shrink-0">
-        {/* Top Row: Title + Actions */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-            <Wallet size={22} weight="duotone" className="text-red-600" />
-            <span>{t.expenses?.title || 'Expenses'}</span>
-          </h1>
-          <div className="flex items-center gap-2">
+        {/* Top Row: Period Filter Left + Action Button Right */}
+        <div className="flex items-center justify-between mb-3">
+          {/* Period Filter Tabs - Left Side */}
+          <div className="flex-shrink-0">
+            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+              {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setSelectedPeriod(period)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                    selectedPeriod === period
+                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  {period.charAt(0).toUpperCase() + period.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Button - Right Side */}
+          <div className="flex-shrink-0">
             <button
               onClick={() => setShowNewExpense(true)}
-              className="h-8 px-3 rounded-lg border border-blue-200 bg-white text-xs text-blue-600 font-semibold flex items-center gap-1.5 hover:border-blue-400 hover:bg-blue-50 transition-all"
+              className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
+                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                transition-all duration-200"
             >
               <Plus size={14} weight="bold" />
               <span>Expense</span>
@@ -231,94 +254,100 @@ const Expenses = () => {
           </div>
         </div>
 
-        {/* Category Filter & Stats - Compact Modern (matching Sales design) */}
-        <div className="space-y-2">
-          {/* Category Filter Tabs */}
-          <div className="flex items-center justify-center">
-            <div className="inline-flex items-center gap-0.5 text-xs bg-white rounded-lg p-0.5 shadow-sm border border-slate-200">
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1",
-                    selectedCategory === cat.id
-                      ? "bg-slate-800 text-white shadow-sm"
-                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-                  )}
-                >
-                  <cat.icon size={12} weight="duotone" />
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Stats Cards - Compact */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
-                  <Wallet size={16} weight="duotone" className="text-red-600" />
-                </div>
-                <span className="text-[10px] text-slate-500 font-medium">{t.expenses?.totalExpenses || 'Total'}</span>
+        {/* Stats Cards - Second Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+          {/* Total Expenses Card */}
+          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.expenses?.totalExpenses || 'Total'}</span>
+              <div className="w-10 h-10 rounded-xl bg-red-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <Wallet size={20} weight="duotone" className="text-red-600" />
               </div>
-              <p className="text-lg font-bold text-slate-800">₹{stats.totalExpenses.toLocaleString()}</p>
             </div>
+            <div className="text-2xl font-bold text-slate-800">₹{stats.totalExpenses.toLocaleString()}</div>
+          </button>
 
-            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Calendar size={16} weight="duotone" className="text-blue-600" />
-                </div>
-                <span className="text-[10px] text-slate-500 font-medium">{t.expenses?.thisMonth || 'This Month'}</span>
+          {/* This Month Card */}
+          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.expenses?.thisMonth || 'This Month'}</span>
+              <div className="w-10 h-10 rounded-xl bg-blue-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <Calendar size={20} weight="duotone" className="text-blue-600" />
               </div>
-              <p className="text-lg font-bold text-slate-800">₹{stats.thisMonth.toLocaleString()}</p>
             </div>
+            <div className="text-2xl font-bold text-slate-800">₹{stats.thisMonth.toLocaleString()}</div>
+          </button>
 
-            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-                  <Receipt size={16} weight="duotone" className="text-orange-600" />
-                </div>
-                <span className="text-[10px] text-slate-500 font-medium">{t.common?.pending || 'Pending'}</span>
+          {/* Pending Card */}
+          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.common?.pending || 'Pending'}</span>
+              <div className="w-10 h-10 rounded-xl bg-orange-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <Receipt size={20} weight="duotone" className="text-orange-600" />
               </div>
-              <p className="text-lg font-bold text-slate-800">₹{stats.pending.toLocaleString()}</p>
             </div>
+            <div className="text-2xl font-bold text-slate-800">₹{stats.pending.toLocaleString()}</div>
+          </button>
 
-            <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200">
-              <div className="flex items-center gap-2 mb-1">
-                <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center",
-                  stats.percentChange >= 0 ? "bg-green-100" : "bg-red-100"
-                )}>
-                  {stats.percentChange >= 0 ?
-                    <TrendUp size={16} weight="duotone" className="text-green-600" /> :
-                    <TrendDown size={16} weight="duotone" className="text-red-600" />
-                  }
-                </div>
-                <span className="text-[10px] text-slate-500 font-medium">{t.expenses?.change || 'Change'}</span>
-              </div>
-              <p className={cn(
-                "text-lg font-bold",
-                stats.percentChange >= 0 ? "text-green-600" : "text-red-600"
+          {/* Change Card */}
+          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.expenses?.change || 'Change'}</span>
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]",
+                stats.percentChange >= 0 ? "bg-green-100/80" : "bg-red-100/80"
               )}>
-                {stats.percentChange >= 0 ? '+' : ''}{stats.percentChange.toFixed(1)}%
-              </p>
+                {stats.percentChange >= 0 ?
+                  <TrendUp size={20} weight="duotone" className="text-green-600" /> :
+                  <TrendDown size={20} weight="duotone" className="text-red-600" />
+                }
+              </div>
             </div>
-          </div>
+            <div className={cn(
+              "text-2xl font-bold",
+              stats.percentChange >= 0 ? "text-green-600" : "text-red-600"
+            )}>
+              {stats.percentChange >= 0 ? '+' : ''}{stats.percentChange.toFixed(1)}%
+            </div>
+          </button>
+        </div>
 
-          {/* Search Bar */}
-          <div className="bg-white rounded-lg p-2 shadow-sm border border-slate-200">
-            <div className="flex items-center gap-2">
-              <MagnifyingGlass size={16} weight="bold" className="text-slate-400" />
-              <input
-                type="text"
-                placeholder={t.expenses?.searchExpenses || 'Search expenses...'}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400"
-              />
+        <div className="space-y-2">
+          {/* Search Bar & Category Filter Tabs Row */}
+          <div className="flex items-center gap-3">
+            {/* Search Bar */}
+            <div className="flex-1 bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-3 shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff] dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
+              <div className="flex items-center gap-2">
+                <MagnifyingGlass size={16} weight="bold" className="text-slate-400" />
+                <input
+                  type="text"
+                  placeholder={t.expenses?.searchExpenses || 'Search expenses...'}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-[#f5f7fa] dark:bg-slate-700 rounded-xl px-3 py-2 outline-none text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]"
+                />
+              </div>
+            </div>
+
+            {/* Category Filter Tabs */}
+            <div className="flex-shrink-0">
+              <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1",
+                      selectedCategory === cat.id
+                        ? "bg-[#f5f7fa] dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                    )}
+                  >
+                    <cat.icon size={12} weight="duotone" />
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

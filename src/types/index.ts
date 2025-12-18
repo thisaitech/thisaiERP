@@ -42,6 +42,7 @@ export interface Party {
   type: 'customer' | 'supplier' | 'both'
 
   // Basic Info
+  name?: string // Simple name field (alias for displayName)
   companyName: string
   displayName: string
   contactPersonName?: string
@@ -59,6 +60,8 @@ export interface Party {
 
   // GST & Tax
   gstDetails?: GSTDetails
+  gstin?: string // Direct GSTIN field (alias for gstDetails.gstin)
+  state?: string // Direct state field (extracted from billingAddress)
   panNumber?: string
   tanNumber?: string
 
@@ -422,6 +425,20 @@ export interface Invoice {
   // Reverse Charge (RCM)
   isReverseCharge?: boolean
   rcmAmount?: number
+
+  // Additional properties for compatibility with Sales.tsx
+  customerName?: string // Alias for partyName
+  total?: number // Alias for grandTotal
+  convertedFrom?: string // If converted from quotation
+  paidAmount?: number // Amount already paid
+  paymentStatus?: 'paid' | 'partial' | 'pending' | 'overdue' | 'returned' // Payment status
+  paymentMode?: string // Payment method used
+  vehicleNo?: string // Vehicle number for transport
+  isReversed?: boolean // If invoice was reversed
+
+  // Return tracking
+  hasReturns?: boolean // If invoice has any returns
+  returnedAmount?: number // Total returned amount
 }
 
 // ============================================
@@ -645,22 +662,7 @@ export const PLAN_CONFIG: Record<PlanType, SubscriptionPlan> = {
   }
 }
 
-// Extended types to resolve missing properties
-
-export interface Invoice {
-  id: string;
-  type: 'sale' | 'credit';
-  total: number;
-  convertedFrom?: string;
-  paidAmount?: number;
-  paymentStatus?: string;
-  paymentMode?: string;
-  vehicleNo?: string;
-  isReversed?: boolean;
-  createdAt: string;
-  updatedAt: string;
-  // Other properties...
-}
+// Extended types to resolve missing properties - These are added to main Invoice interface above
 
 export interface InvoiceTab {
   id: string;
@@ -680,8 +682,14 @@ export interface InvoiceTab {
 
 export interface CartItem {
   id: string;
+  itemId: string;
   name: string;
+  price: number;
+  quantity: number;
+  unit: string;
+  tax: number;
+  taxAmount: number;
   hsnCode?: string;
   discount?: number;
-  // Other properties...
+  gstRate?: number;
 }

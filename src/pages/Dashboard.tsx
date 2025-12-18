@@ -729,10 +729,10 @@ const Dashboard = () => {
           }}
         >
           {[
-            { label: 'Sales', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, color: 'green' },
-            { label: 'Purchases', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, color: 'red' },
-            { label: 'Expenses', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, color: 'amber' },
-            { label: 'Profit', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, color: 'blue' },
+            { label: 'Sales', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, gradient: 'from-emerald-600 to-emerald-800', bgGradient: 'from-emerald-700/90 to-emerald-900/90' },
+            { label: 'Purchases', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, gradient: 'from-rose-600 to-rose-900', bgGradient: 'from-rose-700/90 to-rose-900/90' },
+            { label: 'Expenses', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, gradient: 'from-blue-600 to-blue-800', bgGradient: 'from-blue-700/90 to-blue-900/90' },
+            { label: 'Profit', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, gradient: 'from-amber-500 to-yellow-700', bgGradient: 'from-amber-600/90 to-yellow-700/90' },
           ].map((stat, i) => (
             <motion.div
               key={i}
@@ -741,38 +741,36 @@ const Dashboard = () => {
                 visible: { opacity: 1, y: 0 },
               }}
               onClick={() => navigate(stat.route)}
-              className="p-5 rounded-3xl cursor-pointer bg-[#e4ebf5] dark:bg-slate-800
-                shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
-                dark:shadow-[8px_8px_16px_#1e293b,-8px_-8px_16px_#334155]
-                active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
-                transition-all duration-200"
+              className={cn(
+                "relative p-5 rounded-3xl cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]",
+                "border-2 border-white/20 backdrop-blur-sm",
+                "shadow-[8px_8px_24px_rgba(0,0,0,0.3)]",
+                "hover:shadow-[12px_12px_32px_rgba(0,0,0,0.4)]"
+              )}
+              style={{
+                background: `linear-gradient(135deg, ${
+                  stat.gradient.includes('emerald') ? '#047857, #065f46' :
+                  stat.gradient.includes('rose') ? '#be123c, #881337' :
+                  stat.gradient.includes('blue') ? '#1d4ed8, #1e3a8a' :
+                  '#d97706, #a16207'
+                })`
+              }}
             >
-              <div className="flex items-center gap-2 mb-3">
-                <div className={cn("p-2 rounded-xl shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.7)]",
-                    stat.color === 'green' && 'bg-green-100/80 dark:bg-green-900/50',
-                    stat.color === 'red' && 'bg-red-100/80 dark:bg-red-900/50',
-                    stat.color === 'amber' && 'bg-yellow-100/80 dark:bg-yellow-900/50',
-                    stat.color === 'blue' && 'bg-blue-100/80 dark:bg-blue-900/50',
-                )}>
-                  <stat.icon size={20} weight="bold" className={cn(
-                    stat.color === 'green' && 'text-green-600 dark:text-green-400',
-                    stat.color === 'red' && 'text-red-600 dark:text-red-400',
-                    stat.color === 'amber' && 'text-yellow-600 dark:text-yellow-400',
-                    stat.color === 'blue' && 'text-blue-600 dark:text-blue-400',
-                  )} />
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-white/90">{stat.label}</p>
+                <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
+                  <stat.icon size={20} weight="bold" className="text-white" />
                 </div>
-                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{stat.label}</p>
               </div>
-              <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                {`₹${(stat.value / 1000).toLocaleString('en-IN', { maximumFractionDigits: 1 })}K`}
+              <p className="text-3xl font-bold text-white mb-1">
+                {`₹${(stat.value / 1000).toLocaleString('en-IN', { maximumFractionDigits: stat.value === 0 ? 0 : 1 })}K`}
               </p>
-              {stat.growth !== null && (
-                <div className="flex items-center gap-1 text-xs mt-1">
-                  <span className={cn("font-semibold", stat.growth >= 0 ? 'text-green-500' : 'text-red-500')}>
-                    {stat.growth >= 0 ? `+${stat.growth.toFixed(1)}%` : `${stat.growth.toFixed(1)}%`}
-                  </span>
-                  <span className="text-slate-500 dark:text-slate-400 text-xs">vs yest.</span>
-                </div>
+              {stat.growth !== null ? (
+                <p className="text-xs text-white/80">
+                  {stat.growth >= 0 ? `+${stat.growth.toFixed(1)}%` : `${stat.growth.toFixed(1)}%`} vs yesterday
+                </p>
+              ) : (
+                <p className="text-xs text-white/80">This period</p>
               )}
             </motion.div>
           ))}
@@ -1013,8 +1011,54 @@ const Dashboard = () => {
           >
             <h2 className="text-lg font-bold text-slate-700 dark:text-slate-100 mb-5">Quick Shortcuts</h2>
             <div className="flex flex-wrap gap-4">
+              {/* Create Invoice - Primary Action */}
               <button
-                onClick={() => navigate('/company-info')}
+                onClick={() => { localStorage.setItem('sales_viewMode', 'create'); navigate('/sales') }}
+                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-white
+                  bg-blue-600
+                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
+                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
+                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
+                  hover:bg-blue-700
+                  active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)]
+                  transition-all duration-200"
+              >
+                <Receipt size={18} weight="bold" />
+                Create Invoice
+              </button>
+              {/* Create Purchase */}
+              <button
+                onClick={() => { localStorage.setItem('purchases_viewMode', 'create'); navigate('/purchases') }}
+                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-white
+                  bg-emerald-600
+                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
+                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
+                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
+                  hover:bg-emerald-700
+                  active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)]
+                  transition-all duration-200"
+              >
+                <ShoppingCart size={18} weight="bold" />
+                Create Purchase
+              </button>
+              {/* Scan QR Code */}
+              <button
+                onClick={() => toast('QR Scanner coming soon!', { icon: '📱' })}
+                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-white
+                  bg-violet-600
+                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
+                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
+                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
+                  hover:bg-violet-700
+                  active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)]
+                  transition-all duration-200"
+              >
+                <Scan size={18} weight="bold" />
+                Scan QR Code
+              </button>
+              {/* Add Expense */}
+              <button
+                onClick={() => navigate('/expenses')}
                 className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-200
                   bg-[#e4ebf5] dark:bg-slate-700
                   shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
@@ -1023,9 +1067,10 @@ const Dashboard = () => {
                   active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
                   transition-all duration-200"
               >
-                <FileText size={18} className="text-slate-500" />
-                Edit Company Profile
+                <Wallet size={18} className="text-amber-500" />
+                Add Expense
               </button>
+              {/* Add Party */}
               <button
                 onClick={() => navigate('/parties')}
                 className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-200
@@ -1036,12 +1081,13 @@ const Dashboard = () => {
                   active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
                   transition-all duration-200"
               >
-                <Users size={18} className="text-slate-500" />
-                View Parties
+                <UserPlus size={18} className="text-slate-500" />
+                Add Party
               </button>
+              {/* Check Inventory */}
               <button
                 onClick={() => navigate('/inventory')}
-                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-blue-600 dark:text-blue-400
+                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-200
                   bg-[#e4ebf5] dark:bg-slate-700
                   shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
                   dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
@@ -1049,7 +1095,7 @@ const Dashboard = () => {
                   active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
                   transition-all duration-200"
               >
-                <Package size={18} />
+                <Package size={18} className="text-blue-500" />
                 Check Inventory
               </button>
             </div>

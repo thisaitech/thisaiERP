@@ -80,52 +80,59 @@ const Layout = () => {
 
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
-      {/* Desktop Navigation */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 hidden lg:block">
-        <div className="max-w-[1800px] mx-auto px-3">
-          <div className="flex items-center justify-between h-11">
-            <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+      {/* Desktop Navigation - Neumorphic Style */}
+      <header className="sticky top-0 z-50 hidden lg:block py-2 px-3 bg-[#e4ebf5] dark:bg-slate-900">
+        <div className="max-w-[1920px] mx-auto">
+          <div className="flex items-center justify-between h-11 px-3 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
+            shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
+            dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
+            <div className="flex items-center gap-2">
               <NavLink to="/" className="flex items-center gap-1.5">
-                <div className="p-1.5 bg-blue-600 rounded-md">
+                <div className="p-1.5 bg-blue-600 rounded-lg
+                  shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]">
                   <Sparkle size={16} weight="fill" className="text-white" />
                 </div>
-                <span className="text-base font-bold text-slate-900 dark:text-white">Billi</span>
+                <span className="text-base font-bold text-slate-800 dark:text-white">Billi</span>
               </NavLink>
-              <div className="h-5 w-px bg-slate-200 dark:bg-slate-700"></div>
+              <div className="h-5 w-px bg-slate-300/50 dark:bg-slate-600 mx-1"></div>
               <nav className="flex items-center gap-0.5">
                 {navigationItems.map((item) => (
                   <NavLink
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) => cn(
-                      "flex items-center px-2.5 py-0.5 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:-translate-y-0.5",
+                      "flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-200",
                       isActive
-                        ? "text-blue-600 bg-blue-100/50 dark:bg-blue-500/10 dark:text-blue-400"
-                        : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+                        ? "bg-blue-600 text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
                     )}
                   >
+                    <item.icon size={16} weight="bold" />
                     <span>{item.label}</span>
                   </NavLink>
                 ))}
               </nav>
             </div>
-            
+
             <div className="flex items-center gap-2">
-
-
-              <div className="h-5 w-px bg-slate-200 dark:bg-slate-700"></div>
-
               <div ref={userDropdownRef} className="relative">
-                <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center gap-1.5">
-                  <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-sm font-bold text-blue-600">
+                <button
+                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                  className="flex items-center gap-2 px-2 py-1 rounded-xl transition-all duration-200
+                    hover:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]
+                    dark:hover:shadow-[inset_2px_2px_4px_#1e293b,inset_-2px_-2px_4px_#334155]"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-purple-500 flex items-center justify-center text-xs font-bold text-white
+                    shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]
+                    dark:shadow-[2px_2px_4px_#1e293b,-2px_-2px_4px_#334155]">
                     {userData?.displayName?.charAt(0).toUpperCase() || 'A'}
                   </div>
                   <div className="text-left">
-                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{userData?.displayName}</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize">{userData?.role}</p>
+                    <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 max-w-[120px] truncate">{userData?.displayName}</p>
+                    <p className="text-[9px] text-slate-500 dark:text-slate-400 capitalize">{userData?.role}</p>
                   </div>
-                  <CaretDown size={14} className="text-slate-500" />
+                  <CaretDown size={12} className="text-slate-400" />
                 </button>
                 <AnimatePresence>
                   {isUserDropdownOpen && (
@@ -133,15 +140,23 @@ const Layout = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+                      className="absolute right-0 top-full mt-2 w-56 rounded-xl overflow-hidden
+                        bg-[#e4ebf5] dark:bg-slate-800
+                        shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
+                        dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]"
                     >
-                     {/* ... Dropdown content ... */}
-                     <div className="p-2">
+                     <div className="p-2.5">
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/50"
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-red-600 dark:text-red-400 rounded-lg
+                          bg-[#e4ebf5] dark:bg-slate-700
+                          shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]
+                          dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]
+                          hover:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]
+                          dark:hover:shadow-[inset_2px_2px_4px_#1e293b,inset_-2px_-2px_4px_#334155]
+                          transition-all duration-200"
                       >
-                        <SignOut size={18} />
+                        <SignOut size={16} />
                         <span>Logout</span>
                       </button>
                       </div>
@@ -154,14 +169,28 @@ const Layout = () => {
         </div>
       </header>
 
-      {/* Mobile Header */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 lg:hidden p-4">
-        <div className="flex items-center justify-between">
-          <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -m-2">
-            <List size={24} />
+      {/* Mobile Header - Neumorphic */}
+      <header className="sticky top-0 z-40 lg:hidden p-4 bg-[#e4ebf5] dark:bg-slate-900">
+        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
+          shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
+          dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="p-2.5 rounded-xl bg-[#e4ebf5] dark:bg-slate-700
+              shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
+              dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+              active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
+              transition-all duration-200"
+          >
+            <List size={22} className="text-slate-600 dark:text-slate-300" />
           </button>
-          <h1 className="text-lg font-bold">Billi</h1>
-          <div className="w-8"></div>
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-blue-600 rounded-lg shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]">
+              <Sparkle size={16} weight="fill" className="text-white" />
+            </div>
+            <h1 className="text-lg font-bold text-slate-800 dark:text-white">Billi</h1>
+          </div>
+          <div className="w-10"></div>
         </div>
       </header>
 
@@ -181,49 +210,56 @@ const Layout = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed left-0 top-0 h-full w-72 bg-white dark:bg-slate-900 shadow-2xl z-50 lg:hidden flex flex-col"
+              className="fixed left-0 top-0 h-full w-72 bg-[#e4ebf5] dark:bg-slate-900 z-50 lg:hidden flex flex-col"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between p-5">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-600 rounded-lg">
+                  <div className="p-2 bg-blue-600 rounded-xl shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]">
                     <Sparkle size={20} weight="fill" className="text-white" />
                   </div>
-                  <span className="text-lg font-bold text-slate-900 dark:text-white">Billi</span>
+                  <span className="text-lg font-bold text-slate-800 dark:text-white">Billi</span>
                 </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="p-2.5 rounded-xl bg-[#e4ebf5] dark:bg-slate-800
+                    shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
+                    transition-all duration-200"
                 >
-                  <X size={24} className="text-slate-500" />
+                  <X size={22} className="text-slate-500" />
                 </button>
               </div>
 
-              {/* User Info */}
-              <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+              {/* User Info - Neumorphic Card */}
+              <div className="mx-4 mb-4 p-4 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
+                shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
+                dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">
+                  <div className="w-11 h-11 rounded-xl bg-purple-500 flex items-center justify-center font-bold text-white
+                    shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]">
                     {userData?.displayName?.charAt(0).toUpperCase() || 'A'}
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800 dark:text-slate-200">{userData?.displayName || 'User'}</p>
+                    <p className="font-semibold text-slate-700 dark:text-slate-200">{userData?.displayName || 'User'}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{userData?.role || 'Guest'}</p>
                   </div>
                 </div>
               </div>
 
               {/* Navigation Items */}
-              <nav className="flex-1 overflow-y-auto p-2">
+              <nav className="flex-1 overflow-y-auto px-4 space-y-2">
                 {navigationItems.map((item) => (
                   <NavLink
                     key={item.path}
                     to={item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors mb-1",
+                      "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "text-blue-600 dark:text-blue-400 bg-[#e4ebf5] dark:bg-slate-800 shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]"
+                        : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]"
                     )}
                   >
                     <item.icon size={20} weight="duotone" />
@@ -233,14 +269,20 @@ const Layout = () => {
               </nav>
 
               {/* Bottom Actions */}
-              <div className="p-4 border-t border-slate-200 dark:border-slate-700">
-                <div className="flex items-center justify-between mb-3">
+              <div className="p-4 space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-[#e4ebf5] dark:bg-slate-800
+                  shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
+                  dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
                   <span className="text-sm text-slate-600 dark:text-slate-400">Dark Mode</span>
                   <button
                     onClick={toggleDarkMode}
-                    className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                    className="p-2.5 rounded-xl bg-[#e4ebf5] dark:bg-slate-700
+                      shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]
+                      dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]
+                      active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]
+                      transition-all duration-200"
                   >
-                    {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                    {isDarkMode ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-slate-600" />}
                   </button>
                 </div>
                 <button
@@ -248,7 +290,12 @@ const Layout = () => {
                     setIsMobileMenuOpen(false)
                     handleLogout()
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-red-600 dark:text-red-400 rounded-xl
+                    bg-[#e4ebf5] dark:bg-slate-800
+                    shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
+                    transition-all duration-200"
                 >
                   <SignOut size={18} />
                   <span>Logout</span>
@@ -263,22 +310,24 @@ const Layout = () => {
         <Outlet />
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 lg:hidden z-40">
-        <div className="flex justify-around items-center h-16">
+      {/* Mobile Bottom Navigation - Neumorphic */}
+      <nav className="fixed bottom-0 left-0 right-0 lg:hidden z-40 p-3 bg-[#e4ebf5] dark:bg-slate-900">
+        <div className="flex justify-around items-center h-16 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
+          shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
+          dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
           {navigationItems.slice(0, 5).map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               className={({ isActive }) => cn(
-                "flex flex-col items-center justify-center gap-1 w-full h-full transition-all duration-200 ease-in-out relative",
+                "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
                 isActive
-                  ? "text-blue-600 dark:text-blue-400"
+                  ? "text-blue-600 dark:text-blue-400 shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]"
                   : "text-slate-500 dark:text-slate-400"
               )}
             >
-              <item.icon size={24} weight={"regular"} />
-              <span className="text-[11px] font-bold">{item.label}</span>
+              <item.icon size={22} weight={"regular"} />
+              <span className="text-[10px] font-semibold">{item.label}</span>
             </NavLink>
           ))}
         </div>

@@ -2126,7 +2126,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
               placeholder={t.posPage.searchItems}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 md:pl-10 pr-12 md:pr-14 py-2.5 md:py-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm md:text-base"
+              className="w-full pl-9 md:pl-10 pr-12 md:pr-14 py-2.5 md:py-3 neu-input text-sm md:text-base border-0 outline-none dark:text-white"
               autoFocus
             />
             {/* Barcode scanner icon button */}
@@ -2172,10 +2172,10 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 setSelectedSubcategory(null)
               }}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0 border shadow-sm",
+                "flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0",
                 selectedCategory === 'All'
-                  ? "bg-emerald-500 text-white shadow-md border-emerald-500"
-                  : "bg-white text-gray-700 hover:bg-emerald-50 hover:border-emerald-300 border-gray-200"
+                  ? "bg-emerald-500 text-white shadow-md"
+                  : "neu-btn text-gray-700"
               )}
             >
               <Squares size={14} weight="fill" />
@@ -2189,10 +2189,10 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                   setSelectedSubcategory(null)
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0 border shadow-sm",
+                  "flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0",
                   selectedCategory === category
-                    ? "bg-emerald-500 text-white shadow-md border-emerald-500"
-                    : "bg-white text-gray-700 hover:bg-emerald-50 hover:border-emerald-300 border-gray-200"
+                    ? "bg-emerald-500 text-white shadow-md"
+                    : "neu-btn text-gray-700"
                 )}
               >
                 <span className="[&>svg]:w-4 [&>svg]:h-4">{categoryIcons[category] || categoryIcons['default']}</span>
@@ -2214,7 +2214,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap transition-all",
                 selectedCategory === 'All'
                   ? "bg-emerald-500 text-white shadow-md"
-                  : "bg-white text-gray-600 hover:bg-emerald-50 border border-gray-200"
+                  : "neu-btn text-gray-600"
               )}
             >
               <Squares size={14} weight="fill" />
@@ -2257,7 +2257,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap transition-all",
                       selectedCategory === category
                         ? "bg-emerald-500 text-white shadow-md"
-                        : "bg-white text-gray-600 hover:bg-emerald-50 border border-gray-200"
+                        : "neu-btn text-gray-600"
                     )}
                   >
                     <span className="[&>svg]:w-3.5 [&>svg]:h-3.5">{categoryIcons[category] || categoryIcons['default']}</span>
@@ -2592,18 +2592,18 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
 
           {/* Customer Name - Searchable Dropdown */}
           <div className="relative" ref={customerDropdownRef}>
-            <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 z-10" />
+            <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
             <input
               type="text"
               placeholder={t.posPage.searchCustomer}
               value={customerSearch}
               onChange={(e) => handleCustomerSearchChange(e.target.value)}
               onFocus={() => setShowCustomerDropdown(true)}
-              className="w-full pl-9 pr-10 py-2 rounded-lg border border-white/30 bg-white/10 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/20 transition-all text-sm"
+              className="w-full pl-9 pr-10 py-2 rounded-lg bg-white text-gray-800 placeholder-gray-400 neu-input border-0 focus:outline-none transition-all text-sm"
             />
             <CaretDown
               size={16}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
               onClick={() => setShowCustomerDropdown(!showCustomerDropdown)}
             />
 
@@ -3052,7 +3052,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                     "flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-semibold text-sm transition-all",
                     cart.length === 0
                       ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 shadow-sm"
+                      : "neu-btn text-emerald-600"
                   )}
                 >
                   <Printer size={16} weight="bold" />
@@ -3100,10 +3100,10 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                       key={method}
                       onClick={() => setPaymentMethod(method)}
                       className={cn(
-                        "flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all",
+                        "flex flex-col items-center gap-0.5 p-2 rounded-xl transition-all",
                         paymentMethod === method
-                          ? "border-emerald-500 bg-emerald-50"
-                          : "border-gray-200 bg-white"
+                          ? "border-2 border-emerald-500 bg-emerald-50"
+                          : "neu-btn"
                       )}
                       style={{
                         borderColor: paymentMethod === method
@@ -3142,7 +3142,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                             "px-3 py-1.5 rounded-lg font-semibold text-xs transition-all",
                             parseFloat(amountTendered) === amount
                               ? "bg-emerald-500 text-white shadow-md"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              : "neu-btn text-gray-700"
                           )}
                         >
                           ₹{amount}
@@ -3161,7 +3161,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                         value={amountTendered}
                         onChange={(e) => setAmountTendered(e.target.value)}
                         placeholder={grandTotal.toFixed(0)}
-                        className="w-full pl-8 pr-3 py-2.5 text-lg font-bold text-center rounded-lg border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+                        className="w-full pl-8 pr-3 py-2.5 text-lg font-bold text-center rounded-lg neu-input border-0 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
                         autoFocus
                       />
                     </div>
@@ -3190,7 +3190,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                     value={transactionId}
                     onChange={(e) => setTransactionId(e.target.value)}
                     placeholder="Enter transaction reference"
-                    className="w-full px-3 py-2.5 rounded-lg border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm"
+                    className="w-full px-3 py-2.5 rounded-lg neu-input border-0 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all text-sm"
                   />
                 </div>
               )}
@@ -3213,13 +3213,13 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
             <div className="p-2.5 bg-gray-50 border-t border-gray-200 flex gap-2 flex-shrink-0">
               <button
                 onClick={handleQuickCheckoutCancel}
-                className="px-3 py-2 rounded-lg border-2 border-gray-300 text-gray-600 font-semibold text-xs hover:bg-gray-100 transition-colors"
+                className="px-3 py-2 rounded-lg neu-btn text-gray-600 font-semibold text-xs"
               >
                 Back
               </button>
               <button
                 onClick={handleFullCheckout}
-                className="px-2 py-2 rounded-lg border-2 border-emerald-200 text-emerald-600 font-semibold text-xs hover:bg-emerald-50 transition-colors flex items-center gap-1"
+                className="px-2 py-2 rounded-lg neu-btn text-emerald-600 font-semibold text-xs flex items-center gap-1"
                 title="Advanced checkout with more options"
               >
                 <Receipt size={14} weight="bold" />
@@ -3569,7 +3569,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                         printReceipt()
                         setShowMobileCart(false)
                       }}
-                      className="flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-emerald-200 text-emerald-600 font-semibold text-sm hover:bg-emerald-50 transition-colors"
+                      className="flex items-center justify-center gap-2 py-3 rounded-xl neu-btn text-emerald-600 font-semibold text-sm"
                     >
                       <Printer size={18} weight="bold" />
                       Print
@@ -3649,10 +3649,10 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                         key={method}
                         onClick={() => setPaymentMethod(method)}
                         className={cn(
-                          "flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all",
+                          "flex flex-col items-center gap-1 p-3 rounded-xl transition-all",
                           paymentMethod === method
-                            ? "border-emerald-500 bg-emerald-50"
-                            : "border-gray-200 bg-white"
+                            ? "border-2 border-emerald-500 bg-emerald-50"
+                            : "neu-btn"
                         )}
                         style={{
                           borderColor: paymentMethod === method
@@ -3691,7 +3691,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                               "px-4 py-2 rounded-lg font-semibold text-sm transition-all",
                               parseFloat(amountTendered) === amount
                                 ? "bg-emerald-500 text-white shadow-md"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                : "neu-btn text-gray-700"
                             )}
                           >
                             ₹{amount}
@@ -3710,7 +3710,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                           value={amountTendered}
                           onChange={(e) => setAmountTendered(e.target.value)}
                           placeholder={grandTotal.toFixed(0)}
-                          className="w-full pl-10 pr-4 py-3 text-xl font-bold text-center rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+                          className="w-full pl-10 pr-4 py-3 text-xl font-bold text-center rounded-xl neu-input border-0 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
                           autoFocus
                         />
                       </div>
@@ -3736,7 +3736,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value)}
                         placeholder="Enter UPI Transaction ID"
-                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all"
+                        className="w-full px-4 py-3 rounded-xl neu-input border-0 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all"
                       />
                     </div>
                   </div>
@@ -3752,7 +3752,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value)}
                         placeholder="Enter Card Transaction ID"
-                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+                        className="w-full px-4 py-3 rounded-xl neu-input border-0 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
                       />
                     </div>
                   </div>
@@ -3772,7 +3772,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
               <div className="p-4 bg-gray-50 border-t border-gray-200 flex gap-3">
                 <button
                   onClick={handleQuickCheckoutCancel}
-                  className="px-4 py-3 rounded-xl border-2 border-gray-300 text-gray-600 font-semibold text-sm hover:bg-gray-100 transition-colors"
+                  className="px-4 py-3 rounded-xl neu-btn text-gray-600 font-semibold text-sm"
                 >
                   Back
                 </button>

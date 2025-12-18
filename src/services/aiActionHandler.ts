@@ -7,6 +7,9 @@ export interface ActionResult {
   success: boolean
   message: string
   data?: any
+  // Optional properties for inter-page communication
+  type?: string
+  payload?: any
 }
 
 // ========== INDIAN NAME FIXES (Shiva → Siva, etc.) ==========

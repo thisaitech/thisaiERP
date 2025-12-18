@@ -9,6 +9,16 @@ export default defineConfig({
     react()
     // PWA COMPLETELY REMOVED - WAS CAUSING AGGRESSIVE CACHING ISSUES
   ],
+  define: {
+    '__DEFINES__': {}
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom']
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+    force: true
+  },
   server: {
     port: 3000,
     open: true

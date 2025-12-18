@@ -617,48 +617,14 @@ const ReportsNew = () => {
   ]
 
   return (
-    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-3 py-2 bg-slate-50/50 min-h-screen">
-      {/* Header - Clean & Simple like Sales/Purchase */}
+    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen">
+      {/* Header - Clean & Simple */}
       <div className="flex-shrink-0">
-        {/* Top Row: Title + Actions */}
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-            <ChartLine size={22} weight="duotone" className="text-blue-600" />
-            <span>{t.reports.businessReports}</span>
-          </h1>
-          {/* Export Buttons - show when report data available */}
-          {reportData && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleExportJSON}
-                className="h-8 px-3 rounded-lg border border-yellow-200 bg-white text-xs text-yellow-600 font-semibold flex items-center gap-1.5 hover:border-yellow-400 hover:bg-yellow-50 transition-all"
-              >
-                <FileJs size={14} weight="bold" />
-                <span>JSON</span>
-              </button>
-              <button
-                onClick={handleExportExcel}
-                className="h-8 px-3 rounded-lg border border-green-200 bg-white text-xs text-green-600 font-semibold flex items-center gap-1.5 hover:border-green-400 hover:bg-green-50 transition-all"
-              >
-                <Download size={14} weight="bold" />
-                <span>Excel</span>
-              </button>
-              <button
-                onClick={handleExportPDF}
-                className="h-8 px-3 rounded-lg border border-red-200 bg-white text-xs text-red-600 font-semibold flex items-center gap-1.5 hover:border-red-400 hover:bg-red-50 transition-all"
-              >
-                <Download size={14} weight="bold" />
-                <span>PDF</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Period Filter & Tabs - Compact Modern (matching Sales design) */}
-        <div className="space-y-2">
-          {/* Period Filter Tabs */}
-          <div className="flex items-center justify-center">
-            <div className="inline-flex items-center gap-0.5 text-xs bg-white rounded-lg p-0.5 shadow-sm border border-slate-200">
+        {/* Top Row: Period Filter Left + Export Buttons Right */}
+        <div className="flex items-center justify-between mb-3">
+          {/* Period Filter Tabs - Left Side */}
+          <div className="flex-shrink-0">
+            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
               {[
                 { key: 'today', label: t.common.today },
                 { key: 'this-week', label: t.common.thisWeek },
@@ -670,10 +636,10 @@ const ReportsNew = () => {
                   key={filter.key}
                   onClick={() => setSelectedPeriod(filter.key)}
                   className={cn(
-                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap",
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
                     selectedPeriod === filter.key
-                      ? "bg-slate-800 text-white shadow-sm"
-                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                   )}
                 >
                   {filter.label}
@@ -682,18 +648,62 @@ const ReportsNew = () => {
             </div>
           </div>
 
-          {/* Category Tabs */}
+          {/* Export Buttons - Right Side - show when report data available */}
+          {reportData && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportJSON}
+                className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-yellow-600 font-semibold flex items-center gap-1.5
+                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                  active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
+                  transition-all duration-200"
+              >
+                <FileJs size={14} weight="bold" />
+                <span>JSON</span>
+              </button>
+              <button
+                onClick={handleExportExcel}
+                className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-green-600 font-semibold flex items-center gap-1.5
+                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                  active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
+                  transition-all duration-200"
+              >
+                <Download size={14} weight="bold" />
+                <span>Excel</span>
+              </button>
+              <button
+                onClick={handleExportPDF}
+                className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-red-600 font-semibold flex items-center gap-1.5
+                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                  active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
+                  transition-all duration-200"
+              >
+                <Download size={14} weight="bold" />
+                <span>PDF</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Category Tabs - Second Row */}
+        <div className="mb-3">
           <div className="flex items-center justify-center">
-            <div className="inline-flex items-center gap-0.5 text-xs bg-white rounded-lg p-0.5 shadow-sm border border-slate-200 overflow-x-auto">
+            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155] overflow-x-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setSelectedTab(tab.id)}
                   className={cn(
-                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1",
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1",
                     selectedTab === tab.id
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                      ? "bg-[#f5f7fa] dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                   )}
                 >
                   <tab.icon size={14} weight={selectedTab === tab.id ? "duotone" : "regular"} />

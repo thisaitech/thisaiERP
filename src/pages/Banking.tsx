@@ -53,6 +53,7 @@ const Banking = () => {
 
   const navigate = useNavigate()
   const [selectedTab, setSelectedTab] = useState('overview')
+  const [selectedPeriod, setSelectedPeriod] = useState('all')
   const [showAddAccount, setShowAddAccount] = useState(false)
   
   // Razorpay state
@@ -750,53 +751,106 @@ const Banking = () => {
   const netWorth = totalAssets - totalLoanOutstanding  // Assets - Liabilities
 
   return (
-    <div className="min-h-screen bg-slate-50 p-3 pb-20 lg:pb-6">
+    <div className="min-h-screen bg-[#f5f7fa] dark:bg-slate-900 p-3 pb-20 lg:pb-6">
       {/* Modern Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-3"
       >
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-            <Bank size={22} weight="duotone" className="text-blue-600" />
-            <span>{t.banking.bankingAndFinance}</span>
-          </h1>
+        {/* Top Row: Period Filter Left + Action Button Right */}
+        <div className="flex items-center justify-between mb-3">
+          {/* Period Filter Tabs - Left Side */}
+          <div className="flex-shrink-0">
+            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+              {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setSelectedPeriod(period)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                    selectedPeriod === period
+                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  {period.charAt(0).toUpperCase() + period.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Button - Right Side */}
           <button
             onClick={() => setShowAddAccount(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors active:scale-[0.98]"
+            className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
+              shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+              dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+              hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+              active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+              transition-all duration-200"
           >
-            <Plus size={16} weight="bold" />
+            <Plus size={14} weight="bold" />
             <span className="hidden sm:inline">{t.banking.addAccount}</span>
           </button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-blue-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.banking.availableBalance}</div>
-            <div className="text-base font-bold text-slate-800">₹{(availableBalance / 100000).toFixed(2)}L</div>
-          </div>
+        {/* Stats Cards - Second Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+          {/* Available Balance Card */}
+          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.banking.availableBalance}</span>
+              <div className="w-10 h-10 rounded-xl bg-blue-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <Bank size={20} weight="duotone" className="text-blue-600" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-slate-800">₹{(availableBalance / 100000).toFixed(2)}L</div>
+          </button>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-green-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.banking.cashInHand}</div>
-            <div className="text-base font-bold text-green-600">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</div>
-          </div>
+          {/* Cash in Hand Card */}
+          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.banking.cashInHand}</span>
+              <div className="w-10 h-10 rounded-xl bg-green-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <Wallet size={20} weight="duotone" className="text-green-600" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-green-600">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</div>
+          </button>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-amber-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.banking.pendingCheques}</div>
-            <div className="text-base font-bold text-amber-600">{accounts.cheques.filter(ch => ch.status === 'pending').length}</div>
-          </div>
+          {/* Pending Cheques Card */}
+          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.banking.pendingCheques}</span>
+              <div className="w-10 h-10 rounded-xl bg-amber-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <Receipt size={20} weight="duotone" className="text-amber-600" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-amber-600">{accounts.cheques.filter(ch => ch.status === 'pending').length}</div>
+          </button>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2.5 text-center transition-all hover:shadow-md hover:border-purple-200 active:scale-[0.98]">
-            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t.banking.netWorth}</div>
+          {/* Net Worth Card */}
+          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-slate-500 font-medium">{t.banking.netWorth}</span>
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]",
+                netWorth >= 0 ? "bg-green-100/80" : "bg-red-100/80"
+              )}>
+                {netWorth >= 0 ?
+                  <TrendUp size={20} weight="duotone" className="text-green-600" /> :
+                  <TrendDown size={20} weight="duotone" className="text-red-500" />
+                }
+              </div>
+            </div>
             <div className={cn(
-              "text-base font-bold",
+              "text-2xl font-bold",
               netWorth >= 0 ? "text-green-600" : "text-red-500"
             )}>
               {netWorth >= 0 ? '+' : '-'}₹{(Math.abs(netWorth) / 100000).toFixed(1)}L
             </div>
-          </div>
+          </button>
         </div>
       </motion.div>
 
@@ -813,10 +867,10 @@ const Banking = () => {
             key={tab.id}
             onClick={() => setSelectedTab(tab.id)}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200",
               selectedTab === tab.id
-                ? "bg-slate-800 text-white shadow-md"
-                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                ? "bg-[#f5f7fa] dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
             )}
           >
             <tab.icon size={14} weight={selectedTab === tab.id ? "duotone" : "regular"} />
