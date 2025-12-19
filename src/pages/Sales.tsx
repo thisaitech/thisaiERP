@@ -5064,10 +5064,10 @@ TOTAL:       ₹${invoice.total}
       {viewMode === 'list' && (
       <div className="flex-shrink-0">
         {/* Top Row: Filter Buttons (Left) + Action Buttons (Right) */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+        <div className="flex items-center justify-between mb-3">
           {/* Period Filter Tabs - Left Side */}
-          <div className="flex flex-col items-start gap-2">
-            <div className="inline-flex items-center bg-[#f5f7fa] rounded-xl p-1 shadow-[inset_2px_2px_4px_#e0e3e7,inset_-2px_-2px_4px_#ffffff]">
+          <div className="flex-shrink-0">
+            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
               {[
                 { value: 'today', label: t.common.today },
                 { value: 'week', label: t.common.week },
@@ -5087,10 +5087,10 @@ TOTAL:       ₹${invoice.total}
                     }
                   }}
                   className={cn(
-                    "px-4 py-1.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap",
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
                     statsFilter === filter.value
-                      ? "bg-blue-500 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff]"
-                      : "text-slate-600 hover:text-slate-800"
+                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                   )}
                 >
                   {filter.label}
@@ -5098,45 +5098,22 @@ TOTAL:       ₹${invoice.total}
               ))}
             </div>
 
-            {/* Custom Date Range Picker - Below Filter Buttons */}
-            {(statsFilter === 'custom' || showCustomDatePicker) && (
-              <div className="flex flex-wrap items-center gap-2 bg-[#f5f7fa] rounded-xl p-3 shadow-[8px_8px_16px_#e0e3e7,-8px_-8px_16px_#ffffff]">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-slate-600 font-medium">{t.common.from}:</span>
-                  <input
-                    type="date"
-                    value={customDateFrom}
-                    onChange={(e) => setCustomDateFrom(e.target.value)}
-                    className="px-2 py-1 text-xs rounded-lg bg-[#f5f7fa] text-slate-800 outline-none shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] focus:shadow-[inset_4px_4px_8px_#e0e3e7,inset_-4px_-4px_8px_#ffffff]"
-                  />
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-slate-600 font-medium">{t.common.to}:</span>
-                  <input
-                    type="date"
-                    value={customDateTo}
-                    onChange={(e) => setCustomDateTo(e.target.value)}
-                    className="px-2 py-1 text-xs rounded-lg bg-[#f5f7fa] text-slate-800 outline-none shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] focus:shadow-[inset_4px_4px_8px_#e0e3e7,inset_-4px_-4px_8px_#ffffff]"
-                  />
-                </div>
-                {statsFilter === 'custom' && customDateFrom && customDateTo && (
-                  <span className="text-xs text-blue-600 font-medium bg-[#f5f7fa] px-2 py-1 rounded-lg shadow-[inset_2px_2px_4px_#e0e3e7,inset_-2px_-2px_4px_#ffffff]">
-                    {new Date(customDateFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - {new Date(customDateTo).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+            </div>
 
           {/* Action Buttons - Right Side */}
-          <div className="flex items-center gap-2">
+          <div className="flex-shrink-0 flex items-center gap-2">
                 {/* AI Bill */}
                 <button
                   onClick={() => setShowAIAssistant(true)}
-                  className="px-4 py-1.5 rounded-lg text-sm text-white font-medium flex items-center gap-1.5 shadow-[3px_3px_6px_#d1d5db,-3px_-3px_6px_#ffffff] hover:shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.2)] transition-all bg-gradient-to-r from-violet-600 to-purple-600"
+                  className="h-9 px-4 rounded-xl text-xs text-white font-semibold flex items-center gap-1.5
+                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                    active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                    transition-all duration-200 bg-gradient-to-r from-violet-600 to-purple-600"
                 >
                   <Sparkle size={14} weight="fill" />
-                  <span>AI Bill</span>
+                  <span className="hidden sm:inline">AI Bill</span>
                 </button>
                 {/* Tally Export Dropdown */}
                 <div className="relative">
@@ -5149,10 +5126,15 @@ TOTAL:       ₹${invoice.total}
                       })
                       setShowTallyDropdown(!showTallyDropdown)
                     }}
-                    className="px-4 py-1.5 rounded-lg text-sm bg-white text-emerald-600 font-medium flex items-center gap-1.5 shadow-[3px_3px_6px_#d1d5db,-3px_-3px_6px_#ffffff] hover:shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.2)] transition-all border border-emerald-200 hover:border-emerald-400"
+                    className="h-9 px-4 rounded-xl text-xs bg-white text-emerald-600 font-semibold flex items-center gap-1.5
+                      shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                      dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                      hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                      active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                      transition-all duration-200 border border-emerald-200"
                   >
                     <Download size={14} weight="bold" />
-                    <span>Tally</span>
+                    <span className="hidden sm:inline">Tally</span>
                     <CaretDown size={12} />
                   </button>
                   {showTallyDropdown && (
@@ -5211,10 +5193,16 @@ TOTAL:       ₹${invoice.total}
                     }
                     setViewMode('create')
                   }}
-                  className="px-4 py-1.5 rounded-lg text-sm bg-blue-500 text-white font-medium flex items-center gap-1.5 shadow-[3px_3px_6px_#d1d5db,-3px_-3px_6px_#ffffff] hover:shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.2)] transition-all"
+                  className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
+                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                    active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                    transition-all duration-200"
                 >
                   <Plus size={14} weight="bold" />
-                  <span>Create {location.pathname === '/pos' ? 'POS Bill' : 'Invoice'}</span>
+                  <span className="hidden sm:inline">Create {location.pathname === '/pos' ? 'POS Bill' : 'Invoice'}</span>
+                  <span className="sm:hidden">+ Add</span>
                 </button>
           </div>
         </div>
@@ -6022,34 +6010,34 @@ TOTAL:       ₹${invoice.total}
             )}
           >
           {/* Left Column - Invoice Form / POS Product Area */}
-          <div className="flex flex-col bg-white overflow-x-hidden">
+          <div className="flex flex-col bg-white dark:bg-slate-900 overflow-x-hidden">
 
 
           {/* Tabs for multiple invoices + Mode Toggle + Back */}
-          <div className="flex items-center gap-2 px-2 py-1 border-b border-border/50 flex-shrink-0">
+          <div className="flex items-center gap-2 px-2 py-0.5 border-b border-slate-200 flex-shrink-0 bg-white dark:bg-slate-900">
             {/* Invoice Tabs */}
-            <div className="flex items-center gap-0.5 overflow-x-auto">
+            <div className="flex items-center gap-1 overflow-x-auto">
               {invoiceTabs.map((tab) => (
                 <div
                   key={tab.id}
                   className={cn(
-                    "relative flex items-center gap-1.5 px-2.5 py-1 rounded-t border border-b-0 cursor-pointer transition-all min-w-[100px]",
+                    "relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg border cursor-pointer transition-all min-w-[90px]",
                     tab.id === activeTabId
-                      ? "bg-background border-border text-foreground"
+                      ? "bg-background border-border text-foreground shadow-sm"
                       : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted/50"
                   )}
                   onClick={() => switchToTab(tab.id)}
                 >
-                  <div className="flex items-center gap-1.5 flex-1">
+                  <div className="flex items-center gap-2 flex-1">
                     <div className={cn(
-                      "w-1.5 h-1.5 rounded-full",
+                      "w-2 h-2 rounded-full",
                       tab.mode === 'pos' ? "bg-green-500" : "bg-blue-500"
                     )} />
-                    <span className="text-[11px] font-medium">
+                    <span className="text-sm font-medium">
                       {tab.mode === 'pos' ? 'POS' : 'Invoice'}
                     </span>
                     {tab.customerName && (
-                      <span className="text-[10px] text-muted-foreground truncate max-w-[60px]">
+                      <span className="text-xs text-muted-foreground truncate max-w-[60px]">
                         - {tab.customerName}
                       </span>
                     )}
@@ -6068,19 +6056,13 @@ TOTAL:       ₹${invoice.total}
                 </div>
               ))}
 
-              {/* Add new tab button - color based on current mode */}
+              {/* Add new tab button - green circle with + */}
               <button
                 onClick={() => addNewTab('sale')}
-                className="p-1 hover:bg-muted rounded transition-colors group"
+                className="w-7 h-7 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full transition-all shadow-sm hover:shadow-md"
                 title={`Add ${salesMode === 'pos' ? 'POS' : 'Invoice'} Tab`}
               >
-                <div className="flex items-center gap-0.5">
-                  <div className={cn(
-                    "w-1.5 h-1.5 rounded-full",
-                    salesMode === 'pos' ? "bg-green-500" : "bg-blue-500"
-                  )} />
-                  <Plus size={14} className="text-black" />
-                </div>
+                <Plus size={16} weight="bold" />
               </button>
             </div>
 
@@ -6099,12 +6081,12 @@ TOTAL:       ₹${invoice.total}
 
           <div className={cn(
             "flex flex-col overflow-y-auto",
-            salesMode === 'pos' ? "p-2" : "p-2"
+            salesMode === 'pos' ? "p-1" : "p-1"
           )}>
             {/* HEADER - Fixed at top */}
             <div className="flex-shrink-0">
             {/* Mobile Header - Compact */}
-            <div className="md:hidden mb-1">
+            <div className="md:hidden mb-0.5">
               <div className="relative" ref={customerDropdownRef}>
                 {/* Customer Search - Full Width */}
                 <User size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-400 z-10 pointer-events-none" />
@@ -6312,11 +6294,11 @@ TOTAL:       ₹${invoice.total}
             </div>
 
             {/* Desktop Header - Item Search on Left, Customer on Right - 50/50 split */}
-            <div className="hidden md:grid md:grid-cols-2 gap-6 mb-4 px-4">
+            <div className="hidden md:grid md:grid-cols-2 gap-4 mb-0.5 px-2 py-1">
               {/* Left: Item Search Bar - 50% width */}
-              <div className="flex items-center gap-3">
-                <div className="p-2 neu-icon">
-                  <MagnifyingGlass size={18} className="text-amber-600" />
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-full">
+                  <MagnifyingGlass size={16} className="text-amber-600" />
                 </div>
                 <div ref={desktopItemDropdownRef} className="relative flex-1">
                   <input
@@ -6361,7 +6343,7 @@ TOTAL:       ₹${invoice.total}
                         setHighlightedItemIndex(-1)
                       }
                     }}
-                    className="w-full px-3 py-2 neu-input text-sm placeholder:text-slate-400 transition-all border-0 outline-none dark:text-white"
+                    className="w-full px-3 py-2.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-xl text-sm placeholder:text-slate-400 transition-all border-0 outline-none dark:text-white"
                   />
                   {/* Desktop Item Search Dropdown - Top Header */}
                   {showItemDropdown && desktopItemDropdownRef.current && createPortal(
@@ -6430,20 +6412,20 @@ TOTAL:       ₹${invoice.total}
                 <button
                   type="button"
                   onClick={() => setShowBarcodeScanner(true)}
-                  className="px-3 py-2 neu-btn text-amber-600 flex items-center gap-1.5 font-medium text-sm"
+                  className="px-3 py-2.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-xl text-amber-600 flex items-center font-medium text-sm hover:bg-[#d9e2f0] transition-colors"
                   title="Scan Barcode"
                 >
-                  <Barcode size={16} weight="bold" />
+                  <Barcode size={20} weight="bold" />
                 </button>
               </div>
 
-              {/* Right: Customer Search + Details - 50% width */}
-              <div className="flex items-center gap-3">
-                <div className="p-2 neu-icon">
-                  <User size={18} className="text-blue-600" />
+              {/* Right: Customer Search + Details */}
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-full">
+                  <User size={16} className="text-blue-600" />
                 </div>
                 {/* Customer Search Input */}
-                <div className={cn("relative", customerName ? "w-40" : "flex-1")} ref={customerDropdownRef}>
+                <div className={cn("relative", customerName ? "w-48" : "flex-1")} ref={customerDropdownRef}>
                   <input
                     type="text"
                     placeholder="Search customer..."
@@ -6478,7 +6460,7 @@ TOTAL:       ₹${invoice.total}
                         setHighlightedCustomerIndex(-1)
                       }
                     }}
-                    className="w-full px-3 py-2 neu-input text-sm placeholder:text-slate-400 transition-all border-0 outline-none dark:text-white"
+                    className="w-full px-3 py-2.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-xl text-sm placeholder:text-slate-400 transition-all border-0 outline-none dark:text-white"
                   />
                   {/* Desktop Customer Dropdown */}
                   {showCustomerDropdown && (
@@ -6769,53 +6751,53 @@ TOTAL:       ₹${invoice.total}
                 {/* Scrollable Items Table - Desktop */}
                 <div
                   ref={itemTableContainerRef}
-                  className="hidden md:block border border-slate-200/60 rounded-xl overflow-x-auto overflow-y-auto bg-white shadow-sm"
+                  className="hidden md:block rounded-xl overflow-x-auto overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
                   style={desktopTableStyle}
                 >
                   <table className="w-full text-sm border-collapse" style={{ minWidth: '720px' }}>
-                    <thead className="bg-[#f0f2f5] sticky top-0 z-10 shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff]">
+                    <thead className="bg-[#e4ebf5] dark:bg-slate-800 sticky top-0 z-10">
                       <tr>
-                        <th className="px-2 py-2.5 text-center" style={{ width: '28px', minWidth: '28px' }}>
+                        <th className="px-1 py-0.5 text-center" style={{ width: '28px', minWidth: '28px' }}>
                           <button
                             type="button"
                             onClick={() => addEmptyRow()}
-                            className="w-6 h-6 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full transition-all hover:scale-110 shadow-[3px_3px_6px_#d1d5db,-3px_-3px_6px_#ffffff] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.2)]"
+                            className="w-5 h-5 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full transition-all hover:scale-110"
                             title="Add manual item row"
                           >
-                            <Plus size={14} weight="bold" />
+                            <Plus size={12} weight="bold" />
                           </button>
                         </th>
-                        <th className="px-2 py-2.5 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '170px', minWidth: '170px' }}>ITEM NAME</th>
+                        <th className="px-1 py-0.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '170px', minWidth: '170px' }}>ITEM NAME</th>
                         {visibleColumns.hsnCode && (
-                          <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '65px', minWidth: '65px' }}>HSN</th>
+                          <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '65px', minWidth: '65px' }}>HSN</th>
                         )}
                         {visibleColumns.description && (
-                          <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '45px', minWidth: '45px' }}>DESC</th>
+                          <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '45px', minWidth: '45px' }}>DESC</th>
                         )}
-                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '30px', minWidth: '30px' }}>QTY</th>
-                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '48px', minWidth: '48px' }}>UNIT</th>
-                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '58px', minWidth: '58px' }}>TAX</th>
-                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider" style={{ width: '60px', minWidth: '60px' }}>MRP</th>
-                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '60px', minWidth: '60px' }}>TAXABLE</th>
+                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '30px', minWidth: '30px' }}>QTY</th>
+                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '48px', minWidth: '48px' }}>UNIT</th>
+                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '58px', minWidth: '58px' }}>TAX</th>
+                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '60px', minWidth: '60px' }}>MRP</th>
+                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '60px', minWidth: '60px' }}>TAXABLE</th>
                         {visibleColumns.discount && (
                           <>
-                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>Dis%</th>
-                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>Dis₹</th>
+                            <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>DIS%</th>
+                            <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>DIS₹</th>
                           </>
                         )}
                         {/* Single GST % column - always visible */}
-                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>GST%</th>
-                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>GST₹</th>
+                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>GST%</th>
+                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>GST₹</th>
                         {/* CGST/SGST/IGST breakdown - optional */}
                         {visibleColumns.gstBreakdown && (
                           <>
-                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider" style={{ width: '35px', minWidth: '35px' }}>CGST%</th>
-                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider" style={{ width: '35px', minWidth: '35px' }}>SGST%</th>
-                            <th className="px-1 py-2.5 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider" style={{ width: '35px', minWidth: '35px' }}>IGST%</th>
+                            <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wide" style={{ width: '35px', minWidth: '35px' }}>CGST%</th>
+                            <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wide" style={{ width: '35px', minWidth: '35px' }}>SGST%</th>
+                            <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wide" style={{ width: '35px', minWidth: '35px' }}>IGST%</th>
                           </>
                         )}
-                        <th className="px-1 py-2.5 text-center text-[10px] font-bold text-emerald-600 uppercase tracking-wider" style={{ width: '65px', minWidth: '65px' }}>TOTAL</th>
-                        <th className="px-1 py-2.5 relative" style={{ width: '28px', minWidth: '28px' }}>
+                        <th className="px-1 py-0.5 text-right pr-4 text-xs font-bold text-emerald-600 uppercase tracking-wide" style={{ width: '75px', minWidth: '75px' }}>TOTAL</th>
+                        <th className="px-1 py-0.5 relative" style={{ width: '28px', minWidth: '28px' }}>
                           <button
                             onClick={() => setShowColumnMenu(!showColumnMenu)}
                             className="p-1.5 bg-[#f0f2f5] text-slate-500 hover:text-slate-700 rounded-full transition-all shadow-[3px_3px_6px_#d1d5db,-3px_-3px_6px_#ffffff] hover:shadow-[5px_5px_10px_#d1d5db,-5px_-5px_10px_#ffffff] active:shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]"
@@ -7144,7 +7126,7 @@ TOTAL:       ₹${invoice.total}
                                   </td>
                                 </>
                               )}
-                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '65px', minWidth: '65px' }}>
+                              <td className="px-1 py-1.5 text-right align-middle pr-4" style={{ width: '75px', minWidth: '75px' }}>
                                 <span className="text-sm font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">₹{item.total.toFixed(2)}</span>
                               </td>
                               <td className="px-1 py-1.5 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
@@ -7162,43 +7144,40 @@ TOTAL:       ₹${invoice.total}
                   </table>
                 </div>
                 {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) */}
-                <div className="hidden md:grid md:grid-cols-2 gap-4 mt-3 px-2 items-stretch">
+                <div className="hidden md:grid md:grid-cols-2 gap-1.5 mt-0.5 px-1 items-stretch">
                 {/* Left Column - Invoice Details + Discount/Payment/Notes */}
-                <div className="p-4 bg-[#f0f2f5] rounded-xl shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff] flex flex-col justify-between overflow-hidden">
-                {/* Line 1: Invoice #, Date and Discount */}
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-center gap-1">
-                      <label className="text-xs text-slate-600 whitespace-nowrap">Inv #</label>
-                      <input
-                        type="text"
-                        value={invoiceNumber}
-                        onChange={(e) => setInvoiceNumber(e.target.value)}
-                        placeholder="INV/2024-25/001"
-                        className="w-36 px-1.5 py-1 text-xs bg-[#f0f2f5] rounded outline-none shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff] focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]"
-                      />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <label className="text-xs text-slate-600">Date</label>
-                      <input
-                        type="date"
-                        value={invoiceDate}
-                        onChange={(e) => setInvoiceDate(e.target.value)}
-                        className="px-1.5 py-1 text-xs bg-[#f0f2f5] rounded outline-none shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff] focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]"
-                      />
-                    </div>
+                <div className="p-1.5 bg-[#e4ebf5] dark:bg-slate-800 rounded-lg shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] flex flex-col justify-between">
+                {/* Line 1: Invoice #, Date and Discount - All on same line */}
+                <div className="grid grid-cols-3 gap-1.5 mb-0.5">
+                  <div className="flex items-center gap-1">
+                    <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">Inv #</label>
+                    <input
+                      type="text"
+                      value={invoiceNumber}
+                      onChange={(e) => setInvoiceNumber(e.target.value)}
+                      placeholder="INV/2024-25/001"
+                      className="w-full px-2 py-1 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300 focus:border-blue-400"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <label className="text-sm font-semibold text-slate-700">Date</label>
+                    <input
+                      type="date"
+                      value={invoiceDate}
+                      onChange={(e) => setInvoiceDate(e.target.value)}
+                      className="w-full px-1 py-1 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300 focus:border-blue-400"
+                    />
                   </div>
                   {/* Discount */}
                   <div className="flex items-center gap-1">
-                    <label className="text-xs text-slate-600 flex items-center gap-0.5">
-                      <Percent size={10} className="text-orange-500" />
+                    <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">
                       Discount
                     </label>
-                    <div className="flex items-center bg-[#f0f2f5] rounded shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]">
+                    <div className="flex items-center bg-[#e4ebf5] rounded-md border border-slate-300">
                       <button
                         type="button"
                         onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
-                        className={`px-1.5 py-1 text-xs font-medium border-r border-slate-300/50 transition-colors ${
+                        className={`px-1.5 py-1 text-sm font-bold border-r border-slate-300 transition-colors ${
                           discountType === 'percent'
                             ? 'text-orange-600'
                             : 'text-green-600'
@@ -7216,7 +7195,7 @@ TOTAL:       ₹${invoice.total}
                           setInvoiceDiscount(parseFloat(val) || 0)
                         }}
                         placeholder="0"
-                        className="w-10 px-1 py-1 text-xs text-center bg-transparent outline-none"
+                        className="w-12 px-1 py-1 text-sm font-medium text-center bg-transparent outline-none"
                       />
                     </div>
                   </div>
@@ -7224,25 +7203,25 @@ TOTAL:       ₹${invoice.total}
 
                 {/* Line 2: Terms & Conditions */}
                 <div className="flex items-center gap-1">
-                  <label className="text-xs text-slate-600 flex items-center gap-0.5 whitespace-nowrap">
-                    <Pencil size={10} className="text-purple-500" />
-                    Terms & Conditions
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-0.5 whitespace-nowrap">
+                    <Pencil size={12} className="text-purple-500" />
+                    Terms
                   </label>
                   <input
                     type="text"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Thank you"
-                    className="flex-1 min-w-0 px-1.5 py-1 text-xs bg-[#f0f2f5] rounded outline-none shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff] focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]"
+                    className="flex-1 min-w-0 px-1.5 py-0.5 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300 focus:border-blue-400"
                   />
                 </div>
 
                 {/* Line 3: Payment */}
-                <div className="space-y-1.5">
+                <div className="space-y-0.5">
                   {payments.map((payment, index) => (
                     <div key={index} className="flex items-center gap-1 flex-wrap">
-                      <label className={cn("text-xs text-slate-600 flex items-center gap-0.5", index > 0 && "invisible")}>
-                        <CreditCard size={10} className="text-green-600" />
+                      <label className={cn("text-sm font-semibold text-slate-700 flex items-center gap-0.5", index > 0 && "invisible")}>
+                        <CreditCard size={12} className="text-green-600" />
                         Payment
                       </label>
                       <select
@@ -7255,7 +7234,7 @@ TOTAL:       ₹${invoice.total}
                             setSelectedBankAccountId('')
                           }
                         }}
-                        className="px-1.5 py-1 text-xs bg-[#f0f2f5] rounded outline-none shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff]"
+                        className="px-1 py-1 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300"
                       >
                         <option value="cash">Cash</option>
                         <option value="card">Card</option>
@@ -7281,7 +7260,7 @@ TOTAL:       ₹${invoice.total}
                                 setSelectedBankAccountId('')
                               }
                             }}
-                            className="px-1.5 py-1 text-xs bg-[#f0f2f5] rounded outline-none shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff] min-w-[80px]"
+                            className="px-1.5 py-1 text-xs bg-[#e4ebf5] rounded outline-none border border-slate-300 min-w-[80px]"
                           >
                             <option value="">{bankAccounts.length > 0 ? '-- Select --' : 'No accounts'}</option>
                             {bankAccounts.map((account) => (
@@ -7310,7 +7289,7 @@ TOTAL:       ₹${invoice.total}
                           setPayments(newPayments)
                         }}
                         placeholder="₹0"
-                        className="w-12 px-1.5 py-1 text-xs bg-[#f0f2f5] rounded outline-none shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff] focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]"
+                        className="w-12 px-1 py-1 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300 focus:border-blue-400"
                       />
                       <input
                         type="text"
@@ -7321,7 +7300,7 @@ TOTAL:       ₹${invoice.total}
                           setPayments(newPayments)
                         }}
                         placeholder="Ref No."
-                        className="flex-1 min-w-0 px-1.5 py-1 text-xs bg-[#f0f2f5] rounded outline-none shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff] focus:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]"
+                        className="flex-1 min-w-0 px-1.5 py-1 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300 focus:border-blue-400"
                       />
                       {payments.length > 1 && (
                         <button type="button" onClick={() => setPayments(payments.filter((_, i) => i !== index))} className="p-0.5 text-red-500 hover:bg-red-50 rounded shadow-[2px_2px_4px_#d1d5db,-2px_-2px_4px_#ffffff]">
@@ -7343,76 +7322,76 @@ TOTAL:       ₹${invoice.total}
                 </div>
                 </div>
                 {/* Right Side - Totals Summary */}
-                <div className="p-4 bg-[#f0f2f5] rounded-xl shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff]">
+                <div className="p-1.5 bg-[#e4ebf5] dark:bg-slate-800 rounded-lg shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]">
                   {invoiceItems.length > 0 ? (
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-0.5 mr-[46px]">
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-500">Subtotal:</span>
-                        <span className="font-semibold text-slate-700">₹{totals.subtotal.toFixed(2)}</span>
+                        <span className="text-sm font-semibold text-slate-600">Subtotal:</span>
+                        <span className="text-base font-bold text-slate-800 text-right w-[75px] pr-4">₹{totals.subtotal.toFixed(2)}</span>
                       </div>
                       {invoiceDiscount > 0 && (
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-500">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
-                          <span className="font-semibold text-orange-500">-₹{totals.discount.toFixed(2)}</span>
+                          <span className="text-sm font-semibold text-slate-600">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
+                          <span className="text-base font-bold text-orange-500 text-right w-[75px] pr-4">-₹{totals.discount.toFixed(2)}</span>
                         </div>
                       )}
                       {/* Tax Row - Consolidated with CGST/SGST/IGST breakdown inline */}
                       {totals.totalTax > 0 && (
-                        <div className="flex justify-between items-center py-1.5 border-t border-slate-200/50">
+                        <div className="flex justify-between items-center py-0.5 border-t border-slate-300/50">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-400">Tax</span>
+                            <span className="text-sm font-semibold text-slate-600">Tax</span>
                             {totals.totalIGST > 0 ? (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-[#f0f2f5] text-blue-600 rounded font-medium shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]">Interstate</span>
+                              <span className="text-xs px-2 py-0.5 bg-white text-blue-600 rounded-lg font-semibold border border-slate-300">Interstate</span>
                             ) : (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-[#f0f2f5] text-emerald-600 rounded font-medium shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]">Intra</span>
+                              <span className="text-xs px-2 py-0.5 bg-white text-emerald-600 rounded-lg font-semibold border border-slate-300">Intra</span>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
                             {totals.totalIGST > 0 ? (
-                              <span className="text-xs text-slate-600">IGST ₹{totals.totalIGST.toFixed(2)}</span>
+                              <span className="text-sm font-semibold text-slate-700">IGST ₹{totals.totalIGST.toFixed(2)}</span>
                             ) : (
                               <>
-                                <span className="text-[11px] text-slate-500">CGST</span>
-                                <span className="text-xs font-medium text-slate-700">₹{totals.totalCGST.toFixed(2)}</span>
-                                <span className="text-slate-300">|</span>
-                                <span className="text-[11px] text-slate-500">SGST</span>
-                                <span className="text-xs font-medium text-slate-700">₹{totals.totalSGST.toFixed(2)}</span>
+                                <span className="text-sm text-slate-600">CGST</span>
+                                <span className="text-sm font-bold text-slate-700">₹{totals.totalCGST.toFixed(2)}</span>
+                                <span className="text-slate-400">|</span>
+                                <span className="text-sm text-slate-600">SGST</span>
+                                <span className="text-sm font-bold text-slate-700">₹{totals.totalSGST.toFixed(2)}</span>
                               </>
                             )}
                           </div>
-                          <span className="text-sm font-semibold text-slate-700">₹{totals.totalTax.toFixed(2)}</span>
+                          <span className="text-base font-bold text-slate-800 text-right w-[75px] pr-4">₹{totals.totalTax.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-slate-300/50">
+                      <div className="flex justify-between items-center pt-0.5 mt-0.5 border-t-2 border-slate-300/50">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-800">TOTAL</span>
-                          <span className="text-xs text-slate-400 bg-[#f0f2f5] px-1.5 py-0.5 rounded shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
+                          <span className="text-base font-bold text-slate-800">TOTAL</span>
+                          <span className="text-sm text-slate-600 bg-white px-2 py-0.5 rounded-lg font-semibold border border-slate-300">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <label className="flex items-center gap-1 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={roundOff}
                               onChange={(e) => setRoundOff(e.target.checked)}
-                              className="w-3 h-3 rounded accent-emerald-600"
+                              className="w-3.5 h-3.5 rounded accent-emerald-600"
                             />
-                            <span className="text-[10px] text-slate-400">Round Off</span>
+                            <span className="text-xs font-medium text-slate-500">Round Off</span>
                           </label>
                           {roundOff && totals.roundOffAmount !== 0 && (
-                            <span className="text-[10px] text-emerald-600">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
+                            <span className="text-sm font-semibold text-emerald-600">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
                           )}
                         </div>
-                        <span className="font-bold text-2xl text-emerald-600">₹{totals.total.toFixed(0)}</span>
+                        <span className="font-bold text-2xl text-emerald-600 text-right w-[75px] pr-4">₹{totals.total.toFixed(0)}</span>
                       </div>
                       {totals.received > 0 && (
                         <>
-                          <div className="flex justify-between text-xs pt-1 border-t border-border/50">
-                            <span className="text-muted-foreground">Paid:</span>
-                            <span className="font-medium text-emerald-600">₹{totals.received.toFixed(2)}</span>
+                          <div className="flex justify-between text-sm pt-1 border-t border-border/50">
+                            <span className="font-medium text-slate-600">Paid:</span>
+                            <span className="font-bold text-emerald-600">₹{totals.received.toFixed(2)}</span>
                           </div>
-                          <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">Balance:</span>
-                            <span className={cn("font-semibold", totals.balance > 0 ? "text-red-600" : "text-emerald-600")}>
+                          <div className="flex justify-between text-sm">
+                            <span className="font-medium text-slate-600">Balance:</span>
+                            <span className={cn("font-bold", totals.balance > 0 ? "text-red-600" : "text-emerald-600")}>
                               ₹{Math.abs(totals.balance).toFixed(2)}
                             </span>
                           </div>
@@ -7634,7 +7613,7 @@ TOTAL:       ₹${invoice.total}
 
           </div>
           {/* Bottom Action Bar */}
-          <div className="px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white flex-shrink-0">
+          <div className="px-3 md:px-3 py-1.5 md:py-1 border-t border-slate-200 bg-white dark:bg-slate-900 flex-shrink-0">
             
             {/* Mobile Search Bar - MOVED TO TOP (near customer search) */}
             <div className="hidden">
@@ -7930,7 +7909,7 @@ TOTAL:       ₹${invoice.total}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleBackToList}
-                className="hidden md:flex px-4 py-2.5 rounded-lg font-semibold text-sm transition-all items-center gap-2 bg-[#f0f2f5] text-slate-600 shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff] active:shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff]"
+                className="hidden md:flex px-4 py-2.5 rounded-lg font-semibold text-sm transition-all items-center gap-2 bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
               >
                 <ArrowLeft size={16} weight="bold" />
                 Back
@@ -7946,8 +7925,8 @@ TOTAL:       ₹${invoice.total}
                     className={cn(
                       "px-4 py-2 rounded-l-lg font-medium text-sm transition-all flex items-center justify-center gap-2 active:scale-95",
                       invoiceItems.length > 0 && !isCreatingInvoice
-                        ? "bg-[#f0f2f5] text-foreground shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff] active:shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff]"
-                        : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]"
+                        ? "bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
+                        : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300"
                     )}
                   >
                     {isCreatingInvoice ? 'Creating...' : 'Generate Bill'}
@@ -7960,8 +7939,8 @@ TOTAL:       ₹${invoice.total}
                       className={cn(
                         "px-2 py-2 rounded-r-lg font-medium text-sm transition-all active:scale-95",
                         invoiceItems.length > 0 && !isCreatingInvoice
-                          ? "bg-[#f0f2f5] text-foreground shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_#d1d5db,-8px_-8px_16px_#ffffff] active:shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff]"
-                          : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]"
+                          ? "bg-slate-200 text-slate-700 border border-slate-300 border-l-0 hover:bg-slate-300 active:bg-slate-400"
+                          : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300 border-l-0"
                       )}
                     >
                       <CaretDown size={14} weight="bold" className={cn("transition-transform", showBillDropdown && "rotate-180")} />

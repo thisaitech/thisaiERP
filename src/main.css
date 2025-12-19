@@ -788,6 +788,20 @@
   display: none;
 }
 
+/* Hide scrollbar for invoice create/edit view */
+.invoice-create-view {
+  overflow: hidden !important;
+}
+
+.invoice-create-view * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.invoice-create-view *::-webkit-scrollbar {
+  display: none;
+}
+
 /* ============================================
    THERMAL PRINTER STYLES (58mm/80mm)
    ============================================ */

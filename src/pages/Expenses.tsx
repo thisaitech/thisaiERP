@@ -254,48 +254,55 @@ const Expenses = () => {
           </div>
         </div>
 
-        {/* Stats Cards - Second Row */}
+        {/* Stats Cards - Second Row with Colored Backgrounds */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-          {/* Total Expenses Card */}
-          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+          {/* Total Expenses Card - Red Theme */}
+          <button className="bg-red-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5c4c4,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5c4c4,-15px_-15px_30px_#ffffff] transition-all duration-200">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.expenses?.totalExpenses || 'Total'}</span>
-              <div className="w-10 h-10 rounded-xl bg-red-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-red-700 font-medium">{t.expenses?.totalExpenses || 'Total'}</span>
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]">
                 <Wallet size={20} weight="duotone" className="text-red-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-slate-800">₹{stats.totalExpenses.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-red-600">₹{stats.totalExpenses.toLocaleString()}</div>
           </button>
 
-          {/* This Month Card */}
-          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+          {/* This Month Card - Blue Theme */}
+          <button className="bg-blue-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8d4f5,-15px_-15px_30px_#ffffff] transition-all duration-200">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.expenses?.thisMonth || 'This Month'}</span>
-              <div className="w-10 h-10 rounded-xl bg-blue-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-blue-700 font-medium">{t.expenses?.thisMonth || 'This Month'}</span>
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]">
                 <Calendar size={20} weight="duotone" className="text-blue-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-slate-800">₹{stats.thisMonth.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-blue-600">₹{stats.thisMonth.toLocaleString()}</div>
           </button>
 
-          {/* Pending Card */}
-          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+          {/* Pending Card - Orange Theme */}
+          <button className="bg-orange-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5e0b8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5e0b8,-15px_-15px_30px_#ffffff] transition-all duration-200">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.common?.pending || 'Pending'}</span>
-              <div className="w-10 h-10 rounded-xl bg-orange-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-orange-700 font-medium">{t.common?.pending || 'Pending'}</span>
+              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5e0b8,inset_-3px_-3px_6px_#ffffff]">
                 <Receipt size={20} weight="duotone" className="text-orange-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-slate-800">₹{stats.pending.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-orange-600">₹{stats.pending.toLocaleString()}</div>
           </button>
 
-          {/* Change Card */}
-          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+          {/* Change Card - Dynamic Green/Red Theme */}
+          <button className={cn(
+            "rounded-2xl p-4 transition-all duration-200",
+            stats.percentChange >= 0
+              ? "bg-green-50 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8e0c8,-15px_-15px_30px_#ffffff]"
+              : "bg-red-50 shadow-[10px_10px_20px_#f5c4c4,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5c4c4,-15px_-15px_30px_#ffffff]"
+          )}>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.expenses?.change || 'Change'}</span>
+              <span className={cn("text-sm font-medium", stats.percentChange >= 0 ? "text-green-700" : "text-red-700")}>{t.expenses?.change || 'Change'}</span>
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]",
-                stats.percentChange >= 0 ? "bg-green-100/80" : "bg-red-100/80"
+                "w-10 h-10 rounded-xl flex items-center justify-center",
+                stats.percentChange >= 0
+                  ? "bg-green-100 shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]"
+                  : "bg-red-100 shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]"
               )}>
                 {stats.percentChange >= 0 ?
                   <TrendUp size={20} weight="duotone" className="text-green-600" /> :

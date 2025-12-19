@@ -69,7 +69,18 @@
       "Bash(else echo \"✗ MISSING: $file\")",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npx firebase deploy:*)",
+      "Bash(npm ls:*)",
+      "Bash(if exist \"d:\\\\Project\\\\Anna\\\\node_modules\\\\.vite\" rd /s /q \"d:\\\\Project\\\\Anna\\\\node_modules\\\\.vite\")",
+      "Bash(start cmd /k \"cd /d d:\\\\Project\\\\Anna && firebase login --reauth\")",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && npm run dev\")",
+      "Bash(start cmd /k \"cd /d d:\\\\Project\\\\Anna && npm run dev\")",
+      "Bash(start http://localhost:5173)",
+      "Bash(cmd.exe /c \"set PATH=Z:\\\\Application;%PATH% && cd /d d:\\\\Project\\\\Anna && npm run dev\")",
+      "Bash(start cmd /k \"set PATH=Z:\\\\Application;%PATH% && cd /d d:\\\\Project\\\\Anna && npm run dev\")",
+      "Bash(start cmd /k \"set PATH=C:\\\\Program Files\\\\nodejs;%PATH% && cd /d d:\\\\Project\\\\Anna && npm run dev\")",
+      "Bash(cmd.exe /c \"set PATH=C:\\\\Program Files\\\\nodejs;%PATH% && cd /d d:\\\\Project\\\\Anna && node --version && npm --version\")"
     ],
     "deny": [],
     "ask": []

@@ -1025,59 +1025,59 @@ const Inventory = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
           {/* Stats Cards */}
           <div className="contents">
-            {/* Total Items Card */}
+            {/* Total Items Card - Blue Theme */}
             <button
               onClick={() => setActiveTab('all')}
-              className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+              className="bg-blue-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8d4f5,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-slate-500 font-medium">Total Items</span>
-                <div className="w-10 h-10 rounded-xl bg-blue-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <span className="text-sm text-blue-600 font-medium">Total Items</span>
+                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]">
                   <Package size={20} weight="duotone" className="text-blue-600" />
                 </div>
               </div>
-              <div className="text-2xl font-bold text-slate-800">{inventorySummary.totalItems}</div>
+              <div className="text-2xl font-bold text-blue-700">{inventorySummary.totalItems}</div>
             </button>
 
-            {/* Low Stock Card */}
+            {/* Low Stock Card - Orange Theme */}
             <button
               onClick={() => setActiveTab('low')}
-              className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+              className="bg-orange-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5e0b8,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#f5e0b8,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-slate-500 font-medium">Low Stock</span>
-                <div className="w-10 h-10 rounded-xl bg-orange-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <span className="text-sm text-orange-600 font-medium">Low Stock</span>
+                <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5e0b8,inset_-3px_-3px_6px_#ffffff]">
                   <WarningCircle size={20} weight="duotone" className="text-orange-600" />
                 </div>
               </div>
-              <div className="text-2xl font-bold text-orange-600">{inventorySummary.lowStockItems}</div>
+              <div className="text-2xl font-bold text-orange-700">{inventorySummary.lowStockItems}</div>
             </button>
 
-            {/* Out of Stock Card */}
+            {/* Out of Stock Card - Red Theme */}
             <button
               onClick={() => setActiveTab('out')}
-              className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+              className="bg-red-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5c4c4,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#f5c4c4,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-slate-500 font-medium">Out of Stock</span>
-                <div className="w-10 h-10 rounded-xl bg-red-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+                <span className="text-sm text-red-600 font-medium">Out of Stock</span>
+                <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]">
                   <X size={20} weight="bold" className="text-red-600" />
                 </div>
               </div>
-              <div className="text-2xl font-bold text-red-500">{inventorySummary.outOfStockItems}</div>
+              <div className="text-2xl font-bold text-red-600">{inventorySummary.outOfStockItems}</div>
             </button>
 
-            {/* Stock Value Card */}
+            {/* Stock Value Card - Green Theme */}
             <button
-              className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+              className="bg-green-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8e0c8,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-slate-500 font-medium">Stock Value</span>
-                <div className="w-10 h-10 rounded-xl bg-emerald-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                  <CurrencyInr size={20} weight="duotone" className="text-emerald-600" />
+                <span className="text-sm text-green-600 font-medium">Stock Value</span>
+                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]">
+                  <CurrencyInr size={20} weight="duotone" className="text-green-600" />
                 </div>
               </div>
-              <div className="text-2xl font-bold text-emerald-600">₹{inventorySummary.totalValue.toLocaleString('en-IN')}</div>
+              <div className="text-2xl font-bold text-green-700">₹{inventorySummary.totalValue.toLocaleString('en-IN')}</div>
             </button>
           </div>
         </div>

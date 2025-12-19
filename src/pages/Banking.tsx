@@ -797,46 +797,51 @@ const Banking = () => {
 
         {/* Stats Cards - Second Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-          {/* Available Balance Card */}
-          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+          {/* Available Balance Card - Blue Theme */}
+          <button className="bg-blue-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8d4f5,-15px_-15px_30px_#ffffff] transition-all duration-200">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.banking.availableBalance}</span>
-              <div className="w-10 h-10 rounded-xl bg-blue-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-blue-600 font-medium">{t.banking.availableBalance}</span>
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]">
                 <Bank size={20} weight="duotone" className="text-blue-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-slate-800">₹{(availableBalance / 100000).toFixed(2)}L</div>
+            <div className="text-2xl font-bold text-blue-700">₹{(availableBalance / 100000).toFixed(2)}L</div>
           </button>
 
-          {/* Cash in Hand Card */}
-          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+          {/* Cash in Hand Card - Green Theme */}
+          <button className="bg-green-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8e0c8,-15px_-15px_30px_#ffffff] transition-all duration-200">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.banking.cashInHand}</span>
-              <div className="w-10 h-10 rounded-xl bg-green-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-green-600 font-medium">{t.banking.cashInHand}</span>
+              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]">
                 <Wallet size={20} weight="duotone" className="text-green-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-green-600">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</div>
+            <div className="text-2xl font-bold text-green-700">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</div>
           </button>
 
-          {/* Pending Cheques Card */}
-          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+          {/* Pending Cheques Card - Orange Theme */}
+          <button className="bg-orange-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5e0b8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5e0b8,-15px_-15px_30px_#ffffff] transition-all duration-200">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.banking.pendingCheques}</span>
-              <div className="w-10 h-10 rounded-xl bg-amber-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                <Receipt size={20} weight="duotone" className="text-amber-600" />
+              <span className="text-sm text-orange-600 font-medium">{t.banking.pendingCheques}</span>
+              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5e0b8,inset_-3px_-3px_6px_#ffffff]">
+                <Receipt size={20} weight="duotone" className="text-orange-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-amber-600">{accounts.cheques.filter(ch => ch.status === 'pending').length}</div>
+            <div className="text-2xl font-bold text-orange-700">{accounts.cheques.filter(ch => ch.status === 'pending').length}</div>
           </button>
 
-          {/* Net Worth Card */}
-          <button className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#c5ccd6,-15px_-15px_30px_#ffffff] transition-all duration-200">
+          {/* Net Worth Card - Dynamic Green/Red Theme */}
+          <button className={cn(
+            "rounded-2xl p-4 transition-all duration-200",
+            netWorth >= 0
+              ? "bg-green-50 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8e0c8,-15px_-15px_30px_#ffffff]"
+              : "bg-red-50 shadow-[10px_10px_20px_#f5c4c4,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5c4c4,-15px_-15px_30px_#ffffff]"
+          )}>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.banking.netWorth}</span>
+              <span className={cn("text-sm font-medium", netWorth >= 0 ? "text-green-600" : "text-red-600")}>{t.banking.netWorth}</span>
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]",
-                netWorth >= 0 ? "bg-green-100/80" : "bg-red-100/80"
+                "w-10 h-10 rounded-xl flex items-center justify-center",
+                netWorth >= 0 ? "bg-green-100 shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]" : "bg-red-100 shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]"
               )}>
                 {netWorth >= 0 ?
                   <TrendUp size={20} weight="duotone" className="text-green-600" /> :
@@ -846,7 +851,7 @@ const Banking = () => {
             </div>
             <div className={cn(
               "text-2xl font-bold",
-              netWorth >= 0 ? "text-green-600" : "text-red-500"
+              netWorth >= 0 ? "text-green-700" : "text-red-600"
             )}>
               {netWorth >= 0 ? '+' : '-'}₹{(Math.abs(netWorth) / 100000).toFixed(1)}L
             </div>

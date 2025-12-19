@@ -776,10 +776,10 @@ const Parties = () => {
         className="mb-3"
       >
         {/* Top Row: Period Filter (Left) + Actions (Right) */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+        <div className="flex items-center justify-between mb-3">
           {/* Period Filter Tabs - Left Side */}
-          <div className="flex flex-col items-start gap-2">
-            <div className="inline-flex items-center bg-[#f5f7fa] rounded-xl p-1 shadow-[inset_2px_2px_4px_#e0e3e7,inset_-2px_-2px_4px_#ffffff]">
+          <div className="flex-shrink-0">
+            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
             {[
               { value: 'today', label: t.common.today },
               { value: 'week', label: t.common.week },
@@ -799,58 +799,30 @@ const Parties = () => {
                   }
                 }}
                 className={cn(
-                  "px-4 py-1.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap",
+                  "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
                   statsFilter === filter.value
-                    ? "bg-blue-500 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff]"
-                    : "text-slate-600 hover:text-slate-800"
+                    ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                 )}
               >
                 {filter.label}
               </button>
             ))}
             </div>
-
-            {/* Custom Date Range Picker - Below Filter Buttons */}
-            {(statsFilter === 'custom' || showCustomDatePicker) && (
-              <div className="flex flex-wrap items-center gap-2 bg-[#f5f7fa] rounded-xl p-3 shadow-[8px_8px_16px_#e0e3e7,-8px_-8px_16px_#ffffff]">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-slate-600 font-medium">{t.common.from}:</span>
-                  <input
-                    type="date"
-                    value={customDateFrom}
-                    onChange={(e) => setCustomDateFrom(e.target.value)}
-                    className="px-2 py-1 text-xs rounded-lg bg-[#f5f7fa] text-slate-800 outline-none shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] focus:shadow-[inset_4px_4px_8px_#e0e3e7,inset_-4px_-4px_8px_#ffffff]"
-                  />
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-slate-600 font-medium">{t.common.to}:</span>
-                  <input
-                    type="date"
-                    value={customDateTo}
-                    onChange={(e) => setCustomDateTo(e.target.value)}
-                    className="px-2 py-1 text-xs rounded-lg bg-[#f5f7fa] text-slate-800 outline-none shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] focus:shadow-[inset_4px_4px_8px_#e0e3e7,inset_-4px_-4px_8px_#ffffff]"
-                  />
-                </div>
-                {statsFilter === 'custom' && customDateFrom && customDateTo && (
-                  <span className="text-xs text-blue-600 font-medium bg-[#f5f7fa] px-2 py-1 rounded-lg shadow-[inset_2px_2px_4px_#e0e3e7,inset_-2px_-2px_4px_#ffffff]">
-                    {new Date(customDateFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} - {new Date(customDateTo).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Action Buttons - Right Side */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex-shrink-0">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white rounded-xl text-sm font-medium
+              className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
                 shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
                 hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
                 active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
                 transition-all duration-200"
             >
-              <Plus size={16} weight="bold" />
+              <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">{language === 'ta' ? 'தரப்பினர் சேர்' : 'Add Party'}</span>
             </button>
           </div>
@@ -858,61 +830,65 @@ const Parties = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {/* Parties Card - Blue Theme */}
           <button
             onClick={() => setActiveTab('all')}
-            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            className="bg-blue-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8d4f5,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{language === 'ta' ? 'தரப்பினர்' : 'Parties'}</span>
-              <div className="w-10 h-10 rounded-xl bg-blue-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-blue-600 font-medium">{language === 'ta' ? 'தரப்பினர்' : 'Parties'}</span>
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]">
                 <Users size={20} weight="duotone" className="text-blue-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-slate-800">{partiesSummary.totalParties}</div>
+            <div className="text-2xl font-bold text-blue-700">{partiesSummary.totalParties}</div>
           </button>
 
+          {/* To Receive Card - Green Theme */}
           <button
             onClick={() => setActiveTab('customers')}
-            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            className="bg-green-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8e0c8,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{language === 'ta' ? 'பெற வேண்டியது' : 'To Receive'}</span>
-              <div className="w-10 h-10 rounded-xl bg-emerald-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <span className="text-sm text-green-600 font-medium">{language === 'ta' ? 'பெற வேண்டியது' : 'To Receive'}</span>
+              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]">
+                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
-            <div className="text-2xl font-bold text-emerald-600">₹{(partiesSummary.totalReceivables / 100000).toFixed(2)}L</div>
+            <div className="text-2xl font-bold text-green-700">₹{(partiesSummary.totalReceivables / 100000).toFixed(2)}L</div>
           </button>
 
+          {/* To Pay Card - Red Theme */}
           <button
             onClick={() => setActiveTab('suppliers')}
-            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            className="bg-red-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5c4c4,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#f5c4c4,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'To Pay'}</span>
-              <div className="w-10 h-10 rounded-xl bg-red-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-red-600 font-medium">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'To Pay'}</span>
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]">
                 <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
-            <div className="text-2xl font-bold text-red-500">₹{(partiesSummary.totalPayables / 100000).toFixed(2)}L</div>
+            <div className="text-2xl font-bold text-red-600">₹{(partiesSummary.totalPayables / 100000).toFixed(2)}L</div>
           </button>
 
+          {/* Net Balance Card - Purple Theme */}
           <button
-            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            className="bg-purple-50 rounded-2xl p-4 shadow-[10px_10px_20px_#d8c4f5,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#d8c4f5,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{language === 'ta' ? 'நிகர இருப்பு' : 'Net Balance'}</span>
-              <div className="w-10 h-10 rounded-xl bg-blue-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
-                <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <span className="text-sm text-purple-600 font-medium">{language === 'ta' ? 'நிகர இருப்பு' : 'Net Balance'}</span>
+              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#d8c4f5,inset_-3px_-3px_6px_#ffffff]">
+                <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
             </div>
-            <div className="text-2xl font-bold text-blue-600">₹{(partiesSummary.netBalance / 100000).toFixed(2)}L</div>
+            <div className="text-2xl font-bold text-purple-700">₹{(partiesSummary.netBalance / 100000).toFixed(2)}L</div>
           </button>
         </div>
       </motion.div>

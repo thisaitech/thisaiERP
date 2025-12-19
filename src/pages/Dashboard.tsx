@@ -930,7 +930,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Stats Cards - Neumorphic Floating Style (4 Cards) */}
+          {/* Stats Cards - Colored Neumorphic Style (4 Cards) */}
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
             initial="hidden"
@@ -940,10 +940,10 @@ const Dashboard = () => {
             }}
           >
             {[
-              { label: 'Sales', sublabel: 'vs yesterday', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, color: 'green' },
-              { label: 'Purchases', sublabel: 'Total spend', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, color: 'red' },
-              { label: 'Expenses', sublabel: 'This period', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, color: 'amber' },
-              { label: 'Profit', sublabel: 'Net earnings', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, color: 'blue' },
+              { label: 'Sales', sublabel: 'vs yesterday', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, color: 'green', borderColor: 'border-green-300', shadow: 'shadow-[10px_10px_20px_rgba(34,197,94,0.15),-10px_-10px_20px_#ffffff]', hoverShadow: 'hover:shadow-[14px_14px_28px_rgba(34,197,94,0.25),-14px_-14px_28px_#ffffff]' },
+              { label: 'Purchases', sublabel: 'Total spend', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, color: 'red', borderColor: 'border-red-300', shadow: 'shadow-[10px_10px_20px_rgba(239,68,68,0.15),-10px_-10px_20px_#ffffff]', hoverShadow: 'hover:shadow-[14px_14px_28px_rgba(239,68,68,0.25),-14px_-14px_28px_#ffffff]' },
+              { label: 'Expenses', sublabel: 'This period', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, color: 'amber', borderColor: 'border-amber-300', shadow: 'shadow-[10px_10px_20px_rgba(245,158,11,0.15),-10px_-10px_20px_#ffffff]', hoverShadow: 'hover:shadow-[14px_14px_28px_rgba(245,158,11,0.25),-14px_-14px_28px_#ffffff]' },
+              { label: 'Profit', sublabel: 'Net earnings', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, color: 'blue', borderColor: 'border-blue-300', shadow: 'shadow-[10px_10px_20px_rgba(59,130,246,0.15),-10px_-10px_20px_#ffffff]', hoverShadow: 'hover:shadow-[14px_14px_28px_rgba(59,130,246,0.25),-14px_-14px_28px_#ffffff]' },
             ].map((stat, i) => (
               <motion.div
                 key={i}
@@ -952,22 +952,30 @@ const Dashboard = () => {
                   visible: { opacity: 1, y: 0 },
                 }}
                 onClick={() => navigate(stat.route)}
-                className="relative p-6 rounded-3xl cursor-pointer bg-[#e4ebf5] dark:bg-slate-800
-                  shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff]
-                  dark:shadow-[10px_10px_20px_#1e293b,-10px_-10px_20px_#334155]
-                  hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff]
-                  dark:hover:shadow-[14px_14px_28px_#1e293b,-14px_-14px_28px_#334155]
-                  transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group"
+                className={cn(
+                  "relative p-6 rounded-3xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group",
+                  "bg-[#e4ebf5] dark:bg-slate-800",
+                  "border-2",
+                  stat.borderColor,
+                  stat.shadow,
+                  stat.hoverShadow,
+                  "dark:border-opacity-30 dark:shadow-[10px_10px_20px_#1e293b,-10px_-10px_20px_#334155] dark:hover:shadow-[14px_14px_28px_#1e293b,-14px_-14px_28px_#334155]"
+                )}
               >
                 <div className="flex justify-between items-start mb-4">
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
+                  <p className={cn(
+                    "text-sm font-medium",
+                    stat.color === 'green' && 'text-green-700 dark:text-green-300',
+                    stat.color === 'red' && 'text-red-700 dark:text-red-300',
+                    stat.color === 'amber' && 'text-amber-700 dark:text-amber-300',
+                    stat.color === 'blue' && 'text-blue-700 dark:text-blue-300',
+                  )}>{stat.label}</p>
                   <div className={cn(
                     "w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
-                    "shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]",
-                    stat.color === 'green' && 'bg-green-100/80 dark:bg-green-900/40',
-                    stat.color === 'red' && 'bg-red-100/80 dark:bg-red-900/40',
-                    stat.color === 'amber' && 'bg-amber-100/80 dark:bg-amber-900/40',
-                    stat.color === 'blue' && 'bg-blue-100/80 dark:bg-blue-900/40',
+                    stat.color === 'green' && 'bg-green-100 shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]',
+                    stat.color === 'red' && 'bg-red-100 shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]',
+                    stat.color === 'amber' && 'bg-amber-100 shadow-[inset_3px_3px_6px_#f5e0b8,inset_-3px_-3px_6px_#ffffff]',
+                    stat.color === 'blue' && 'bg-blue-100 shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]',
                   )}>
                     <stat.icon size={24} weight="bold" className={cn(
                       stat.color === 'green' && 'text-green-600 dark:text-green-400',
@@ -989,12 +997,18 @@ const Dashboard = () => {
                 {stat.growth !== null ? (
                   <p className={cn(
                     "text-sm font-medium",
-                    stat.growth >= 0 ? 'text-green-500' : 'text-red-500',
+                    stat.growth >= 0 ? 'text-green-600' : 'text-red-600',
                   )}>
                     {stat.growth >= 0 ? `+${stat.growth.toFixed(1)}%` : `${stat.growth.toFixed(1)}%`} {stat.sublabel}
                   </p>
                 ) : (
-                  <p className="text-sm font-medium text-slate-400">{stat.sublabel}</p>
+                  <p className={cn(
+                    "text-sm font-medium",
+                    stat.color === 'green' && 'text-green-500',
+                    stat.color === 'red' && 'text-red-500',
+                    stat.color === 'amber' && 'text-amber-500',
+                    stat.color === 'blue' && 'text-blue-500',
+                  )}>{stat.sublabel}</p>
                 )}
               </motion.div>
             ))}

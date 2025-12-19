@@ -5147,7 +5147,7 @@ TOTAL:       ₹${invoice.total}
           </div>
 
           {/* Action Buttons - Right Side */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center gap-2">
                 {/* Tally Export Dropdown */}
                 <div className="relative">
                   <button
@@ -5159,10 +5159,15 @@ TOTAL:       ₹${invoice.total}
                       })
                       setShowTallyDropdown(!showTallyDropdown)
                     }}
-                    className="h-8 px-3 rounded-lg border border-emerald-200 bg-white text-xs text-emerald-600 font-semibold flex items-center gap-1.5 hover:border-emerald-400 hover:bg-emerald-50 transition-all"
+                    className="h-9 px-4 rounded-xl text-xs bg-white text-emerald-600 font-semibold flex items-center gap-1.5
+                      shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                      dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                      hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                      active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                      transition-all duration-200 border border-emerald-200"
                   >
                     <Download size={14} weight="bold" />
-                    <span>Tally</span>
+                    <span className="hidden sm:inline">Tally</span>
                     <CaretDown size={12} />
                   </button>
                   {showTallyDropdown && (
@@ -5237,68 +5242,68 @@ TOTAL:       ₹${invoice.total}
         {/* Stats Grid - Dashboard Style Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
 
-          {/* Sales Card */}
+          {/* Sales Card - Green Theme */}
           <button
             onClick={() => setFilterStatus('all')}
-            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            className="bg-green-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8e0c8,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.nav.sales}</span>
-              <div className="w-10 h-10 rounded-xl bg-green-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-green-600 font-medium">{t.nav.sales}</span>
+              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]">
                 <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
             </div>
-            <div className="text-2xl font-bold text-slate-800">₹{dashboardStats.periodSales.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold text-green-700">₹{dashboardStats.periodSales.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </button>
 
-          {/* Collected Card */}
+          {/* Collected Card - Emerald Theme */}
           <button
             onClick={() => setFilterStatus('paid')}
-            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            className="bg-emerald-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8e0c8,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.sales.collected}</span>
-              <div className="w-10 h-10 rounded-xl bg-emerald-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-emerald-600 font-medium">{t.sales.collected}</span>
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]">
                 <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
-            <div className="text-2xl font-bold text-emerald-600">₹{dashboardStats.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold text-emerald-700">₹{dashboardStats.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </button>
 
-          {/* Pending Card */}
+          {/* Pending Card - Orange Theme */}
           <button
             onClick={() => setFilterStatus('pending')}
-            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            className="bg-orange-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5e0b8,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#f5e0b8,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.sales.pending}</span>
-              <div className="w-10 h-10 rounded-xl bg-orange-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-orange-600 font-medium">{t.sales.pending}</span>
+              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5e0b8,inset_-3px_-3px_6px_#ffffff]">
                 <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
-            <div className="text-2xl font-bold text-red-500">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold text-orange-700">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </button>
 
-          {/* Invoices Card */}
+          {/* Invoices Card - Blue Theme */}
           <button
             onClick={() => setFilterStatus('all')}
-            className="bg-[#e4ebf5] rounded-2xl p-4 shadow-[10px_10px_20px_#c5ccd6,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#c5ccd6,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
+            className="bg-blue-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8d4f5,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-slate-500 font-medium">{t.sales.invoice}</span>
-              <div className="w-10 h-10 rounded-xl bg-blue-100/80 flex items-center justify-center shadow-[inset_3px_3px_6px_rgba(0,0,0,0.08),inset_-3px_-3px_6px_rgba(255,255,255,0.8)]">
+              <span className="text-sm text-blue-600 font-medium">{t.sales.invoice}</span>
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]">
                 <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
             </div>
-            <div className="text-2xl font-bold text-blue-600">{dashboardStats.invoiceCount}</div>
+            <div className="text-2xl font-bold text-blue-700">{dashboardStats.invoiceCount}</div>
           </button>
         </div>
       </div>
@@ -5991,7 +5996,7 @@ TOTAL:       ₹${invoice.total}
 
       {/* Create Invoice Form - Show when in create mode */}
       {viewMode === 'create' && (
-        <div className="flex flex-col h-[calc(100vh-64px)]">
+        <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden invoice-create-view">
           {/* Modern Café POS View */}
           {showCafePOS ? (
             <div className="flex-1 overflow-hidden h-full">

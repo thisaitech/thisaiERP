@@ -623,29 +623,27 @@ const ReportsNew = () => {
         {/* Top Row: Period Filter Left + Export Buttons Right */}
         <div className="flex items-center justify-between mb-3">
           {/* Period Filter Tabs - Left Side */}
-          <div className="flex-shrink-0">
-            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
-              {[
-                { key: 'today', label: t.common.today },
-                { key: 'this-week', label: t.common.thisWeek },
-                { key: 'this-month', label: t.common.thisMonth },
-                { key: 'this-year', label: t.common.thisYear },
-                { key: 'all-time', label: t.reports.allTime }
-              ].map((filter) => (
-                <button
-                  key={filter.key}
-                  onClick={() => setSelectedPeriod(filter.key)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
-                    selectedPeriod === filter.key
-                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                  )}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-2 overflow-x-auto">
+            {[
+              { key: 'today', label: t.common.today },
+              { key: 'this-week', label: t.common.week },
+              { key: 'this-month', label: t.common.month },
+              { key: 'this-year', label: t.common.year },
+              { key: 'all-time', label: t.reports.all || 'All' }
+            ].map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setSelectedPeriod(filter.key)}
+                className={cn(
+                  "px-4 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-200",
+                  selectedPeriod === filter.key
+                    ? "bg-blue-600 text-white shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]"
+                    : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]"
+                )}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
 
           {/* Export Buttons - Right Side - show when report data available */}
@@ -692,25 +690,23 @@ const ReportsNew = () => {
         </div>
 
         {/* Category Tabs - Second Row */}
-        <div className="mb-3">
-          <div className="flex items-center justify-center">
-            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155] overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setSelectedTab(tab.id)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1",
-                    selectedTab === tab.id
-                      ? "bg-[#f5f7fa] dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                  )}
-                >
-                  <tab.icon size={14} weight={selectedTab === tab.id ? "duotone" : "regular"} />
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+        <div className="mb-4">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedTab(tab.id)}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-2",
+                  selectedTab === tab.id
+                    ? "bg-blue-600 text-white shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]"
+                    : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]"
+                )}
+              >
+                <tab.icon size={18} weight={selectedTab === tab.id ? "bold" : "regular"} />
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -729,17 +725,6 @@ const ReportsNew = () => {
             {/* Every Day Tab */}
             {selectedTab === 'everyday' && (
               <div className="space-y-3">
-                {/* Header with description */}
-                <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar size={20} className="text-blue-600" weight="duotone" />
-                    <h2 className="text-base font-semibold text-slate-800">{t.reports.everyDayReports}</h2>
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    {t.reports.essentialDailyReports}
-                  </p>
-                </div>
-
                 {/* Daily Reports Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   <button
