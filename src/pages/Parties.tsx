@@ -31,11 +31,12 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { getPartyLedger, getPartyBalance, type LedgerEntry } from '../services/ledgerService'
-import { getParties, getPartiesWithOutstanding, createParty, updateParty, deleteParty } from '../services/partyService'
+import { getParties, getPartiesWithOutstanding, createParty, updateParty, deleteParty, findPartyByName, findPartyByGSTIN, autoCleanupDuplicates } from '../services/partyService'
 import { getPartySettings, type PartySettings } from '../services/settingsService'
 import { getInvoices } from '../services/invoiceService'
 import { toast } from 'sonner'
 import { validateCustomerName, validatePhoneNumber, validateGSTIN } from '../utils/inputValidation'
+import { getPartyName } from '../utils/partyUtils'
 
 // Indian States list with priority states first
 const INDIAN_STATES = [
@@ -111,6 +112,7 @@ const Parties = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [partyToDelete, setPartyToDelete] = useState<any>(null)
   const [allInvoices, setAllInvoices] = useState<any[]>([])
+  const [isCleaningDuplicates, setIsCleaningDuplicates] = useState(false)
 
   // Party settings from Settings page
   const [partySettings, setPartySettings] = useState<PartySettings>(() => getPartySettings())
@@ -127,7 +129,7 @@ const Parties = () => {
   // Form state for new party
   const [partyType, setPartyType] = useState<'customer' | 'supplier'>('customer')
   const [partyName, setPartyName] = useState('')
-  const [partyPhone, setPartyPhone] = useState('')
+  const [partyPhone, setPartyPhone] = useState('') // Just the 10-digit number (91 prefix shown separately)
   const [partyEmail, setPartyEmail] = useState('')
   const [partyGst, setPartyGst] = useState('')
   const [partyAddress, setPartyAddress] = useState('')
@@ -168,6 +170,31 @@ const Parties = () => {
   useEffect(() => {
     loadPartiesFromDatabase()
   }, [])
+
+  // Handle cleanup duplicates
+  const handleCleanupDuplicates = async () => {
+    try {
+      setIsCleaningDuplicates(true)
+      const result = await autoCleanupDuplicates()
+
+      if (result.partiesRemoved > 0) {
+        toast.success(`Removed ${result.partiesRemoved} duplicate parties from ${result.groupsCleaned} groups`)
+        // Reload parties list
+        await loadPartiesFromDatabase()
+      } else {
+        toast.info('No duplicate parties found')
+      }
+
+      if (result.errors.length > 0) {
+        console.warn('Cleanup errors:', result.errors)
+      }
+    } catch (error) {
+      console.error('Error cleaning up duplicates:', error)
+      toast.error('Failed to cleanup duplicates')
+    } finally {
+      setIsCleaningDuplicates(false)
+    }
+  }
 
   // Check for action parameter and auto-open modal
   useEffect(() => {
@@ -226,7 +253,7 @@ const Parties = () => {
 
     setPartyType('customer')
     setPartyName('')
-    setPartyPhone('')
+    setPartyPhone('') // Just the 10-digit number (91 prefix shown separately)
     setPartyEmail('')
     setPartyGst('')
     setPartyAddress('')
@@ -257,10 +284,10 @@ const Parties = () => {
       return
     }
 
-    // Validate phone number - must be 10-15 digits (allows country code)
+    // Validate phone number - must be exactly 10 digits (91 prefix is added automatically)
     const phoneDigits = partyPhone.replace(/\D/g, '') // Remove non-digits
-    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
-      toast.error('Phone number must be 10-15 digits')
+    if (phoneDigits.length !== 10) {
+      toast.error('Phone number must be exactly 10 digits')
       return
     }
 
@@ -280,11 +307,14 @@ const Parties = () => {
 
     setIsLoadingParties(true)
     try {
+      // Format phone with 91 prefix for storage
+      const formattedPhone = '91' + phoneDigits
+
       console.log(isEditMode ? 'Updating' : 'Creating', 'party with data:', {
         type: partyType,
         companyName: partyName.trim(),
         displayName: partyName.trim(),
-        phone: partyPhone.trim(),
+        phone: formattedPhone,
         email: partyEmail?.trim() || '',
       })
 
@@ -294,7 +324,7 @@ const Parties = () => {
         type: partyType,
         companyName: partyName.trim(),
         displayName: partyName.trim(),
-        phone: partyPhone.trim(),
+        phone: formattedPhone,
         email: partyEmail?.trim() || '',
         contacts: [],
         billingAddress: {
@@ -339,6 +369,28 @@ const Parties = () => {
       }
 
       if (isEditMode && editingPartyId) {
+        // Check for TRUE duplicate (excluding current party being edited)
+        // Same name with different phone/GSTIN is allowed
+        const existingByName = await findPartyByName(partyName.trim(), partyType)
+        if (existingByName && existingByName.id !== editingPartyId) {
+          // Normalize phone numbers for comparison
+          const newPhone = (partyPhone || '').replace(/\D/g, '').trim()
+          const existingPhone = (existingByName.phone || '').replace(/\D/g, '').trim()
+          const newGstin = (partyGst || '').trim().toUpperCase()
+          const existingGstin = (existingByName.gstDetails?.gstin || existingByName.gstin || '').trim().toUpperCase()
+
+          // Only block if TRUE duplicate (same identifier OR both have no identifiers)
+          const bothHaveNoIdentifiers = !newPhone && !existingPhone && !newGstin && !existingGstin
+          const samePhone = newPhone && existingPhone && newPhone === existingPhone
+          const sameGstin = newGstin && existingGstin && newGstin === existingGstin
+
+          if (bothHaveNoIdentifiers || samePhone || sameGstin) {
+            toast.error(`A ${partyType} with the name "${existingByName.displayName || existingByName.companyName}" and same contact details already exists.`)
+            setIsLoadingParties(false)
+            return
+          }
+        }
+
         // Update existing party
         const success = await updateParty(editingPartyId, partyData)
 
@@ -352,6 +404,40 @@ const Parties = () => {
           toast.error('Failed to update party. Please try again.')
         }
       } else {
+        // Check for duplicate by GSTIN first (if provided) - GSTIN must be unique
+        if (partyGst?.trim()) {
+          const existingByGstin = await findPartyByGSTIN(partyGst.trim().toUpperCase())
+          if (existingByGstin) {
+            toast.error(`A party with GSTIN "${partyGst.trim().toUpperCase()}" already exists: "${existingByGstin.displayName || existingByGstin.companyName}". Please use a different GSTIN.`)
+            setIsLoadingParties(false)
+            return
+          }
+        }
+
+        // Check for TRUE duplicate - same name AND same phone/GSTIN (or both missing)
+        // Parties with same name but different phone numbers are allowed
+        const existingByName = await findPartyByName(partyName.trim(), partyType)
+        if (existingByName) {
+          // Normalize phone numbers for comparison (remove non-digits)
+          const newPhone = (partyPhone || '').replace(/\D/g, '').trim()
+          const existingPhone = (existingByName.phone || '').replace(/\D/g, '').trim()
+          const newGstin = (partyGst || '').trim().toUpperCase()
+          const existingGstin = (existingByName.gstDetails?.gstin || existingByName.gstin || '').trim().toUpperCase()
+
+          // Check if this is a TRUE duplicate (same identifier OR both have no identifiers)
+          const bothHaveNoIdentifiers = !newPhone && !existingPhone && !newGstin && !existingGstin
+          const samePhone = newPhone && existingPhone && newPhone === existingPhone
+          const sameGstin = newGstin && existingGstin && newGstin === existingGstin
+
+          if (bothHaveNoIdentifiers || samePhone || sameGstin) {
+            // TRUE duplicate - block creation
+            toast.error(`A ${partyType} with the name "${existingByName.displayName || existingByName.companyName}" and same contact details already exists. Please edit the existing ${partyType}.`)
+            setIsLoadingParties(false)
+            return
+          }
+          // Different phone/GSTIN = different person with same name = allowed
+        }
+
         // Create new party
         const newParty = await createParty(partyData)
 
@@ -385,8 +471,15 @@ const Parties = () => {
     setEditingPartyId(party.id)
     setPartyType(party.type || 'customer')
     // Check all possible name fields: displayName, companyName, name
-    setPartyName(party.displayName || party.companyName || party.name || '')
-    setPartyPhone(party.phone || '')
+    setPartyName(getPartyName(party))
+    // Extract just the 10-digit number (remove country code if present)
+    const existingPhone = party.phone || ''
+    const phoneDigits = existingPhone.replace(/\D/g, '') // Remove all non-digits
+    // If starts with 91 and has more than 10 digits, remove the 91 prefix
+    const cleanPhone = phoneDigits.startsWith('91') && phoneDigits.length > 10
+      ? phoneDigits.slice(2)
+      : phoneDigits.slice(-10) // Take last 10 digits
+    setPartyPhone(cleanPhone)
     setPartyEmail(party.email || '')
     setPartyGst(party.gstDetails?.gstin || '')
     setPartyAddress(party.billingAddress?.street || '')
@@ -442,13 +535,15 @@ const Parties = () => {
 
   const getPartyStatus = (party: typeof parties[0]) => {
     if ((party.overdue || 0) > 0) return { label: 'Overdue', color: 'destructive', icon: WarningCircle }
-    if (party.status === 'active' || party.isActive) return { label: 'Active', color: 'success', icon: CheckCircle }
-    return { label: 'Inactive', color: 'warning', icon: WarningCircle }
+    // Treat party as active if isActive is true OR undefined (default to active for parties without this field)
+    // Only show as Inactive if explicitly set to false
+    if (party.isActive === false) return { label: 'Inactive', color: 'warning', icon: WarningCircle }
+    return { label: 'Active', color: 'success', icon: CheckCircle }
   }
 
   // Filter parties by search and tab only (not by date - date filter is for summary cards)
   const filteredParties = parties.filter(party => {
-    const matchesSearch = (party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = (getPartyName(party).toLowerCase().includes(searchQuery.toLowerCase())) ||
                          (party.phone || '').includes(searchQuery) ||
                          (party.email || '').toLowerCase().includes(searchQuery.toLowerCase())
     const matchesTab = activeTab === 'all' ||
@@ -490,43 +585,38 @@ const Parties = () => {
     return true
   }
 
-  // Parties Summary - calculated based on INVOICES within the date range (2025 Standard)
-  // This ensures To Receive/To Pay/Net Balance reflect the selected time period
+  // Parties Summary - calculated based on party outstanding balances (includes opening balance + invoices)
+  // This shows the TRUE receivable/payable amounts from each party
   const partiesSummary = useMemo(() => {
-    // Filter invoices by date range
-    const dateFilteredInvoices = allInvoices.filter(isInvoiceDateInRange)
+    // Calculate To Receive and To Pay from party outstanding balances
+    // Outstanding logic:
+    // - Customer with positive outstanding = They owe us = To Receive
+    // - Customer with negative outstanding = We owe them (advance) = To Pay
+    // - Supplier with positive outstanding = We owe them = To Pay
+    // - Supplier with negative outstanding = They owe us (advance) = To Receive
 
-    // Calculate receivables from sales invoices in date range
-    const totalReceivables = dateFilteredInvoices
-      .filter(inv => inv.type !== 'purchase' && inv.billType !== 'purchase')
-      .reduce((sum, inv) => {
-        const total = Number(inv.total || inv.grandTotal || inv.amount || 0)
-        const paid = Number(
-          inv.payment?.paidAmount ||
-          inv.paidAmount ||
-          inv.amountPaid ||
-          (inv.payment?.status === 'paid' ? total : 0) ||
-          0
-        )
-        const outstanding = total - paid
-        return sum + (outstanding > 0 ? outstanding : 0)
-      }, 0)
+    let totalReceivables = 0
+    let totalPayables = 0
 
-    // Calculate payables from purchase invoices in date range
-    const totalPayables = dateFilteredInvoices
-      .filter(inv => inv.type === 'purchase' || inv.billType === 'purchase')
-      .reduce((sum, inv) => {
-        const total = Number(inv.total || inv.grandTotal || inv.amount || 0)
-        const paid = Number(
-          inv.payment?.paidAmount ||
-          inv.paidAmount ||
-          inv.amountPaid ||
-          (inv.payment?.status === 'paid' ? total : 0) ||
-          0
-        )
-        const outstanding = total - paid
-        return sum + (outstanding > 0 ? outstanding : 0)
-      }, 0)
+    filteredParties.forEach(party => {
+      const outstanding = party.outstanding ?? party.currentBalance ?? 0
+
+      if (party.type === 'customer') {
+        // Customer: positive = they owe us (receivable), negative = we owe them (payable)
+        if (outstanding > 0) {
+          totalReceivables += outstanding
+        } else if (outstanding < 0) {
+          totalPayables += Math.abs(outstanding)
+        }
+      } else {
+        // Supplier: positive = we owe them (payable), negative = they owe us (receivable)
+        if (outstanding > 0) {
+          totalPayables += outstanding
+        } else if (outstanding < 0) {
+          totalReceivables += Math.abs(outstanding)
+        }
+      }
+    })
 
     return {
       totalParties: filteredParties.length,
@@ -535,10 +625,10 @@ const Parties = () => {
       totalReceivables,
       totalPayables,
       netBalance: totalReceivables - totalPayables,
-      activeParties: filteredParties.filter(p => p.isActive || p.status === 'active').length,
+      activeParties: filteredParties.filter(p => p.isActive !== false).length,
       overdueCustomers: 0
     }
-  }, [filteredParties, allInvoices, statsFilter, customDateFrom, customDateTo])
+  }, [filteredParties])
 
   const viewLedger = (party: typeof parties[0]) => {
     setSelectedParty(party)
@@ -553,11 +643,10 @@ const Parties = () => {
       return
     }
 
-    const partyName = party.displayName || party.companyName || party.name || 'Unknown'
+    const partyName = getPartyName(party)
     const outstanding = party.outstanding ?? party.currentBalance ?? 0
-    const balanceLabel = party.type === 'customer'
-      ? (outstanding > 0 ? 'To Receive' : outstanding < 0 ? 'Advance' : 'Settled')
-      : (outstanding > 0 ? 'To Pay' : outstanding < 0 ? 'Credit' : 'Settled')
+    // Positive = they owe us (To Receive), Negative = we owe them (To Pay)
+    const balanceLabel = outstanding > 0 ? 'To Receive' : outstanding < 0 ? 'To Pay' : 'Settled'
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -633,11 +722,10 @@ const Parties = () => {
       return
     }
 
-    const partyName = selectedParty.displayName || selectedParty.companyName || selectedParty.name || 'Unknown'
+    const partyName = getPartyName(selectedParty)
     const outstanding = selectedParty.currentBalance || 0
-    const balanceLabel = selectedParty.type === 'customer'
-      ? (outstanding > 0 ? 'To Receive' : outstanding < 0 ? 'Advance' : 'Settled')
-      : (outstanding > 0 ? 'To Pay' : outstanding < 0 ? 'Credit' : 'Settled')
+    // Positive = they owe us (To Receive), Negative = we owe them (To Pay)
+    const balanceLabel = outstanding > 0 ? 'To Receive' : outstanding < 0 ? 'To Pay' : 'Settled'
 
     const ledgerRows = ledgerEntries.map(entry => `
       <tr>
@@ -812,7 +900,29 @@ const Parties = () => {
           </div>
 
           {/* Action Buttons - Right Side */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center gap-2">
+            {/* Cleanup Duplicates Button */}
+            <button
+              onClick={handleCleanupDuplicates}
+              disabled={isCleaningDuplicates}
+              className="h-9 px-3 rounded-xl bg-amber-50 text-xs text-amber-700 font-medium flex items-center gap-1.5
+                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-all duration-200"
+              title="Remove duplicate parties (case-insensitive)"
+            >
+              {isCleaningDuplicates ? (
+                <ArrowsClockwise size={14} weight="bold" className="animate-spin" />
+              ) : (
+                <ArrowsClockwise size={14} weight="bold" />
+              )}
+              <span className="hidden sm:inline">{isCleaningDuplicates ? 'Cleaning...' : 'Cleanup'}</span>
+            </button>
+
+            {/* Add Party Button */}
             <button
               onClick={() => setShowAddModal(true)}
               className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
@@ -961,14 +1071,13 @@ const Parties = () => {
             const status = getPartyStatus(party)
             const outstanding = party.outstanding ?? party.currentBalance ?? 0
 
-            // Color logic based on party type
+            // Color logic - SAME for all party types:
+            // Positive (green) = they owe us money (we receive)
+            // Negative (red) = we owe them money (we pay)
+            // Zero (grey) = settled
             const getProperColor = () => {
               if (outstanding === 0) return 'grey'
-              if (party.type === 'customer' || party.type === 'both') {
-                return outstanding > 0 ? 'green' : 'red'
-              } else {
-                return outstanding > 0 ? 'red' : 'green'
-              }
+              return outstanding > 0 ? 'green' : 'red'
             }
             const outstandingColor = getProperColor()
             const outstandingFormatted = `₹${Math.abs(outstanding).toLocaleString('en-IN')}`
@@ -995,7 +1104,7 @@ const Parties = () => {
                       )}
                     </div>
                     <span className="font-medium text-xs text-slate-800 truncate">
-                      {party.displayName || party.companyName || party.name || 'Unknown'}
+                      {getPartyName(party)}
                     </span>
                   </div>
 
@@ -1103,7 +1212,7 @@ const Parties = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm text-slate-800 truncate">
-                          {party.displayName || party.companyName || party.name || 'Unknown'}
+                          {getPartyName(party)}
                         </h3>
                         {party.phone && (
                           <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-500">
@@ -1297,16 +1406,26 @@ const Parties = () => {
                     <label className="text-sm font-medium mb-1.5 block">
                       {language === 'ta' ? 'தொலைபேசி எண்' : 'Phone Number'} <span className="text-destructive">*</span>
                     </label>
-                    <input
-                      type="tel"
-                      value={partyPhone}
-                      onChange={(e) => setPartyPhone(validatePhoneNumber(e.target.value))}
-                      placeholder={language === 'ta' ? 'எண் உள்ளிடவும் (எ.கா., +919876543210)' : 'Enter phone number (e.g., +919876543210)'}
-                      maxLength={16}
-                      className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                    />
-                    {partyPhone && partyPhone.replace(/\D/g, '').length < 10 && (
-                      <p className="text-xs text-destructive mt-1">{language === 'ta' ? 'தொலைபேசி எண் குறைந்தது 10 இலக்கங்களாக இருக்க வேண்டும்' : 'Phone number must be at least 10 digits'}</p>
+                    <div className="flex">
+                      {/* Fixed 91 prefix */}
+                      <div className="flex items-center justify-center px-3 py-2.5 bg-muted border border-r-0 border-border rounded-l-lg text-muted-foreground font-medium select-none">
+                        +91
+                      </div>
+                      <input
+                        type="tel"
+                        value={partyPhone}
+                        onChange={(e) => {
+                          // Only allow digits, max 10
+                          const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                          setPartyPhone(digits)
+                        }}
+                        placeholder={language === 'ta' ? '10 இலக்க எண்' : '10 digit number'}
+                        maxLength={10}
+                        className="flex-1 px-3 py-2.5 bg-background border border-border rounded-r-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                      />
+                    </div>
+                    {partyPhone && partyPhone.length > 0 && partyPhone.length < 10 && (
+                      <p className="text-xs text-destructive mt-1">{language === 'ta' ? 'தொலைபேசி எண் 10 இலக்கங்களாக இருக்க வேண்டும்' : `Phone number must be 10 digits (${partyPhone.length}/10)`}</p>
                     )}
                   </div>
                 </div>
@@ -1830,7 +1949,7 @@ const Parties = () => {
                 </p>
                 <div className="bg-muted/50 rounded-lg p-4 border border-border">
                   <p className="font-semibold text-foreground">
-                    {partyToDelete.displayName || partyToDelete.companyName || partyToDelete.name}
+                    {getPartyName(partyToDelete)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {partyToDelete.phone} • {partyToDelete.email}

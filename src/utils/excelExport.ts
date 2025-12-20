@@ -7,6 +7,7 @@ import { getInvoices } from '../services/invoiceService'
 import { getItems } from '../services/itemService'
 import { getParties } from '../services/partyService'
 import { getPartyLedger } from '../services/ledgerService'
+import { getPartyName } from './partyUtils'
 
 /**
  * Helper function to download workbook with Capacitor Filesystem support for Android/iOS APK
@@ -228,7 +229,7 @@ export async function exportPartiesToExcel(type?: 'customer' | 'supplier') {
 
   // Prepare data for Excel
   const data = parties.map(party => ({
-    'Party Name': party.displayName || party.companyName,
+    'Party Name': getPartyName(party),
     'Type': party.type === 'customer' ? 'Customer' : 'Supplier',
     'Contact Person': party.contactPerson || '-',
     'Email': party.email || '-',

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { getPartyName } from '../utils/partyUtils';
 import { createPortal } from 'react-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import {
@@ -195,7 +196,7 @@ const Sales = () => {
   // Tab system for multiple simultaneous invoices
   interface InvoiceTab {
     id: string
-    type: 'sale' | 'credit'
+    type: 'quote' | 'credit'
     mode: 'invoice' | 'pos' // Track which mode this tab belongs to
     customerName: string
     customerPhone: string
@@ -235,10 +236,10 @@ const Sales = () => {
   const [viewMode, setViewMode] = useState<'list' | 'create'>(() => {
     try {
       if (hasConvertedDraft) return 'create'
-      const saved = localStorage.getItem('sales_viewMode')
+      const saved = localStorage.getItem('quotations_viewMode')
       if (saved === 'list' || saved === 'create') return saved as 'list' | 'create'
-      // Default to create mode when landing directly on /sales to avoid mode flip animations
-      if (typeof window !== 'undefined' && window.location.pathname === '/sales') return 'create'
+      // Default to create mode when landing directly on /quotations to avoid mode flip animations
+      if (typeof window !== 'undefined' && window.location.pathname === '/quotations') return 'create'
       return 'list'
     } catch {
       return 'create'
@@ -248,7 +249,7 @@ const Sales = () => {
   // Lazy initialization for tabs - load from localStorage immediately
   const [invoiceTabs, setInvoiceTabs] = useState<InvoiceTab[]>(() => {
     try {
-      const saved = localStorage.getItem('sales_invoiceTabs')
+      const saved = localStorage.getItem('quotations_invoiceTabs')
       if (saved) {
         const parsed = JSON.parse(saved)
         if (parsed && parsed.length > 0) {
@@ -267,7 +268,7 @@ const Sales = () => {
     // Default initial tab
     return [{
       id: '1',
-      type: 'sale',
+      type: 'quote',
       mode: 'invoice', // Default to invoice mode
       customerName: '',
       customerPhone: '',
@@ -286,7 +287,7 @@ const Sales = () => {
   // Lazy initialization for active tab ID
   const [activeTabId, setActiveTabId] = useState(() => {
     try {
-      const saved = localStorage.getItem('sales_activeTabId')
+      const saved = localStorage.getItem('quotations_activeTabId')
       return saved || '1'
     } catch {
       return '1'
@@ -765,17 +766,17 @@ const Sales = () => {
 
   // Persist viewMode to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('sales_viewMode', viewMode)
+    localStorage.setItem('quotations_viewMode', viewMode)
   }, [viewMode])
 
   // Persist tabs to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('sales_invoiceTabs', JSON.stringify(invoiceTabs))
+    localStorage.setItem('quotations_invoiceTabs', JSON.stringify(invoiceTabs))
   }, [invoiceTabs])
 
   // Persist active tab ID to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('sales_activeTabId', activeTabId)
+    localStorage.setItem('quotations_activeTabId', activeTabId)
   }, [activeTabId])
 
   // Click outside handler for column menu
@@ -853,7 +854,7 @@ const Sales = () => {
   }, [invoiceItems.length])
 
   // Add new tab
-  const addNewTab = (type: 'sale' | 'credit' = 'sale') => {
+  const addNewTab = (type: 'quote' | 'credit' = 'quote') => {
     const newTab: InvoiceTab = {
       id: Date.now().toString(),
       type,
@@ -913,7 +914,7 @@ const Sales = () => {
     } else {
       // Regular sales - just switch to list view
       setViewMode('list')
-      localStorage.setItem('sales_viewMode', 'list')
+      localStorage.setItem('quotations_viewMode', 'list')
       console.log('✅ Sales: Set viewMode to list')
     }
 
@@ -932,7 +933,7 @@ const Sales = () => {
 
       const resetTab: InvoiceTab = {
         id: activeTabId,
-        type: 'sale',
+        type: 'quote',
         mode: 'invoice',
         customerName: '',
         customerPhone: '',
@@ -964,7 +965,7 @@ const Sales = () => {
       setInvoiceDate(newDate)
 
       // Save to localStorage
-      localStorage.setItem('sales_invoiceTabs', JSON.stringify([resetTab]))
+      localStorage.setItem('quotations_invoiceTabs', JSON.stringify([resetTab]))
       return
     }
 
@@ -998,15 +999,15 @@ const Sales = () => {
     setCustomerSearch(newActiveTab.customerSearch || '')
 
     // Save to localStorage
-    localStorage.setItem('sales_invoiceTabs', JSON.stringify(updatedTabs))
-    localStorage.setItem('sales_activeTabId', newActiveTab.id)
+    localStorage.setItem('quotations_invoiceTabs', JSON.stringify(updatedTabs))
+    localStorage.setItem('quotations_activeTabId', newActiveTab.id)
   }
 
   // Reusable function to load invoices from database
   const loadInvoicesFromDatabase = async () => {
     try {
       setIsLoadingInvoices(true)
-      const invoicesData = await getInvoices('sale')
+      const invoicesData = await getInvoices('quote')
 
       if (invoicesData && Array.isArray(invoicesData) && invoicesData.length > 0) {
         // STEP 1: Calculate customer outstanding directly from invoice data (2025 Standard)
@@ -1176,14 +1177,14 @@ const Sales = () => {
         setShowCafePOS(true)
         setViewMode('create')
       }
-    } else if (location.pathname === '/sales') {
-      // Go directly to invoice creation view
+    } else if (location.pathname === '/quotations') {
+      // Go directly to quotation creation view
       setSalesMode('invoice')
       setShowCafePOS(false)
       // If caller explicitly requested create via query param, respect it.
       if (forceOpen === 'create') {
         setViewMode('create')
-        try { localStorage.setItem('sales_viewMode', 'create') } catch {}
+        try { localStorage.setItem('quotations_viewMode', 'create') } catch {}
       } else {
         setViewMode('create')
       }
@@ -1232,7 +1233,7 @@ const Sales = () => {
       const newTabId = converted.invoiceNumber || `converted_${Date.now()}`
       const newTab: InvoiceTab = {
         id: newTabId,
-        type: 'sale',
+        type: 'quote',
         mode: 'invoice',
         customerName: converted.partyName || '',
         customerPhone: converted.partyPhone || '',
@@ -1272,11 +1273,11 @@ const Sales = () => {
         return [...prev, newTab]
       })
       setActiveTabId(newTabId)
-      localStorage.setItem('sales_activeTabId', newTabId)
-      // Ensure the Sales page stays in `create` mode when loading a converted quotation
+      localStorage.setItem('quotations_activeTabId', newTabId)
+      // Ensure the Quotations page stays in `create` mode when loading a converted quotation
       // This avoids immediately falling back to the invoice list view.
       try {
-        localStorage.setItem('sales_viewMode', 'create')
+        localStorage.setItem('quotations_viewMode', 'create')
         localStorage.removeItem('pos_viewMode')
       } catch (e) {
         // ignore localStorage errors
@@ -2965,7 +2966,7 @@ const Sales = () => {
 
     return {
       id: `preview_${Date.now()}`,
-      type: 'sale' as const,
+      type: 'quote' as const,
       invoiceNumber,
       invoiceDate,
       date: invoiceDate,
@@ -3044,7 +3045,7 @@ const Sales = () => {
 
       // Create invoice data
       const invoiceData = {
-        type: 'sale' as const,
+        type: 'quote' as const,
         source: (location.pathname === '/pos' || salesMode === 'pos') ? 'pos' as const : 'invoice' as const,
         invoiceNumber,
         invoiceDate,
@@ -3196,7 +3197,7 @@ const Sales = () => {
 
       // Create invoice data
       const invoiceData = {
-        type: 'sale' as const,
+        type: 'quote' as const,
         source: (location.pathname === '/pos' || salesMode === 'pos') ? 'pos' as const : 'invoice' as const,
         invoiceNumber,
         invoiceDate,
@@ -3361,7 +3362,7 @@ const Sales = () => {
 
       // Create invoice data
       const invoiceData = {
-        type: 'sale' as const,
+        type: 'quote' as const,
         source: 'pos' as const,
         invoiceNumber: newInvoiceNumber,
         invoiceDate: today,
@@ -3476,8 +3477,8 @@ const Sales = () => {
 
       // Create invoice data with source: 'pos'
       const invoiceData = {
-        type: 'sale' as const,
-        source: 'pos' as const, // IMPORTANT: Mark as POS sale
+        type: 'quote' as const,
+        source: 'pos' as const, // IMPORTANT: Mark as POS quote
         invoiceNumber: newInvoiceNumber,
         invoiceDate: today,
         dueDate: today,
@@ -4112,7 +4113,7 @@ const Sales = () => {
 
         invoiceNumber: invoiceData.invoiceNumber || invoice.invoiceNumber,
         invoiceDate: invoiceData.invoiceDate || invoiceData.date || invoice.date,
-        type: 'sale',
+        type: 'quote',
 
         partyName: invoiceData.partyName || invoiceData.customerName || invoice.partyName || 'Walk-in Customer',
         partyPhone: invoiceData.partyPhone || invoice.partyPhone || '',
@@ -4328,7 +4329,7 @@ const Sales = () => {
         const saved = await createInvoiceService(invoicePayload as any)
         if (saved) {
           toast.success(`Invoice ${invoicePayload.invoiceNumber} created and added to Sales`)
-          try { localStorage.setItem('sales_viewMode', 'list') } catch {}
+          try { localStorage.setItem('quotations_viewMode', 'list') } catch {}
           await new Promise(res => setTimeout(res, 150))
           navigate('/sales')
         } else {
@@ -4661,7 +4662,7 @@ const Sales = () => {
       // Create new tab with duplicated invoice data
       const newTab: InvoiceTab = {
         id: Date.now().toString(),
-        type: 'sale',
+        type: 'quote',
         mode: salesMode,
         customerName: invoice.partyName || '',
         customerPhone: invoice.partyPhone || '',
@@ -4686,7 +4687,7 @@ const Sales = () => {
       
       // Switch to create mode
       setViewMode('create')
-      localStorage.setItem('sales_viewMode', 'create')
+      localStorage.setItem('quotations_viewMode', 'create')
 
       toast.success(`Invoice duplicated! New invoice number: ${newInvoiceNumber}`)
       console.log('Duplicated invoice:', { original: invoice, newTab, newInvoiceNumber })
@@ -5104,8 +5105,8 @@ TOTAL:       ₹${invoice.total}
   }
 
   const desktopTableStyle = {
-    maxHeight: '55vh',
-    minHeight: invoiceItems.length > 0 ? '120px' : '0'
+    maxHeight: 'calc(100vh - 380px)', // Leave room for header, sticky bottom bar, and action buttons
+    minHeight: invoiceItems.length > 0 ? '100px' : '0',
   }
 
   return (
@@ -6189,7 +6190,7 @@ TOTAL:       ₹${invoice.total}
                             className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 cursor-pointer"
                           >
                             <div className="flex items-center justify-between">
-                              <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
+                              <div className="font-medium text-sm">{getPartyName(party)}</div>
                               {(party.outstanding !== undefined || party.currentBalance !== undefined) && (() => {
                                 const outstanding = party.outstanding ?? party.currentBalance ?? 0
                                 const colorClass = outstanding > 0 ? 'text-emerald-600' : outstanding < 0 ? 'text-red-600' : 'text-gray-500'
@@ -6512,7 +6513,7 @@ TOTAL:       ₹${invoice.total}
                               )}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
+                                <div className="font-medium text-sm">{getPartyName(party)}</div>
                                 {(party.outstanding !== undefined || party.currentBalance !== undefined) && (() => {
                                   const outstanding = party.outstanding ?? party.currentBalance ?? 0
                                   const colorClass = outstanding > 0 ? 'text-emerald-600' : outstanding < 0 ? 'text-red-600' : 'text-gray-500'
@@ -7161,47 +7162,44 @@ TOTAL:       ₹${invoice.total}
                     </tbody>
                   </table>
                 </div>
-                {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) */}
-                <div className="hidden md:grid md:grid-cols-2 gap-4 mt-3 px-2 items-stretch">
+                {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) - STICKY BOTTOM */}
+                <div className="hidden md:grid md:grid-cols-2 gap-4 mt-2 px-2 items-stretch sticky-bottom-bar flex-shrink-0">
                 {/* Left Column - Invoice Details + Discount/Payment/Notes */}
-                <div className="p-4 bg-background border border-border rounded-lg flex flex-col justify-between overflow-hidden">
-                {/* Line 1: Invoice #, Date and Discount */}
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex items-center gap-1">
-                      <label className="text-xs text-slate-600 whitespace-nowrap">Inv #</label>
-                      <input
-                        type="text"
-                        value={invoiceNumber}
-                        onChange={(e) => setInvoiceNumber(e.target.value)}
-                        placeholder="INV/2024-25/001"
-                        className="w-36 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary"
-                      />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <label className="text-xs text-slate-600">Date</label>
-                      <input
-                        type="date"
-                        value={invoiceDate}
-                        onChange={(e) => setInvoiceDate(e.target.value)}
-                        className="px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary"
-                      />
-                    </div>
+                <div className="premium-card-subtle p-4 dark:bg-slate-800 flex flex-col justify-between rounded-xl">
+                {/* Line 1: Invoice #, Date and Discount - All on same line */}
+                <div className="grid grid-cols-[1.5fr_1fr_1fr] gap-2 mb-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">Inv #</label>
+                    <input
+                      type="text"
+                      value={invoiceNumber}
+                      onChange={(e) => setInvoiceNumber(e.target.value)}
+                      placeholder="QTN/2024-25/001"
+                      className="w-full px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700">Date</label>
+                    <input
+                      type="date"
+                      value={invoiceDate}
+                      onChange={(e) => setInvoiceDate(e.target.value)}
+                      className="w-full px-1.5 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
+                    />
                   </div>
                   {/* Discount */}
-                  <div className="flex items-center gap-1">
-                    <label className="text-xs text-slate-600 flex items-center gap-0.5">
-                      <Percent size={10} className="text-orange-500" />
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">
                       Discount
                     </label>
-                    <div className="flex items-center bg-white border border-slate-300 rounded">
+                    <div className="flex items-center bg-white rounded-md border border-slate-300 shadow-sm">
                       <button
                         type="button"
                         onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
-                        className={`px-1.5 py-1 text-xs font-medium border-r border-slate-300 transition-colors ${
+                        className={`px-1.5 py-1.5 text-sm font-bold border-r border-slate-300 transition-colors ${
                           discountType === 'percent'
-                            ? 'bg-orange-50 text-orange-600'
-                            : 'bg-green-50 text-green-600'
+                            ? 'text-orange-600'
+                            : 'text-green-600'
                         }`}
                         title={discountType === 'percent' ? 'Switch to Amount' : 'Switch to Percent'}
                       >
@@ -7216,33 +7214,33 @@ TOTAL:       ₹${invoice.total}
                           setInvoiceDiscount(parseFloat(val) || 0)
                         }}
                         placeholder="0"
-                        className="w-10 px-1 py-1 text-xs text-center bg-transparent outline-none"
+                        className="w-14 px-1.5 py-1 text-sm font-medium text-center bg-transparent outline-none"
                       />
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Line 2: Terms & Conditions */}
-                <div className="flex items-center gap-1">
-                  <label className="text-xs text-slate-600 flex items-center gap-0.5 whitespace-nowrap">
-                    <Pencil size={10} className="text-purple-500" />
-                    Terms & Conditions
+                <div className="flex items-center gap-1.5 mt-1">
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-0.5 whitespace-nowrap">
+                    <Pencil size={12} className="text-purple-500" />
+                    Terms
                   </label>
                   <input
                     type="text"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Thank you"
-                    className="flex-1 min-w-0 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none"
+                    className="flex-1 min-w-0 px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                   />
                 </div>
 
                 {/* Line 3: Payment */}
-                <div className="space-y-1.5">
+                <div className="space-y-1 mt-1">
                   {payments.map((payment, index) => (
-                    <div key={index} className="flex items-center gap-1 flex-wrap">
-                      <label className={cn("text-xs text-slate-600 flex items-center gap-0.5", index > 0 && "invisible")}>
-                        <CreditCard size={10} className="text-green-600" />
+                    <div key={index} className="flex items-center gap-1.5 flex-wrap">
+                      <label className={cn("text-sm font-semibold text-slate-700 flex items-center gap-0.5", index > 0 && "invisible")}>
+                        <CreditCard size={12} className="text-green-600" />
                         Payment
                       </label>
                       <select
@@ -7255,7 +7253,7 @@ TOTAL:       ₹${invoice.total}
                             setSelectedBankAccountId('')
                           }
                         }}
-                        className="px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none"
+                        className="px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 shadow-sm"
                       >
                         <option value="cash">Cash</option>
                         <option value="card">Card</option>
@@ -7281,7 +7279,7 @@ TOTAL:       ₹${invoice.total}
                                 setSelectedBankAccountId('')
                               }
                             }}
-                            className="px-1.5 py-1 text-xs bg-blue-50 border border-blue-300 rounded outline-none min-w-[80px]"
+                            className="px-2 py-1.5 text-xs bg-white rounded-md outline-none border border-slate-300 shadow-sm min-w-[100px]"
                           >
                             <option value="">{bankAccounts.length > 0 ? '-- Select --' : 'No accounts'}</option>
                             {bankAccounts.map((account) => (
@@ -7310,7 +7308,7 @@ TOTAL:       ₹${invoice.total}
                           setPayments(newPayments)
                         }}
                         placeholder="₹0"
-                        className="w-12 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none"
+                        className="w-16 px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                       />
                       <input
                         type="text"
@@ -7321,7 +7319,7 @@ TOTAL:       ₹${invoice.total}
                           setPayments(newPayments)
                         }}
                         placeholder="Ref No."
-                        className="flex-1 min-w-0 px-1.5 py-1 text-xs bg-white border border-slate-300 rounded outline-none"
+                        className="flex-1 min-w-0 px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                       />
                       {payments.length > 1 && (
                         <button type="button" onClick={() => setPayments(payments.filter((_, i) => i !== index))} className="p-0.5 text-red-500 hover:bg-red-50 rounded">
@@ -7343,66 +7341,68 @@ TOTAL:       ₹${invoice.total}
                 </div>
                 </div>
                 {/* Right Side - Totals Summary */}
-                <div className="p-4 bg-gradient-to-br from-slate-50 to-white border border-slate-200/60 rounded-xl">
+                <div className="totals-card p-4 dark:bg-slate-800 rounded-xl">
                   {invoiceItems.length > 0 ? (
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-500">Subtotal:</span>
-                        <span className="font-semibold text-slate-700">₹{totals.subtotal.toFixed(2)}</span>
+                        <span className="text-sm font-semibold text-slate-600">Subtotal:</span>
+                        <span className="text-base font-bold text-slate-800 text-right w-[75px] pr-4">₹{totals.subtotal.toFixed(2)}</span>
                       </div>
                       {invoiceDiscount > 0 && (
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-500">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
-                          <span className="font-semibold text-orange-500">-₹{totals.discount.toFixed(2)}</span>
+                          <span className="text-sm font-semibold text-slate-600">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
+                          <span className="text-base font-bold text-orange-500 text-right w-[75px] pr-4">-₹{totals.discount.toFixed(2)}</span>
                         </div>
                       )}
                       {/* Tax Row - Consolidated with CGST/SGST/IGST breakdown inline */}
                       {totals.totalTax > 0 && (
-                        <div className="flex justify-between items-center py-1.5 border-t border-slate-100">
+                        <div className="flex justify-between items-center py-0.5 border-t border-slate-300/50">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-400">Tax</span>
+                            <span className="text-sm font-semibold text-slate-600">Tax</span>
                             {totals.totalIGST > 0 ? (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded font-medium">Interstate</span>
+                              <span className="text-xs px-2 py-0.5 bg-white text-blue-600 rounded-lg font-semibold border border-slate-300">Interstate</span>
                             ) : (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded font-medium">Intra</span>
+                              <span className="text-xs px-2 py-0.5 bg-white text-emerald-600 rounded-lg font-semibold border border-slate-300">Intra</span>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
                             {totals.totalIGST > 0 ? (
-                              <span className="text-xs text-slate-600">IGST ₹{totals.totalIGST.toFixed(2)}</span>
+                              <span className="text-sm font-semibold text-slate-700">IGST ₹{totals.totalIGST.toFixed(2)}</span>
                             ) : (
                               <>
-                                <span className="text-[11px] text-slate-500">CGST</span>
-                                <span className="text-xs font-medium text-slate-700">₹{totals.totalCGST.toFixed(2)}</span>
-                                <span className="text-slate-300">|</span>
-                                <span className="text-[11px] text-slate-500">SGST</span>
-                                <span className="text-xs font-medium text-slate-700">₹{totals.totalSGST.toFixed(2)}</span>
+                                <span className="text-sm text-slate-600">CGST</span>
+                                <span className="text-sm font-bold text-slate-700">₹{totals.totalCGST.toFixed(2)}</span>
+                                <span className="text-slate-400">|</span>
+                                <span className="text-sm text-slate-600">SGST</span>
+                                <span className="text-sm font-bold text-slate-700">₹{totals.totalSGST.toFixed(2)}</span>
                               </>
                             )}
                           </div>
-                          <span className="text-sm font-semibold text-slate-700">₹{totals.totalTax.toFixed(2)}</span>
+                          <span className="text-base font-bold text-slate-800 text-right w-[75px] pr-4">₹{totals.totalTax.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="flex justify-between items-center pt-3 mt-2 border-t-2 border-emerald-200">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-800">TOTAL</span>
-                          <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
+                      <div className="grand-total-container mt-3 -mx-4 -mb-4 rounded-b-xl">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-3">
+                            <span className="grand-total-label text-[#166534]">GRAND TOTAL</span>
+                            <span className="item-count-badge bg-[#DCFCE7] text-[#16A34A] border border-[#86EFAC]">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <label className="flex items-center gap-1.5 cursor-pointer bg-white/60 px-2 py-1 rounded-lg border border-[#86EFAC]">
+                              <input
+                                type="checkbox"
+                                checked={roundOff}
+                                onChange={(e) => setRoundOff(e.target.checked)}
+                                className="w-4 h-4 rounded accent-[#16A34A]"
+                              />
+                              <span className="text-xs font-medium text-[#166534]">Round Off</span>
+                            </label>
+                            {roundOff && totals.roundOffAmount !== 0 && (
+                              <span className="text-sm font-semibold text-[#16A34A] bg-white/60 px-2 py-1 rounded-lg">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
+                            )}
+                          </div>
+                          <span className="grand-total-value">₹{totals.total.toFixed(0)}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-1 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={roundOff}
-                              onChange={(e) => setRoundOff(e.target.checked)}
-                              className="w-3 h-3 rounded accent-emerald-600"
-                            />
-                            <span className="text-[10px] text-slate-400">Round Off</span>
-                          </label>
-                          {roundOff && totals.roundOffAmount !== 0 && (
-                            <span className="text-[10px] text-emerald-600">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
-                          )}
-                        </div>
-                        <span className="font-bold text-2xl text-emerald-600">₹{totals.total.toFixed(0)}</span>
                       </div>
                       {totals.received > 0 && (
                         <>
@@ -8792,7 +8792,7 @@ TOTAL:       ₹${invoice.total}
                               className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50"
                             >
                               <div className="flex items-center justify-between">
-                                <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
+                                <div className="font-medium text-sm">{getPartyName(party)}</div>
                                 {/* Live Outstanding Balance - For Customers: Positive = To Receive (GREEN), Negative = To Pay (RED) */}
                                 {(party.outstanding !== undefined || party.currentBalance !== undefined) && (() => {
                                   const outstanding = party.outstanding ?? party.currentBalance ?? 0

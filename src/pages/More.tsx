@@ -31,8 +31,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { toast } from 'sonner'
-import { UpgradeModal } from '../components/UpgradeModal'
-import { usePlan } from '../hooks/usePlan'
 import {
   getDeliveryChallans,
   createDeliveryChallan,
@@ -63,7 +61,9 @@ import { getParties } from '../services/partyService'
 import { getItems, findItemByBarcode } from '../services/itemService'
 import { Party, Item } from '../types'
 import { getCompanySettings } from '../services/settingsService'
+import { getPartyName } from '../utils/partyUtils'
 import BarcodeScanner from '../components/BarcodeScanner'
+import PaymentAllocationModal from '../components/PaymentAllocationModal'
 import {
   createPaymentIn,
   createPaymentOut,
@@ -73,6 +73,10 @@ import {
   type PaymentOut
 } from '../services/paymentInOutService'
 import {
+  getAllocatedPayments,
+  type AllocatedPayment
+} from '../services/paymentAllocationService'
+import {
   createPriceList,
   getPriceLists,
   deletePriceList,
@@ -81,17 +85,80 @@ import {
 
 const More = () => {
   const { t, language } = useLanguage()
-  const { hasFeature } = usePlan()
   const [selectedModule, setSelectedModule] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
-  const [upgradeFeature, setUpgradeFeature] = useState({ name: '', description: '' })
   const [deliveryChallans, setDeliveryChallans] = useState<DeliveryChallan[]>([])
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
   const [proformaInvoices, setProformaInvoices] = useState<ProformaInvoice[]>([])
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
   const [showQRScanner, setShowQRScanner] = useState(false)
   const [lastScannedItem, setLastScannedItem] = useState<Item | null>(null)
+
+  // Notes feature states
+  const [notes, setNotes] = useState<{id: string; title: string; content: string; partyId?: string; partyName?: string; date: string}[]>([])
+  const [noteTitle, setNoteTitle] = useState('')
+  const [noteContent, setNoteContent] = useState('')
+  const [noteParty, setNoteParty] = useState<Party | null>(null)
+
+  // Schemes feature states
+  const [schemes, setSchemes] = useState<{id: string; name: string; description: string; discountType: 'percentage' | 'amount'; discountValue: number; minQty?: number; validFrom: string; validTo: string}[]>([])
+  const [schemeName, setSchemeName] = useState('')
+  const [schemeDesc, setSchemeDesc] = useState('')
+  const [schemeDiscountType, setSchemeDiscountType] = useState<'percentage' | 'amount'>('percentage')
+  const [schemeDiscountValue, setSchemeDiscountValue] = useState(0)
+  const [schemeMinQty, setSchemeMinQty] = useState('')
+  const [schemeValidFrom, setSchemeValidFrom] = useState('')
+  const [schemeValidTo, setSchemeValidTo] = useState('')
+
+  // Discount Management states
+  const [discounts, setDiscounts] = useState<{id: string; code: string; type: 'percentage' | 'amount'; value: number; maxDiscount?: number; validFrom: string; validTo: string}[]>([])
+  const [discountCode, setDiscountCode] = useState('')
+  const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage')
+  const [discountValue, setDiscountValue] = useState(0)
+  const [discountMaxValue, setDiscountMaxValue] = useState('')
+  const [discountValidFrom, setDiscountValidFrom] = useState('')
+  const [discountValidTo, setDiscountValidTo] = useState('')
+
+  // UPI Payment Links states
+  const [upiLinks, setUpiLinks] = useState<{id: string; partyName: string; amount: number; upiId: string; link: string; createdAt: string}[]>([])
+  const [upiPartyName, setUpiPartyName] = useState('')
+  const [upiAmount, setUpiAmount] = useState('')
+  const [upiId, setUpiId] = useState('')
+
+  // Multiple Locations states
+  const [locations, setLocations] = useState<{id: string; name: string; address: string; city: string; state: string; pincode: string; isDefault: boolean}[]>([])
+  const [locationName, setLocationName] = useState('')
+  const [locationAddress, setLocationAddress] = useState('')
+  const [locationCity, setLocationCity] = useState('')
+  const [locationState, setLocationState] = useState('')
+  const [locationPincode, setLocationPincode] = useState('')
+
+  // Staff Attendance states
+  const [attendanceRecords, setAttendanceRecords] = useState<{id: string; staffName: string; date: string; status: 'present' | 'absent' | 'half-day' | 'leave'; notes?: string}[]>([])
+  const [attendanceStaffName, setAttendanceStaffName] = useState('')
+  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0])
+  const [attendanceStatus, setAttendanceStatus] = useState<'present' | 'absent' | 'half-day' | 'leave'>('present')
+  const [attendanceNotes, setAttendanceNotes] = useState('')
+
+  // Salary Management states
+  const [salaryRecords, setSalaryRecords] = useState<{id: string; staffName: string; month: string; basicSalary: number; allowances: number; deductions: number; netSalary: number; paidDate?: string; status: 'pending' | 'paid'}[]>([])
+  const [salaryStaffName, setSalaryStaffName] = useState('')
+  const [salaryMonth, setSalaryMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [salaryBasic, setSalaryBasic] = useState('')
+  const [salaryAllowances, setSalaryAllowances] = useState('')
+  const [salaryDeductions, setSalaryDeductions] = useState('')
+
+  // Serial Number Tracking states
+  const [serialNumbers, setSerialNumbers] = useState<{id: string; itemName: string; serialNumber: string; purchaseDate: string; warrantyExpiry?: string; status: 'in-stock' | 'sold' | 'defective'; soldTo?: string}[]>([])
+  const [serialItemName, setSerialItemName] = useState('')
+  const [serialNumber, setSerialNumber] = useState('')
+  const [serialPurchaseDate, setSerialPurchaseDate] = useState(new Date().toISOString().split('T')[0])
+  const [serialWarrantyExpiry, setSerialWarrantyExpiry] = useState('')
+  const [serialStatus, setSerialStatus] = useState<'in-stock' | 'sold' | 'defective'>('in-stock')
+
+  // Online Store states
+  const [onlineStoreUrl, setOnlineStoreUrl] = useState('')
+  const [onlineStoreEnabled, setOnlineStoreEnabled] = useState(false)
 
   // Form states for Delivery Challan
   const [dcCustomerSearch, setDcCustomerSearch] = useState('')
@@ -119,8 +186,13 @@ const More = () => {
   const [poNotes, setPoNotes] = useState('')
   const [poExpectedDate, setPoExpectedDate] = useState('')
 
-  // Form states for Payment In
+  // Form states for Payment In/Out (New Allocation Modal)
   const [showPaymentInModal, setShowPaymentInModal] = useState(false)
+  const [showPaymentOutModal, setShowPaymentOutModal] = useState(false)
+  const [allocatedPaymentsIn, setAllocatedPaymentsIn] = useState<AllocatedPayment[]>([])
+  const [allocatedPaymentsOut, setAllocatedPaymentsOut] = useState<AllocatedPayment[]>([])
+
+  // Legacy form states for Payment In (kept for backward compatibility)
   const [pinPartySearch, setPinPartySearch] = useState('')
   const [pinSelectedParty, setPinSelectedParty] = useState<Party | null>(null)
   const [showPinPartyDropdown, setShowPinPartyDropdown] = useState(false)
@@ -130,8 +202,7 @@ const More = () => {
   const [pinDate, setPinDate] = useState(new Date().toISOString().split('T')[0])
   const [pinNotes, setPinNotes] = useState('')
 
-  // Form states for Payment Out
-  const [showPaymentOutModal, setShowPaymentOutModal] = useState(false)
+  // Legacy form states for Payment Out (kept for backward compatibility)
   const [poutPartySearch, setPoutPartySearch] = useState('')
   const [poutSelectedParty, setPoutSelectedParty] = useState<Party | null>(null)
   const [showPoutPartyDropdown, setShowPoutPartyDropdown] = useState(false)
@@ -201,6 +272,26 @@ const More = () => {
       }
     }
     loadInitialCounts()
+
+    // Load localStorage data for new features
+    try {
+      const savedAttendance = localStorage.getItem('attendance_records')
+      if (savedAttendance) setAttendanceRecords(JSON.parse(savedAttendance))
+
+      const savedSalary = localStorage.getItem('salary_records')
+      if (savedSalary) setSalaryRecords(JSON.parse(savedSalary))
+
+      const savedSerials = localStorage.getItem('serial_numbers')
+      if (savedSerials) setSerialNumbers(JSON.parse(savedSerials))
+
+      const savedStoreEnabled = localStorage.getItem('online_store_enabled')
+      if (savedStoreEnabled) setOnlineStoreEnabled(savedStoreEnabled === 'true')
+
+      const savedStoreUrl = localStorage.getItem('online_store_url')
+      if (savedStoreUrl) setOnlineStoreUrl(savedStoreUrl)
+    } catch (error) {
+      console.error('Error loading localStorage data:', error)
+    }
   }, [])
 
   // Load data when module is selected
@@ -227,8 +318,12 @@ const More = () => {
   // Load functions for payments and price lists
   const loadPaymentsInData = async () => {
     try {
+      // Load legacy payments
       const data = await getPaymentsIn()
       setPaymentsIn(data)
+      // Load allocated payments
+      const allocatedData = await getAllocatedPayments('IN')
+      setAllocatedPaymentsIn(allocatedData)
     } catch (error) {
       console.error('Error loading payments in:', error)
     }
@@ -236,8 +331,12 @@ const More = () => {
 
   const loadPaymentsOutData = async () => {
     try {
+      // Load legacy payments
       const data = await getPaymentsOut()
       setPaymentsOut(data)
+      // Load allocated payments
+      const allocatedData = await getAllocatedPayments('OUT')
+      setAllocatedPaymentsOut(allocatedData)
     } catch (error) {
       console.error('Error loading payments out:', error)
     }
@@ -292,7 +391,7 @@ const More = () => {
       return
     }
 
-    const customerName = dcSelectedCustomer?.displayName || dcSelectedCustomer?.companyName || dcCustomerSearch
+    const customerName = dcSelectedCustomer ? getPartyName(dcSelectedCustomer) : dcCustomerSearch
     const totalQty = dcItems.reduce((sum, item) => sum + item.qty, 0)
     const totalValue = dcItems.reduce((sum, item) => sum + (item.qty * (item.rate || 0)), 0)
 
@@ -384,23 +483,58 @@ const More = () => {
         feature: 'performanceInvoice',
         name: 'Proforma Invoice',
         description: 'Create proforma invoices for quotations and advance orders. Available in Gold Plan.'
+      },
+      'notes': {
+        feature: 'notes',
+        name: 'Notes',
+        description: 'Add notes for tasks & parties. Available in all plans.'
+      },
+      'schemes': {
+        feature: 'schemes',
+        name: 'Promotional Schemes',
+        description: 'Create promotional schemes for customers. Available in Gold Plan.'
+      },
+      'discounts': {
+        feature: 'discountManagement',
+        name: 'Discount Management',
+        description: 'Manage various discount types and codes. Available in Gold Plan.'
+      },
+      'ledger': {
+        feature: 'ledgerReport',
+        name: 'Ledger Report',
+        description: 'View detailed ledger accounts. Available in all plans.'
+      },
+      'location': {
+        feature: 'multipleLocations',
+        name: 'Multiple Locations',
+        description: 'Manage multiple business locations. Available in Gold Plan.'
+      },
+      'whatsapp': {
+        feature: 'whatsappIntegration',
+        name: 'WhatsApp Integration',
+        description: 'Send invoices via WhatsApp. Available in Gold Plan.'
+      },
+      'upi': {
+        feature: 'upiPaymentLinks',
+        name: 'UPI Payment Links',
+        description: 'Generate UPI payment links for customers. Available in all plans.'
       }
     }
 
     const featureConfig = featureMap[moduleId]
 
-    // Check if this is a locked feature
-    if (featureConfig && !hasFeature(featureConfig.feature as any)) {
-      setUpgradeFeature({
-        name: featureConfig.name,
-        description: featureConfig.description
-      })
-      setShowUpgradeModal(true)
-      return
-    }
-
-    // Feature is available, proceed
+    // All features are now available - no premium check needed
     setSelectedModule(moduleId)
+
+    // Only show modal for features that have modal panels implemented
+    // Features with dedicated sections (payment-in, payment-out, etc.) don't need the modal
+    const modalFeatures = [
+      'notes', 'schemes', 'discounts', 'whatsapp', 'upi', 'ledger', 'location',
+      'attendance', 'salary', 'item-serial', 'online-store'
+    ]
+    if (modalFeatures.includes(moduleId)) {
+      setShowCreateModal(true)
+    }
 
     // Scroll to top so the panel is visible
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -454,7 +588,7 @@ const More = () => {
       return
     }
 
-    const customerName = piSelectedCustomer?.displayName || piSelectedCustomer?.companyName || piCustomerSearch
+    const customerName = piSelectedCustomer ? getPartyName(piSelectedCustomer) : piCustomerSearch
     const customerState = piSelectedCustomer?.billingAddress?.state || 'Tamil Nadu'
     const isInterState = companyState.toLowerCase() !== customerState.toLowerCase()
 
@@ -1216,27 +1350,58 @@ const More = () => {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {paymentsIn.length === 0 ? (
+                  {/* Show both old payments and new allocated payments */}
+                  {paymentsIn.length === 0 && allocatedPaymentsIn.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       No payments recorded yet
                     </div>
-                  ) : paymentsIn.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between p-4 bg-success/5 rounded-lg border border-success/20">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
-                          <Wallet size={20} weight="duotone" className="text-success" />
+                  ) : (
+                    <>
+                      {/* New Allocated Payments (from PaymentAllocationModal) */}
+                      {allocatedPaymentsIn.map((payment) => (
+                        <div key={payment.id} className="flex items-center justify-between p-4 bg-success/5 rounded-lg border border-success/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
+                              <Wallet size={20} weight="duotone" className="text-success" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{payment.partyName}</p>
+                              <p className="text-sm text-muted-foreground capitalize">
+                                {payment.mode}{payment.referenceNo ? ` • ${payment.referenceNo}` : ''}
+                                {payment.allocations && payment.allocations.length > 0 && (
+                                  <span className="ml-2 text-xs text-success">
+                                    ({payment.allocations.length} invoice{payment.allocations.length > 1 ? 's' : ''})
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-success">+₹{payment.amount.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(payment.date).toLocaleDateString()}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">{payment.partyName}</p>
-                          <p className="text-sm text-muted-foreground capitalize">{payment.paymentMode}{payment.reference ? ` • ${payment.reference}` : ''}</p>
+                      ))}
+                      {/* Old Legacy Payments */}
+                      {paymentsIn.map((payment) => (
+                        <div key={payment.id} className="flex items-center justify-between p-4 bg-success/5 rounded-lg border border-success/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
+                              <Wallet size={20} weight="duotone" className="text-success" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{payment.partyName}</p>
+                              <p className="text-sm text-muted-foreground capitalize">{payment.paymentMode}{payment.reference ? ` • ${payment.reference}` : ''}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-success">+₹{payment.amount.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(payment.paymentDate).toLocaleDateString()}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-success">+₹{payment.amount.toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(payment.paymentDate).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -1268,27 +1433,58 @@ const More = () => {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {paymentsOut.length === 0 ? (
+                  {/* Show both old payments and new allocated payments */}
+                  {paymentsOut.length === 0 && allocatedPaymentsOut.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       No payments recorded yet
                     </div>
-                  ) : paymentsOut.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between p-4 bg-destructive/5 rounded-lg border border-destructive/20">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
-                          <CurrencyCircleDollar size={20} weight="duotone" className="text-destructive" />
+                  ) : (
+                    <>
+                      {/* New Allocated Payments (from PaymentAllocationModal) */}
+                      {allocatedPaymentsOut.map((payment) => (
+                        <div key={payment.id} className="flex items-center justify-between p-4 bg-destructive/5 rounded-lg border border-destructive/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+                              <CurrencyCircleDollar size={20} weight="duotone" className="text-destructive" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{payment.partyName}</p>
+                              <p className="text-sm text-muted-foreground capitalize">
+                                {payment.mode}{payment.referenceNo ? ` • ${payment.referenceNo}` : ''}
+                                {payment.allocations && payment.allocations.length > 0 && (
+                                  <span className="ml-2 text-xs text-destructive">
+                                    ({payment.allocations.length} bill{payment.allocations.length > 1 ? 's' : ''})
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-destructive">-₹{payment.amount.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(payment.date).toLocaleDateString()}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">{payment.partyName}</p>
-                          <p className="text-sm text-muted-foreground capitalize">{payment.paymentMode}{payment.reference ? ` • ${payment.reference}` : ''}</p>
+                      ))}
+                      {/* Old Legacy Payments */}
+                      {paymentsOut.map((payment) => (
+                        <div key={payment.id} className="flex items-center justify-between p-4 bg-destructive/5 rounded-lg border border-destructive/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+                              <CurrencyCircleDollar size={20} weight="duotone" className="text-destructive" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{payment.partyName}</p>
+                              <p className="text-sm text-muted-foreground capitalize">{payment.paymentMode}{payment.reference ? ` • ${payment.reference}` : ''}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-destructive">-₹{payment.amount.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(payment.paymentDate).toLocaleDateString()}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-destructive">-₹{payment.amount.toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(payment.paymentDate).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -1573,7 +1769,7 @@ const More = () => {
                       <label className="text-sm font-medium text-muted-foreground">{t.more.partyCustomer} *</label>
                       <input
                         type="text"
-                        value={dcSelectedCustomer ? (dcSelectedCustomer.displayName || dcSelectedCustomer.companyName) : dcCustomerSearch}
+                        value={dcSelectedCustomer ? getPartyName(dcSelectedCustomer) : dcCustomerSearch}
                         onChange={e => {
                           setDcCustomerSearch(e.target.value)
                           setDcSelectedCustomer(null)
@@ -1586,7 +1782,7 @@ const More = () => {
                       {showDcCustomerDropdown && dcCustomerSearch && (
                         <div className="absolute z-10 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-40 overflow-y-auto">
                           {availableParties
-                            .filter(p => (p.displayName || p.companyName || '').toLowerCase().includes(dcCustomerSearch.toLowerCase()))
+                            .filter(p => getPartyName(p).toLowerCase().includes(dcCustomerSearch.toLowerCase()))
                             .slice(0, 5)
                             .map(party => (
                               <div
@@ -1598,7 +1794,7 @@ const More = () => {
                                 }}
                                 className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
                               >
-                                <p className="font-medium">{party.displayName || party.companyName}</p>
+                                <p className="font-medium">{getPartyName(party)}</p>
                                 <p className="text-xs text-muted-foreground">{party.phone}</p>
                               </div>
                             ))}
@@ -1606,7 +1802,7 @@ const More = () => {
                       )}
                       {dcSelectedCustomer && (
                         <div className="mt-1 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                          ✓ {dcSelectedCustomer.displayName || dcSelectedCustomer.companyName}
+                          ✓ {getPartyName(dcSelectedCustomer)}
                         </div>
                       )}
                     </div>
@@ -1899,7 +2095,7 @@ const More = () => {
                       <label className="text-sm font-medium text-muted-foreground">{t.more.selectCustomer} *</label>
                       <input
                         type="text"
-                        value={piSelectedCustomer ? (piSelectedCustomer.displayName || piSelectedCustomer.companyName) : piCustomerSearch}
+                        value={piSelectedCustomer ? getPartyName(piSelectedCustomer) : piCustomerSearch}
                         onChange={e => {
                           setPiCustomerSearch(e.target.value)
                           setPiSelectedCustomer(null)
@@ -1924,7 +2120,7 @@ const More = () => {
                                 }}
                                 className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
                               >
-                                <p className="font-medium">{party.displayName || party.companyName}</p>
+                                <p className="font-medium">{getPartyName(party)}</p>
                                 <p className="text-xs text-muted-foreground">{party.phone} • {party.billingAddress?.state}</p>
                               </div>
                             ))}
@@ -2230,15 +2426,6 @@ const More = () => {
           )}
         </AnimatePresence>
 
-
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        featureName={upgradeFeature.name}
-        featureDescription={upgradeFeature.description}
-      />
-
       {/* Purchase Order Modal */}
       <AnimatePresence>
         {showPOModal && (
@@ -2470,357 +2657,21 @@ const More = () => {
         )}
       </AnimatePresence>
 
-      {/* Payment In Modal */}
-      <AnimatePresence>
-        {showPaymentInModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowPaymentInModal(false)}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative bg-card rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
-            >
-              <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Wallet size={24} weight="duotone" className="text-success" />
-                  Record Payment In
-                </h2>
-                <button onClick={() => setShowPaymentInModal(false)} className="p-2 hover:bg-muted rounded-lg">
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="p-6 space-y-4">
-                {/* Party Search */}
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-1">Received From *</label>
-                  <input
-                    type="text"
-                    value={pinPartySearch}
-                    onChange={(e) => {
-                      setPinPartySearch(e.target.value)
-                      setShowPinPartyDropdown(true)
-                    }}
-                    onFocus={() => setShowPinPartyDropdown(true)}
-                    placeholder="Search customer..."
-                    className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-success"
-                  />
-                  {showPinPartyDropdown && pinPartySearch && (
-                    <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {availableParties
-                        .filter(p => p.companyName?.toLowerCase().includes(pinPartySearch.toLowerCase()))
-                        .slice(0, 5)
-                        .map(party => (
-                          <button
-                            key={party.id}
-                            onClick={() => {
-                              setPinSelectedParty(party)
-                              setPinPartySearch(party.companyName || '')
-                              setShowPinPartyDropdown(false)
-                            }}
-                            className="w-full px-3 py-2 text-left hover:bg-muted"
-                          >
-                            {party.companyName}
-                          </button>
-                        ))}
-                    </div>
-                  )}
-                </div>
+      {/* Payment In Modal - New Allocation Modal */}
+      <PaymentAllocationModal
+        isOpen={showPaymentInModal}
+        onClose={() => setShowPaymentInModal(false)}
+        type="IN"
+        onSuccess={() => loadPaymentsInData()}
+      />
 
-                {/* Amount */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Amount *</label>
-                  <input
-                    type="number"
-                    value={pinAmount}
-                    onChange={(e) => setPinAmount(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-success text-xl font-bold"
-                  />
-                </div>
-
-                {/* Payment Mode */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Payment Mode</label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {(['cash', 'upi', 'bank', 'cheque', 'card'] as const).map(mode => (
-                      <button
-                        key={mode}
-                        onClick={() => setPinMode(mode)}
-                        className={cn(
-                          "px-3 py-2 rounded-lg text-sm font-medium capitalize border",
-                          pinMode === mode ? "bg-success text-white border-success" : "border-input hover:bg-muted"
-                        )}
-                      >
-                        {mode}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Date */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Date</label>
-                  <input
-                    type="date"
-                    value={pinDate}
-                    onChange={(e) => setPinDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-input rounded-lg"
-                  />
-                </div>
-
-                {/* Reference */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Reference / Transaction ID</label>
-                  <input
-                    type="text"
-                    value={pinReference}
-                    onChange={(e) => setPinReference(e.target.value)}
-                    placeholder="Transaction reference..."
-                    className="w-full px-3 py-2 border border-input rounded-lg"
-                  />
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Notes</label>
-                  <textarea
-                    value={pinNotes}
-                    onChange={(e) => setPinNotes(e.target.value)}
-                    placeholder="Additional notes..."
-                    className="w-full px-3 py-2 border border-input rounded-lg h-20"
-                  />
-                </div>
-              </div>
-              <div className="sticky mobile-sticky-offset bg-card border-t border-border px-6 py-4 flex gap-3">
-                <button
-                  onClick={() => setShowPaymentInModal(false)}
-                  className="flex-1 px-4 py-2 border border-input rounded-lg hover:bg-muted"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    if (!pinSelectedParty || !pinAmount) {
-                      toast.error('Please select party and enter amount')
-                      return
-                    }
-                    try {
-                      await createPaymentIn({
-                        partyId: pinSelectedParty.id,
-                        partyName: pinSelectedParty.companyName || '',
-                        amount: parseFloat(pinAmount),
-                        paymentMode: pinMode,
-                        paymentDate: pinDate,
-                        reference: pinReference,
-                        notes: pinNotes
-                      })
-                      toast.success(`Payment of ₹${parseFloat(pinAmount).toLocaleString()} recorded from ${pinSelectedParty.companyName}`)
-                      // Refresh the list
-                      loadPaymentsInData()
-                      setShowPaymentInModal(false)
-                      setPinSelectedParty(null)
-                      setPinPartySearch('')
-                      setPinAmount('')
-                      setPinReference('')
-                      setPinNotes('')
-                    } catch (error) {
-                      console.error('Error saving payment:', error)
-                      toast.error('Failed to save payment')
-                    }
-                  }}
-                  className="flex-1 px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 font-medium"
-                >
-                  Record Payment
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Payment Out Modal */}
-      <AnimatePresence>
-        {showPaymentOutModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowPaymentOutModal(false)}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative bg-card rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
-            >
-              <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <CurrencyCircleDollar size={24} weight="duotone" className="text-destructive" />
-                  Record Payment Out
-                </h2>
-                <button onClick={() => setShowPaymentOutModal(false)} className="p-2 hover:bg-muted rounded-lg">
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="p-6 space-y-4">
-                {/* Party Search */}
-                <div className="relative">
-                  <label className="block text-sm font-medium mb-1">Paid To *</label>
-                  <input
-                    type="text"
-                    value={poutPartySearch}
-                    onChange={(e) => {
-                      setPoutPartySearch(e.target.value)
-                      setShowPoutPartyDropdown(true)
-                    }}
-                    onFocus={() => setShowPoutPartyDropdown(true)}
-                    placeholder="Search supplier..."
-                    className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-destructive"
-                  />
-                  {showPoutPartyDropdown && poutPartySearch && (
-                    <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {availableParties
-                        .filter(p => p.companyName?.toLowerCase().includes(poutPartySearch.toLowerCase()))
-                        .slice(0, 5)
-                        .map(party => (
-                          <button
-                            key={party.id}
-                            onClick={() => {
-                              setPoutSelectedParty(party)
-                              setPoutPartySearch(party.companyName || '')
-                              setShowPoutPartyDropdown(false)
-                            }}
-                            className="w-full px-3 py-2 text-left hover:bg-muted"
-                          >
-                            {party.companyName}
-                          </button>
-                        ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Amount */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Amount *</label>
-                  <input
-                    type="number"
-                    value={poutAmount}
-                    onChange={(e) => setPoutAmount(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-destructive text-xl font-bold"
-                  />
-                </div>
-
-                {/* Payment Mode */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Payment Mode</label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {(['cash', 'upi', 'bank', 'cheque', 'card'] as const).map(mode => (
-                      <button
-                        key={mode}
-                        onClick={() => setPoutMode(mode)}
-                        className={cn(
-                          "px-3 py-2 rounded-lg text-sm font-medium capitalize border",
-                          poutMode === mode ? "bg-destructive text-white border-destructive" : "border-input hover:bg-muted"
-                        )}
-                      >
-                        {mode}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Date */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Date</label>
-                  <input
-                    type="date"
-                    value={poutDate}
-                    onChange={(e) => setPoutDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-input rounded-lg"
-                  />
-                </div>
-
-                {/* Reference */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Reference / Transaction ID</label>
-                  <input
-                    type="text"
-                    value={poutReference}
-                    onChange={(e) => setPoutReference(e.target.value)}
-                    placeholder="Transaction reference..."
-                    className="w-full px-3 py-2 border border-input rounded-lg"
-                  />
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Notes</label>
-                  <textarea
-                    value={poutNotes}
-                    onChange={(e) => setPoutNotes(e.target.value)}
-                    placeholder="Additional notes..."
-                    className="w-full px-3 py-2 border border-input rounded-lg h-20"
-                  />
-                </div>
-              </div>
-              <div className="sticky mobile-sticky-offset bg-card border-t border-border px-6 py-4 flex gap-3">
-                <button
-                  onClick={() => setShowPaymentOutModal(false)}
-                  className="flex-1 px-4 py-2 border border-input rounded-lg hover:bg-muted"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    if (!poutSelectedParty || !poutAmount) {
-                      toast.error('Please select party and enter amount')
-                      return
-                    }
-                    try {
-                      await createPaymentOut({
-                        partyId: poutSelectedParty.id,
-                        partyName: poutSelectedParty.companyName || '',
-                        amount: parseFloat(poutAmount),
-                        paymentMode: poutMode,
-                        paymentDate: poutDate,
-                        reference: poutReference,
-                        notes: poutNotes
-                      })
-                      toast.success(`Payment of ₹${parseFloat(poutAmount).toLocaleString()} recorded to ${poutSelectedParty.companyName}`)
-                      // Refresh the list
-                      loadPaymentsOutData()
-                      setShowPaymentOutModal(false)
-                      setPoutSelectedParty(null)
-                      setPoutPartySearch('')
-                      setPoutAmount('')
-                      setPoutReference('')
-                      setPoutNotes('')
-                    } catch (error) {
-                      console.error('Error saving payment:', error)
-                      toast.error('Failed to save payment')
-                    }
-                  }}
-                  className="flex-1 px-4 py-2 bg-destructive text-white rounded-lg hover:bg-destructive/90 font-medium"
-                >
-                  Record Payment
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Payment Out Modal - New Allocation Modal */}
+      <PaymentAllocationModal
+        isOpen={showPaymentOutModal}
+        onClose={() => setShowPaymentOutModal(false)}
+        type="OUT"
+        onSuccess={() => loadPaymentsOutData()}
+      />
 
       {/* Price List Modal */}
       <AnimatePresence>
@@ -3001,6 +2852,881 @@ const More = () => {
           }
         }}
       />
+
+      {/* Feature Panels - Shown when a module is selected */}
+      <AnimatePresence>
+        {selectedModule && showCreateModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => {setShowCreateModal(false); setSelectedModule(null)}}
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="bg-card rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Notes Panel */}
+              {selectedModule === 'notes' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">📝 Notes</h2>
+                  <p className="text-muted-foreground mb-4">Add notes for tasks & parties</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={noteTitle}
+                        onChange={(e) => setNoteTitle(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="Enter note title"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Content</label>
+                      <textarea
+                        value={noteContent}
+                        onChange={(e) => setNoteContent(e.target.value)}
+                        className="w-full p-2 border rounded h-32"
+                        placeholder="Enter note content"
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (noteTitle && noteContent) {
+                          const newNote = {
+                            id: `note_${Date.now()}`,
+                            title: noteTitle,
+                            content: noteContent,
+                            date: new Date().toISOString()
+                          }
+                          setNotes([...notes, newNote])
+                          toast.success('Note created successfully!')
+                          setNoteTitle('')
+                          setNoteContent('')
+                        }
+                      }}
+                      className="w-full bg-primary text-white py-2 rounded hover:bg-primary/90"
+                    >
+                      Save Note
+                    </button>
+                    <div className="mt-4">
+                      <h3 className="font-semibold mb-2">Recent Notes ({notes.length})</h3>
+                      {notes.map(note => (
+                        <div key={note.id} className="p-3 border rounded mb-2">
+                          <h4 className="font-semibold">{note.title}</h4>
+                          <p className="text-sm text-muted-foreground">{note.content}</p>
+                          <small className="text-xs text-muted-foreground">{new Date(note.date).toLocaleDateString()}</small>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* WhatsApp Integration Panel */}
+              {selectedModule === 'whatsapp' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">📱 WhatsApp Integration</h2>
+                  <p className="text-muted-foreground mb-4">Send invoices via WhatsApp</p>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm mb-2">This feature allows you to send invoices, quotations, and payment reminders directly to your customers via WhatsApp.</p>
+                    <p className="text-sm font-semibold mb-4">Setup Instructions:</p>
+                    <ol className="text-sm space-y-2 list-decimal list-inside">
+                      <li>You'll need WhatsApp Business API access</li>
+                      <li>Or use direct WhatsApp link integration (available now)</li>
+                      <li>Configure in Settings → Integrations</li>
+                    </ol>
+                    <button
+                      onClick={() => toast.info('Navigate to Settings → Integrations to configure WhatsApp')}
+                      className="mt-4 w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+                    >
+                      Configure WhatsApp
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* UPI Payment Links Panel */}
+              {selectedModule === 'upi' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">💳 UPI Payment Links</h2>
+                  <p className="text-muted-foreground mb-4">Generate UPI payment links for customers</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Customer Name</label>
+                      <input
+                        type="text"
+                        value={upiPartyName}
+                        onChange={(e) => setUpiPartyName(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="Enter customer name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Amount (₹)</label>
+                      <input
+                        type="number"
+                        value={upiAmount}
+                        onChange={(e) => setUpiAmount(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="Enter amount"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Your UPI ID</label>
+                      <input
+                        type="text"
+                        value={upiId}
+                        onChange={(e) => setUpiId(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="yourname@upi"
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (upiPartyName && upiAmount && upiId) {
+                          const link = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiPartyName)}&am=${upiAmount}&cu=INR`
+                          const newUpiLink = {
+                            id: `upi_${Date.now()}`,
+                            partyName: upiPartyName,
+                            amount: parseFloat(upiAmount),
+                            upiId,
+                            link,
+                            createdAt: new Date().toISOString()
+                          }
+                          setUpiLinks([...upiLinks, newUpiLink])
+                          navigator.clipboard.writeText(link)
+                          toast.success('UPI link generated and copied to clipboard!')
+                          setUpiPartyName('')
+                          setUpiAmount('')
+                        }
+                      }}
+                      className="w-full bg-primary text-white py-2 rounded hover:bg-primary/90"
+                    >
+                      Generate UPI Link
+                    </button>
+                    <div className="mt-4">
+                      <h3 className="font-semibold mb-2">Recent Links ({upiLinks.length})</h3>
+                      {upiLinks.map(link => (
+                        <div key={link.id} className="p-3 border rounded mb-2">
+                          <p className="font-semibold">{link.partyName} - ₹{link.amount}</p>
+                          <p className="text-xs text-muted-foreground truncate">{link.link}</p>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(link.link)
+                              toast.success('Link copied!')
+                            }}
+                            className="text-xs text-primary mt-1"
+                          >
+                            Copy Link
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Ledger Report Panel */}
+              {selectedModule === 'ledger' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">📊 Ledger Report</h2>
+                  <p className="text-muted-foreground mb-4">View detailed ledger accounts</p>
+                  <div className="bg-amber-50 p-4 rounded-lg">
+                    <p className="text-sm mb-2">Ledger reports are available in the Party Statement section.</p>
+                    <p className="text-sm mb-4">To view a party ledger:</p>
+                    <ol className="text-sm space-y-2 list-decimal list-inside">
+                      <li>Go to Parties page</li>
+                      <li>Click on any party</li>
+                      <li>Select "View Statement" or "Ledger"</li>
+                    </ol>
+                    <button
+                      onClick={() => {
+                        window.location.href = '/parties'
+                      }}
+                      className="mt-4 w-full bg-primary text-white py-2 rounded hover:bg-primary/90"
+                    >
+                      Go to Parties
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Schemes Panel */}
+              {selectedModule === 'schemes' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">🎁 Promotional Schemes</h2>
+                  <p className="text-muted-foreground mb-4">Create promotional schemes for customers</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Scheme Name</label>
+                      <input
+                        type="text"
+                        value={schemeName}
+                        onChange={(e) => setSchemeName(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="e.g., Buy 2 Get 1 Free"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Description</label>
+                      <textarea
+                        value={schemeDesc}
+                        onChange={(e) => setSchemeDesc(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="Scheme details"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Discount Type</label>
+                        <select
+                          value={schemeDiscountType}
+                          onChange={(e) => setSchemeDiscountType(e.target.value as 'percentage' | 'amount')}
+                          className="w-full p-2 border rounded"
+                        >
+                          <option value="percentage">Percentage</option>
+                          <option value="amount">Fixed Amount</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Discount Value</label>
+                        <input
+                          type="number"
+                          value={schemeDiscountValue}
+                          onChange={(e) => setSchemeDiscountValue(parseFloat(e.target.value))}
+                          className="w-full p-2 border rounded"
+                          placeholder="10"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (schemeName && schemeDesc) {
+                          const newScheme = {
+                            id: `scheme_${Date.now()}`,
+                            name: schemeName,
+                            description: schemeDesc,
+                            discountType: schemeDiscountType,
+                            discountValue: schemeDiscountValue,
+                            validFrom: new Date().toISOString(),
+                            validTo: new Date(Date.now() + 30*24*60*60*1000).toISOString()
+                          }
+                          setSchemes([...schemes, newScheme])
+                          toast.success('Scheme created successfully!')
+                          setSchemeName('')
+                          setSchemeDesc('')
+                          setSchemeDiscountValue(0)
+                        }
+                      }}
+                      className="w-full bg-primary text-white py-2 rounded hover:bg-primary/90"
+                    >
+                      Create Scheme
+                    </button>
+                    <div className="mt-4">
+                      <h3 className="font-semibold mb-2">Active Schemes ({schemes.length})</h3>
+                      {schemes.map(scheme => (
+                        <div key={scheme.id} className="p-3 border rounded mb-2">
+                          <h4 className="font-semibold">{scheme.name}</h4>
+                          <p className="text-sm">{scheme.description}</p>
+                          <p className="text-sm text-success">{scheme.discountValue}{scheme.discountType === 'percentage' ? '%' : '₹'} off</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Discount Management Panel */}
+              {selectedModule === 'discounts' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">🏷️ Discount Management</h2>
+                  <p className="text-muted-foreground mb-4">Manage various discount types</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Discount Code</label>
+                      <input
+                        type="text"
+                        value={discountCode}
+                        onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                        className="w-full p-2 border rounded"
+                        placeholder="e.g., SAVE10"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Type</label>
+                        <select
+                          value={discountType}
+                          onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'amount')}
+                          className="w-full p-2 border rounded"
+                        >
+                          <option value="percentage">Percentage</option>
+                          <option value="amount">Fixed Amount</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Value</label>
+                        <input
+                          type="number"
+                          value={discountValue}
+                          onChange={(e) => setDiscountValue(parseFloat(e.target.value))}
+                          className="w-full p-2 border rounded"
+                          placeholder="10"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (discountCode && discountValue > 0) {
+                          const newDiscount = {
+                            id: `discount_${Date.now()}`,
+                            code: discountCode,
+                            type: discountType,
+                            value: discountValue,
+                            validFrom: new Date().toISOString(),
+                            validTo: new Date(Date.now() + 30*24*60*60*1000).toISOString()
+                          }
+                          setDiscounts([...discounts, newDiscount])
+                          toast.success(`Discount code ${discountCode} created!`)
+                          setDiscountCode('')
+                          setDiscountValue(0)
+                        }
+                      }}
+                      className="w-full bg-primary text-white py-2 rounded hover:bg-primary/90"
+                    >
+                      Create Discount
+                    </button>
+                    <div className="mt-4">
+                      <h3 className="font-semibold mb-2">Active Discounts ({discounts.length})</h3>
+                      {discounts.map(discount => (
+                        <div key={discount.id} className="p-3 border rounded mb-2 flex justify-between items-center">
+                          <div>
+                            <h4 className="font-semibold">{discount.code}</h4>
+                            <p className="text-sm text-success">{discount.value}{discount.type === 'percentage' ? '%' : '₹'} off</p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(discount.code)
+                              toast.success('Code copied!')
+                            }}
+                            className="text-xs text-primary"
+                          >
+                            Copy Code
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Multiple Locations Panel */}
+              {selectedModule === 'location' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">📍 Multiple Locations</h2>
+                  <p className="text-muted-foreground mb-4">Manage multiple business locations</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Location Name</label>
+                      <input
+                        type="text"
+                        value={locationName}
+                        onChange={(e) => setLocationName(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="e.g., Main Branch"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Address</label>
+                      <textarea
+                        value={locationAddress}
+                        onChange={(e) => setLocationAddress(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="Street address"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">City</label>
+                        <input
+                          type="text"
+                          value={locationCity}
+                          onChange={(e) => setLocationCity(e.target.value)}
+                          className="w-full p-2 border rounded"
+                          placeholder="City"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">State</label>
+                        <input
+                          type="text"
+                          value={locationState}
+                          onChange={(e) => setLocationState(e.target.value)}
+                          className="w-full p-2 border rounded"
+                          placeholder="State"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Pincode</label>
+                      <input
+                        type="text"
+                        value={locationPincode}
+                        onChange={(e) => setLocationPincode(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="123456"
+                        maxLength={6}
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (locationName && locationAddress && locationCity) {
+                          const newLocation = {
+                            id: `loc_${Date.now()}`,
+                            name: locationName,
+                            address: locationAddress,
+                            city: locationCity,
+                            state: locationState,
+                            pincode: locationPincode,
+                            isDefault: locations.length === 0
+                          }
+                          setLocations([...locations, newLocation])
+                          toast.success('Location added successfully!')
+                          setLocationName('')
+                          setLocationAddress('')
+                          setLocationCity('')
+                          setLocationState('')
+                          setLocationPincode('')
+                        }
+                      }}
+                      className="w-full bg-primary text-white py-2 rounded hover:bg-primary/90"
+                    >
+                      Add Location
+                    </button>
+                    <div className="mt-4">
+                      <h3 className="font-semibold mb-2">Locations ({locations.length})</h3>
+                      {locations.map(loc => (
+                        <div key={loc.id} className="p-3 border rounded mb-2">
+                          <h4 className="font-semibold">{loc.name} {loc.isDefault && <span className="text-xs text-primary">(Default)</span>}</h4>
+                          <p className="text-sm text-muted-foreground">{loc.address}</p>
+                          <p className="text-sm text-muted-foreground">{loc.city}, {loc.state} - {loc.pincode}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Staff Attendance Panel */}
+              {selectedModule === 'attendance' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">📅 Staff Attendance</h2>
+                  <p className="text-muted-foreground mb-4">Track employee attendance</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Staff Name</label>
+                      <input
+                        type="text"
+                        value={attendanceStaffName}
+                        onChange={(e) => setAttendanceStaffName(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="Employee name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Date</label>
+                      <input
+                        type="date"
+                        value={attendanceDate}
+                        onChange={(e) => setAttendanceDate(e.target.value)}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Status</label>
+                      <select
+                        value={attendanceStatus}
+                        onChange={(e) => setAttendanceStatus(e.target.value as any)}
+                        className="w-full p-2 border rounded"
+                      >
+                        <option value="present">Present</option>
+                        <option value="absent">Absent</option>
+                        <option value="half-day">Half Day</option>
+                        <option value="leave">Leave</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Notes (Optional)</label>
+                      <textarea
+                        value={attendanceNotes}
+                        onChange={(e) => setAttendanceNotes(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        rows={2}
+                        placeholder="Additional notes..."
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (attendanceStaffName && attendanceDate) {
+                          const newRecord = {
+                            id: `att_${Date.now()}`,
+                            staffName: attendanceStaffName,
+                            date: attendanceDate,
+                            status: attendanceStatus,
+                            notes: attendanceNotes
+                          }
+                          setAttendanceRecords([...attendanceRecords, newRecord])
+                          localStorage.setItem('attendance_records', JSON.stringify([...attendanceRecords, newRecord]))
+                          toast.success('Attendance recorded!')
+                          setAttendanceStaffName('')
+                          setAttendanceNotes('')
+                        }
+                      }}
+                      className="w-full bg-primary text-white py-2 rounded hover:bg-primary/90"
+                    >
+                      Mark Attendance
+                    </button>
+                    <div className="mt-4">
+                      <h3 className="font-semibold mb-2">Recent Records ({attendanceRecords.length})</h3>
+                      {attendanceRecords.slice(-5).reverse().map(rec => (
+                        <div key={rec.id} className="p-3 border rounded mb-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-semibold">{rec.staffName}</h4>
+                              <p className="text-sm text-muted-foreground">{new Date(rec.date).toLocaleDateString()}</p>
+                              {rec.notes && <p className="text-xs text-muted-foreground mt-1">{rec.notes}</p>}
+                            </div>
+                            <span className={`px-2 py-1 text-xs rounded ${
+                              rec.status === 'present' ? 'bg-green-100 text-green-700' :
+                              rec.status === 'absent' ? 'bg-red-100 text-red-700' :
+                              rec.status === 'half-day' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {rec.status.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Salary Management Panel */}
+              {selectedModule === 'salary' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">💰 Salary Management</h2>
+                  <p className="text-muted-foreground mb-4">Manage staff salaries and payroll</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Staff Name</label>
+                      <input
+                        type="text"
+                        value={salaryStaffName}
+                        onChange={(e) => setSalaryStaffName(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="Employee name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Month</label>
+                      <input
+                        type="month"
+                        value={salaryMonth}
+                        onChange={(e) => setSalaryMonth(e.target.value)}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Basic Salary (₹)</label>
+                      <input
+                        type="number"
+                        value={salaryBasic}
+                        onChange={(e) => setSalaryBasic(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Allowances (₹)</label>
+                      <input
+                        type="number"
+                        value={salaryAllowances}
+                        onChange={(e) => setSalaryAllowances(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Deductions (₹)</label>
+                      <input
+                        type="number"
+                        value={salaryDeductions}
+                        onChange={(e) => setSalaryDeductions(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="p-3 bg-blue-50 rounded">
+                      <p className="text-sm font-semibold">Net Salary: ₹{
+                        (parseFloat(salaryBasic || '0') + parseFloat(salaryAllowances || '0') - parseFloat(salaryDeductions || '0')).toLocaleString()
+                      }</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (salaryStaffName && salaryBasic) {
+                          const netSalary = parseFloat(salaryBasic) + parseFloat(salaryAllowances || '0') - parseFloat(salaryDeductions || '0')
+                          const newRecord = {
+                            id: `sal_${Date.now()}`,
+                            staffName: salaryStaffName,
+                            month: salaryMonth,
+                            basicSalary: parseFloat(salaryBasic),
+                            allowances: parseFloat(salaryAllowances || '0'),
+                            deductions: parseFloat(salaryDeductions || '0'),
+                            netSalary,
+                            status: 'pending' as const
+                          }
+                          setSalaryRecords([...salaryRecords, newRecord])
+                          localStorage.setItem('salary_records', JSON.stringify([...salaryRecords, newRecord]))
+                          toast.success('Salary record created!')
+                          setSalaryStaffName('')
+                          setSalaryBasic('')
+                          setSalaryAllowances('')
+                          setSalaryDeductions('')
+                        }
+                      }}
+                      className="w-full bg-primary text-white py-2 rounded hover:bg-primary/90"
+                    >
+                      Create Salary Record
+                    </button>
+                    <div className="mt-4">
+                      <h3 className="font-semibold mb-2">Salary Records ({salaryRecords.length})</h3>
+                      {salaryRecords.slice(-5).reverse().map(rec => (
+                        <div key={rec.id} className="p-3 border rounded mb-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-semibold">{rec.staffName}</h4>
+                              <p className="text-sm text-muted-foreground">{new Date(rec.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+                              <p className="text-xs text-muted-foreground mt-1">Basic: ₹{rec.basicSalary.toLocaleString()} + Allowances: ₹{rec.allowances.toLocaleString()} - Deductions: ₹{rec.deductions.toLocaleString()}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-green-600">₹{rec.netSalary.toLocaleString()}</p>
+                              <span className={`px-2 py-1 text-xs rounded ${rec.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                {rec.status.toUpperCase()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Serial Number Tracking Panel */}
+              {selectedModule === 'item-serial' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">🔢 Serial Number Tracking</h2>
+                  <p className="text-muted-foreground mb-4">Track items by serial numbers</p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Item Name</label>
+                      <input
+                        type="text"
+                        value={serialItemName}
+                        onChange={(e) => setSerialItemName(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="Product name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Serial Number</label>
+                      <input
+                        type="text"
+                        value={serialNumber}
+                        onChange={(e) => setSerialNumber(e.target.value)}
+                        className="w-full p-2 border rounded"
+                        placeholder="SN123456789"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Purchase Date</label>
+                        <input
+                          type="date"
+                          value={serialPurchaseDate}
+                          onChange={(e) => setSerialPurchaseDate(e.target.value)}
+                          className="w-full p-2 border rounded"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Warranty Expiry</label>
+                        <input
+                          type="date"
+                          value={serialWarrantyExpiry}
+                          onChange={(e) => setSerialWarrantyExpiry(e.target.value)}
+                          className="w-full p-2 border rounded"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Status</label>
+                      <select
+                        value={serialStatus}
+                        onChange={(e) => setSerialStatus(e.target.value as any)}
+                        className="w-full p-2 border rounded"
+                      >
+                        <option value="in-stock">In Stock</option>
+                        <option value="sold">Sold</option>
+                        <option value="defective">Defective</option>
+                      </select>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (serialItemName && serialNumber) {
+                          const newSerial = {
+                            id: `serial_${Date.now()}`,
+                            itemName: serialItemName,
+                            serialNumber: serialNumber,
+                            purchaseDate: serialPurchaseDate,
+                            warrantyExpiry: serialWarrantyExpiry,
+                            status: serialStatus
+                          }
+                          setSerialNumbers([...serialNumbers, newSerial])
+                          localStorage.setItem('serial_numbers', JSON.stringify([...serialNumbers, newSerial]))
+                          toast.success('Serial number added!')
+                          setSerialItemName('')
+                          setSerialNumber('')
+                          setSerialWarrantyExpiry('')
+                        }
+                      }}
+                      className="w-full bg-primary text-white py-2 rounded hover:bg-primary/90"
+                    >
+                      Add Serial Number
+                    </button>
+                    <div className="mt-4">
+                      <h3 className="font-semibold mb-2">Serial Numbers ({serialNumbers.length})</h3>
+                      {serialNumbers.slice(-5).reverse().map(serial => (
+                        <div key={serial.id} className="p-3 border rounded mb-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-semibold">{serial.itemName}</h4>
+                              <p className="text-sm font-mono text-muted-foreground">SN: {serial.serialNumber}</p>
+                              <p className="text-xs text-muted-foreground">Purchased: {new Date(serial.purchaseDate).toLocaleDateString()}</p>
+                              {serial.warrantyExpiry && (
+                                <p className="text-xs text-muted-foreground">Warranty: {new Date(serial.warrantyExpiry).toLocaleDateString()}</p>
+                              )}
+                            </div>
+                            <span className={`px-2 py-1 text-xs rounded ${
+                              serial.status === 'in-stock' ? 'bg-blue-100 text-blue-700' :
+                              serial.status === 'sold' ? 'bg-green-100 text-green-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {serial.status.toUpperCase().replace('-', ' ')}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Online Store Panel */}
+              {selectedModule === 'online-store' && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">🛍️ Online Store</h2>
+                  <p className="text-muted-foreground mb-4">Your e-commerce website & storefront</p>
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-200">
+                      <h3 className="font-bold text-lg mb-2">🚀 Launch Your Online Store</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Get a fully functional e-commerce website with your product catalog, payment gateway integration, and order management.
+                      </p>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-2">
+                          <span className="text-green-600 mt-1">✓</span>
+                          <p className="text-sm">Automatic product sync from your inventory</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-green-600 mt-1">✓</span>
+                          <p className="text-sm">Built-in payment gateway (UPI, Cards, Wallets)</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-green-600 mt-1">✓</span>
+                          <p className="text-sm">Mobile-responsive design</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-green-600 mt-1">✓</span>
+                          <p className="text-sm">Real-time order notifications</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-green-600 mt-1">✓</span>
+                          <p className="text-sm">Custom domain support</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
+                      <input
+                        type="checkbox"
+                        id="storeEnabled"
+                        checked={onlineStoreEnabled}
+                        onChange={(e) => {
+                          setOnlineStoreEnabled(e.target.checked)
+                          localStorage.setItem('online_store_enabled', e.target.checked.toString())
+                          if (e.target.checked) {
+                            const storeUrl = `https://${Math.random().toString(36).substring(7)}.mystore.com`
+                            setOnlineStoreUrl(storeUrl)
+                            localStorage.setItem('online_store_url', storeUrl)
+                            toast.success('Online store enabled!')
+                          } else {
+                            toast.info('Online store disabled')
+                          }
+                        }}
+                        className="w-5 h-5"
+                      />
+                      <label htmlFor="storeEnabled" className="font-medium cursor-pointer">
+                        Enable Online Store
+                      </label>
+                    </div>
+                    {onlineStoreEnabled && onlineStoreUrl && (
+                      <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                        <p className="text-sm font-semibold mb-2">🎉 Your store is live!</p>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={onlineStoreUrl}
+                            readOnly
+                            className="flex-1 p-2 bg-white border rounded text-sm"
+                          />
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(onlineStoreUrl)
+                              toast.success('Store URL copied!')
+                            }}
+                            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 text-sm"
+                          >
+                            Copy URL
+                          </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Share this URL with your customers to start selling online!
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

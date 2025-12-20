@@ -87,6 +87,7 @@ import { searchItems, type MasterItem } from '../services/itemMasterService'
 import { getItemSettings } from '../services/settingsService'
 import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../services/firebase'
+import { getPartyName } from '../utils/partyUtils'
 
 // Indian States list with priority states first
 const INDIAN_STATES = [
@@ -837,17 +838,38 @@ const Sales = () => {
     }
   }, [salesMode, activeTabId])
 
-  // Auto-scroll to last item when items are added
+  // Auto-scroll to last item when items are added with smooth animation
   useEffect(() => {
     if (invoiceItems.length > 0) {
-      // Scroll desktop table container
-      if (itemTableContainerRef.current) {
-        itemTableContainerRef.current.scrollTop = itemTableContainerRef.current.scrollHeight
-      }
-      // Scroll mobile items container
-      if (mobileItemsContainerRef.current) {
-        mobileItemsContainerRef.current.scrollTop = mobileItemsContainerRef.current.scrollHeight
-      }
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        // Scroll desktop table container smoothly
+        if (itemTableContainerRef.current) {
+          itemTableContainerRef.current.scrollTo({
+            top: itemTableContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          })
+          // Add highlight animation to last row
+          const lastRow = itemTableContainerRef.current.querySelector('tbody tr:last-child')
+          if (lastRow) {
+            lastRow.classList.add('new-item-highlight')
+            setTimeout(() => lastRow.classList.remove('new-item-highlight'), 1500)
+          }
+        }
+        // Scroll mobile items container smoothly
+        if (mobileItemsContainerRef.current) {
+          mobileItemsContainerRef.current.scrollTo({
+            top: mobileItemsContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          })
+          // Add highlight to last mobile card
+          const lastCard = mobileItemsContainerRef.current.lastElementChild
+          if (lastCard) {
+            lastCard.classList.add('new-item-highlight')
+            setTimeout(() => lastCard.classList.remove('new-item-highlight'), 1500)
+          }
+        }
+      }, 50)
     }
   }, [invoiceItems.length])
 
@@ -1014,7 +1036,7 @@ const Sales = () => {
 
         invoicesData.forEach(invoice => {
           // Get customer key (normalize to lowercase for consistent matching)
-          const customerKey = (invoice?.partyName || invoice?.customerName || '').toLowerCase().trim()
+          const customerKey = getPartyName(invoice).toLowerCase().trim()
           if (!customerKey || customerKey === 'unknown') return
 
           // Calculate this invoice's unpaid balance
@@ -1032,7 +1054,7 @@ const Sales = () => {
         // STEP 2: Convert invoices to display format with customer outstanding attached
         const formattedInvoices = invoicesData.map(invoice => {
           // Look up customer's TOTAL outstanding across ALL their invoices
-          const customerKey = (invoice?.partyName || invoice?.customerName || '').toLowerCase().trim()
+          const customerKey = getPartyName(invoice).toLowerCase().trim()
           const customerOutstanding = customerOutstandingMap.get(customerKey) || 0
 
           // Debug: Log items for converted invoices
@@ -1462,6 +1484,34 @@ const Sales = () => {
     }
   }, [])
 
+  // Reusable function to reload items with fresh stock data
+  const reloadItemsFromDatabase = async () => {
+    try {
+      const { getItems } = await import('../services/itemService')
+      const items = await getItems()
+      setAllItems(items || [])
+      // Also update availableItems for multi-unit support
+      setAvailableItems(
+        items.map((i: any) => ({
+          id: i.id,
+          name: i.name || 'Unnamed Item',
+          price: (i.sellingPrice as any) || (i.purchasePrice as any) || 0,
+          tax: i.tax?.gstRate || 0,
+          unit: i.unit,
+          hasMultiUnit: i.hasMultiUnit || false,
+          baseUnit: i.baseUnit || 'Pcs',
+          purchaseUnit: i.purchaseUnit || 'Box',
+          piecesPerPurchaseUnit: i.piecesPerPurchaseUnit || 12,
+          sellingPricePerPiece: i.sellingPricePerPiece,
+          purchasePricePerBox: i.purchasePricePerBox,
+          stockBase: i.stockBase || i.stock || 0
+        }))
+      )
+    } catch (error) {
+      console.error('Failed to reload items:', error)
+    }
+  }
+
   // Load all items for search
   useEffect(() => {
     let mounted = true
@@ -1502,13 +1552,7 @@ const Sales = () => {
 
   // Filter customers based on search
   const filteredCustomers = allParties.filter(party =>
-    party.displayName?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    party.companyName?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    party.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    party.customerName?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    party.partyName?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    party.fullName?.toLowerCase().includes(customerSearch.toLowerCase()) ||
-    party.businessName?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+    getPartyName(party).toLowerCase().includes(customerSearch.toLowerCase()) ||
     party.phone?.includes(customerSearch) ||
     party.email?.toLowerCase().includes(customerSearch.toLowerCase())
   ).slice(0, 10) // Limit to 10 results
@@ -2843,8 +2887,9 @@ const Sales = () => {
 
         toast.success(`Invoice ${invoiceData.invoiceNumber} created & payment received!`)
 
-        // Reload invoices list
+        // Reload invoices list and items (to refresh stock quantities)
         await loadInvoicesFromDatabase()
+        await reloadItemsFromDatabase()
 
         // Close modal and reset form
         setShowUPIModal(false)
@@ -2912,8 +2957,9 @@ const Sales = () => {
 
         toast.success(`Invoice ${invoiceData.invoiceNumber} created & payment received!`)
 
-        // Reload invoices list
+        // Reload invoices list and items (to refresh stock quantities)
         await loadInvoicesFromDatabase()
+        await reloadItemsFromDatabase()
 
         // Close modal and reset form
         setShowCardModal(false)
@@ -3131,8 +3177,9 @@ const Sales = () => {
 
         toast.success(`Invoice ${invoiceNumber} created successfully!${totalPaidAmount > 0 ? ' Banking updated.' : ''}`)
 
-        // Reload invoices list
+        // Reload invoices list and items (to refresh stock quantities)
         await loadInvoicesFromDatabase()
+        await reloadItemsFromDatabase()
 
         // Close current tab only, preserve other tabs
         closeCurrentTab()
@@ -3317,8 +3364,9 @@ const Sales = () => {
 
         toast.success(`Sale completed! Invoice ${invoiceNumber} created.${totalPaidAmount > 0 ? ' Banking updated.' : ''}`)
 
-        // Reload invoices list
+        // Reload invoices list and items (to refresh stock quantities)
         await loadInvoicesFromDatabase()
+        await reloadItemsFromDatabase()
 
         // Close current tab only, preserve other tabs
         closeCurrentTab()
@@ -3425,8 +3473,9 @@ const Sales = () => {
           }
         }
 
-        // Reload invoices
+        // Reload invoices and items (to refresh stock quantities)
         await loadInvoicesFromDatabase()
+        await reloadItemsFromDatabase()
 
         toast.success(`POS Sale completed! Invoice #${newInvoiceNumber}`)
       }
@@ -3537,8 +3586,9 @@ const Sales = () => {
           }
         }
 
-        // Reload invoices to show in POS history
+        // Reload invoices to show in POS history and items (to refresh stock quantities)
         await loadInvoicesFromDatabase()
+        await reloadItemsFromDatabase()
 
         console.log(`✅ POS Quick Checkout completed! Invoice #${newInvoiceNumber}`)
       }
@@ -5051,14 +5101,14 @@ TOTAL:       ₹${invoice.total}
   }
 
   const desktopTableStyle = {
-    maxHeight: '55vh',
-    minHeight: invoiceItems.length > 0 ? '120px' : '0'
+    maxHeight: 'calc(100vh - 380px)', // Leave room for header, sticky bottom bar, and action buttons
+    minHeight: invoiceItems.length > 0 ? '100px' : '0',
   }
 
   return (
     <div className={cn(
       "overflow-x-hidden flex flex-col w-full",
-      viewMode === 'list' ? "px-3 py-2 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen" : "bg-white"
+      viewMode === 'list' ? "px-3 py-2 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen" : "bg-white h-[calc(100vh-64px)] overflow-hidden"
     )} style={{ maxWidth: '100vw' }}>
       {/* Header - Only show in list mode */}
       {viewMode === 'list' && (
@@ -5984,7 +6034,7 @@ TOTAL:       ₹${invoice.total}
 
       {/* Create Invoice Form - Show when in create mode */}
       {viewMode === 'create' && (
-        <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+        <div className="invoice-layout-container">
           {/* Modern Café POS View */}
           {showCafePOS ? (
             <div className="flex-1 overflow-hidden h-full">
@@ -6003,14 +6053,14 @@ TOTAL:       ₹${invoice.total}
           ) : (
           <div
             className={cn(
-              "flex flex-col overflow-x-hidden",
+              "flex flex-col flex-1 min-h-0 overflow-hidden",
               (salesMode === 'pos' || showPosPreview)
                 ? "lg:flex-row gap-2"
                 : ""
             )}
           >
           {/* Left Column - Invoice Form / POS Product Area */}
-          <div className="flex flex-col bg-white dark:bg-slate-900 overflow-x-hidden">
+          <div className="flex flex-col flex-1 min-h-0 bg-white dark:bg-slate-900 overflow-hidden">
 
 
           {/* Tabs for multiple invoices + Mode Toggle + Back */}
@@ -6080,8 +6130,8 @@ TOTAL:       ₹${invoice.total}
           </div>
 
           <div className={cn(
-            "flex flex-col overflow-y-auto",
-            salesMode === 'pos' ? "p-1" : "p-1"
+            "flex flex-col flex-1 min-h-0 overflow-hidden",
+            salesMode === 'pos' ? "p-2" : "p-4"
           )}>
             {/* HEADER - Fixed at top */}
             <div className="flex-shrink-0">
@@ -6171,7 +6221,7 @@ TOTAL:       ₹${invoice.total}
                             className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50 cursor-pointer"
                           >
                             <div className="flex items-center justify-between">
-                              <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
+                              <div className="font-medium text-sm">{getPartyName(party)}</div>
                               {(party.outstanding !== undefined || party.currentBalance !== undefined) && (() => {
                                 const outstanding = party.outstanding ?? party.currentBalance ?? 0
                                 const colorClass = outstanding > 0 ? 'text-emerald-600' : outstanding < 0 ? 'text-red-600' : 'text-gray-500'
@@ -6297,7 +6347,7 @@ TOTAL:       ₹${invoice.total}
             <div className="hidden md:grid md:grid-cols-2 gap-4 mb-0.5 px-2 py-1">
               {/* Left: Item Search Bar - 50% width */}
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-full">
+                <div className="p-1.5 bg-amber-100 dark:bg-slate-700 rounded-full shadow-sm border border-amber-200">
                   <MagnifyingGlass size={16} className="text-amber-600" />
                 </div>
                 <div ref={desktopItemDropdownRef} className="relative flex-1">
@@ -6343,7 +6393,7 @@ TOTAL:       ₹${invoice.total}
                         setHighlightedItemIndex(-1)
                       }
                     }}
-                    className="w-full px-3 py-2.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-xl text-sm placeholder:text-slate-400 transition-all border-0 outline-none dark:text-white"
+                    className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 rounded-xl text-sm placeholder:text-slate-400 transition-all border border-slate-200 outline-none focus:border-blue-400 shadow-sm dark:text-white"
                   />
                   {/* Desktop Item Search Dropdown - Top Header */}
                   {showItemDropdown && desktopItemDropdownRef.current && createPortal(
@@ -6421,7 +6471,7 @@ TOTAL:       ₹${invoice.total}
 
               {/* Right: Customer Search + Details */}
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-full">
+                <div className="p-1.5 bg-blue-100 dark:bg-slate-700 rounded-full shadow-sm border border-blue-200">
                   <User size={16} className="text-blue-600" />
                 </div>
                 {/* Customer Search Input */}
@@ -6460,7 +6510,7 @@ TOTAL:       ₹${invoice.total}
                         setHighlightedCustomerIndex(-1)
                       }
                     }}
-                    className="w-full px-3 py-2.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-xl text-sm placeholder:text-slate-400 transition-all border-0 outline-none dark:text-white"
+                    className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 rounded-xl text-sm placeholder:text-slate-400 transition-all border border-slate-200 outline-none focus:border-blue-400 shadow-sm dark:text-white"
                   />
                   {/* Desktop Customer Dropdown */}
                   {showCustomerDropdown && (
@@ -6494,7 +6544,7 @@ TOTAL:       ₹${invoice.total}
                               )}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
+                                <div className="font-medium text-sm">{getPartyName(party)}</div>
                                 {(party.outstanding !== undefined || party.currentBalance !== undefined) && (() => {
                                   const outstanding = party.outstanding ?? party.currentBalance ?? 0
                                   const colorClass = outstanding > 0 ? 'text-emerald-600' : outstanding < 0 ? 'text-red-600' : 'text-gray-500'
@@ -6584,7 +6634,7 @@ TOTAL:       ₹${invoice.total}
             </div>
 
               {/* Items List - Scrollable Table for All Devices */}
-              <div>
+              <div className="flex flex-col">
                 {/* Mobile Card Layout - Clean & Consistent */}
                 <div ref={mobileItemsContainerRef} className="md:hidden space-y-1.5 max-h-[35vh] overflow-y-auto">
                   {invoiceItems.length === 0 ? (
@@ -7143,41 +7193,41 @@ TOTAL:       ₹${invoice.total}
                     </tbody>
                   </table>
                 </div>
-                {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) */}
-                <div className="hidden md:grid md:grid-cols-2 gap-1.5 mt-0.5 px-1 items-stretch">
+                {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) - STICKY BOTTOM */}
+                <div className="hidden md:grid md:grid-cols-2 gap-4 mt-2 px-2 items-stretch sticky-bottom-bar flex-shrink-0">
                 {/* Left Column - Invoice Details + Discount/Payment/Notes */}
-                <div className="p-1.5 bg-[#e4ebf5] dark:bg-slate-800 rounded-lg shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] flex flex-col justify-between">
+                <div className="premium-card-subtle p-4 dark:bg-slate-800 flex flex-col justify-between rounded-xl">
                 {/* Line 1: Invoice #, Date and Discount - All on same line */}
-                <div className="grid grid-cols-3 gap-1.5 mb-0.5">
-                  <div className="flex items-center gap-1">
+                <div className="grid grid-cols-[1.5fr_1fr_1fr] gap-2 mb-0.5">
+                  <div className="flex items-center gap-1.5">
                     <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">Inv #</label>
                     <input
                       type="text"
                       value={invoiceNumber}
                       onChange={(e) => setInvoiceNumber(e.target.value)}
                       placeholder="INV/2024-25/001"
-                      className="w-full px-2 py-1 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300 focus:border-blue-400"
+                      className="w-full px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                     />
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <label className="text-sm font-semibold text-slate-700">Date</label>
                     <input
                       type="date"
                       value={invoiceDate}
                       onChange={(e) => setInvoiceDate(e.target.value)}
-                      className="w-full px-1 py-1 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300 focus:border-blue-400"
+                      className="w-full px-1.5 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                     />
                   </div>
                   {/* Discount */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">
                       Discount
                     </label>
-                    <div className="flex items-center bg-[#e4ebf5] rounded-md border border-slate-300">
+                    <div className="flex items-center bg-white rounded-md border border-slate-300 shadow-sm">
                       <button
                         type="button"
                         onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
-                        className={`px-1.5 py-1 text-sm font-bold border-r border-slate-300 transition-colors ${
+                        className={`px-1.5 py-1.5 text-sm font-bold border-r border-slate-300 transition-colors ${
                           discountType === 'percent'
                             ? 'text-orange-600'
                             : 'text-green-600'
@@ -7195,14 +7245,14 @@ TOTAL:       ₹${invoice.total}
                           setInvoiceDiscount(parseFloat(val) || 0)
                         }}
                         placeholder="0"
-                        className="w-12 px-1 py-1 text-sm font-medium text-center bg-transparent outline-none"
+                        className="w-14 px-1.5 py-1 text-sm font-medium text-center bg-transparent outline-none"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Line 2: Terms & Conditions */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5 mt-1">
                   <label className="text-sm font-semibold text-slate-700 flex items-center gap-0.5 whitespace-nowrap">
                     <Pencil size={12} className="text-purple-500" />
                     Terms
@@ -7212,14 +7262,14 @@ TOTAL:       ₹${invoice.total}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Thank you"
-                    className="flex-1 min-w-0 px-1.5 py-0.5 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300 focus:border-blue-400"
+                    className="flex-1 min-w-0 px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                   />
                 </div>
 
                 {/* Line 3: Payment */}
-                <div className="space-y-0.5">
+                <div className="space-y-1 mt-1">
                   {payments.map((payment, index) => (
-                    <div key={index} className="flex items-center gap-1 flex-wrap">
+                    <div key={index} className="flex items-center gap-1.5 flex-wrap">
                       <label className={cn("text-sm font-semibold text-slate-700 flex items-center gap-0.5", index > 0 && "invisible")}>
                         <CreditCard size={12} className="text-green-600" />
                         Payment
@@ -7234,7 +7284,7 @@ TOTAL:       ₹${invoice.total}
                             setSelectedBankAccountId('')
                           }
                         }}
-                        className="px-1 py-1 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300"
+                        className="px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 shadow-sm"
                       >
                         <option value="cash">Cash</option>
                         <option value="card">Card</option>
@@ -7260,7 +7310,7 @@ TOTAL:       ₹${invoice.total}
                                 setSelectedBankAccountId('')
                               }
                             }}
-                            className="px-1.5 py-1 text-xs bg-[#e4ebf5] rounded outline-none border border-slate-300 min-w-[80px]"
+                            className="px-2 py-1.5 text-xs bg-white rounded-md outline-none border border-slate-300 shadow-sm min-w-[100px]"
                           >
                             <option value="">{bankAccounts.length > 0 ? '-- Select --' : 'No accounts'}</option>
                             {bankAccounts.map((account) => (
@@ -7289,7 +7339,7 @@ TOTAL:       ₹${invoice.total}
                           setPayments(newPayments)
                         }}
                         placeholder="₹0"
-                        className="w-12 px-1 py-1 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300 focus:border-blue-400"
+                        className="w-16 px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                       />
                       <input
                         type="text"
@@ -7300,7 +7350,7 @@ TOTAL:       ₹${invoice.total}
                           setPayments(newPayments)
                         }}
                         placeholder="Ref No."
-                        className="flex-1 min-w-0 px-1.5 py-1 text-sm font-medium bg-[#e4ebf5] rounded-md outline-none border border-slate-300 focus:border-blue-400"
+                        className="flex-1 min-w-0 px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                       />
                       {payments.length > 1 && (
                         <button type="button" onClick={() => setPayments(payments.filter((_, i) => i !== index))} className="p-0.5 text-red-500 hover:bg-red-50 rounded shadow-[2px_2px_4px_#d1d5db,-2px_-2px_4px_#ffffff]">
@@ -7322,9 +7372,9 @@ TOTAL:       ₹${invoice.total}
                 </div>
                 </div>
                 {/* Right Side - Totals Summary */}
-                <div className="p-1.5 bg-[#e4ebf5] dark:bg-slate-800 rounded-lg shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]">
+                <div className="totals-card p-4 dark:bg-slate-800 rounded-xl">
                   {invoiceItems.length > 0 ? (
-                    <div className="space-y-0.5 mr-[46px]">
+                    <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-semibold text-slate-600">Subtotal:</span>
                         <span className="text-base font-bold text-slate-800 text-right w-[75px] pr-4">₹{totals.subtotal.toFixed(2)}</span>
@@ -7362,26 +7412,28 @@ TOTAL:       ₹${invoice.total}
                           <span className="text-base font-bold text-slate-800 text-right w-[75px] pr-4">₹{totals.totalTax.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="flex justify-between items-center pt-0.5 mt-0.5 border-t-2 border-slate-300/50">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base font-bold text-slate-800">TOTAL</span>
-                          <span className="text-sm text-slate-600 bg-white px-2 py-0.5 rounded-lg font-semibold border border-slate-300">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
+                      <div className="grand-total-container mt-3 -mx-4 -mb-4 rounded-b-xl">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-3">
+                            <span className="grand-total-label text-[#166534]">GRAND TOTAL</span>
+                            <span className="item-count-badge bg-[#DCFCE7] text-[#16A34A] border border-[#86EFAC]">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <label className="flex items-center gap-1.5 cursor-pointer bg-white/60 px-2 py-1 rounded-lg border border-[#86EFAC]">
+                              <input
+                                type="checkbox"
+                                checked={roundOff}
+                                onChange={(e) => setRoundOff(e.target.checked)}
+                                className="w-4 h-4 rounded accent-[#16A34A]"
+                              />
+                              <span className="text-xs font-medium text-[#166534]">Round Off</span>
+                            </label>
+                            {roundOff && totals.roundOffAmount !== 0 && (
+                              <span className="text-sm font-semibold text-[#16A34A] bg-white/60 px-2 py-1 rounded-lg">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
+                            )}
+                          </div>
+                          <span className="grand-total-value">₹{totals.total.toFixed(0)}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <label className="flex items-center gap-1 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={roundOff}
-                              onChange={(e) => setRoundOff(e.target.checked)}
-                              className="w-3.5 h-3.5 rounded accent-emerald-600"
-                            />
-                            <span className="text-xs font-medium text-slate-500">Round Off</span>
-                          </label>
-                          {roundOff && totals.roundOffAmount !== 0 && (
-                            <span className="text-sm font-semibold text-emerald-600">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
-                          )}
-                        </div>
-                        <span className="font-bold text-2xl text-emerald-600 text-right w-[75px] pr-4">₹{totals.total.toFixed(0)}</span>
                       </div>
                       {totals.received > 0 && (
                         <>
@@ -8830,7 +8882,7 @@ TOTAL:       ₹${invoice.total}
                               className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b border-border/50"
                             >
                               <div className="flex items-center justify-between">
-                                <div className="font-medium text-sm">{party.displayName || party.companyName || party.name || party.customerName || party.partyName || party.fullName || party.businessName || 'Unknown Customer'}</div>
+                                <div className="font-medium text-sm">{getPartyName(party)}</div>
                                 {/* Live Outstanding Balance - For Customers: Positive = To Receive (GREEN), Negative = To Pay (RED) */}
                                 {(party.outstanding !== undefined || party.currentBalance !== undefined) && (() => {
                                   const outstanding = party.outstanding ?? party.currentBalance ?? 0

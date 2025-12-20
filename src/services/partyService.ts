@@ -171,6 +171,55 @@ export async function findPartyByGSTIN(gstin: string): Promise<Party | null> {
 }
 
 /**
+ * Find party by name (case-insensitive) to prevent duplicates
+ * Checks displayName, companyName, and name fields
+ */
+export async function findPartyByName(
+  name: string,
+  type?: 'customer' | 'supplier' | 'both'
+): Promise<Party | null> {
+  if (!name || name.trim().length === 0) {
+    return null
+  }
+
+  const searchName = name.trim().toLowerCase()
+
+  // Get all parties and search locally (case-insensitive search not supported in Firestore)
+  const parties = await getParties(type)
+
+  // Find matching party by name (case-insensitive)
+  const match = parties.find(p => {
+    return getPartyName(p).toLowerCase().trim().includes(searchName)
+  })
+
+  if (match) {
+    console.log(`[findPartyByName] Found match for "${name}": ${match.displayName || match.companyName} (ID: ${match.id})`)
+  }
+
+  return match || null
+}
+
+/**
+ * Find party by phone number
+ */
+export async function findPartyByPhone(phone: string): Promise<Party | null> {
+  if (!phone || phone.trim().length < 10) {
+    return null
+  }
+
+  const searchPhone = phone.replace(/\D/g, '') // Remove non-digits
+
+  const parties = await getParties()
+
+  const match = parties.find(p => {
+    const partyPhone = (p.phone || '').replace(/\D/g, '')
+    return partyPhone === searchPhone || partyPhone.endsWith(searchPhone) || searchPhone.endsWith(partyPhone)
+  })
+
+  return match || null
+}
+
+/**
  * Helper function to deeply remove undefined values from an object
  */
 function removeUndefinedDeep(obj: any): any {
@@ -392,7 +441,7 @@ export async function findOrCreatePartyFromInvoice(
   pinCode?: string,
   type: 'customer' | 'supplier' = 'supplier'
 ): Promise<Party | null> {
-  // If GSTIN provided, try to find existing party
+  // If GSTIN provided, try to find existing party by GSTIN first
   if (gstin && validateGSTIN(gstin)) {
     const existing = await findPartyByGSTIN(gstin)
     if (existing) {
@@ -416,6 +465,35 @@ export async function findOrCreatePartyFromInvoice(
 
       return existing
     }
+  }
+
+  // Try to find existing party by name (case-insensitive) to prevent duplicates
+  const existingByName = await findPartyByName(name, type)
+  if (existingByName) {
+    console.log(`[findOrCreatePartyFromInvoice] Found existing party by name: ${name} -> ${existingByName.displayName}`)
+    // Update with new information if available
+    const updates: Partial<Party> = {}
+    if (gstin && !existingByName.gstDetails?.gstin) {
+      const stateCode = getStateCodeFromGSTIN(gstin)
+      updates.gstDetails = { gstin, gstType: 'Regular', stateCode }
+    }
+    if (phone && !existingByName.phone) updates.phone = phone
+    if (email && !existingByName.email) updates.email = email
+    if (address && !existingByName.billingAddress?.street) {
+      updates.billingAddress = {
+        ...existingByName.billingAddress,
+        street: address || '',
+        city: city || existingByName.billingAddress?.city || '',
+        state: state || existingByName.billingAddress?.state || '',
+        pinCode: pinCode || existingByName.billingAddress?.pinCode || ''
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await updateParty(existingByName.id, updates)
+    }
+
+    return existingByName
   }
 
   // Create new party
@@ -693,6 +771,220 @@ export async function migratePartyData(): Promise<{ success: boolean; updated: n
 }
 
 // ============================================
+// DUPLICATE DETECTION AND CLEANUP
+// ============================================
+
+export interface DuplicateGroup {
+  name: string
+  parties: Party[]
+  keepId: string // ID of the party to keep (usually the one with most data)
+  deleteIds: string[] // IDs of parties to delete
+}
+
+/**
+ * Find TRUE duplicate parties - same name AND same identifying data
+ * Parties with same name but different phone/GSTIN are NOT duplicates
+ * Only merges parties that are truly the same (e.g., "ganesh" and "Ganesh" with no other data)
+ */
+export async function findDuplicateParties(): Promise<DuplicateGroup[]> {
+  const parties = await getParties()
+  const duplicateGroups: DuplicateGroup[] = []
+
+  // Group parties by normalized name first
+  const nameMap = new Map<string, Party[]>()
+
+  for (const party of parties) {
+    // Normalize name: lowercase, trim, remove extra spaces
+    const name = (party.displayName || party.companyName || (party as any).name || '').toLowerCase().trim().replace(/\s+/g, ' ')
+    if (!name) continue
+
+    if (!nameMap.has(name)) {
+      nameMap.set(name, [])
+    }
+    nameMap.get(name)!.push(party)
+  }
+
+  // Find groups with more than one party with same name
+  for (const [name, group] of nameMap.entries()) {
+    if (group.length > 1) {
+      // Further group by unique identifier (phone or GSTIN)
+      // Parties with different phone/GSTIN are NOT duplicates
+      const identifierMap = new Map<string, Party[]>()
+
+      for (const party of group) {
+        // Create a unique key based on phone and GSTIN
+        // Empty values get a special marker so parties without data can be grouped
+        const phone = (party.phone || '').replace(/\D/g, '').trim()
+        const gstin = (party.gstDetails?.gstin || party.gstin || '').trim().toUpperCase()
+
+        // Key format: phone|gstin - if both empty, use "NO_ID"
+        let key = 'NO_ID'
+        if (phone || gstin) {
+          key = `${phone || 'NO_PHONE'}|${gstin || 'NO_GSTIN'}`
+        }
+
+        if (!identifierMap.has(key)) {
+          identifierMap.set(key, [])
+        }
+        identifierMap.get(key)!.push(party)
+      }
+
+      // Only parties with the SAME identifier (or both without identifiers) are duplicates
+      for (const [key, identifierGroup] of identifierMap.entries()) {
+        if (identifierGroup.length > 1) {
+          // These are TRUE duplicates - same name AND same phone/GSTIN (or both missing)
+          // Sort by: has more data > has outstanding > created date (newest first)
+          const sorted = [...identifierGroup].sort((a, b) => {
+            // Prefer party with GSTIN
+            const aHasGstin = a.gstDetails?.gstin ? 1 : 0
+            const bHasGstin = b.gstDetails?.gstin ? 1 : 0
+            if (aHasGstin !== bHasGstin) return bHasGstin - aHasGstin
+
+            // Prefer party with phone
+            const aHasPhone = a.phone ? 1 : 0
+            const bHasPhone = b.phone ? 1 : 0
+            if (aHasPhone !== bHasPhone) return bHasPhone - aHasPhone
+
+            // Prefer party with email
+            const aHasEmail = a.email ? 1 : 0
+            const bHasEmail = b.email ? 1 : 0
+            if (aHasEmail !== bHasEmail) return bHasEmail - aHasEmail
+
+            // Prefer party with outstanding balance (has transactions)
+            const aHasOutstanding = Math.abs(a.outstanding || a.currentBalance || 0) > 0 ? 1 : 0
+            const bHasOutstanding = Math.abs(b.outstanding || b.currentBalance || 0) > 0 ? 1 : 0
+            if (aHasOutstanding !== bHasOutstanding) return bHasOutstanding - aHasOutstanding
+
+            // Prefer newer party (likely has more recent data)
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+          })
+
+          duplicateGroups.push({
+            name: sorted[0].displayName || sorted[0].companyName || name,
+            parties: sorted,
+            keepId: sorted[0].id,
+            deleteIds: sorted.slice(1).map(p => p.id)
+          })
+        }
+      }
+    }
+  }
+
+  console.log(`[findDuplicateParties] Found ${duplicateGroups.length} TRUE duplicate groups (same name AND same identifiers)`)
+  return duplicateGroups
+}
+
+/**
+ * Merge duplicate parties - keeps one party and deletes others
+ * Updates all invoices to point to the kept party
+ */
+export async function mergeDuplicateParties(
+  keepPartyId: string,
+  deletePartyIds: string[]
+): Promise<{ success: boolean; merged: number; errors: string[] }> {
+  const errors: string[] = []
+  let merged = 0
+
+  try {
+    // Get the party we're keeping
+    const keepParty = await getPartyById(keepPartyId)
+    if (!keepParty) {
+      return { success: false, merged: 0, errors: ['Party to keep not found'] }
+    }
+
+    // Get all invoices to update references
+    const { getInvoices, updateInvoice } = await import('./invoiceService')
+    const allInvoices = await getInvoices()
+
+    // For each party to delete
+    for (const deleteId of deletePartyIds) {
+      try {
+        const deleteParty = await getPartyById(deleteId)
+        if (!deleteParty) {
+          errors.push(`Party ${deleteId} not found`)
+          continue
+        }
+
+        // Merge data from deleted party to kept party (fill in missing fields)
+        const updates: Partial<Party> = {}
+        if (!keepParty.phone && deleteParty.phone) updates.phone = deleteParty.phone
+        if (!keepParty.email && deleteParty.email) updates.email = deleteParty.email
+        if (!keepParty.gstDetails?.gstin && deleteParty.gstDetails?.gstin) {
+          updates.gstDetails = deleteParty.gstDetails
+        }
+        if (!keepParty.billingAddress?.street && deleteParty.billingAddress?.street) {
+          updates.billingAddress = deleteParty.billingAddress
+        }
+        // Add outstanding from deleted party to kept party
+        const additionalBalance = deleteParty.currentBalance || deleteParty.outstanding || 0
+        if (additionalBalance !== 0) {
+          updates.currentBalance = (keepParty.currentBalance || 0) + additionalBalance
+        }
+
+        // Update kept party with merged data
+        if (Object.keys(updates).length > 0) {
+          await updateParty(keepPartyId, updates)
+        }
+
+        // Update all invoices that reference the deleted party
+        const invoicesToUpdate = allInvoices.filter(inv => inv.partyId === deleteId)
+        for (const invoice of invoicesToUpdate) {
+          try {
+            await updateInvoice(invoice.id, {
+              partyId: keepPartyId,
+              partyName: keepParty.displayName || keepParty.companyName
+            })
+            console.log(`[mergeDuplicateParties] Updated invoice ${invoice.invoiceNumber} to party ${keepPartyId}`)
+          } catch (error) {
+            errors.push(`Failed to update invoice ${invoice.invoiceNumber}: ${error}`)
+          }
+        }
+
+        // Delete the duplicate party
+        await deleteParty(deleteId)
+        merged++
+        console.log(`[mergeDuplicateParties] Deleted duplicate party: ${deleteParty.displayName || deleteParty.companyName}`)
+      } catch (error) {
+        errors.push(`Failed to process party ${deleteId}: ${error}`)
+      }
+    }
+
+    return { success: true, merged, errors }
+  } catch (error) {
+    console.error('[mergeDuplicateParties] Error:', error)
+    return { success: false, merged, errors: [...errors, String(error)] }
+  }
+}
+
+/**
+ * Auto-cleanup all duplicate parties
+ * Finds all duplicates and merges them automatically
+ */
+export async function autoCleanupDuplicates(): Promise<{
+  success: boolean
+  groupsCleaned: number
+  partiesRemoved: number
+  errors: string[]
+}> {
+  const duplicateGroups = await findDuplicateParties()
+  let groupsCleaned = 0
+  let partiesRemoved = 0
+  const errors: string[] = []
+
+  for (const group of duplicateGroups) {
+    const result = await mergeDuplicateParties(group.keepId, group.deleteIds)
+    if (result.success) {
+      groupsCleaned++
+      partiesRemoved += result.merged
+    }
+    errors.push(...result.errors)
+  }
+
+  console.log(`[autoCleanupDuplicates] Cleaned ${groupsCleaned} groups, removed ${partiesRemoved} parties`)
+  return { success: true, groupsCleaned, partiesRemoved, errors }
+}
+
+// ============================================
 // LIVE OUTSTANDING BALANCE (2025 Standard)
 // Vyapar/Marg/Zoho style - shows everywhere
 // ============================================
@@ -713,15 +1005,24 @@ function formatCurrency(amount: number): string {
 }
 
 /**
- * Get outstanding color based on amount
- * Green = positive (they owe us - receivable)
- * Red = negative (we owe them - advance/credit)
- * Grey = zero (settled)
+ * Get outstanding color based on amount (same for ALL party types)
+ *
+ * Green (+) = They owe US money (we will RECEIVE) - good for business
+ * Red (-) = WE owe THEM money (we will PAY) - liability for business
+ * Grey (0) = Settled, no outstanding
+ *
+ * This is consistent for both customers and suppliers:
+ * - Customer with +₹5000 = customer owes us ₹5000 (green, we receive)
+ * - Supplier with +₹5000 = supplier owes us ₹5000 (green, we receive - maybe advance we paid)
+ * - Customer with -₹5000 = we owe customer ₹5000 (red, we pay - maybe refund)
+ * - Supplier with -₹5000 = we owe supplier ₹5000 (red, we pay)
  */
-function getOutstandingColor(amount: number): 'green' | 'red' | 'grey' {
-  if (amount > 0) return 'green'
-  if (amount < 0) return 'red'
-  return 'grey'
+function getOutstandingColor(amount: number, _partyType?: 'customer' | 'supplier' | 'both'): 'green' | 'red' | 'grey' {
+  if (amount === 0) return 'grey'
+
+  // Positive = they owe us (green) - money coming in
+  // Negative = we owe them (red) - money going out
+  return amount > 0 ? 'green' : 'red'
 }
 
 /**
@@ -757,8 +1058,8 @@ export async function calculatePartyOutstanding(partyId: string): Promise<{
         const invoice = doc.data()
         // Add invoice total (they owe us more)
         outstanding += Number(invoice.total || invoice.grandTotal || 0)
-        // Subtract paid amount (they paid, so owe less)
-        outstanding -= Number(invoice.paidAmount || 0)
+        // Subtract paid amount (they paid, so owe less) - check both fields
+        outstanding -= Number(invoice.payment?.paidAmount || invoice.paidAmount || 0)
       }
 
       // Also check purchases where this party is the supplier
@@ -767,24 +1068,22 @@ export async function calculatePartyOutstanding(partyId: string): Promise<{
 
       for (const doc of purchasesSnapshot.docs) {
         const invoice = doc.data()
-        // Subtract purchase total (we owe them more, so for our receivable view it's negative)
-        // But for supplier, positive means we owe them
+        // For suppliers: we OWE them, so it's NEGATIVE (we need to pay)
+        // Negative = red = we owe them = money going out
         if (party.type === 'supplier' || party.type === 'both') {
-          outstanding += Number(invoice.total || invoice.grandTotal || 0)
-          outstanding -= Number(invoice.paidAmount || 0)
+          const purchaseTotal = Number(invoice.total || invoice.grandTotal || 0)
+          const paidAmount = Number(invoice.payment?.paidAmount || invoice.paidAmount || 0)
+          outstanding -= (purchaseTotal - paidAmount)
         }
       }
     }
 
-    // Use currentBalance if available (might be pre-calculated)
-    if (party.currentBalance && party.currentBalance !== 0) {
-      outstanding = party.currentBalance
-    }
+    // NOTE: We no longer override with currentBalance - calculated outstanding from invoices is the source of truth
 
     return {
       outstanding,
       outstandingFormatted: formatCurrency(outstanding),
-      outstandingColor: getOutstandingColor(outstanding)
+      outstandingColor: getOutstandingColor(outstanding, party.type)
     }
   } catch (error) {
     console.error('Error calculating outstanding for party:', partyId, error)
@@ -804,11 +1103,16 @@ export async function getPartiesWithOutstanding(type?: 'customer' | 'supplier' |
   if (!isFirebaseReady()) {
     return parties.map(party => {
       const outstanding = party.currentBalance || party.openingBalance || 0
+      // Ensure displayName is always set (fallback to name for legacy records)
+      const effectiveDisplayName = getPartyName(party);
+      const effectiveCompanyName = getPartyName(party);
       return {
         ...party,
+        displayName: effectiveDisplayName,
+        companyName: effectiveCompanyName,
         outstanding,
         outstandingFormatted: formatCurrency(outstanding),
-        outstandingColor: getOutstandingColor(outstanding)
+        outstandingColor: getOutstandingColor(outstanding, party.type)
       }
     })
   }
@@ -827,11 +1131,15 @@ export async function getPartiesWithOutstanding(type?: 'customer' | 'supplier' |
   const partiesWithOutstanding = parties.map(party => {
     let outstanding = party.openingBalance || 0
 
+    // Ensure displayName and companyName are always set (fallback to name)
+    // This handles legacy records that only have 'name' field
+    const effectiveDisplayName = party.displayName || party.companyName || party.name || ''
+    const effectiveCompanyName = party.companyName || party.displayName || party.name || ''
+
     // Get all possible party name variations (lowercase, trimmed)
     const partyNames = [
       party.displayName?.trim()?.toLowerCase(),
       party.companyName?.trim()?.toLowerCase(),
-      party.name?.trim()?.toLowerCase()
     ].filter(Boolean) as string[]
 
     // For customers: add sales invoices, subtract payments
@@ -916,20 +1224,23 @@ export async function getPartiesWithOutstanding(type?: 'customer' | 'supplier' |
           (invoice.payment?.status === 'paid' ? (invoice.total || invoice.grandTotal || 0) : 0) ||
           0
         )
-        outstanding += (total - paid)
+        // For suppliers: we OWE them, so it's NEGATIVE (we need to pay)
+        // Negative = red = we owe them = money going out
+        outstanding -= (total - paid)
       }
     }
 
-    // Also use currentBalance if manually set (override calculated)
-    if (party.currentBalance && party.currentBalance !== 0) {
-      outstanding = party.currentBalance
-    }
+    // NOTE: We no longer override with currentBalance - calculated outstanding from invoices is the source of truth
+    // The currentBalance field may have stale data. Invoice paidAmount is always up-to-date after payments.
 
     return {
       ...party,
+      // Ensure displayName and companyName are always set for UI display
+      displayName: effectiveDisplayName,
+      companyName: effectiveCompanyName,
       outstanding,
       outstandingFormatted: formatCurrency(outstanding),
-      outstandingColor: getOutstandingColor(outstanding)
+      outstandingColor: getOutstandingColor(outstanding, party.type)
     }
   })
 

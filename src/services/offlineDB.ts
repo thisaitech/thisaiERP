@@ -2,9 +2,10 @@
 // Provides local storage for offline-first functionality
 
 const DB_NAME = 'thisai_crm_offline'
-const DB_VERSION = 3
+const DB_VERSION = 4  // Incremented to fix store name consistency
 
 // Store names for different data types
+// IMPORTANT: Must match offlineSyncService.ts STORES exactly!
 export const STORES = {
   INVOICES: 'invoices',
   PURCHASES: 'purchases',
@@ -13,8 +14,9 @@ export const STORES = {
   PAYMENTS: 'payments',
   EXPENSES: 'expenses',
   QUOTATIONS: 'quotations',
-  DELIVERY_CHALLANS: 'delivery_challans',
-  SYNC_QUEUE: 'sync_queue', // Queue for pending sync operations
+  DELIVERY_CHALLANS: 'deliveryChallans',  // Match offlineSyncService
+  SYNC_QUEUE: 'syncQueue',  // Match offlineSyncService
+  CACHE_META: 'cacheMeta',  // Match offlineSyncService
   SETTINGS: 'settings'
 }
 

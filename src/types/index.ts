@@ -1,5 +1,32 @@
 // Comprehensive Data Models for Invoice System
 
+import {
+  PartyType,
+  GSTType,
+  AccountType,
+  ItemTaxPreference,
+  TaxMode,
+  ItemUnit,
+  PaymentMode,
+  PaymentInfoStatus,
+  InvoiceType,
+  InvoiceSource,
+  InvoiceStatus,
+  Platform,
+  PaymentStatus,
+  CreditNoteType,
+  CreditNoteReason,
+  CreditNoteAdjustmentType,
+  RefundMode,
+  CreditNoteStatus,
+  SalesReturnReason,
+  SalesReturnAction,
+  SalesReturnStatus,
+  PlanTypeEnum,
+  InvoiceTabType,
+  InvoiceTabMode,
+} from './enums';
+
 // ============================================
 // PARTY (Customer/Supplier) TYPES
 // ============================================
@@ -23,7 +50,7 @@ export interface PartyContact {
 
 export interface GSTDetails {
   gstin: string
-  gstType: 'Regular' | 'Composition' | 'Unregistered'
+  gstType: GSTType
   stateCode: string
   registrationDate?: string
 }
@@ -34,18 +61,28 @@ export interface BankDetails {
   bankName: string
   branch: string
   ifscCode: string
-  accountType: 'Savings' | 'Current'
+  accountType: AccountType
 }
 
 export interface Party {
   id: string
-  type: 'customer' | 'supplier' | 'both'
+  type: PartyType
+
+  name: string // The primary name for the party
 
   // Basic Info
-  name?: string // Simple name field (alias for displayName)
+  /** @deprecated use name instead */
   companyName: string
+  /** @deprecated use name instead */
   displayName: string
   contactPersonName?: string
+  /** @deprecated use name instead */
+  customerName?: string // for compatibility
+  /** @deprecated use name instead */
+  partyName?: string // for compatibility
+  /** @deprecated use name instead */
+  fullName?: string // for compatibility
+  businessName?: string // for compatibility
 
   // Contact Details
   phone: string
@@ -126,15 +163,15 @@ export interface Item {
   sellingPrice: number
   purchasePrice: number
   mrp?: number
-  unit: 'NONE' | 'KGS' | 'PCS' | 'LTRS' | 'MTR' | 'SET' | 'BOX' | 'PACK'
+  unit: ItemUnit
 
   // Tax
-  taxPreference: 'taxable' | 'non-taxable'
+  taxPreference: ItemTaxPreference
   tax: ItemTax
 
   // GST Tax Mode (Inclusive/Exclusive) - Separate for Selling & Purchase
-  taxMode?: 'inclusive' | 'exclusive' // For selling price (default: 'inclusive')
-  purchaseTaxMode?: 'inclusive' | 'exclusive' // For purchase price (default: 'inclusive')
+  taxMode?: TaxMode // For selling price (default: 'inclusive')
+  purchaseTaxMode?: TaxMode // For purchase price (default: 'inclusive')
   baseSellingPrice?: number // Auto-calculated base if selling is inclusive
   basePurchasePrice?: number // Auto-calculated base if purchase is inclusive
 
@@ -216,8 +253,8 @@ export interface TransportDetails {
 }
 
 export interface PaymentInfo {
-  mode: 'cash' | 'card' | 'upi' | 'bank' | 'cheque' | 'credit'
-  status: 'paid' | 'partial' | 'unpaid'
+  mode: PaymentMode
+  status: PaymentInfoStatus
   paidAmount: number
   dueAmount: number
   dueDate?: string
@@ -231,7 +268,7 @@ export interface CreditNote {
   id: string
   creditNoteNumber: string
   creditNoteDate: string
-  type: 'credit' | 'debit' // credit for sales returns, debit for purchase returns
+  type: CreditNoteType // credit for sales returns, debit for purchase returns
 
   // Reference to original invoice
   originalInvoiceId: string
@@ -246,7 +283,7 @@ export interface CreditNote {
   items: InvoiceItem[]
 
   // Reason
-  reason: 'return' | 'discount' | 'error_correction' | 'damage' | 'other'
+  reason: CreditNoteReason
   reasonDescription?: string
 
   // Amounts
@@ -255,13 +292,13 @@ export interface CreditNote {
   grandTotal: number
 
   // Adjustment
-  adjustmentType: 'refund' | 'adjust_balance' | 'replace'
+  adjustmentType: CreditNoteAdjustmentType
   refundAmount?: number
-  refundMode?: 'cash' | 'bank' | 'upi' | 'card'
+  refundMode?: RefundMode
   refundReference?: string  // For bank refunds: bank account name/number
 
   // Status
-  status: 'draft' | 'approved' | 'cancelled'
+  status: CreditNoteStatus
 
   // Metadata
   createdAt: string
@@ -293,18 +330,18 @@ export interface SalesReturn {
   }>
 
   // Reason
-  reason: 'defective' | 'wrong_item' | 'customer_request' | 'damaged' | 'other'
+  reason: SalesReturnReason
   reasonDescription?: string
 
   // Total
   totalAmount: number
 
   // Action taken
-  action: 'refund' | 'replacement' | 'store_credit'
+  action: SalesReturnAction
   refundAmount?: number
 
   // Status
-  status: 'pending' | 'approved' | 'completed' | 'rejected'
+  status: SalesReturnStatus
 
   // Auto-generated credit note
   creditNoteId?: string
@@ -317,8 +354,8 @@ export interface SalesReturn {
 
 export interface Invoice {
   id: string
-  type: 'sale' | 'credit'
-  source?: 'pos' | 'invoice' | 'ai' // Track where invoice was created from
+  type: InvoiceType
+  source?: InvoiceSource // Track where invoice was created from
 
   // Invoice Details
   invoiceNumber: string
@@ -388,7 +425,7 @@ export interface Invoice {
   notes?: string
 
   // Metadata
-  status: 'draft' | 'approved' | 'sent' | 'paid' | 'cancelled'
+  status: InvoiceStatus
   createdAt: string
   updatedAt: string
   createdBy: string
@@ -402,7 +439,7 @@ export interface Invoice {
 
   // Marketplace/Channel Details (for GST Sales Register - Output Tax)
   // Used to calculate correct taxable value for marketplaces like Amazon, Flipkart, Meesho etc.
-  platform?: 'amazon' | 'flipkart' | 'meesho' | 'shopify' | 'website' | 'offline' | 'other'
+  platform?: Platform
   platformName?: string // Custom platform name if 'other'
   orderId?: string // Marketplace order ID (e.g., AMZ2025-12345)
 
@@ -431,7 +468,7 @@ export interface Invoice {
   total?: number // Alias for grandTotal
   convertedFrom?: string // If converted from quotation
   paidAmount?: number // Amount already paid
-  paymentStatus?: 'paid' | 'partial' | 'pending' | 'overdue' | 'returned' // Payment status
+  paymentStatus?: PaymentStatus // Payment status
   paymentMode?: string // Payment method used
   vehicleNo?: string // Vehicle number for transport
   isReversed?: boolean // If invoice was reversed
@@ -568,7 +605,7 @@ export interface APIResponse<T> {
 // SUBSCRIPTION PLAN TYPES
 // ============================================
 
-export type PlanType = 'silver' | 'gold'
+export type PlanType = PlanTypeEnum;
 
 export interface PlanFeatures {
   // Core Features (Available in Silver Plan)
@@ -604,8 +641,8 @@ export interface SubscriptionPlan {
 }
 
 export const PLAN_CONFIG: Record<PlanType, SubscriptionPlan> = {
-  silver: {
-    type: 'silver',
+  [PlanTypeEnum.SILVER]: {
+    type: PlanTypeEnum.SILVER,
     name: 'Silver Plan',
     description: 'Full-featured CRM with core business tools',
     features: {
@@ -633,8 +670,8 @@ export const PLAN_CONFIG: Record<PlanType, SubscriptionPlan> = {
       multipleLocations: false,
     }
   },
-  gold: {
-    type: 'gold',
+  [PlanTypeEnum.GOLD]: {
+    type: PlanTypeEnum.GOLD,
     name: 'Gold Plan',
     description: 'Complete enterprise solution with all premium features',
     features: {
@@ -666,8 +703,8 @@ export const PLAN_CONFIG: Record<PlanType, SubscriptionPlan> = {
 
 export interface InvoiceTab {
   id: string;
-  type: 'sale' | 'credit';
-  mode: 'invoice' | 'pos';
+  type: InvoiceTabType;
+  mode: InvoiceTabMode;
   customerName: string;
   customerPhone: string;
   customerEmail: string;

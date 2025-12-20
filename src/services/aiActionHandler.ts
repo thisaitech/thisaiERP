@@ -2,6 +2,7 @@
 import { getParties } from './partyService'
 import { getItems } from './itemService'
 import type { Party, Item } from '../types'
+import { getPartyName } from '../utils/partyUtils'
 
 export interface ActionResult {
   success: boolean
@@ -375,12 +376,7 @@ function stringSimilarity(a: string, b: string): number {
   return matches / Math.max(aLower.length, bLower.length)
 }
 
-/**
- * Get the display name from a Party object (checks multiple fields)
- */
-export function getPartyName(party: Party): string {
-  return (party as any).name || party.displayName || party.companyName || party.contactPersonName || 'Unknown'
-}
+// Note: getPartyName is now imported from '../utils/partyUtils' at the top
 
 /**
  * Smart customer finder with fuzzy matching, Indian name fixes and Tamil support

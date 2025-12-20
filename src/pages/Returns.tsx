@@ -30,6 +30,7 @@ import {
   getReturnsSummary
 } from '../services/returnsService'
 import type { SalesReturn } from '../types'
+import { useErrorHandler } from '../hooks/useErrorHandler'
 
 const ReturnsPage = () => {
   const [returns, setReturns] = useState<SalesReturn[]>([])
@@ -45,6 +46,7 @@ const ReturnsPage = () => {
     approvedReturns: 0,
     totalReturnValue: 0
   })
+  const { handleError } = useErrorHandler();
 
   // Load returns
   useEffect(() => {
@@ -58,8 +60,7 @@ const ReturnsPage = () => {
       const data = await getReturns()
       setReturns(data)
     } catch (error) {
-      console.error('Error loading returns:', error)
-      toast.error('Failed to load returns')
+      handleError(error, 'ReturnsPage.loadReturns');
     } finally {
       setIsLoading(false)
     }
@@ -70,7 +71,7 @@ const ReturnsPage = () => {
       const data = await getReturnsSummary()
       setSummary(data)
     } catch (error) {
-      console.error('Error loading summary:', error)
+      handleError(error, 'ReturnsPage.loadSummary');
     }
   }
 
@@ -84,10 +85,10 @@ const ReturnsPage = () => {
         loadReturns()
         loadSummary()
       } else {
-        toast.error('Failed to approve return')
+        throw new Error('Failed to approve return');
       }
     } catch (error) {
-      toast.error('Error approving return')
+      handleError(error, 'ReturnsPage.handleApprove');
     }
   }
 
@@ -101,10 +102,10 @@ const ReturnsPage = () => {
         loadReturns()
         loadSummary()
       } else {
-        toast.error('Failed to complete return')
+        throw new Error('Failed to complete return');
       }
     } catch (error) {
-      toast.error('Error completing return')
+      handleError(error, 'ReturnsPage.handleComplete');
     }
   }
 
@@ -118,10 +119,10 @@ const ReturnsPage = () => {
         loadReturns()
         loadSummary()
       } else {
-        toast.error('Failed to reject return')
+        throw new Error('Failed to reject return');
       }
     } catch (error) {
-      toast.error('Error rejecting return')
+      handleError(error, 'ReturnsPage.handleReject');
     }
   }
 

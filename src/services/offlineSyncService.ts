@@ -11,7 +11,7 @@ let syncCallback: ((item: any) => Promise<boolean>) | null = null
 
 // IndexedDB Database Name and Version
 const DB_NAME = 'thisai_crm_offline'
-const DB_VERSION = 3 // Incremented to add delivery challans store
+const DB_VERSION = 4 // Incremented to fix store name consistency
 
 // Store Names - Export for use in other services
 export const STORES = {

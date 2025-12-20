@@ -97,9 +97,12 @@ export const signIn = async (email: string, password: string): Promise<UserData>
       createdAt: new Date().toISOString(),
       lastLogin: new Date().toISOString()
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Sign in error:', error)
-    throw new Error(getAuthErrorMessage(error.code))
+    if (error && typeof error === 'object' && 'code' in error) {
+        throw new Error(getAuthErrorMessage((error as {code: string}).code))
+    }
+    throw new Error('An unknown sign-in error occurred.');
   }
 }
 
@@ -120,9 +123,12 @@ export const signInWithGoogle = async (): Promise<UserData> => {
     const user = result.user
 
     return await handleSocialLoginUser(user, 'google')
-  } catch (error: any) {
+  } catch (error) {
     console.error('Google sign in error:', error)
-    throw new Error(getSocialAuthErrorMessage(error.code))
+    if (error && typeof error === 'object' && 'code' in error) {
+        throw new Error(getSocialAuthErrorMessage((error as {code: string}).code))
+    }
+    throw new Error('An unknown Google sign-in error occurred.');
   }
 }
 
@@ -141,9 +147,12 @@ export const signInWithFacebook = async (): Promise<UserData> => {
     const user = result.user
 
     return await handleSocialLoginUser(user, 'facebook')
-  } catch (error: any) {
+  } catch (error) {
     console.error('Facebook sign in error:', error)
-    throw new Error(getSocialAuthErrorMessage(error.code))
+    if (error && typeof error === 'object' && 'code' in error) {
+        throw new Error(getSocialAuthErrorMessage((error as {code: string}).code))
+    }
+    throw new Error('An unknown Facebook sign-in error occurred.');
   }
 }
 
@@ -162,9 +171,12 @@ export const signInWithApple = async (): Promise<UserData> => {
     const user = result.user
 
     return await handleSocialLoginUser(user, 'apple')
-  } catch (error: any) {
+  } catch (error) {
     console.error('Apple sign in error:', error)
-    throw new Error(getSocialAuthErrorMessage(error.code))
+    if (error && typeof error === 'object' && 'code' in error) {
+        throw new Error(getSocialAuthErrorMessage((error as {code: string}).code))
+    }
+    throw new Error('An unknown Apple sign-in error occurred.');
   }
 }
 
@@ -249,7 +261,7 @@ export const signOut = async (): Promise<void> => {
 
   try {
     await firebaseSignOut(auth)
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Sign out error:', error)
     throw error
   }
@@ -293,9 +305,12 @@ export const createAdminAccount = async (
     await setDoc(userDocRef, userData)
 
     return userData
-  } catch (error: any) {
+  } catch (error) {
     console.error('Create account error:', error)
-    throw new Error(getAuthErrorMessage(error.code))
+    if (error && typeof error === 'object' && 'code' in error) {
+        throw new Error(getAuthErrorMessage((error as {code: string}).code))
+    }
+    throw new Error('An unknown error occurred while creating the account.');
   }
 }
 
@@ -323,9 +338,12 @@ export const reauthenticate = async (password: string): Promise<void> => {
     
     // Re-authenticate the user
     await reauthenticateWithCredential(user, credential)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Re-authentication error:', error)
-    throw new Error(getAuthErrorMessage(error.code))
+    if (error && typeof error === 'object' && 'code' in error) {
+        throw new Error(getAuthErrorMessage((error as {code: string}).code))
+    }
+    throw new Error('An unknown re-authentication error occurred.');
   }
 }
 
@@ -352,7 +370,7 @@ export const getUserData = async (uid: string): Promise<UserData | null> => {
     }
 
     return null
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Get user data error:', error)
     return null
   }
@@ -436,9 +454,12 @@ export const createStaffUser = async (
     // The admin will need to sign back in. We return the new user data for display purposes.
 
     return userData
-  } catch (error: any) {
+  } catch (error) {
     console.error('Create staff user error:', error)
-    throw new Error(getAuthErrorMessage(error.code))
+    if (error && typeof error === 'object' && 'code' in error) {
+        throw new Error(getAuthErrorMessage((error as {code: string}).code))
+    }
+    throw new Error('An unknown error occurred while creating the staff user.');
   }
 }
 
@@ -463,7 +484,7 @@ export const getCompanyUsers = async (companyId: string): Promise<UserData[]> =>
     users.sort((a, b) => roleOrder[a.role] - roleOrder[b.role])
 
     return users
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Get company users error:', error)
     throw new Error('Failed to fetch users')
   }
@@ -510,7 +531,7 @@ export const updateUserRole = async (
     }
 
     await updateDoc(userDocRef, { role: newRole })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update user role error:', error)
     throw error
   }
@@ -557,7 +578,7 @@ export const updateUserStatus = async (
     }
 
     await updateDoc(userDocRef, { status: newStatus })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update user status error:', error)
     throw error
   }
@@ -608,7 +629,7 @@ export const deleteStaffUser = async (
     // Note: This only removes the Firestore document.
     // The Firebase Auth account still exists but user won't have access
     // since their companyId data is gone. For full deletion, use Firebase Admin SDK.
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Delete staff user error:', error)
     throw error
   }

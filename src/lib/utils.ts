@@ -104,3 +104,17 @@ export function generateInvoiceNumber(type: 'sale' | 'purchase'): string {
   const random = Math.floor(Math.random() * 100).toString().padStart(2, '0')
   return `${prefix}-${timestamp}-${random}`
 }
+
+export const getErrorMessage = (error: unknown): string => {
+  let message: string;
+  if (error instanceof Error) {
+    message = error.message;
+  } else if (error && typeof error === 'object' && 'message' in error) {
+    message = String((error as { message: unknown }).message);
+  } else if (typeof error === 'string') {
+    message = error;
+  } else {
+    message = 'Something went wrong';
+  }
+  return message;
+};

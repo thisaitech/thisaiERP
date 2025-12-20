@@ -33,9 +33,9 @@ import ToastCleaner from './components/ToastCleaner'
 import OfflineIndicator from './components/OfflineIndicator'
 import { Toaster } from 'sonner'
 import { Toaster as HotToaster } from 'react-hot-toast'
-import { initSyncService, forceSyncNow } from './services/syncService'
+import { initSyncService } from './services/syncService'
 import { initOfflineDB } from './services/offlineDB'
-import { registerServiceWorker } from './services/serviceWorkerRegistration'
+import { PWAUpdateReady } from './components/PWAUpdateReady'
 
 function App() {
   // Initialize offline services on app mount
@@ -50,14 +50,6 @@ function App() {
         initSyncService()
         console.log('✅ Sync service initialized')
         
-        // Register service worker (for PWA/caching)
-        await registerServiceWorker()
-        console.log('✅ Service worker registered')
-        
-        // Listen for sync requests from service worker
-        window.addEventListener('sw-sync-requested', () => {
-          forceSyncNow()
-        })
       } catch (error) {
         console.error('Failed to initialize offline services:', error)
       }
@@ -74,6 +66,7 @@ function App() {
         <AIAssistantProvider>
           <CelebrationProvider>
           <div className="min-h-screen bg-background text-foreground overflow-x-hidden max-w-[100vw]">
+          <PWAUpdateReady />
           <ToastCleaner />
           <OfflineIndicator position="bottom-left" />
           <Toaster
