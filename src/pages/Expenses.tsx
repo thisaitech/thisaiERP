@@ -22,10 +22,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { toast } from 'sonner'
 import { getExpenses, createExpense, deleteExpense, Expense, generateExpenseNumber } from '../services/expenseService'
+import { useErrorHandler } from '../hooks/useErrorHandler'
 
 const Expenses = () => {
   // Language support
   const { t, language } = useLanguage()
+  const { handleError } = useErrorHandler()
 
   const [showNewExpense, setShowNewExpense] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -61,8 +63,7 @@ const Expenses = () => {
       const data = await getExpenses()
       setExpenses(data)
     } catch (error) {
-      console.error('Error fetching expenses:', error)
-      toast.error('Failed to load expenses')
+      handleError(error, 'Expenses.fetchExpenses')
     } finally {
       setIsLoading(false)
     }
@@ -165,7 +166,7 @@ const Expenses = () => {
 
           console.log('💰 Expense: Cash in Hand reduced by ₹', expenseData.amount, '(Firebase)')
         } catch (err) {
-          console.error('Failed to update Cash in Hand for expense:', err)
+          handleError(err, 'Expenses.handleCreateExpense.updateCashInHand')
         }
       }
 
@@ -182,8 +183,7 @@ const Expenses = () => {
       })
       fetchExpenses()
     } catch (error) {
-      console.error('Error creating expense:', error)
-      toast.error('Failed to create expense')
+      handleError(error, 'Expenses.handleCreateExpense')
     } finally {
       setIsSaving(false)
     }
@@ -198,8 +198,7 @@ const Expenses = () => {
       toast.success('Expense deleted')
       fetchExpenses()
     } catch (error) {
-      console.error('Error deleting expense:', error)
-      toast.error('Failed to delete expense')
+      handleError(error, 'Expenses.handleDeleteExpense')
     }
   }
 

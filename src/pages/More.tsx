@@ -2108,7 +2108,7 @@ const More = () => {
                       {showPiCustomerDropdown && piCustomerSearch && (
                         <div className="absolute z-10 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-40 overflow-y-auto">
                           {availableParties
-                            .filter(p => (p.displayName || p.companyName || '').toLowerCase().includes(piCustomerSearch.toLowerCase()))
+                            .filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase()))
                             .slice(0, 5)
                             .map(party => (
                               <div
@@ -2124,14 +2124,14 @@ const More = () => {
                                 <p className="text-xs text-muted-foreground">{party.phone} • {party.billingAddress?.state}</p>
                               </div>
                             ))}
-                          {availableParties.filter(p => (p.displayName || p.companyName || '').toLowerCase().includes(piCustomerSearch.toLowerCase())).length === 0 && (
+                          {availableParties.filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase())).length === 0 && (
                             <p className="px-3 py-2 text-sm text-muted-foreground">{t.more.noMatchNewCustomer}</p>
                           )}
                         </div>
                       )}
                       {piSelectedCustomer && (
                         <div className="mt-1 p-2 bg-success/10 rounded text-xs text-success">
-                          ✓ {piSelectedCustomer.displayName || piSelectedCustomer.companyName} | {piSelectedCustomer.gstDetails?.gstin || t.more.noGstin} | {piSelectedCustomer.billingAddress?.state}
+                          ✓ {getPartyName(piSelectedCustomer)} | {piSelectedCustomer.gstDetails?.gstin || t.more.noGstin} | {piSelectedCustomer.billingAddress?.state}
                         </div>
                       )}
                     </div>

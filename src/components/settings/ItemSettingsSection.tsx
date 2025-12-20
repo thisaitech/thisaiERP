@@ -272,7 +272,7 @@ export const ItemSettingsSection = () => {
           </div>
           <p className="text-sm text-slate-500">
             Are you sure you want to delete the unit <span className="font-semibold text-slate-700">"{unitToDelete}"</span>? This action cannot be undone.
-          p>
+          </p>
         </div>
       </ReusableModal>
 

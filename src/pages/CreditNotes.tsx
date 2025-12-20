@@ -24,6 +24,7 @@ import { cn } from '../lib/utils'
 import { toast } from 'sonner'
 import { getCreditNotes, approveCreditNote, cancelCreditNote, deleteCreditNote } from '../services/creditNoteService'
 import type { CreditNote } from '../types'
+import { useErrorHandler } from '../hooks/useErrorHandler'
 
 const CreditNotesPage = () => {
   const [creditNotes, setCreditNotes] = useState<CreditNote[]>([])
@@ -33,6 +34,7 @@ const CreditNotesPage = () => {
   const [selectedNote, setSelectedNote] = useState<CreditNote | null>(null)
   const [showViewModal, setShowViewModal] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const { handleError } = useErrorHandler()
 
   // Load credit notes
   useEffect(() => {
@@ -45,8 +47,7 @@ const CreditNotesPage = () => {
       const notes = await getCreditNotes()
       setCreditNotes(notes)
     } catch (error) {
-      console.error('Error loading credit notes:', error)
-      toast.error('Failed to load credit notes')
+      handleError(error, 'CreditNotesPage.loadCreditNotes')
     } finally {
       setIsLoading(false)
     }
@@ -62,7 +63,7 @@ const CreditNotesPage = () => {
         toast.error('Failed to approve credit note')
       }
     } catch (error) {
-      toast.error('Error approving credit note')
+      handleError(error, 'CreditNotesPage.handleApprove')
     }
   }
 
@@ -78,7 +79,7 @@ const CreditNotesPage = () => {
         toast.error('Failed to cancel credit note')
       }
     } catch (error) {
-      toast.error('Error cancelling credit note')
+      handleError(error, 'CreditNotesPage.handleCancel')
     }
   }
 
@@ -94,7 +95,7 @@ const CreditNotesPage = () => {
         toast.error('Failed to delete credit note')
       }
     } catch (error) {
-      toast.error('Error deleting credit note')
+      handleError(error, 'CreditNotesPage.handleDelete')
     }
   }
 

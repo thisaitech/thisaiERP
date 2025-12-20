@@ -1581,14 +1581,7 @@ const Sales = () => {
     })
 
     // Try ALL possible name field variations
-    const customerName = party.displayName ||
-                        party.companyName ||
-                        party.name ||
-                        party.customerName ||
-                        party.partyName ||
-                        party.fullName ||
-                        party.businessName ||
-                        'Unknown Customer'
+    const customerName = getPartyName(party)
 
     console.log('✅ Final customer name selected:', customerName)
 
@@ -1629,7 +1622,7 @@ const Sales = () => {
       if (lastAction.success && lastAction.data?.selectedCustomer) {
         handleCustomerSelect(lastAction.data.selectedCustomer)
         const customer = lastAction.data.selectedCustomer
-        const customerDisplayName = customer.name || customer.displayName || customer.companyName || 'Customer'
+        const customerDisplayName = getPartyName(customer)
         toast.success(`Selected customer: ${customerDisplayName}`)
       } else if (lastAction.data?.matches && lastAction.data.matches.length > 0) {
         // Multiple matches - auto-select first one or show dropdown
@@ -1643,7 +1636,7 @@ const Sales = () => {
       if (lastAction.success && lastAction.data?.customer) {
         handleCustomerSelect(lastAction.data.customer)
         const customer = lastAction.data.customer
-        const customerDisplayName = customer.name || customer.displayName || customer.companyName || 'Customer'
+        const customerDisplayName = getPartyName(customer)
         toast.success(`New bill for: ${customerDisplayName}`)
       } else if (!lastAction.success && lastAction.data?.alternatives?.length > 0) {
         // Customer not found exactly - show alternatives but DON'T auto-select
