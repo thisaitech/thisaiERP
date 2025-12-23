@@ -35,7 +35,7 @@ import {
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import { getLowStockItems } from '../utils/stockUtils'
 
 type WeeklyOverviewEntry = {

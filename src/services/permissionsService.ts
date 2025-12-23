@@ -16,6 +16,7 @@ export interface PagePermissions {
   inventory: boolean
   reports: boolean
   banking: boolean
+  crm: boolean
   utilities: boolean
   others: boolean
   settings: boolean
@@ -25,7 +26,7 @@ export interface PagePermissions {
 export interface UserPermissions {
   userId: string
   email: string
-  role: 'admin' | 'manager' | 'cashier'
+  role: 'admin' | 'manager' | 'sales' | 'cashier'
   displayName?: string
   permissions: PagePermissions
   updatedAt: string
@@ -46,6 +47,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PagePermissions> = {
     inventory: true,
     reports: true,
     banking: true,
+    crm: true,
     utilities: true,
     others: true,
     settings: true,
@@ -62,7 +64,25 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PagePermissions> = {
     inventory: true,
     reports: true,
     banking: false,
+    crm: true,
     utilities: true,
+    others: true,
+    settings: false,
+    userManagement: false
+  },
+  sales: {
+    dashboard: true,
+    sales: true,
+    pos: true,
+    purchases: false,
+    quotations: true,
+    parties: true,
+    expenses: false,
+    inventory: false,
+    reports: false,
+    banking: false,
+    crm: true,
+    utilities: false,
     others: true,
     settings: false,
     userManagement: false
@@ -78,6 +98,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PagePermissions> = {
     inventory: false,
     reports: false,
     banking: false,
+    crm: true,
     utilities: false,
     others: false,
     settings: false,
@@ -97,6 +118,7 @@ export const PAGE_INFO: { key: keyof PagePermissions; label: string; labelTa: st
   { key: 'inventory', label: 'Inventory', labelTa: 'சரக்கு', path: '/inventory' },
   { key: 'reports', label: 'Reports', labelTa: 'அறிக்கைகள்', path: '/reports' },
   { key: 'banking', label: 'Banking', labelTa: 'வங்கி', path: '/banking' },
+  { key: 'crm', label: 'CRM', labelTa: 'சிஆர்எம்', path: '/crm' },
   { key: 'utilities', label: 'Utilities', labelTa: 'பயன்பாடுகள்', path: '/utilities' },
   { key: 'others', label: 'Others (Challan)', labelTa: 'மற்றவை (சலான்)', path: '/more' },
   { key: 'settings', label: 'Settings', labelTa: 'அமைப்புகள்', path: '/settings' },

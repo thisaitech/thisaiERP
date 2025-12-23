@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: '/',
   plugins: [
     react(),
@@ -42,12 +42,30 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024 // 10 MB limit
-      }
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB limit
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/api\./,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+              }
+            }
+          }
+        ]
+      },
+      // Disable PWA in development for faster builds
+      disable: mode === 'development'
     })
-  ],
+  ].filter(Boolean),
   define: {
-    '__DEFINES__': {}
+    '__DEFINES__': {},
+    // Production optimizations
+    __PROD__: mode === 'production',
+    __DEV__: mode === 'development'
   },
   test: {
     globals: true,
@@ -61,8 +79,41 @@ export default defineConfig({
     include: ['react', 'react-dom'],
     force: true
   },
+  build: {
+    // Code splitting for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks
+          'react-vendor': ['react', 'react-dom'],
+          'firebase-vendor': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          'ui-vendor': ['framer-motion', 'react-router-dom', 'sonner'],
+          'utils-vendor': ['clsx', 'tailwind-merge', 'date-fns']
+        }
+      }
+    },
+    // Source maps for production debugging
+    sourcemap: mode === 'production',
+    // Minify for production
+    minify: mode === 'production' ? 'esbuild' : false,
+    // Chunk size warnings
+    chunkSizeWarningLimit: 1000,
+    // Target modern browsers for better performance
+    target: 'esnext',
+    // CSS code splitting
+    cssCodeSplit: true
+  },
   server: {
     port: 3000,
-    open: true
+    open: true,
+    // CORS for development
+    cors: true
+  },
+  // Environment variables validation
+  envPrefix: 'VITE_',
+  // Preview server for testing production builds
+  preview: {
+    port: 4173,
+    strictPort: true
   }
-})
+}))

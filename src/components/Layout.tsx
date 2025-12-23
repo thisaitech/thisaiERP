@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   House, Receipt, ShoppingCart, Users, Package, ChartLine, List, X, Sparkle,
-  Moon, Sun, Wallet, Bank, Gear, FileText, SignOut, Storefront, MagnifyingGlass, Bell, CaretDown
+  Moon, Sun, Wallet, Bank, Gear, FileText, SignOut, Storefront, MagnifyingGlass, Bell, CaretDown,
+  Buildings
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -64,6 +65,7 @@ const Layout = () => {
     { path: '/parties', label: t.nav.parties, icon: Users, allowedRoles: ['admin', 'manager'], pageKey: 'parties' },
     { path: '/quotations', label: t.nav.quotations, icon: FileText, pageKey: 'quotations' },
     { path: '/inventory', label: t.nav.inventory, icon: Package, allowedRoles: ['admin', 'manager'], pageKey: 'inventory' },
+    { path: '/crm', label: 'CRM', icon: Buildings, allowedRoles: ['admin', 'manager', 'sales'], pageKey: 'crm' },
     { path: '/settings', label: t.nav.settings, icon: Gear, allowedRoles: ['admin'], pageKey: 'settings' },
     { path: '/expenses', label: t.nav.expenses, icon: Wallet, allowedRoles: ['admin', 'manager'], pageKey: 'expenses' },
     { path: '/banking', label: t.nav.banking, icon: Bank, allowedRoles: ['admin', 'manager'], pageKey: 'banking' },

@@ -101,7 +101,14 @@
       "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && npx tsc --noEmit 2>&1 | head -50\")",
       "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && npm run build 2>&1\")",
       "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && npm run build\")",
-      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && if exist node_modules\\\\.vite rd /s /q node_modules\\\\.vite && npm run build 2>&1\")"
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && if exist node_modules\\\\.vite rd /s /q node_modules\\\\.vite && npm run build 2>&1\")",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && git log --oneline -10 -- src/services/partyService.ts\")",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && git log --oneline -10\")",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && git log --oneline -10 2>&1\")",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && git blame src/services/partyService.ts -L 190,200 2>&1\")",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && npx tsc --noEmit 2>&1 | head -100\")",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && npx tsc --noEmit\")",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && call npm run build\")"
     ],
     "deny": [],
     "ask": []

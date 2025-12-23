@@ -132,6 +132,7 @@ interface FeatureStatus {
 }
 
 const CompanyInfo = () => {
+  const { handleError } = useErrorHandler()
   const [isEditing, setIsEditing] = useState(false)
   const [showFeatures, setShowFeatures] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -355,7 +356,7 @@ const CompanyInfo = () => {
         })
       }
     } catch (error) {
-      toast.error('Failed to save company information')
+      handleError(error, 'CompanyInfo.handleSave')
     } finally {
       setIsSaving(false)
     }

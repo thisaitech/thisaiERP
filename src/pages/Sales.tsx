@@ -88,6 +88,7 @@ import { getItemSettings } from '../services/settingsService'
 import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import { getPartyName } from '../utils/partyUtils'
+import AddCustomerModal from '../components/sales/AddCustomerModal'
 
 // Indian States list with priority states first
 const INDIAN_STATES = [
@@ -390,25 +391,6 @@ const Sales = () => {
 
   // Add Customer Modal State
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false)
-  const [newCustomerName, setNewCustomerName] = useState('')
-  const [newCustomerPhone, setNewCustomerPhone] = useState('')
-  const [newCustomerEmail, setNewCustomerEmail] = useState('')
-  const [newCustomerGST, setNewCustomerGST] = useState('')
-  const [newCustomerAddress, setNewCustomerAddress] = useState('')
-  const [newCustomerState, setNewCustomerState] = useState('')
-  const [newCustomerType, setNewCustomerType] = useState('Regular')
-  const [newCustomerNotes, setNewCustomerNotes] = useState('')
-  const [newCustomerOpeningBalance, setNewCustomerOpeningBalance] = useState('')
-  const [newCustomerCreditDays, setNewCustomerCreditDays] = useState(30)
-  const [showAddressField, setShowAddressField] = useState(false)
-  const [showStateField, setShowStateField] = useState(false)
-  const [showGstField, setShowGstField] = useState(false)
-  const [showEmailField, setShowEmailField] = useState(false)
-  const [showCustomerTypeField, setShowCustomerTypeField] = useState(false)
-  const [showNotesField, setShowNotesField] = useState(false)
-  const [showOpeningBalanceField, setShowOpeningBalanceField] = useState(false)
-  const [showCreditDaysField, setShowCreditDaysField] = useState(false)
-  const [savingCustomer, setSavingCustomer] = useState(false)
 
   // POS Preview Modal State
   const [showPosPreview, setShowPosPreview] = useState(false)
@@ -1826,85 +1808,26 @@ const Sales = () => {
   }
 
   // Reset customer form
-  const resetCustomerForm = () => {
-    setNewCustomerName('')
-    setNewCustomerPhone('')
-    setNewCustomerEmail('')
-    setNewCustomerGST('')
-    setNewCustomerAddress('')
-    setNewCustomerState('')
-    setNewCustomerType('Regular')
-    setNewCustomerNotes('')
-    setNewCustomerOpeningBalance('')
-    setNewCustomerCreditDays(30)
-    setShowAddressField(false)
-    setShowStateField(false)
-    setShowGstField(false)
-    setShowEmailField(false)
-    setShowCustomerTypeField(false)
-    setShowNotesField(false)
-    setShowOpeningBalanceField(false)
-    setShowCreditDaysField(false)
-  }
 
-  // Handle saving new customer
-  const handleSaveNewCustomer = async () => {
-    if (!newCustomerName.trim()) {
-      toast.error('Please enter customer name')
-      return
+
+  const handleCustomerSaved = (newParty) => {
+    // Auto-fill customer details in invoice
+    setCustomerName(newParty.name);
+    setCustomerPhone(newParty.phone || '');
+    setCustomerEmail(newParty.email || '');
+    setCustomerGST(newParty.gstin || '');
+    setCustomerState(newParty.state || '');
+    setCustomerSearch(newParty.name);
+
+    // Add to parties list
+    setAllParties(prev => [newParty, ...prev]);
+
+    // Refresh parties list in ModernPOS if it's open
+    if ((window as any).__modernPOSRefreshParties) {
+      (window as any).__modernPOSRefreshParties();
     }
+  };
 
-    setSavingCustomer(true)
-    try {
-      const { createParty } = await import('../services/partyService')
-      const openingBal = parseFloat(newCustomerOpeningBalance) || 0
-      const newParty = await createParty({
-        name: newCustomerName.trim(),
-        type: 'customer',
-        phone: newCustomerPhone.trim() || undefined,
-        email: newCustomerEmail.trim() || undefined,
-        gstin: newCustomerGST.trim() || undefined,
-        billingAddress: newCustomerAddress.trim() || undefined,
-        state: newCustomerState.trim() || undefined,
-        openingBalance: openingBal,
-        balance: openingBal,
-        creditDays: newCustomerCreditDays
-      })
-
-      if (newParty) {
-        // Auto-fill customer details in invoice
-        setCustomerName(newParty.name)
-        setCustomerPhone(newParty.phone || '')
-        setCustomerEmail(newParty.email || '')
-        setCustomerGST(newParty.gstin || '')
-        setCustomerState(newParty.state || '')
-        setCustomerSearch(newParty.name)
-
-        // Add to parties list
-        setAllParties(prev => [newParty, ...prev])
-
-        // Clear form and close modal
-        resetCustomerForm()
-        setShowAddCustomerModal(false)
-
-        toast.success('Customer added successfully!')
-
-        // Refresh parties list in ModernPOS if it's open
-        if ((window as any).__modernPOSRefreshParties) {
-          (window as any).__modernPOSRefreshParties()
-        }
-      } else {
-        toast.error('Failed to create customer')
-      }
-    } catch (error) {
-      console.error('Error creating customer:', error)
-      toast.error('Failed to create customer')
-    } finally {
-      setSavingCustomer(false)
-    }
-  }
-
-  // AI Description Suggestions for New Item
   const getNewItemDescriptionSuggestions = (itemName: string): string[] => {
     const name = itemName.toLowerCase()
 

@@ -72,7 +72,17 @@ export const COLLECTIONS = {
   PAYMENTS_OUT: 'payments_out',
   PRICE_LISTS: 'price_lists',
   BANKING: 'banking',
-  QUOTATIONS: 'quotations'
+  QUOTATIONS: 'quotations',
+  // CRM Collections
+  CRM_LEADS: 'crm_leads',
+  CRM_ACTIVITIES: 'crm_activities',
+  CRM_SITE_VISITS: 'crm_site_visits',
+  CRM_REQUIREMENTS: 'crm_requirements',
+  CRM_DRAWINGS: 'crm_drawings',
+  CRM_QUOTATIONS: 'crm_quotations',
+  CRM_ATTACHMENTS: 'crm_attachments',
+  CRM_AUDIT_LOGS: 'crm_audit_logs',
+  CRM_SETTINGS: 'crm_settings'
 } as const
 
 export type CollectionName = typeof COLLECTIONS[keyof typeof COLLECTIONS]

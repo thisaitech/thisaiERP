@@ -45,14 +45,54 @@ const deriveCompanyId = (email?: string | null, companyName?: string) => {
     .replace(/(^-|-$)/g, '') || 'default-company'
 }
 
+// Rate limiting for sign-in attempts
+const signInAttempts = new Map<string, { count: number; lastAttempt: number }>()
+const MAX_ATTEMPTS = 5
+const LOCKOUT_DURATION = 15 * 60 * 1000 // 15 minutes
+
+const checkRateLimit = (email: string): void => {
+  const now = Date.now()
+  const attempts = signInAttempts.get(email)
+
+  if (attempts) {
+    // Reset counter if lockout period has passed
+    if (now - attempts.lastAttempt > LOCKOUT_DURATION) {
+      signInAttempts.delete(email)
+      return
+    }
+
+    if (attempts.count >= MAX_ATTEMPTS) {
+      const remainingTime = Math.ceil((LOCKOUT_DURATION - (now - attempts.lastAttempt)) / 60000)
+      throw new Error(`Too many failed attempts. Please try again in ${remainingTime} minutes.`)
+    }
+  }
+}
+
+const recordFailedAttempt = (email: string): void => {
+  const now = Date.now()
+  const attempts = signInAttempts.get(email) || { count: 0, lastAttempt: 0 }
+  attempts.count += 1
+  attempts.lastAttempt = now
+  signInAttempts.set(email, attempts)
+}
+
+const recordSuccessfulAttempt = (email: string): void => {
+  signInAttempts.delete(email)
+}
+
 // Sign in with email and password
 export const signIn = async (email: string, password: string): Promise<UserData> => {
   if (!auth) {
     throw new Error('Firebase authentication not initialized')
   }
 
+  // SECURITY: Check rate limiting
+  checkRateLimit(email)
+
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password)
+    // SECURITY: Clear failed attempts on successful login
+    recordSuccessfulAttempt(email)
     const user = userCredential.user
 
     // Update last login
@@ -99,6 +139,12 @@ export const signIn = async (email: string, password: string): Promise<UserData>
     }
   } catch (error) {
     console.error('Sign in error:', error)
+
+    // SECURITY: Record failed attempt for rate limiting
+    if (email) {
+      recordFailedAttempt(email)
+    }
+
     if (error && typeof error === 'object' && 'code' in error) {
         throw new Error(getAuthErrorMessage((error as {code: string}).code))
     }
@@ -198,7 +244,7 @@ const handleSocialLoginUser = async (user: User, provider: string): Promise<User
       await setDoc(userDocRef, updatedData, { merge: true })
       return updatedData
     } else {
-      // New user - create document
+      // New user - create document with restricted role
       const companyId = deriveCompanyId(user.email, user.displayName || '')
       const newUserData: UserData = {
         uid: user.uid,
@@ -206,7 +252,7 @@ const handleSocialLoginUser = async (user: User, provider: string): Promise<User
         displayName: user.displayName || user.email?.split('@')[0] || 'User',
         companyName: '', // User will need to set this in settings
         companyId,
-        role: 'admin', // First time social login users get admin role
+        role: 'cashier', // SECURITY: Start with lowest privilege role
         status: 'active',
         createdAt: now,
         lastLogin: now
@@ -222,7 +268,7 @@ const handleSocialLoginUser = async (user: User, provider: string): Promise<User
     email: user.email || '',
     displayName: user.displayName || '',
     companyName: '',
-    role: 'admin',
+    role: 'cashier', // SECURITY: Start with lowest privilege role
     status: 'active',
     createdAt: now,
     lastLogin: now

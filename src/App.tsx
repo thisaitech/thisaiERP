@@ -36,6 +36,8 @@ import { Toaster as HotToaster } from 'react-hot-toast'
 import { initSyncService } from './services/syncService'
 import { initOfflineDB } from './services/offlineDB'
 import { PWAUpdateReady } from './components/PWAUpdateReady'
+// CRM Module
+import CRMPage from './crm/pages/CRMPage'
 
 function App() {
   // Initialize offline services on app mount
@@ -141,6 +143,9 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="online-store" element={<OnlineStore />} />
               <Route path="more" element={<ProtectedRoute pageKey="others"><More /></ProtectedRoute>} />
+
+              {/* CRM Module */}
+              <Route path="crm" element={<CRMPage />} />
             </Route>
           </Routes>
         </div>

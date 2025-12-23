@@ -33,6 +33,12 @@ import {
 // Local storage fallback key (for backward compatibility)
 const LOCAL_STORAGE_KEY = 'thisai_crm_parties'
 
+// Local helper to get party name (avoid circular dependency with partyUtils)
+const getPartyName = (party: Party | null | undefined): string => {
+  if (!party) return 'Unknown'
+  return (party as any).name || (party as any).displayName || (party as any).companyName || 'Unknown'
+}
+
 // Helper to generate offline-safe ID
 const generateOfflineId = () => `party_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 

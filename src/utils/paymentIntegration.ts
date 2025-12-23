@@ -120,15 +120,14 @@ export async function processPineLabsPayment(
   request: CardPaymentRequest,
   config: CardTerminalConfig
 ): Promise<CardPaymentResponse> {
+  console.warn('⚠️ Pine Labs integration is not implemented. This is a simulated failure.');
   // TODO: Implement Pine Labs SDK integration
-  // Steps:
-  // 1. Initialize Pine Labs SDK with merchant credentials
-  // 2. Create transaction request
-  // 3. Send to terminal via Bluetooth/Serial
-  // 4. Wait for response
-  // 5. Return transaction status
-
-  return processCardPayment(request, config)
+  return {
+    success: false,
+    status: 'failed',
+    message: 'Pine Labs terminal not configured. Integration is not complete.',
+    timestamp: new Date().toISOString()
+  };
 }
 
 /**
@@ -138,10 +137,14 @@ export async function processMswipePayment(
   request: CardPaymentRequest,
   config: CardTerminalConfig
 ): Promise<CardPaymentResponse> {
+  console.warn('⚠️ Mswipe integration is not implemented. This is a simulated failure.');
   // TODO: Implement Mswipe integration
-  // Mswipe typically uses serial port or Bluetooth communication
-
-  return processCardPayment(request, config)
+  return {
+    success: false,
+    status: 'failed',
+    message: 'Mswipe terminal not configured. Integration is not complete.',
+    timestamp: new Date().toISOString()
+  };
 }
 
 /**
@@ -152,10 +155,14 @@ export async function processPaytmPayment(
   request: CardPaymentRequest,
   config: CardTerminalConfig
 ): Promise<CardPaymentResponse> {
+  console.warn('⚠️ Paytm integration is not implemented. This is a simulated failure.');
   // TODO: Implement Paytm for Business API
-  // API endpoint: https://securegw.paytm.in/
-
-  return processCardPayment(request, config)
+  return {
+    success: false,
+    status: 'failed',
+    message: 'Paytm terminal not configured. Integration is not complete.',
+    timestamp: new Date().toISOString()
+  };
 }
 
 /**
@@ -166,9 +173,14 @@ export async function processPhonePePayment(
   request: CardPaymentRequest,
   config: CardTerminalConfig
 ): Promise<CardPaymentResponse> {
+  console.warn('⚠️ PhonePe integration is not implemented. This is a simulated failure.');
   // TODO: Implement PhonePe Switch or Payment Gateway API
-
-  return processCardPayment(request, config)
+  return {
+    success: false,
+    status: 'failed',
+    message: 'PhonePe terminal not configured. Integration is not complete.',
+    timestamp: new Date().toISOString()
+  };
 }
 
 /**

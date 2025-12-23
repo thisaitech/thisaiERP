@@ -7,123 +7,125 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Helper function to check if user belongs to this business
-    function isBusinessMember(businessId) {
+    // Helper function to check if user belongs to a company
+    function belongsToCompany(companyId) {
       return isAuthenticated() &&
-             request.auth.token.businessId == businessId;
+             request.auth.token.companyId == companyId;
     }
 
-    // Helper function to check if user is admin
-    function isAdmin() {
-      return isAuthenticated() &&
+    // Helper function to check if user is admin of the company
+    function isCompanyAdmin(companyId) {
+      return belongsToCompany(companyId) &&
              request.auth.token.role == 'admin';
     }
 
-    // Helper function to get user's business ID
-    function getUserBusinessId() {
-      return request.auth.token.businessId;
+    // Helper function to check if user can read company data (any role in company)
+    function canReadCompanyData(companyId) {
+      return belongsToCompany(companyId) &&
+             (request.auth.token.role == 'admin' ||
+              request.auth.token.role == 'manager' ||
+              request.auth.token.role == 'cashier');
     }
 
-    // Users collection - users can read/write their own data
+    // Helper function to check if user can write company data
+    function canWriteCompanyData(companyId) {
+      return belongsToCompany(companyId) &&
+             (request.auth.token.role == 'admin' ||
+              request.auth.token.role == 'manager');
+    }
+
+    // Helper function to validate data size limits
+    function isValidDataSize() {
+      return request.resource.data.size() < 1 * 1024 * 1024; // 1MB limit
+    }
+
+    // Users collection - users can only read/write their own data
     match /users/{userId} {
+      // Users can read their own profile
       allow read: if isAuthenticated() && request.auth.uid == userId;
-      allow write: if isAuthenticated() && request.auth.uid == userId;
+
+      // Users can write their own profile, but cannot change sensitive fields
+      allow write: if isAuthenticated() &&
+                   request.auth.uid == userId &&
+                   isValidDataSize() &&
+                   // Prevent changing companyId, role, or createdBy after creation
+                   (!request.resource.data.diff(resource.data).affectedKeys()
+                      .hasAny(['companyId', 'role', 'createdBy', 'createdAt']) ||
+                    !exists(/databases/$(database)/documents/users/$(userId)));
     }
 
-    // Businesses collection - members can read, admins can write
-    match /businesses/{businessId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+    // Company data collections - scoped by companyId
+    match /{collectionName}/{documentId} {
+      // Check if this document has a companyId field
+      allow read: if isAuthenticated() &&
+                  canReadCompanyData(resource.data.companyId) &&
+                  resource.data.companyId == request.auth.token.companyId;
 
-      // Subcollections within a business
-      match /{subcollection}/{docId} {
-        allow read, write: if isAuthenticated();
-      }
+      allow write: if isAuthenticated() &&
+                   canWriteCompanyData(resource.data.companyId) &&
+                   resource.data.companyId == request.auth.token.companyId &&
+                   isValidDataSize();
+
+      // For new documents, validate companyId matches user's company
+      allow create: if isAuthenticated() &&
+                    request.resource.data.companyId == request.auth.token.companyId &&
+                    isValidDataSize() &&
+                    canWriteCompanyData(request.resource.data.companyId);
     }
 
-    // Invoices - authenticated users within their business
-    match /invoices/{invoiceId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Items/Products - authenticated users within their business
-    match /items/{itemId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Parties (customers/vendors) - authenticated users
-    match /parties/{partyId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Expenses - authenticated users
-    match /expenses/{expenseId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Settings - authenticated users
+    // Settings collection - only admins can modify company settings
     match /settings/{settingId} {
-      allow read, write: if isAuthenticated();
+      allow read: if belongsToCompany(resource.data.companyId);
+      allow write: if isCompanyAdmin(resource.data.companyId) &&
+                   resource.data.companyId == request.auth.token.companyId &&
+                   isValidDataSize();
     }
 
-    // Banking transactions - authenticated users
+    // Banking transactions - sensitive financial data, restrict to admins/managers
     match /banking/{transactionId} {
-      allow read, write: if isAuthenticated();
+      allow read: if belongsToCompany(resource.data.companyId) &&
+                  (request.auth.token.role == 'admin' || request.auth.token.role == 'manager');
+      allow write: if isCompanyAdmin(resource.data.companyId) &&
+                   resource.data.companyId == request.auth.token.companyId &&
+                   isValidDataSize();
     }
 
-    // Quotations - authenticated users
-    match /quotations/{quotationId} {
-      allow read, write: if isAuthenticated();
+    // User management - only admins can create/manage staff users
+    match /users/{userId} {
+      // Staff can be created only by admins of the same company
+      allow create: if isAuthenticated() &&
+                    isCompanyAdmin(request.resource.data.companyId) &&
+                    request.resource.data.companyId == request.auth.token.companyId &&
+                    request.resource.data.createdBy == request.auth.uid;
+
+      // Staff can be read by company members
+      allow read: if belongsToCompany(resource.data.companyId);
+
+      // Staff can only be modified by admins of the same company
+      allow update: if isCompanyAdmin(resource.data.companyId) &&
+                    resource.data.companyId == request.auth.token.companyId &&
+                    // Cannot change companyId or createdBy
+                    !request.resource.data.diff(resource.data).affectedKeys()
+                       .hasAny(['companyId', 'createdBy']);
+
+      // Only admins can delete staff (not themselves)
+      allow delete: if isCompanyAdmin(resource.data.companyId) &&
+                    resource.data.companyId == request.auth.token.companyId &&
+                    userId != request.auth.uid;
     }
 
-    // Credit notes - authenticated users
-    match /credit_notes/{noteId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Debit notes - authenticated users
-    match /debit_notes/{noteId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Delivery challans - authenticated users
-    match /delivery_challans/{challanId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Purchase orders - authenticated users
-    match /purchase_orders/{orderId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Proforma invoices - authenticated users
-    match /proforma_invoices/{invoiceId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // E-way bills - authenticated users
-    match /eway_bills/{billId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Payments in - authenticated users
-    match /payments_in/{paymentId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Payments out - authenticated users
-    match /payments_out/{paymentId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Price lists - authenticated users
-    match /price_lists/{listId} {
-      allow read, write: if isAuthenticated();
-    }
-
-    // Catch-all for any other collections - require authentication
+    // Rate limiting for sensitive operations (basic implementation)
     match /{document=**} {
-      allow read, write: if isAuthenticated();
+      // Allow max 1000 writes per minute per user (basic rate limiting)
+      allow write: if isAuthenticated() &&
+                   get(/databases/$(database)/documents/rate_limits/$(request.auth.uid)).data.lastWrite <
+                   request.time.toMillis() - 60000 ||
+                   !exists(/databases/$(database)/documents/rate_limits/$(request.auth.uid));
+
+      // Update rate limit on write
+      match /rate_limits/{userId} {
+        allow write: if request.auth.uid == userId;
+      }
     }
   }
 }

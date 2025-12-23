@@ -5,6 +5,16 @@ import { getParties } from './partyService'
 import { getLedgerSummary } from './ledgerService'
 import { getExpenses, calculateProratedAmount, type Expense } from './expenseService'
 
+// TODO: Replace this with a proper service that fetches settings from Firestore
+async function getFinancialSettings() {
+  return {
+    openingBalance: 100000, // Default fallback
+    otherAssets: 50000,
+    loansOutstanding: 0,
+    capitalInvested: 100000,
+  };
+}
+
 /**
  * Normalize date to YYYY-MM-DD string format (local timezone)
  * Handles various date formats including ISO strings and Date objects
@@ -331,19 +341,39 @@ export async function getDayBook(date: string) {
 export async function getBillWiseProfit() {
   const sales = await getInvoices('sale')
   const purchases = await getInvoices('purchase')
+  const items = await getItems();
 
-  // Calculate average cost per item from purchases
+  // Create a map of item names to purchase price from the master list
+  const itemPurchasePrices = new Map<string, number>();
+  items.forEach(item => {
+    if (item.purchasePrice) {
+      itemPurchasePrices.set(item.name.toLowerCase(), item.purchasePrice);
+    }
+  });
+
+  // Calculate average cost per item from recent purchases
   const itemCosts = new Map<string, number>()
   purchases.forEach(purchase => {
     purchase.items.forEach(item => {
-      itemCosts.set(item.description, item.rate)
+      itemCosts.set(item.description.toLowerCase(), item.rate)
     })
   })
 
   const profitData = sales.map(sale => {
     let totalCost = 0
     sale.items.forEach(item => {
-      const cost = itemCosts.get(item.description) || (item.rate * 0.6)
+      const itemDescription = item.description.toLowerCase();
+      let cost = itemCosts.get(itemDescription);
+
+      if (cost === undefined) {
+        cost = itemPurchasePrices.get(itemDescription);
+      }
+      
+      if (cost === undefined) {
+        console.warn(`Could not determine cost for item: ${item.description}. Profit calculation for invoice ${sale.invoiceNumber} may be inaccurate.`);
+        cost = 0; // Default to 0 if no cost can be found, to avoid using arbitrary estimates
+      }
+
       totalCost += cost * item.quantity
     })
 
@@ -481,6 +511,7 @@ export async function getProfitAndLoss(startDate: string, endDate: string) {
  * = Closing Bank Balance today
  */
 export async function getCashFlow(startDate: string, endDate: string) {
+  const settings = await getFinancialSettings();
   const sales = await getInvoices('sale')
   const purchases = await getInvoices('purchase')
   const expenses = await getExpenses()
@@ -578,7 +609,7 @@ export async function getCashFlow(startDate: string, endDate: string) {
 
   // Calculate running balance (starting from opening balance)
   // For now, use a default opening balance - this should come from settings
-  const openingBalance = 100000 // TODO: Get from bank account settings
+  const openingBalance = settings.openingBalance;
 
   let runningBalance = openingBalance
   const transactionsWithBalance = transactions.map(txn => {
@@ -654,6 +685,7 @@ export async function getCashFlow(startDate: string, endDate: string) {
  * Formula: Assets = Liabilities + Owner's Capital (always balances)
  */
 export async function getBalanceSheet(asOfDate: string) {
+  const settings = await getFinancialSettings();
   const sales = await getInvoices('sale')
   const purchases = await getInvoices('purchase')
   const items = await getItems()
@@ -684,7 +716,7 @@ export async function getBalanceSheet(asOfDate: string) {
   const accountsReceivable = salesUpToDate.reduce((sum, inv) => sum + (inv.payment?.dueAmount || 0), 0)
 
   // Other Assets (fixed assets, deposits, advance tax)
-  const otherAssets = 50000 // TODO: Get from settings/ledger
+  const otherAssets = settings.otherAssets;
 
   const totalAssets = cashAndBank + inventoryValue + accountsReceivable + otherAssets
 
@@ -710,7 +742,7 @@ export async function getBalanceSheet(asOfDate: string) {
   const suppliersPayable = purchasesUpToDate.reduce((sum, inv) => sum + (inv.payment?.dueAmount || 0), 0)
 
   // Loans / Credit Card Outstanding
-  const loansOutstanding = 0 // TODO: Get from settings/ledger
+  const loansOutstanding = settings.loansOutstanding;
 
   const totalLiabilities = gstPayable + suppliersPayable + loansOutstanding
 
@@ -772,6 +804,7 @@ export async function getBalanceSheet(asOfDate: string) {
  * This is the foundation for Balance Sheet and P&L reports
  */
 export async function getTrialBalance(asOfDate: string) {
+  const settings = await getFinancialSettings();
   const sales = await getInvoices('sale')
   const purchases = await getInvoices('purchase')
   const items = await getItems()
@@ -821,7 +854,7 @@ export async function getTrialBalance(asOfDate: string) {
   }> = []
 
   // Capital Account (Credit)
-  const capitalInvested = 100000 // TODO: Get from settings
+  const capitalInvested = settings.capitalInvested;
   accounts.push({
     accountName: 'Capital Account',
     accountType: 'capital',

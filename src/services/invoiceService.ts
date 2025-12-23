@@ -73,6 +73,23 @@ const getCurrentCompanyId = (): string | null => {
   }
 }
 
+// Pagination interface for scalable data fetching
+export interface PaginationOptions {
+  limit?: number
+  offset?: number
+  cursor?: string // For cursor-based pagination
+  sortBy?: 'invoiceDate' | 'createdAt' | 'invoiceNumber'
+  sortOrder?: 'asc' | 'desc'
+}
+
+export interface PaginatedResult<T> {
+  data: T[]
+  total: number
+  hasMore: boolean
+  nextCursor?: string
+  prevCursor?: string
+}
+
 /**
  * Get all invoices (with optional type filter) - OFFLINE FIRST
  * Returns from IndexedDB first, then syncs with Firebase in background
@@ -185,6 +202,147 @@ export async function getInvoices(type?: 'sale' | 'purchase' | 'quote', limit?: 
     return localInvoices
   }
 }
+
+/**
+ * Get invoices with pagination - SCALABLE VERSION
+ * Uses cursor-based pagination for better performance with large datasets
+ */
+export async function getInvoicesPaginated(
+  type?: 'sale' | 'purchase' | 'quote',
+  options: PaginationOptions = {}
+): Promise<PaginatedResult<Invoice>> {
+  const {
+    limit = 20,
+    cursor,
+    sortBy = 'invoiceDate',
+    sortOrder = 'desc'
+  } = options
+
+  console.log('📥 getInvoicesPaginated called', { type, limit, cursor, sortBy, sortOrder })
+
+  // STEP 1: Try IndexedDB first for offline support
+  let localInvoices: Invoice[] = []
+  try {
+    localInvoices = await getAllFromOffline<Invoice>(STORES.INVOICES)
+
+    // Apply filters
+    if (type) {
+      localInvoices = localInvoices.filter(inv => inv.type === type)
+    }
+
+    // Apply sorting
+    localInvoices.sort((a, b) => {
+      const aValue = (a as any)[sortBy] || (a as any).createdAt || 0
+      const bValue = (b as any)[sortBy] || (b as any).createdAt || 0
+
+      const comparison = sortOrder === 'desc'
+        ? new Date(bValue).getTime() - new Date(aValue).getTime()
+        : new Date(aValue).getTime() - new Date(bValue).getTime()
+
+      return comparison
+    })
+
+    // Apply cursor-based pagination
+    let startIndex = 0
+    if (cursor) {
+      const cursorIndex = localInvoices.findIndex(inv => inv.id === cursor)
+      if (cursorIndex !== -1) {
+        startIndex = cursorIndex + 1
+      }
+    }
+
+    const paginatedData = localInvoices.slice(startIndex, startIndex + limit)
+    const hasMore = startIndex + limit < localInvoices.length
+    const nextCursor = hasMore && paginatedData.length > 0
+      ? paginatedData[paginatedData.length - 1].id
+      : undefined
+
+    return {
+      data: paginatedData,
+      total: localInvoices.length,
+      hasMore,
+      nextCursor
+    }
+  } catch (error) {
+    console.warn('[getInvoicesPaginated] IndexedDB failed:', error)
+  }
+
+  // STEP 2: If offline or Firebase not ready, return local data
+  if (!isDeviceOnline() || !isFirebaseReady()) {
+    return {
+      data: localInvoices.slice(0, limit),
+      total: localInvoices.length,
+      hasMore: localInvoices.length > limit
+    }
+  }
+
+  // STEP 3: Fetch from Firebase with pagination
+  try {
+    const invoicesRef = collection(db!, COLLECTIONS.INVOICES)
+    const companyId = getCurrentCompanyId()
+
+    const snapshot = await getDocs(invoicesRef)
+    let serverInvoices = snapshot.docs.map(docToInvoice)
+
+    // Apply company filtering
+    if (companyId) {
+      serverInvoices = serverInvoices.filter(inv => (inv as any).companyId === companyId)
+    }
+
+    // Apply type filtering
+    if (type) {
+      serverInvoices = serverInvoices.filter(inv => inv.type === type)
+    }
+
+    // Apply sorting
+    serverInvoices.sort((a, b) => {
+      const aValue = (a as any)[sortBy] || (a as any).createdAt || 0
+      const bValue = (b as any)[sortBy] || (b as any).createdAt || 0
+
+      const comparison = sortOrder === 'desc'
+        ? new Date(bValue).getTime() - new Date(aValue).getTime()
+        : new Date(aValue).getTime() - new Date(bValue).getTime()
+
+      return comparison
+    })
+
+    // Apply cursor-based pagination
+    let startIndex = 0
+    if (cursor) {
+      const cursorIndex = serverInvoices.findIndex(inv => inv.id === cursor)
+      if (cursorIndex !== -1) {
+        startIndex = cursorIndex + 1
+      }
+    }
+
+    const paginatedData = serverInvoices.slice(startIndex, startIndex + limit)
+    const hasMore = startIndex + limit < serverInvoices.length
+    const nextCursor = hasMore && paginatedData.length > 0
+      ? paginatedData[paginatedData.length - 1].id
+      : undefined
+
+    // Update local cache asynchronously
+    paginatedData.forEach(invoice => {
+      saveToOffline(STORES.INVOICES, invoice).catch(() => {})
+    })
+
+    return {
+      data: paginatedData,
+      total: serverInvoices.length,
+      hasMore,
+      nextCursor
+    }
+  } catch (error) {
+    console.warn('[getInvoicesPaginated] Firebase fetch failed:', error)
+    // Fallback to local data
+    return {
+      data: localInvoices.slice(0, limit),
+      total: localInvoices.length,
+      hasMore: localInvoices.length > limit
+    }
+  }
+}
+
 /**
  * Get invoice by ID - OFFLINE FIRST
  * Checks IndexedDB first, then localStorage, then Firebase

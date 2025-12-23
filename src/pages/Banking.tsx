@@ -46,8 +46,10 @@ import {
   type BankingPageData,
   type BankingPageTransaction
 } from '../services/bankingService'
+import { useErrorHandler } from '../hooks/useErrorHandler'
 
 const Banking = () => {
+  const { handleError } = useErrorHandler()
   // Language support
   const { t, language } = useLanguage()
 
@@ -123,7 +125,7 @@ const Banking = () => {
         if (!mounted) return
         setAllParties(parties || [])
       } catch (error) {
-        console.error('Failed to load parties for Banking:', error)
+        handleError(error, 'Banking.loadParties')
       }
     }
     loadParties()
