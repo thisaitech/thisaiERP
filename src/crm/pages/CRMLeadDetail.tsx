@@ -37,8 +37,7 @@ import {
   getLeadSiteVisits,
   createActivity,
   uploadAttachment,
-  getLeadAttachments,
-  debugLeadData
+  getLeadAttachments
 } from '../services/crmService';
 import { useModal } from '../components/Modal';
 

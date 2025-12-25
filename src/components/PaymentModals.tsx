@@ -2,9 +2,8 @@
 // UPI QR code display, card terminal status, and payment confirmation
 
 import { useState, useEffect } from 'react'
-import { QRCodeSVG } from 'react-qr-code'
+import QRCode from 'react-qr-code'
 import { X, CheckCircle, XCircle, Clock, CreditCard, QrCode, Warning } from '@phosphor-icons/react'
-import { cn } from '../lib/utils'
 import {
   generateUPILink,
   initiateCardTerminalPayment,
@@ -109,11 +108,10 @@ export function UPIPaymentModal({
               <div className="flex justify-center">
                 {upiLink ? (
                   <div className="p-4 bg-white border-4 border-gray-200 rounded-2xl shadow-lg">
-                    <QRCodeSVG
+                    <QRCode
                       value={upiLink}
                       size={220}
                       level="H"
-                      includeMargin={false}
                     />
                   </div>
                 ) : (

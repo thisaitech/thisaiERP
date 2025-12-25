@@ -1,7 +1,7 @@
 // Create Lead Modal Component
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Phone, Mail, MapPin, Building, CurrencyDollar, Calendar, Tag, CheckCircle } from '@phosphor-icons/react';
+import { X, User, Phone, Envelope, MapPin, Building, CurrencyDollar, Calendar, Tag, CheckCircle } from '@phosphor-icons/react';
 import { useCRM } from '../contexts/CRMContext';
 import { CRMLead } from '../types';
 import { CRM_PRIORITIES, CRM_DEFAULTS } from '../constants';

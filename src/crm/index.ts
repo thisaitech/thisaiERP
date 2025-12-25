@@ -185,10 +185,7 @@ export {
 export {
   convertLeadToProject,
   seedCRMData,
-  seedTestDataWithoutCompanyId,
-  debugCRMCollections,
-  debugLeadData,
-  cleanupAllSiteVisitsAndActivities
+  seedTestDataWithoutCompanyId
 } from './services/crmService';
 
 // ============================================================================

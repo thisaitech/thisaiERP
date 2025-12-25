@@ -15,7 +15,8 @@ import {
   CRMEngineer
 } from '../types';
 import { CRMDatabaseAdapter, PaginatedResult, FileUploadResult, CRMAdapterConfig } from './types';
-import { CRM_DEFAULTS } from '../constants';
+import { CRM_DEFAULTS, CRM_STAGES } from '../constants';
+import { CRMStage } from '../types';
 
 // Re-export CRMEngineer
 export type { CRMEngineer };
@@ -397,15 +398,15 @@ export class LocalCRMAdapter implements CRMDatabaseAdapter {
       return {
         id: 'default',
         companyId: this.companyId,
-        leadSources: CRM_DEFAULTS.leadSources,
-        projectTypes: CRM_DEFAULTS.projectTypes,
-        siteVisitChecklist: CRM_DEFAULTS.siteVisitChecklist,
-        pipelineStages: CRM_DEFAULTS.pipelineStages,
-        notifications: CRM_DEFAULTS.notifications,
-        currency: CRM_DEFAULTS.currency,
-        areaUnit: CRM_DEFAULTS.areaUnit,
-        businessType: CRM_DEFAULTS.businessType,
-        lostReasons: CRM_DEFAULTS.lostReasons,
+        leadSources: CRM_DEFAULTS.LEAD_SOURCES,
+        projectTypes: CRM_DEFAULTS.PROJECT_TYPES,
+        siteVisitChecklist: CRM_DEFAULTS.SITE_VISIT_CHECKLIST,
+        pipelineStages: Object.keys(CRM_STAGES) as CRMStage[],
+        notifications: { email: true, sms: false, push: true },
+        currency: CRM_DEFAULTS.CURRENCY,
+        areaUnit: 'sqft',
+        businessType: 'construction',
+        lostReasons: CRM_DEFAULTS.LOST_REASONS,
         createdAt: new Date(),
         updatedAt: new Date(),
         createdBy: 'system',

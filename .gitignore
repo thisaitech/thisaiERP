@@ -2,3 +2,25 @@ node_modules
 nul
 dist
 .firebase
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+*.local.json
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.zip
+firebase-debug.log
