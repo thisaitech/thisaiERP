@@ -1,12 +1,15 @@
 // CRM Settings Page Component
 import React, { useState, useEffect } from 'react';
-import { FloppyDisk, Gear, Plus, Trash, UserPlus, Pencil } from '@phosphor-icons/react';
+import { FloppyDisk, Plus, Trash, UserPlus, Pencil, ArrowCounterClockwise } from '@phosphor-icons/react';
 import { useCRM } from '../contexts/CRMContext';
 import { CRMSettings, CRMEngineer } from '../types';
-import { updateCRMSettings, getCRMSettings, createEngineer, getEngineers } from '../services/crmService';
+import { updateCRMSettings, createEngineer, getEngineers } from '../services/crmService';
+import { useModal } from '../components/Modal';
+import { CRM_DEFAULTS, CRM_STAGES } from '../constants';
 
 const CRMSettingsPage: React.FC = () => {
   const { settings, refreshSettings } = useCRM();
+  const { showAlert, showConfirm, showPrompt } = useModal();
   const [formData, setFormData] = useState<Partial<CRMSettings>>({});
   const [loading, setLoading] = useState(false);
   const [engineers, setEngineers] = useState<CRMEngineer[]>([]);
@@ -21,9 +24,47 @@ const CRMSettingsPage: React.FC = () => {
     status: 'active' as const
   });
 
+  // Get default pipeline stages as key-value mapping from constants
+  const getDefaultPipelineStages = (): Record<string, string> => {
+    const stages: Record<string, string> = {};
+    Object.entries(CRM_STAGES).forEach(([key, stage]) => {
+      stages[key] = stage.label;
+    });
+    return stages;
+  };
+  const defaultPipelineStages = getDefaultPipelineStages();
+
   useEffect(() => {
     if (settings) {
-      setFormData(settings);
+      // Merge settings with defaults to ensure all fields have values
+      // Handle migration from old array format to new key-value format
+      let pipelineStages = settings.pipelineStages;
+      if (!pipelineStages || typeof pipelineStages !== 'object' || Array.isArray(pipelineStages)) {
+        pipelineStages = defaultPipelineStages;
+      }
+
+      setFormData({
+        ...settings,
+        leadSources: settings.leadSources?.length ? settings.leadSources : CRM_DEFAULTS.LEAD_SOURCES,
+        lostReasons: settings.lostReasons?.length ? settings.lostReasons : CRM_DEFAULTS.LOST_REASONS,
+        wonReasons: settings.wonReasons?.length ? settings.wonReasons : CRM_DEFAULTS.WON_REASONS,
+        projectTypes: settings.projectTypes?.length ? settings.projectTypes : CRM_DEFAULTS.PROJECT_TYPES,
+        siteVisitChecklist: settings.siteVisitChecklist?.length ? settings.siteVisitChecklist : CRM_DEFAULTS.SITE_VISIT_CHECKLIST,
+        pipelineStages: pipelineStages
+      });
+    } else {
+      // Set default values from constants
+      setFormData({
+        leadSources: CRM_DEFAULTS.LEAD_SOURCES,
+        lostReasons: CRM_DEFAULTS.LOST_REASONS,
+        wonReasons: CRM_DEFAULTS.WON_REASONS,
+        projectTypes: CRM_DEFAULTS.PROJECT_TYPES,
+        siteVisitChecklist: CRM_DEFAULTS.SITE_VISIT_CHECKLIST,
+        pipelineStages: defaultPipelineStages,
+        areaUnit: 'sqft',
+        currency: '₹',
+        businessType: 'construction'
+      });
     }
   }, [settings]);
 
@@ -34,7 +75,7 @@ const CRMSettingsPage: React.FC = () => {
         const engineersData = await getEngineers();
         setEngineers(engineersData);
       } catch (error) {
-        console.error('Failed to load engineers:', error);
+        // Failed to load engineers
       }
     };
     loadEngineers();
@@ -45,10 +86,9 @@ const CRMSettingsPage: React.FC = () => {
     try {
       await updateCRMSettings(formData, 'user');
       await refreshSettings();
-      // Show success message
+      await showAlert('Settings Saved', 'Your CRM settings have been saved successfully.');
     } catch (error) {
-      console.error('Failed to save settings:', error);
-      // Show error message
+      await showAlert('Error', `Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -89,28 +129,38 @@ const CRMSettingsPage: React.FC = () => {
     try {
       if (editingEngineer) {
         // Update existing engineer (not implemented yet)
-        console.log('Update engineer not implemented yet');
+        await showAlert('Not Implemented', 'Update functionality not implemented yet. Please delete and re-add the engineer.');
       } else {
         // Create new engineer
         await createEngineer({
           ...engineerForm,
-          companyId: '' // Will be set by the service
+          companyId: ''
         });
+
         // Reload engineers
         const engineersData = await getEngineers();
         setEngineers(engineersData);
+
+        // Reset form
+        setEngineerForm({
+          name: '',
+          email: '',
+          phone: '',
+          specialization: '',
+          experience: 0,
+          status: 'active'
+        });
       }
       setShowEngineerModal(false);
     } catch (error) {
-      console.error('Failed to save engineer:', error);
-      alert('Failed to save engineer. Please try again.');
+      await showAlert('Error', `Failed to save engineer: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   const handleDeleteEngineer = async (engineerId: string) => {
-    if (window.confirm('Are you sure you want to delete this engineer?')) {
-      // Delete engineer (not implemented yet)
-      console.log('Delete engineer not implemented yet');
+    const confirmed = await showConfirm('Delete Engineer', 'Are you sure you want to delete this engineer?');
+    if (confirmed) {
+      // TODO: Implement delete engineer functionality
     }
   };
 
@@ -130,9 +180,19 @@ const CRMSettingsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Lead Sources */}
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
-            Lead Sources
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+              Lead Sources
+            </h3>
+            <button
+              onClick={() => updateSetting('leadSources', CRM_DEFAULTS.LEAD_SOURCES)}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700"
+              title="Reset to defaults"
+            >
+              <ArrowCounterClockwise size={12} />
+              Reset
+            </button>
+          </div>
           <div className="space-y-3">
             {(formData.leadSources || []).map((source, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -172,9 +232,19 @@ const CRMSettingsPage: React.FC = () => {
 
         {/* Lost Reasons */}
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
-            Lost Reasons
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+              Lost Reasons
+            </h3>
+            <button
+              onClick={() => updateSetting('lostReasons', CRM_DEFAULTS.LOST_REASONS)}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700"
+              title="Reset to defaults"
+            >
+              <ArrowCounterClockwise size={12} />
+              Reset
+            </button>
+          </div>
           <div className="space-y-3">
             {(formData.lostReasons || []).map((reason, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -212,11 +282,73 @@ const CRMSettingsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Won Reasons */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+              Won Reasons
+            </h3>
+            <button
+              onClick={() => updateSetting('wonReasons', CRM_DEFAULTS.WON_REASONS)}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700"
+              title="Reset to defaults"
+            >
+              <ArrowCounterClockwise size={12} />
+              Reset
+            </button>
+          </div>
+          <div className="space-y-3">
+            {(formData.wonReasons || CRM_DEFAULTS.WON_REASONS).map((reason, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={reason}
+                  onChange={(e) => {
+                    const newReasons = [...(formData.wonReasons || CRM_DEFAULTS.WON_REASONS)];
+                    newReasons[index] = e.target.value;
+                    updateSetting('wonReasons', newReasons);
+                  }}
+                  className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700"
+                />
+                <button
+                  onClick={() => {
+                    const newReasons = (formData.wonReasons || CRM_DEFAULTS.WON_REASONS).filter((_: any, i: number) => i !== index);
+                    updateSetting('wonReasons', newReasons);
+                  }}
+                  className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                >
+                  <Trash size={16} />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => {
+                const newReasons = [...(formData.wonReasons || CRM_DEFAULTS.WON_REASONS), ''];
+                updateSetting('wonReasons', newReasons);
+              }}
+              className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+            >
+              <Plus size={16} />
+              Add Reason
+            </button>
+          </div>
+        </div>
+
         {/* Project Types */}
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
-            Project Types
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+              Project Types
+            </h3>
+            <button
+              onClick={() => updateSetting('projectTypes', CRM_DEFAULTS.PROJECT_TYPES)}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700"
+              title="Reset to defaults"
+            >
+              <ArrowCounterClockwise size={12} />
+              Reset
+            </button>
+          </div>
           <div className="space-y-3">
             {(formData.projectTypes || []).map((type, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -256,9 +388,19 @@ const CRMSettingsPage: React.FC = () => {
 
         {/* Site Visit Checklist */}
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
-            Site Visit Checklist
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+              Site Visit Checklist
+            </h3>
+            <button
+              onClick={() => updateSetting('siteVisitChecklist', CRM_DEFAULTS.SITE_VISIT_CHECKLIST)}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-50 dark:hover:bg-slate-700"
+              title="Reset to defaults"
+            >
+              <ArrowCounterClockwise size={12} />
+              Reset
+            </button>
+          </div>
           <div className="space-y-3">
             {(formData.siteVisitChecklist || []).map((item, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -296,32 +438,114 @@ const CRMSettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Workflow Settings */}
+        {/* Pipeline Stages - Customizable Labels */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                Pipeline Stages
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Customize the display labels for pipeline stages. Changes will reflect in the Pipeline board and Dashboard.
+              </p>
+            </div>
+            <button
+              onClick={() => updateSetting('pipelineStages', defaultPipelineStages)}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
+              title="Reset to default labels"
+            >
+              <ArrowCounterClockwise size={14} />
+              Reset
+            </button>
+          </div>
+          <div className="space-y-3">
+            {Object.entries(CRM_STAGES).map(([stageKey, stageInfo], index) => {
+              const currentStages = (formData.pipelineStages as Record<string, string>) || defaultPipelineStages;
+              const customLabel = currentStages[stageKey] || stageInfo.label;
+
+              return (
+                <div key={stageKey} className="flex items-center gap-3">
+                  <span className="text-slate-500 dark:text-slate-400 font-mono text-sm w-8">{index + 1}.</span>
+                  <div className={`w-3 h-3 rounded-full ${stageInfo.color.split(' ')[0]}`} title={stageKey}></div>
+                  <input
+                    type="text"
+                    value={customLabel}
+                    onChange={(e) => {
+                      const newStages = { ...currentStages, [stageKey]: e.target.value };
+                      updateSetting('pipelineStages', newStages);
+                    }}
+                    className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                    placeholder={stageInfo.label}
+                  />
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-mono w-36 truncate" title={stageKey}>
+                    {stageKey}
+                  </span>
+                  {stageInfo.category === 'closed' && (
+                    <span className="text-xs px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded">
+                      closed
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+            Note: Stage keys (shown in monospace) are fixed and used internally. Only the display labels can be customized.
+            Stages marked as "closed" (Confirmed, Lost) don't appear in the drag-and-drop pipeline but are accessible via lead actions.
+          </p>
+        </div>
+
+        {/* Project Detail Fields - Customizable */}
         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm lg:col-span-2">
           <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
-            Workflow Settings
+            Project Detail Fields
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            Customize the fields shown in project details. Currently optimized for construction business.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Quote Validity (Days)
+                Area Unit Label
               </label>
               <input
-                type="number"
-                value={30} // Default value
+                type="text"
+                value={formData.areaUnitLabel || 'sqft'}
+                onChange={(e) => updateSetting('areaUnitLabel', e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700"
+                placeholder="e.g., sqft, sq.m, acres"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Follow-up Reminder (Hours)
+                Currency Symbol
               </label>
               <input
-                type="number"
-                value={24} // Default value
+                type="text"
+                value={formData.currencySymbol || '₹'}
+                onChange={(e) => updateSetting('currencySymbol', e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700"
+                placeholder="e.g., ₹, $, €"
               />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Business Type
+              </label>
+              <select
+                value={formData.businessType || 'construction'}
+                onChange={(e) => updateSetting('businessType', e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700"
+              >
+                <option value="construction">Construction</option>
+                <option value="real_estate">Real Estate</option>
+                <option value="architecture">Architecture & Design</option>
+                <option value="interior">Interior Design</option>
+                <option value="consulting">Consulting Services</option>
+                <option value="manufacturing">Manufacturing</option>
+                <option value="services">General Services</option>
+                <option value="other">Other</option>
+              </select>
             </div>
           </div>
         </div>

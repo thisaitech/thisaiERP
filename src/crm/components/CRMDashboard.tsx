@@ -59,12 +59,13 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon: Icon, color
 // Pipeline Stage Card
 interface PipelineStageCardProps {
   stage: string;
+  stageLabel: string;
   count: number;
   total: number;
   color: string;
 }
 
-const PipelineStageCard: React.FC<PipelineStageCardProps> = ({ stage, count, total, color }) => {
+const PipelineStageCard: React.FC<PipelineStageCardProps> = ({ stage, stageLabel, count, total, color }) => {
   const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
 
   return (
@@ -75,7 +76,7 @@ const PipelineStageCard: React.FC<PipelineStageCardProps> = ({ stage, count, tot
     >
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
-          {CRM_STAGES[stage as keyof typeof CRM_STAGES]?.label || stage}
+          {stageLabel}
         </h3>
         <span className={`text-lg font-bold ${color}`}>{count}</span>
       </div>
@@ -135,9 +136,17 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, leadName }) => {
 
 // Main Dashboard Component
 const CRMDashboard: React.FC = () => {
-  const { dashboardMetrics, loading, error, refreshDashboard } = useCRM();
+  const { dashboardMetrics, loading, error, refreshDashboard, settings } = useCRM();
   const [upcomingActivities, setUpcomingActivities] = useState<CRMActivity[]>([]);
   const [overdueActivities, setOverdueActivities] = useState<CRMActivity[]>([]);
+
+  // Get custom stage label from settings or fallback to default
+  const getStageLabel = (stageKey: string): string => {
+    if (settings?.pipelineStages && settings.pipelineStages[stageKey]) {
+      return settings.pipelineStages[stageKey];
+    }
+    return CRM_STAGES[stageKey as keyof typeof CRM_STAGES]?.label || stageKey;
+  };
 
   useEffect(() => {
     refreshDashboard();
@@ -148,16 +157,22 @@ const CRMDashboard: React.FC = () => {
     totalLeads: 0,
     stageCounts: {},
     statusCounts: {},
+    stageDistribution: {},
     conversionRate: 0,
     averageDealSize: 0,
+    avgDealSize: 0,
+    wonDeals: 0,
+    lostDeals: 0,
+    activeLeads: 0,
     upcomingFollowUps: [],
     overdueFollowUps: [],
     recentActivities: []
   };
 
-  const wonLeads = metrics.statusCounts.won || 0;
-  const lostLeads = metrics.statusCounts.lost || 0;
-  const activeLeads = metrics.totalLeads - wonLeads - lostLeads;
+  // Support both old format (statusCounts) and new format (wonDeals, activeLeads)
+  const wonLeads = metrics.wonDeals ?? metrics.statusCounts?.won ?? 0;
+  const lostLeads = metrics.lostDeals ?? metrics.statusCounts?.lost ?? 0;
+  const activeLeads = metrics.activeLeads ?? (metrics.totalLeads - wonLeads - lostLeads);
 
   if (loading.dashboard) {
     return (
@@ -225,7 +240,8 @@ const CRMDashboard: React.FC = () => {
             <PipelineStageCard
               key={key}
               stage={key}
-              count={metrics.stageCounts[key as keyof typeof metrics.stageCounts] || 0}
+              stageLabel={getStageLabel(key)}
+              count={(metrics.stageCounts?.[key as keyof typeof metrics.stageCounts] || metrics.stageDistribution?.[key] || 0) as number}
               total={metrics.totalLeads}
               color={stage.color.split(' ')[1]} // Extract color class
             />
@@ -294,7 +310,7 @@ const CRMDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600 mb-2">
-              ₹{Math.round(metrics.averageDealSize).toLocaleString()}
+              ₹{Math.round(metrics.averageDealSize || metrics.avgDealSize || 0).toLocaleString()}
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Average Deal Size

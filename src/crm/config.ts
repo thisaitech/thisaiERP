@@ -21,6 +21,7 @@ export interface CRMConfig {
     attachments: string;
     auditLogs: string;
     settings: string;
+    engineers: string;
   };
 
   // Storage configuration
@@ -101,7 +102,8 @@ export const defaultCRMConfig: CRMConfig = {
     quotations: 'crm_quotations',
     attachments: 'crm_attachments',
     auditLogs: 'crm_audit_logs',
-    settings: 'crm_settings'
+    settings: 'crm_settings',
+    engineers: 'crm_engineers'
   },
 
   storage: {
@@ -177,4 +179,10 @@ export const getCRMPath = (path: string) => `${crmConfig.basePath}${path}`;
 export const getCRMCollection = (collection: keyof CRMConfig['collections']) => crmConfig.collections[collection];
 
 export default crmConfig;
+
+
+
+
+
+
 

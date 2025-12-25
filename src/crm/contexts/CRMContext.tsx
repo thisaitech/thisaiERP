@@ -115,7 +115,6 @@ interface CRMProviderProps {
 }
 
 export const CRMProvider: React.FC<CRMProviderProps> = ({ children }) => {
-  console.log('🏢 CRMProvider rendering...');
   const [state, dispatch] = useReducer(crmReducer, initialState);
 
   // Load dashboard metrics and settings on mount (leads will be loaded as needed)
@@ -196,19 +195,42 @@ export const CRMProvider: React.FC<CRMProviderProps> = ({ children }) => {
 
   const refreshLeads = async () => {
     try {
-      console.log('🔄 Refreshing leads...');
       dispatch({ type: 'SET_LOADING', payload: { key: 'leads', value: true } });
       dispatch({ type: 'SET_ERROR', payload: null });
 
-      const result = await getLeads({}, 1, 1000); // Load up to 1000 leads
-      console.log('📊 Leads loaded:', result.data.length, result.data);
+      let result;
+      try {
+        result = await getLeads({}, 1, 1000); // Load up to 1000 leads
+      } catch (leadsError: any) {
+        // Primary leads query failed, trying fallback
+        const { getLeadsWithoutOrdering } = await import('../services/crmService');
+        result = await getLeadsWithoutOrdering();
+      }
       dispatch({ type: 'SET_LEADS', payload: result.data });
-    } catch (error) {
-      console.error('❌ Failed to load leads:', error);
-      dispatch({
-        type: 'SET_ERROR',
-        payload: error instanceof Error ? error.message : 'Failed to load leads'
-      });
+    } catch (error: any) {
+      // If it's a Firebase index error, try to create the index or use fallback
+      if (error.message && error.message.includes('requires an index')) {
+        // Try a simple query without ordering as fallback
+        try {
+          const { getLeadsWithoutOrdering } = await import('../services/crmService');
+          const fallbackResult = await getLeadsWithoutOrdering();
+          dispatch({ type: 'SET_LEADS', payload: fallbackResult.data });
+          dispatch({
+            type: 'SET_ERROR',
+            payload: 'Using fallback data. Please create Firebase index for full functionality.'
+          });
+        } catch (fallbackError) {
+          dispatch({
+            type: 'SET_ERROR',
+            payload: 'Failed to load leads. Check Firebase index configuration.'
+          });
+        }
+      } else {
+        dispatch({
+          type: 'SET_ERROR',
+          payload: error instanceof Error ? error.message : 'Failed to load leads'
+        });
+      }
     } finally {
       dispatch({ type: 'SET_LOADING', payload: { key: 'leads', value: false } });
     }
@@ -242,7 +264,26 @@ export const CRMProvider: React.FC<CRMProviderProps> = ({ children }) => {
 export const useCRM = (): CRMContextType => {
   const context = useContext(CRMContext);
   if (context === undefined) {
-    throw new Error('useCRM must be used within a CRMProvider');
+    console.error('❌ useCRM called outside of CRMProvider! This might be a hot reload issue.');
+    // Return a dummy context to prevent crashes during hot reload
+    // This should never happen in production with proper component structure
+    return {
+      leads: [],
+      dashboardMetrics: null,
+      settings: null,
+      filters: {},
+      loading: { leads: false, dashboard: false, settings: false },
+      error: 'CRM Context not available - please refresh the page',
+      setLeads: () => {},
+      addLead: () => {},
+      updateLead: () => {},
+      deleteLead: () => {},
+      setFilters: () => {},
+      refreshDashboard: async () => {},
+      refreshSettings: async () => {},
+      refreshLeads: async () => {},
+      clearError: () => {}
+    };
   }
   return context;
 };

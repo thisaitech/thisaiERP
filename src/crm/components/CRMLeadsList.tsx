@@ -147,8 +147,8 @@ interface LeadCardProps {
 const LeadCard: React.FC<LeadCardProps> = ({ lead, onView, onEdit, onDelete, onQuickAction }) => {
   const [showActions, setShowActions] = useState(false);
 
-  const stageInfo = CRM_STAGES[lead.stage];
-  const priorityInfo = CRM_PRIORITIES[lead.priority];
+  const stageInfo = CRM_STAGES[lead.stage] || { label: lead.stage || 'Unknown', color: 'bg-gray-100 text-gray-800', category: 'active' };
+  const priorityInfo = CRM_PRIORITIES[lead.priority] || { label: lead.priority || 'medium', color: 'bg-gray-100 text-gray-800' };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -202,7 +202,10 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onView, onEdit, onDelete, onQ
                   Edit
                 </button>
                 <button
-                  onClick={() => { onDelete(lead); setShowActions(false); }}
+                  onClick={() => {
+                    onDelete(lead);
+                    setShowActions(false);
+                  }}
                   className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                 >
                   <Trash size={16} />
@@ -299,30 +302,33 @@ const CRMLeadsList: React.FC<CRMLeadsListProps> = ({
   onDeleteLead,
   onQuickAction
 }) => {
-  const { filters, setFilters } = useCRM();
+  const { filters, setFilters, leads: contextLeads, refreshLeads } = useCRM();
   const [leads, setLeads] = useState<CRMLead[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch leads based on filters
-  const fetchLeads = async () => {
-    setLoading(true);
-    try {
-      const result: CRMListResponse<CRMLead> = await getLeads(filters, currentPage, 20);
-      setLeads(result.data);
-      setTotalPages(Math.ceil(result.total / 20));
-    } catch (error) {
-      console.error('Failed to fetch leads:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Use leads from context and apply filters
   useEffect(() => {
-    fetchLeads();
-  }, [filters, currentPage]);
+    let filteredLeads = [...contextLeads];
+
+    // Apply filters
+    if (filters.stage && filters.stage.length > 0) {
+      filteredLeads = filteredLeads.filter(lead => filters.stage!.includes(lead.stage));
+    }
+
+    if (filters.status && filters.status.length > 0) {
+      filteredLeads = filteredLeads.filter(lead => filters.status!.includes(lead.status));
+    }
+
+    if (filters.priority && filters.priority.length > 0) {
+      filteredLeads = filteredLeads.filter(lead => filters.priority!.includes(lead.priority));
+    }
+
+    setLeads(filteredLeads);
+    setTotalPages(Math.ceil(filteredLeads.length / 20));
+  }, [contextLeads, filters]);
 
   // Filter leads based on search term
   const filteredLeads = useMemo(() => {

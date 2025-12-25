@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useLanguage } from '../contexts/LanguageContext'
+import { usePlan } from '../hooks/usePlan'
 import {
   Truck,
   ShoppingBag,
@@ -85,6 +86,7 @@ import {
 
 const More = () => {
   const { t, language } = useLanguage()
+  const { hasFeature } = usePlan()
   const [selectedModule, setSelectedModule] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [deliveryChallans, setDeliveryChallans] = useState<DeliveryChallan[]>([])
@@ -117,7 +119,6 @@ const More = () => {
   const [discountValue, setDiscountValue] = useState(0)
   const [discountMaxValue, setDiscountMaxValue] = useState('')
   const [discountValidFrom, setDiscountValidFrom] = useState('')
-  const [discountValidTo, setDiscountValidTo] = useState('')
 
   // UPI Payment Links states
   const [upiLinks, setUpiLinks] = useState<{id: string; partyName: string; amount: number; upiId: string; link: string; createdAt: string}[]>([])
@@ -160,6 +161,16 @@ const More = () => {
   const [onlineStoreUrl, setOnlineStoreUrl] = useState('')
   const [onlineStoreEnabled, setOnlineStoreEnabled] = useState(false)
 
+  // Barcode Generator states
+  const [barcodeItems, setBarcodeItems] = useState<Item[]>([])
+  const [selectedBarcodeItem, setSelectedBarcodeItem] = useState<Item | null>(null)
+  const [barcodeQuantity, setBarcodeQuantity] = useState(1)
+  const [barcodeSize, setBarcodeSize] = useState<'small' | 'medium' | 'large'>('medium')
+  const [showPrice, setShowPrice] = useState(true)
+  const [showProductName, setShowProductName] = useState(true)
+  const [barcodeSearchQuery, setBarcodeSearchQuery] = useState('')
+  const [generatedBarcodes, setGeneratedBarcodes] = useState<{item: Item; quantity: number}[]>([])
+
   // Form states for Delivery Challan
   const [dcCustomerSearch, setDcCustomerSearch] = useState('')
   const [dcSelectedCustomer, setDcSelectedCustomer] = useState<Party | null>(null)
@@ -193,24 +204,8 @@ const More = () => {
   const [allocatedPaymentsOut, setAllocatedPaymentsOut] = useState<AllocatedPayment[]>([])
 
   // Legacy form states for Payment In (kept for backward compatibility)
-  const [pinPartySearch, setPinPartySearch] = useState('')
-  const [pinSelectedParty, setPinSelectedParty] = useState<Party | null>(null)
-  const [showPinPartyDropdown, setShowPinPartyDropdown] = useState(false)
-  const [pinAmount, setPinAmount] = useState('')
-  const [pinMode, setPinMode] = useState<'cash' | 'upi' | 'bank' | 'cheque' | 'card'>('cash')
-  const [pinReference, setPinReference] = useState('')
-  const [pinDate, setPinDate] = useState(new Date().toISOString().split('T')[0])
-  const [pinNotes, setPinNotes] = useState('')
 
   // Legacy form states for Payment Out (kept for backward compatibility)
-  const [poutPartySearch, setPoutPartySearch] = useState('')
-  const [poutSelectedParty, setPoutSelectedParty] = useState<Party | null>(null)
-  const [showPoutPartyDropdown, setShowPoutPartyDropdown] = useState(false)
-  const [poutAmount, setPoutAmount] = useState('')
-  const [poutMode, setPoutMode] = useState<'cash' | 'upi' | 'bank' | 'cheque' | 'card'>('cash')
-  const [poutReference, setPoutReference] = useState('')
-  const [poutDate, setPoutDate] = useState(new Date().toISOString().split('T')[0])
-  const [poutNotes, setPoutNotes] = useState('')
 
   // Form states for Price List
   const [showPriceListModal, setShowPriceListModal] = useState(false)
@@ -521,8 +516,6 @@ const More = () => {
       }
     }
 
-    const featureConfig = featureMap[moduleId]
-
     // All features are now available - no premium check needed
     setSelectedModule(moduleId)
 
@@ -540,43 +533,6 @@ const More = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleCreatePurchaseOrder = async () => {
-    if (!poSupplierName || poItems.length === 0) {
-      toast.error('Please fill supplier name and add items')
-      return
-    }
-
-    const subtotal = poItems.reduce((sum, item) => sum + (item.qty * item.rate), 0)
-    const taxAmount = subtotal * 0.18
-
-    const poData: any = {
-      poNumber: generatePONumber(),
-      poDate: new Date().toISOString().split('T')[0],
-      supplierName: poSupplierName,
-      items: poItems.map((item, i) => ({
-        id: `item_${i}`,
-        itemName: item.name,
-        quantity: item.qty,
-        unit: 'pcs',
-        rate: item.rate,
-        taxRate: 18,
-        amount: item.qty * item.rate
-      })),
-      subtotal,
-      taxAmount,
-      totalAmount: subtotal + taxAmount,
-      status: 'draft' as const
-    }
-
-    const result = await createPurchaseOrder(poData)
-    if (result) {
-      toast.success(`Purchase Order ${result.poNumber} created!`)
-      setShowCreateModal(false)
-      setPoSupplierName('')
-      setPoItems([])
-      loadPurchaseOrders()
-    }
-  }
 
   const handleCreateProformaInvoice = async () => {
     if (!piSelectedCustomer && !piCustomerSearch) {
@@ -773,6 +729,14 @@ const More = () => {
       description: t.more.barcodeScannerDesc,
       icon: Barcode,
       color: 'accent',
+      badge: 'New'
+    },
+    {
+      id: 'barcode-generator',
+      title: t.more.barcodeGenerator || 'Barcode Generator',
+      description: t.more.barcodeGeneratorDesc || 'Generate barcodes for product labels',
+      icon: Barcode,
+      color: 'primary',
       badge: 'New'
     },
     {
@@ -1619,6 +1583,559 @@ const More = () => {
                   >
                     {t.more.openScanner}
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Barcode Generator */}
+            {selectedModule === 'barcode-generator' && (
+              <div className="bg-card rounded-lg shadow-lg border border-blue-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Barcode size={24} weight="duotone" className="text-primary" />
+                    {t.more.barcodeGenerator || 'Barcode Generator'}
+                  </h2>
+                  <button
+                    onClick={() => setSelectedModule(null)}
+                    className="p-2 hover:bg-muted rounded-lg"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Search and Select Product */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {t.more.selectProduct || 'Select Product'}
+                    </label>
+
+                    {/* Action Buttons - Scan & Add New */}
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        onClick={() => setShowBarcodeScanner(true)}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-accent/10 text-accent border border-accent/30 rounded-lg hover:bg-accent/20 transition-colors"
+                      >
+                        <Barcode size={20} />
+                        {t.more.scanBarcode || 'Scan Barcode'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Navigate to inventory to add new product
+                          window.location.href = '/inventory?action=add'
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-success/10 text-success border border-success/30 rounded-lg hover:bg-success/20 transition-colors"
+                      >
+                        <Plus size={20} />
+                        {t.more.addNewProduct || 'Add New Product'}
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={barcodeSearchQuery}
+                        onChange={(e) => {
+                          setBarcodeSearchQuery(e.target.value)
+                          // Filter items based on search
+                          if (e.target.value.length > 0) {
+                            getItems().then(items => {
+                              const filtered = items.filter(item =>
+                                item.name.toLowerCase().includes(e.target.value.toLowerCase()) ||
+                                (item.barcode && item.barcode.includes(e.target.value)) ||
+                                (item.itemCode && item.itemCode.toLowerCase().includes(e.target.value.toLowerCase()))
+                              )
+                              setBarcodeItems(filtered.slice(0, 10)) // Limit to 10 results
+                            })
+                          } else {
+                            // Show all items when empty (limited)
+                            getItems().then(items => {
+                              setBarcodeItems(items.slice(0, 10))
+                            })
+                          }
+                        }}
+                        onFocus={() => {
+                          // Show items on focus
+                          if (barcodeSearchQuery.length === 0) {
+                            getItems().then(items => {
+                              setBarcodeItems(items.slice(0, 10))
+                            })
+                          }
+                        }}
+                        placeholder={t.more.searchProductBarcode || 'Search by product name, code or barcode...'}
+                        className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      {barcodeItems.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-72 overflow-auto">
+                          {barcodeItems.map(item => (
+                            <div
+                              key={item.id}
+                              onClick={() => {
+                                setSelectedBarcodeItem(item)
+                                setBarcodeSearchQuery('')
+                                setBarcodeItems([])
+                              }}
+                              className="px-4 py-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <div className="font-medium">{item.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {item.itemCode && <span className="mr-2">Code: {item.itemCode}</span>}
+                                    {item.barcode ? <span>Barcode: {item.barcode}</span> : <span className="text-warning">No barcode set</span>}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-bold text-primary">₹{item.salePrice}</div>
+                                  <div className="text-xs text-muted-foreground">Stock: {item.stock || 0}</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Selected Product Info */}
+                  {selectedBarcodeItem && (
+                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-bold text-lg">{selectedBarcodeItem.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {t.more.barcode || 'Barcode'}: {selectedBarcodeItem.barcode || <span className="text-warning">Not set (will use product ID)</span>}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {t.more.price || 'Price'}: ₹{selectedBarcodeItem.salePrice}
+                          </p>
+                          {selectedBarcodeItem.itemCode && (
+                            <p className="text-sm text-muted-foreground">
+                              Code: {selectedBarcodeItem.itemCode}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedBarcodeItem(null)
+                            setBarcodeSearchQuery('')
+                          }}
+                          className="p-1 hover:bg-muted rounded"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quantity */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {t.more.quantity || 'Quantity'} ({t.more.numberOfLabels || 'Number of Labels'})
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setBarcodeQuantity(Math.max(1, barcodeQuantity - 1))}
+                        className="px-4 py-3 bg-muted rounded-lg hover:bg-muted/80 font-bold text-lg"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        max="500"
+                        value={barcodeQuantity}
+                        onChange={(e) => setBarcodeQuantity(Math.max(1, Math.min(500, parseInt(e.target.value) || 1)))}
+                        className="flex-1 px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary text-center text-lg font-bold"
+                      />
+                      <button
+                        onClick={() => setBarcodeQuantity(Math.min(500, barcodeQuantity + 1))}
+                        className="px-4 py-3 bg-muted rounded-lg hover:bg-muted/80 font-bold text-lg"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      {[10, 25, 50, 100].map(qty => (
+                        <button
+                          key={qty}
+                          onClick={() => setBarcodeQuantity(qty)}
+                          className={cn(
+                            "flex-1 py-2 rounded-lg text-sm font-medium transition-colors",
+                            barcodeQuantity === qty
+                              ? "bg-primary text-white"
+                              : "bg-muted hover:bg-muted/80"
+                          )}
+                        >
+                          {qty}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Size Selection with Dimensions */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {t.more.labelSize || 'Label Size'}
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {[
+                        { key: 'small' as const, name: t.more.small || 'Small', width: '38mm', height: '25mm', desc: '1.5" × 1"' },
+                        { key: 'medium' as const, name: t.more.medium || 'Medium', width: '50mm', height: '25mm', desc: '2" × 1"' },
+                        { key: 'large' as const, name: t.more.large || 'Large', width: '75mm', height: '38mm', desc: '3" × 1.5"' }
+                      ].map(size => (
+                        <button
+                          key={size.key}
+                          onClick={() => setBarcodeSize(size.key)}
+                          className={cn(
+                            "py-4 px-4 rounded-lg border-2 transition-all text-left",
+                            barcodeSize === size.key
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:border-primary/50"
+                          )}
+                        >
+                          <div className="font-bold">{size.name}</div>
+                          <div className="text-sm text-muted-foreground">{size.width} × {size.height}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{size.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      💡 {t.more.labelSizeHint || 'Standard label rolls: 38×25mm (small), 50×25mm (medium), 75×38mm (large)'}
+                    </p>
+                  </div>
+
+                  {/* Options */}
+                  <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                    <div className="text-sm font-medium mb-2">{t.more.labelOptions || 'Label Options'}</div>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showProductName}
+                        onChange={(e) => setShowProductName(e.target.checked)}
+                        className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <span>{t.more.showProductName || 'Show Product Name'}</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showPrice}
+                        onChange={(e) => setShowPrice(e.target.checked)}
+                        className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <span>{t.more.showPrice || 'Show Price'}</span>
+                    </label>
+                  </div>
+
+                  {/* Add to Print Queue */}
+                  <button
+                    onClick={() => {
+                      if (selectedBarcodeItem) {
+                        setGeneratedBarcodes(prev => [...prev, { item: selectedBarcodeItem, quantity: barcodeQuantity }])
+                        setSelectedBarcodeItem(null)
+                        setBarcodeSearchQuery('')
+                        setBarcodeQuantity(1)
+                        toast.success(t.more.addedToPrintQueue || 'Added to print queue')
+                      }
+                    }}
+                    disabled={!selectedBarcodeItem}
+                    className="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Plus size={20} />
+                    {t.more.addToPrintQueue || 'Add to Print Queue'}
+                  </button>
+
+                  {/* Print Queue */}
+                  {generatedBarcodes.length > 0 && (
+                    <div className="mt-6 p-4 bg-success/5 rounded-lg border border-success/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-bold flex items-center gap-2">
+                          <CheckCircle size={20} className="text-success" />
+                          {t.more.printQueue || 'Print Queue'} ({generatedBarcodes.reduce((acc, b) => acc + b.quantity, 0)} {t.more.labels || 'labels'})
+                        </h3>
+                        <button
+                          onClick={() => setGeneratedBarcodes([])}
+                          className="text-sm text-destructive hover:underline"
+                        >
+                          {t.more.clearAll || 'Clear All'}
+                        </button>
+                      </div>
+                      <div className="space-y-2 max-h-60 overflow-auto">
+                        {generatedBarcodes.map((barcode, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-background rounded-lg">
+                            <div>
+                              <div className="font-medium">{barcode.item.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {barcode.quantity} {t.more.labels || 'labels'} • ₹{barcode.item.salePrice}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => setGeneratedBarcodes(prev => prev.filter((_, i) => i !== index))}
+                              className="p-1 hover:bg-muted rounded text-destructive"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Print Info */}
+                      <div className="mt-4 p-3 bg-background rounded-lg text-sm">
+                        <div className="font-medium mb-1">{t.more.printingInfo || 'Printing Information'}:</div>
+                        <ul className="text-muted-foreground space-y-1">
+                          <li>• {t.more.labelSizeSelected || 'Label Size'}: {barcodeSize === 'small' ? '38mm × 25mm (1.5" × 1")' : barcodeSize === 'medium' ? '50mm × 25mm (2" × 1")' : '75mm × 38mm (3" × 1.5")'}</li>
+                          <li>• {t.more.totalLabels || 'Total Labels'}: {generatedBarcodes.reduce((acc, b) => acc + b.quantity, 0)}</li>
+                          <li>• {t.more.barcodeFormat || 'Barcode Format'}: CODE128</li>
+                        </ul>
+                      </div>
+
+                      {/* Print Buttons */}
+                      <div className="flex gap-2 mt-4">
+                        <button
+                          onClick={() => {
+                            // Preview barcodes
+                            const printWindow = window.open('', '_blank')
+                            if (printWindow) {
+                              const sizeStyles = {
+                                small: { width: '38mm', height: '25mm', fontSize: '7px', barcodeHeight: 20, barcodeWidth: 1.2 },
+                                medium: { width: '50mm', height: '25mm', fontSize: '8px', barcodeHeight: 25, barcodeWidth: 1.5 },
+                                large: { width: '75mm', height: '38mm', fontSize: '10px', barcodeHeight: 35, barcodeWidth: 2 }
+                              }
+                              const style = sizeStyles[barcodeSize]
+
+                              let labelsHtml = ''
+                              generatedBarcodes.forEach(({ item, quantity }) => {
+                                for (let i = 0; i < quantity; i++) {
+                                  labelsHtml += `
+                                    <div class="label" style="
+                                      width: ${style.width};
+                                      height: ${style.height};
+                                      border: 1px dashed #ccc;
+                                      padding: 2mm;
+                                      display: inline-flex;
+                                      flex-direction: column;
+                                      align-items: center;
+                                      justify-content: center;
+                                      margin: 1mm;
+                                      box-sizing: border-box;
+                                      page-break-inside: avoid;
+                                      overflow: hidden;
+                                    ">
+                                      ${showProductName ? `<div style="font-size: ${style.fontSize}; font-weight: bold; text-align: center; margin-bottom: 1mm; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">${item.name}</div>` : ''}
+                                      <svg id="barcode-${item.id}-${i}"></svg>
+                                      ${showPrice ? `<div style="font-size: ${style.fontSize}; font-weight: bold; margin-top: 1mm;">₹${item.salePrice}</div>` : ''}
+                                    </div>
+                                  `
+                                }
+                              })
+
+                              printWindow.document.write(`
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                  <title>Barcode Labels - Preview</title>
+                                  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+                                  <style>
+                                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                                    @media print {
+                                      body { margin: 0; padding: 0; }
+                                      @page {
+                                        margin: 2mm;
+                                        size: auto;
+                                      }
+                                      .no-print { display: none !important; }
+                                      .label { border: none !important; }
+                                    }
+                                    body {
+                                      font-family: Arial, sans-serif;
+                                      display: flex;
+                                      flex-wrap: wrap;
+                                      align-content: flex-start;
+                                      padding: 5mm;
+                                      background: #f5f5f5;
+                                    }
+                                    .print-header {
+                                      width: 100%;
+                                      padding: 10px 20px;
+                                      background: #fff;
+                                      border-bottom: 1px solid #ddd;
+                                      display: flex;
+                                      justify-content: space-between;
+                                      align-items: center;
+                                      margin-bottom: 10px;
+                                    }
+                                    .print-btn {
+                                      padding: 10px 30px;
+                                      background: #22c55e;
+                                      color: white;
+                                      border: none;
+                                      border-radius: 8px;
+                                      font-size: 16px;
+                                      font-weight: bold;
+                                      cursor: pointer;
+                                    }
+                                    .print-btn:hover { background: #16a34a; }
+                                    .label { background: white; }
+                                  </style>
+                                </head>
+                                <body>
+                                  <div class="print-header no-print">
+                                    <div>
+                                      <strong>Label Preview</strong> - ${generatedBarcodes.reduce((acc, b) => acc + b.quantity, 0)} labels (${barcodeSize === 'small' ? '38×25mm' : barcodeSize === 'medium' ? '50×25mm' : '75×38mm'})
+                                    </div>
+                                    <button class="print-btn" onclick="window.print()">🖨️ Print Labels</button>
+                                  </div>
+                                  ${labelsHtml}
+                                  <script>
+                                    window.onload = function() {
+                                      ${generatedBarcodes.map(({ item, quantity }) => {
+                                        let scripts = ''
+                                        for (let i = 0; i < quantity; i++) {
+                                          const barcodeValue = item.barcode || item.id || 'NOCODE'
+                                          scripts += `
+                                            try {
+                                              JsBarcode("#barcode-${item.id}-${i}", "${barcodeValue}", {
+                                                format: "CODE128",
+                                                width: ${sizeStyles[barcodeSize].barcodeWidth},
+                                                height: ${sizeStyles[barcodeSize].barcodeHeight},
+                                                displayValue: true,
+                                                fontSize: ${parseInt(style.fontSize)},
+                                                margin: 0,
+                                                textMargin: 1
+                                              });
+                                            } catch(e) {
+                                              console.error('Barcode error:', e);
+                                              document.getElementById('barcode-${item.id}-${i}').innerHTML = '<text>Invalid</text>';
+                                            }
+                                          `
+                                        }
+                                        return scripts
+                                      }).join('')}
+                                    }
+                                  <\/script>
+                                </body>
+                                </html>
+                              `)
+                              printWindow.document.close()
+                            }
+                          }}
+                          className="flex-1 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <QrCode size={20} />
+                          {t.more.previewLabels || 'Preview Labels'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            // Direct print
+                            const printWindow = window.open('', '_blank')
+                            if (printWindow) {
+                              const sizeStyles = {
+                                small: { width: '38mm', height: '25mm', fontSize: '7px', barcodeHeight: 20, barcodeWidth: 1.2 },
+                                medium: { width: '50mm', height: '25mm', fontSize: '8px', barcodeHeight: 25, barcodeWidth: 1.5 },
+                                large: { width: '75mm', height: '38mm', fontSize: '10px', barcodeHeight: 35, barcodeWidth: 2 }
+                              }
+                              const style = sizeStyles[barcodeSize]
+
+                              let labelsHtml = ''
+                              generatedBarcodes.forEach(({ item, quantity }) => {
+                                for (let i = 0; i < quantity; i++) {
+                                  labelsHtml += `
+                                    <div class="label" style="
+                                      width: ${style.width};
+                                      height: ${style.height};
+                                      padding: 2mm;
+                                      display: inline-flex;
+                                      flex-direction: column;
+                                      align-items: center;
+                                      justify-content: center;
+                                      margin: 0;
+                                      box-sizing: border-box;
+                                      page-break-inside: avoid;
+                                      overflow: hidden;
+                                    ">
+                                      ${showProductName ? `<div style="font-size: ${style.fontSize}; font-weight: bold; text-align: center; margin-bottom: 1mm; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">${item.name}</div>` : ''}
+                                      <svg id="barcode-${item.id}-${i}"></svg>
+                                      ${showPrice ? `<div style="font-size: ${style.fontSize}; font-weight: bold; margin-top: 1mm;">₹${item.salePrice}</div>` : ''}
+                                    </div>
+                                  `
+                                }
+                              })
+
+                              printWindow.document.write(`
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                  <title>Print Labels</title>
+                                  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+                                  <style>
+                                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                                    @media print {
+                                      body { margin: 0; padding: 0; }
+                                      @page { margin: 0; size: auto; }
+                                    }
+                                    body {
+                                      font-family: Arial, sans-serif;
+                                      display: flex;
+                                      flex-wrap: wrap;
+                                      align-content: flex-start;
+                                      padding: 0;
+                                    }
+                                    .label { background: white; }
+                                  </style>
+                                </head>
+                                <body>
+                                  ${labelsHtml}
+                                  <script>
+                                    window.onload = function() {
+                                      ${generatedBarcodes.map(({ item, quantity }) => {
+                                        let scripts = ''
+                                        for (let i = 0; i < quantity; i++) {
+                                          const barcodeValue = item.barcode || item.id || 'NOCODE'
+                                          scripts += `
+                                            try {
+                                              JsBarcode("#barcode-${item.id}-${i}", "${barcodeValue}", {
+                                                format: "CODE128",
+                                                width: ${sizeStyles[barcodeSize].barcodeWidth},
+                                                height: ${sizeStyles[barcodeSize].barcodeHeight},
+                                                displayValue: true,
+                                                fontSize: ${parseInt(style.fontSize)},
+                                                margin: 0,
+                                                textMargin: 1
+                                              });
+                                            } catch(e) { console.error(e); }
+                                          `
+                                        }
+                                        return scripts
+                                      }).join('')}
+                                      setTimeout(function() { window.print(); window.close(); }, 800);
+                                    }
+                                  <\/script>
+                                </body>
+                                </html>
+                              `)
+                              printWindow.document.close()
+                            }
+                          }}
+                          className="flex-1 py-3 bg-success text-white rounded-lg font-medium hover:bg-success/90 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Barcode size={20} />
+                          {t.more.printNow || 'Print Now'}
+                        </button>
+                      </div>
+
+                      {/* Printing Tips */}
+                      <div className="mt-4 p-3 bg-warning/10 rounded-lg border border-warning/20 text-sm">
+                        <div className="font-medium text-warning mb-1">💡 {t.more.printingTips || 'Printing Tips'}:</div>
+                        <ul className="text-muted-foreground space-y-1 text-xs">
+                          <li>• Use a thermal label printer for best results</li>
+                          <li>• Set printer margins to 0 or minimum</li>
+                          <li>• Select correct paper size in printer settings</li>
+                          <li>• For regular printers, use sticker paper sheets</li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -2618,21 +3135,23 @@ const More = () => {
                     }
                     try {
                       const poNumber = await generatePONumber()
-                      const result = await createPurchaseOrder({
+                      await createPurchaseOrder({
                         poNumber,
                         supplierName: poSelectedSupplier.companyName || '',
                         supplierId: poSelectedSupplier.id,
                         items: poItems.map(item => ({
-                          itemId: item.itemId || '',
-                          name: item.name,
+                          id: item.itemId || '',
+                          itemName: item.name,
                           quantity: item.qty,
+                          unit: item.unit || 'pcs',
                           rate: item.rate,
+                          taxRate: item.taxRate || 0,
                           amount: item.qty * item.rate
                         })),
                         totalAmount: poItems.reduce((sum, item) => sum + (item.qty * item.rate), 0),
                         expectedDeliveryDate: poExpectedDate,
                         notes: poNotes,
-                        status: 'pending'
+                        status: 'draft'
                       })
                       toast.success(`Purchase Order ${poNumber} created!`)
                       setShowPOModal(false)

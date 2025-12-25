@@ -213,17 +213,42 @@ export interface CRMAuditLog extends CRMBaseEntity {
   userAgent?: string;
 }
 
+// Engineer entity
+export interface CRMEngineer {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  specialization: string;
+  experience?: number;
+  status: 'active' | 'inactive';
+  companyId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string;
+}
+
 // Settings entity
 export interface CRMSettings {
   id: string;
+  companyId?: string;
   leadSources: string[];
   lostReasons: string[];
+  wonReasons?: string[];
   projectTypes: string[];
-  quotationTemplates: CRMQuotationTemplate[];
+  quotationTemplates?: CRMQuotationTemplate[];
   siteVisitChecklist: string[];
-  stageConfig: Record<CRMStage, { enabled: boolean; requiredFields: string[] }>;
-  permissions: Record<CRMRole, string[]>;
+  pipelineStages?: Record<string, string>; // Maps stage key to custom label
+  stageConfig?: Record<CRMStage, { enabled: boolean; requiredFields: string[] }>;
+  permissions?: Record<CRMRole, string[]>;
   notifications: CRMNotificationSettings;
+  currency?: string;
+  areaUnit?: string;
+  businessType?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface CRMQuotationTemplate {
@@ -286,12 +311,17 @@ export interface CRMLeadForm {
 // Dashboard metrics
 export interface CRMDashboardMetrics {
   totalLeads: number;
-  stageCounts: Record<CRMStage, number>;
-  statusCounts: Record<CRMStatus, number>;
+  activeLeads?: number;
+  wonDeals?: number;
+  lostDeals?: number;
+  stageCounts?: Record<CRMStage, number>;
+  stageDistribution?: Record<string, number>;
+  statusCounts?: Record<CRMStatus, number>;
   conversionRate: number;
-  averageDealSize: number;
-  upcomingFollowUps: CRMActivity[];
-  overdueFollowUps: CRMActivity[];
+  averageDealSize?: number;
+  avgDealSize?: number;
+  upcomingFollowUps: CRMLead[] | CRMActivity[];
+  overdueFollowUps: CRMLead[] | CRMActivity[];
   recentActivities: CRMActivity[];
 }
 
@@ -340,4 +370,10 @@ export interface CRMProjectResult {
   projectUrl?: string;
   error?: string;
 }
+
+
+
+
+
+
 

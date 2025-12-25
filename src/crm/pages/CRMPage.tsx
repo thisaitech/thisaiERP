@@ -1,5 +1,6 @@
 // Main CRM Page Component
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ChartBar,
@@ -7,8 +8,7 @@ import {
   Kanban,
   Gear,
   Plus,
-  Buildings,
-  ArrowClockwise
+  Buildings
 } from '@phosphor-icons/react';
 import { CRMProvider, useCRM } from '../contexts/CRMContext';
 import CRMDashboard from '../components/CRMDashboard';
@@ -17,8 +17,10 @@ import CRMLeadDetail from './CRMLeadDetail';
 import CRMPipelineBoard from '../components/CRMPipelineBoard';
 import CRMSettings from './CRMSettings';
 import CreateLeadModal from '../components/CreateLeadModal';
+import { ToastProvider, useToast } from '../components/Toast';
+import { ModalProvider, useModal } from '../components/Modal';
 import { CRMLead } from '../types';
-import { createSiteVisit, updateLead, seedCRMData, debugCRMCollections, getEngineers, CRMEngineer, seedTestDataWithoutCompanyId } from '../services/crmService';
+import { createSiteVisit, updateLead, getEngineers, CRMEngineer } from '../services/crmService';
 
 // Schedule Visit Modal Component
 interface ScheduleVisitModalProps {
@@ -28,9 +30,10 @@ interface ScheduleVisitModalProps {
   engineers: CRMEngineer[];
   onSuccess: () => void;
   onRefresh: () => void;
+  showToast: (type: 'success' | 'error' | 'warning' | 'info', message: string) => void;
 }
 
-const ScheduleVisitModal: React.FC<ScheduleVisitModalProps> = ({ isOpen, onClose, lead, engineers, onSuccess, onRefresh }) => {
+const ScheduleVisitModal: React.FC<ScheduleVisitModalProps> = ({ isOpen, onClose, lead, engineers, onSuccess, onRefresh, showToast }) => {
   const [visitDate, setVisitDate] = useState('');
   const [visitTime, setVisitTime] = useState('');
   const [engineer, setEngineer] = useState('');
@@ -38,7 +41,15 @@ const ScheduleVisitModal: React.FC<ScheduleVisitModalProps> = ({ isOpen, onClose
   const [loading, setLoading] = useState(false);
 
   const handleSchedule = async () => {
-    if (!lead || !visitDate || !visitTime) return;
+    if (!lead || !visitDate || !visitTime) {
+      showToast('warning', 'Please fill in all required fields (date and time)');
+      return;
+    }
+
+    if (!lead.id) {
+      showToast('error', 'Lead ID is missing. Cannot schedule visit.');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -46,14 +57,28 @@ const ScheduleVisitModal: React.FC<ScheduleVisitModalProps> = ({ isOpen, onClose
 
       // Get engineer details
       const selectedEngineer = engineers.find(eng => eng.id === engineer);
+      const engineerId = engineer && engineer.trim() !== '' ? engineer : 'unassigned';
+      const engineerName = selectedEngineer?.name || 'Unassigned';
 
-      // Create the site visit
+      // Create the site visit with empty checklist
       await createSiteVisit({
         leadId: lead.id,
-        engineerId: engineer || 'engineer1',
-        engineerName: selectedEngineer?.name || engineer || 'Default Engineer',
+        engineerId: engineerId,
+        engineerName: engineerName,
         visitAt: visitDateTime,
-        notes: notes.trim() || undefined,
+        notes: notes.trim() || '',
+        checklist: {},
+        createdBy: 'user'
+      });
+
+      // Also create an activity for the site visit
+      const { createActivity } = await import('../services/crmService');
+      const createdActivity = await createActivity({
+        leadId: lead.id,
+        type: 'site_visit',
+        title: `Site visit scheduled with ${engineerName}`,
+        description: notes.trim() || 'Site visit scheduled',
+        scheduledAt: visitDateTime,
         createdBy: 'user'
       });
 
@@ -66,11 +91,10 @@ const ScheduleVisitModal: React.FC<ScheduleVisitModalProps> = ({ isOpen, onClose
       // Refresh data to show updates
       onRefresh();
 
-      console.log('✅ Site visit scheduled and lead updated');
+      showToast('success', 'Site visit scheduled successfully!');
       onSuccess();
     } catch (error) {
-      console.error('❌ Failed to schedule visit:', error);
-      alert('Failed to schedule visit. Please try again.');
+      showToast('error', `Failed to schedule visit: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -139,16 +163,16 @@ const ScheduleVisitModal: React.FC<ScheduleVisitModalProps> = ({ isOpen, onClose
                       className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
                     >
                       <option value="">Select Engineer</option>
-                      {engineers.map((eng) => (
-                        <option key={eng.id} value={eng.id}>
+                      {engineers.map((eng, index) => (
+                        <option key={eng.id || `eng-${index}`} value={eng.id}>
                           {eng.name} ({eng.specialization})
                         </option>
                       ))}
                       {engineers.length === 0 && (
                         <>
-                          <option value="engineer1">John Smith (Senior Engineer)</option>
-                          <option value="engineer2">Sarah Johnson (Project Engineer)</option>
-                          <option value="engineer3">Mike Davis (Site Engineer)</option>
+                          <option key="eng1" value="engineer1">John Smith (Senior Engineer)</option>
+                          <option key="eng2" value="engineer2">Sarah Johnson (Project Engineer)</option>
+                          <option key="eng3" value="engineer3">Mike Davis (Site Engineer)</option>
                         </>
                       )}
                     </select>
@@ -238,9 +262,12 @@ const CRMLayout: React.FC<CRMLayoutProps> = ({ children }) => {
 
 // Inner CRM Page Component with tabs (needs to be inside provider)
 const CRMPageInner: React.FC = () => {
-  console.log('🔄 CRMPageInner rendering...');
-
-  const { refreshLeads, refreshDashboard, leads } = useCRM();
+  const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
+  const crmContext = useCRM();
+  const { refreshLeads, refreshDashboard, leads, deleteLead: deleteLeadFromContext, error: contextError } = crmContext;
+  const { showToast } = useToast();
+  const { showAlert, showConfirm } = useModal();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedLead, setSelectedLead] = useState<CRMLead | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -248,42 +275,96 @@ const CRMPageInner: React.FC = () => {
   const [leadToSchedule, setLeadToSchedule] = useState<CRMLead | null>(null);
   const [engineers, setEngineers] = useState<CRMEngineer[]>([]);
 
-  console.log('📊 CRMPageInner state:', { activeTab, selectedLead, isCreateModalOpen });
+  // Show error if context is not available (should only happen during hot reload)
+  if (contextError === 'CRM Context not available - please refresh the page') {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <div className="text-center p-8">
+          <p className="text-lg text-slate-600 dark:text-slate-400 mb-4">
+            CRM is loading... If this persists, please refresh the page.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // Load engineers on mount
+  // Check if we're viewing a specific lead
+  const isViewingLead = !!id;
+
+  // If viewing a lead, make sure we're on leads tab when we go back
+  useEffect(() => {
+    if (!isViewingLead && window.location.pathname === '/crm') {
+      setActiveTab('leads');
+    }
+  }, [isViewingLead]);
+
+  // Load engineers on mount and when active tab changes to dashboard (to refresh after adding in settings)
   useEffect(() => {
     const loadEngineers = async () => {
       try {
         const engineersData = await getEngineers();
         setEngineers(engineersData);
-        console.log('👷 Loaded engineers:', engineersData.length);
       } catch (error) {
-        console.error('Failed to load engineers:', error);
+        // Failed to load engineers
       }
     };
 
     loadEngineers();
-  }, []);
+  }, [activeTab]); // Reload when tab changes (including when returning from Settings)
 
   const handleCreateLead = () => {
     setIsCreateModalOpen(true);
   };
 
   const handleViewLead = (lead: CRMLead) => {
-    setSelectedLead(lead);
-    // For now, we'll show lead details in a modal or overlay
-    // In future, we could add a detailed view within the tabs
-    console.log('View lead:', lead.id);
+    if (!lead.id) {
+      showAlert('Error', 'Lead ID is missing. Cannot view details.');
+      return;
+    }
+
+    navigate(`/crm/leads/${lead.id}`);
   };
 
-  const handleEditLead = (lead: CRMLead) => {
-    setSelectedLead(lead);
-    console.log('Edit lead:', lead.id);
+  const handleEditLead = async (lead: CRMLead) => {
+    if (!lead.id) {
+      await showAlert('Error', 'Lead ID is missing. Cannot edit.');
+      return;
+    }
+    // Navigate to lead detail page in edit mode
+    navigate(`/crm/leads/${lead.id}?edit=true`);
   };
 
-  const handleDeleteLead = (lead: CRMLead) => {
-    if (window.confirm(`Are you sure you want to delete the lead "${lead.name}"?`)) {
-      console.log('Delete lead:', lead.id);
+  const handleDeleteLead = async (lead: CRMLead) => {
+    if (!lead || !lead.id) {
+      showToast('error', 'Cannot delete: Lead ID is missing');
+      return;
+    }
+
+    const confirmed = await showConfirm('Delete Lead', `Are you sure you want to delete the lead "${lead.name}"? This action cannot be undone.`);
+    if (confirmed) {
+      try {
+        const { deleteLead } = await import('../services/crmService');
+        await deleteLead(lead.id, 'user');
+
+        // Immediately update local state to remove the lead from UI
+        deleteLeadFromContext(lead.id);
+
+        // Small delay to ensure Firebase delete is propagated
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Force refresh leads from server to ensure sync
+        await refreshLeads();
+
+        showToast('success', `Lead "${lead.name}" deleted successfully!`);
+      } catch (error) {
+        showToast('error', `Failed to delete lead: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
   };
 
@@ -300,8 +381,6 @@ const CRMPageInner: React.FC = () => {
         setLeadToSchedule(lead);
         setIsScheduleModalOpen(true);
         break;
-      default:
-        console.log('Unknown action:', action);
     }
   };
 
@@ -316,34 +395,17 @@ const CRMPageInner: React.FC = () => {
     await refreshDashboard();
   };
 
-  const handleSeedData = async () => {
-    if (window.confirm('This will add sample CRM data for testing. Continue?')) {
-      try {
-        await seedCRMData();
-        await handleRefreshData();
-        alert('Sample CRM data added successfully!');
-      } catch (error) {
-        console.error('Failed to seed data:', error);
-        alert('Failed to add sample data. Check console for details.');
-      }
-    }
-  };
-
-  const handleDebugCollections = async () => {
-    console.log('🔍 Starting CRM collections debug...');
-    try {
-      await debugCRMCollections();
-      alert('Debug information logged to console. Check F12 console for details.');
-    } catch (error) {
-      console.error('Failed to debug collections:', error);
-      alert('Failed to debug collections. Check console for details.');
-    }
-  };
-
   const activeTabData = crmTabs.find(tab => tab.id === activeTab);
   const ActiveComponent = activeTabData?.component;
 
-  console.log('🎯 Active tab:', activeTab, 'Component:', ActiveComponent?.name || 'undefined');
+  // If we're viewing a specific lead, show the lead detail page
+  if (isViewingLead && id) {
+    return (
+      <CRMLayout>
+        <CRMLeadDetail />
+      </CRMLayout>
+    );
+  }
 
   return (
     <>
@@ -364,49 +426,8 @@ const CRMPageInner: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Buttons - Always visible on right */}
+          {/* Action Buttons */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => window.location.reload()}
-              className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-              title="Refresh"
-            >
-              <ArrowClockwise size={16} />
-            </button>
-            <button
-              onClick={handleDebugCollections}
-              className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              title="Debug CRM Collections"
-            >
-              🔍 Debug
-            </button>
-            <button
-              onClick={async () => {
-                if (window.confirm('This will add test data without company restrictions. Use only for debugging! Continue?')) {
-                  try {
-                    await seedTestDataWithoutCompanyId();
-                    await handleRefreshData();
-                    alert('Test data added! Check console for details.');
-                  } catch (error) {
-                    console.error('Failed to seed test data:', error);
-                    alert('Failed to add test data. Check console.');
-                  }
-                }
-              }}
-              className="flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-              title="Seed Test Data (Debug Only)"
-            >
-              🧪 Test Data
-            </button>
-            {!leads.length && (
-              <button
-                onClick={handleSeedData}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-lg"
-              >
-                <Plus size={16} />
-                Seed Sample Data
-              </button>
-            )}
             <button
               onClick={handleCreateLead}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
@@ -450,37 +471,25 @@ const CRMPageInner: React.FC = () => {
           className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden"
         >
           {(() => {
-            try {
-              if (ActiveComponent && activeTab === 'leads') {
-                console.log('📋 Rendering Leads component');
-                return (
-                  <ActiveComponent
-                    onCreateLead={handleCreateLead}
-                    onViewLead={handleViewLead}
-                    onEditLead={handleEditLead}
-                    onDeleteLead={handleDeleteLead}
-                    onQuickAction={handleQuickAction}
-                  />
-                );
-              } else if (ActiveComponent) {
-                console.log('📊 Rendering', activeTab, 'component');
-                return <ActiveComponent />;
-              } else {
-                console.log('❌ No ActiveComponent found');
-                return (
-                  <div className="p-6 text-center">
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Component not found for tab: {activeTab}
-                    </p>
-                  </div>
-                );
-              }
-            } catch (error) {
-              console.error('❌ Error rendering component:', error);
+            if (ActiveComponent && activeTab === 'leads') {
+              return (
+                <ActiveComponent
+                  onCreateLead={handleCreateLead}
+                  onViewLead={handleViewLead}
+                  onEditLead={handleEditLead}
+                  onDeleteLead={handleDeleteLead}
+                  onQuickAction={handleQuickAction}
+                />
+              );
+            } else if (ActiveComponent && activeTab === 'pipeline') {
+              return <ActiveComponent onViewLead={handleViewLead} />;
+            } else if (ActiveComponent) {
+              return <ActiveComponent />;
+            } else {
               return (
                 <div className="p-6 text-center">
-                  <p className="text-red-600 dark:text-red-400">
-                    Error loading {activeTab} component: {error instanceof Error ? error.message : 'Unknown error'}
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Component not found for tab: {activeTab}
                   </p>
                 </div>
               );
@@ -506,6 +515,7 @@ const CRMPageInner: React.FC = () => {
             setLeadToSchedule(null);
           }}
           onRefresh={handleRefreshData}
+          showToast={showToast}
         />
       </CRMLayout>
     </>
@@ -514,12 +524,14 @@ const CRMPageInner: React.FC = () => {
 
 // Main CRM Page Component (wraps everything with provider)
 const CRMPage: React.FC = () => {
-  console.log('🏢 CRMPage (wrapper) rendering...');
-
   return (
-    <CRMProvider>
-      <CRMPageInner />
-    </CRMProvider>
+    <ToastProvider>
+      <ModalProvider>
+        <CRMProvider>
+          <CRMPageInner />
+        </CRMProvider>
+      </ModalProvider>
+    </ToastProvider>
   );
 };
 

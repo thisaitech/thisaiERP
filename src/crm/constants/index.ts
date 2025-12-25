@@ -272,6 +272,16 @@ export const CRM_DEFAULTS = {
     'Location constraints',
     'Other'
   ],
+  WON_REASONS: [
+    'Competitive pricing',
+    'Quality of service',
+    'Good reputation',
+    'Customer referral',
+    'Fast response time',
+    'Unique design',
+    'Trust and reliability',
+    'Other'
+  ],
   PROJECT_TYPES: [
     'Residential House',
     'Commercial Building',
@@ -391,4 +401,10 @@ export const VALIDATION = {
   MIN_BUDGET: 10000,
   MAX_BUDGET: 100000000
 };
+
+
+
+
+
+
 

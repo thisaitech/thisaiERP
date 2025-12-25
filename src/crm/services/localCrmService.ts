@@ -1,7 +1,7 @@
 // Local CRM Service - Uses IndexedDB instead of Firebase
 // This is a drop-in replacement for crmService.ts for standalone mode
 
-import { LocalCRMAdapter } from '../adapters/localAdapter';
+import { LocalCRMAdapter, CRMEngineer } from '../adapters/localAdapter';
 import {
   CRMLead,
   CRMActivity,
@@ -14,8 +14,7 @@ import {
   CRMSettings,
   CRMListResponse,
   CRMFilters,
-  CRMDashboardMetrics,
-  CRMEngineer
+  CRMDashboardMetrics
 } from '../types';
 
 // Export CRMEngineer type
@@ -163,17 +162,6 @@ export const deleteAllLeadSiteVisits = async (leadId: string): Promise<void> => 
   for (const visit of visits) {
     await deleteSiteVisit(visit.id);
   }
-};
-
-export const updateSiteVisit = async (
-  id: string,
-  updates: Partial<CRMSiteVisit>,
-  userId: string = 'user'
-): Promise<CRMSiteVisit> => {
-  return getAdapter().updateSiteVisit(id, {
-    ...updates,
-    updatedBy: userId
-  });
 };
 
 // ============================================

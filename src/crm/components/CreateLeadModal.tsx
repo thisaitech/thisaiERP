@@ -14,7 +14,7 @@ interface CreateLeadModalProps {
 }
 
 const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const { addLead } = useCRM();
+  const { addLead, settings } = useCRM();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -95,6 +95,8 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onSu
         city: formData.city.trim(),
         source: formData.source,
         priority: formData.priority,
+        stage: 'lead_created',
+        status: 'open',
         createdBy: 'user',
         updatedBy: 'user'
       };
@@ -112,9 +114,13 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onSu
       if (formData.timeline.trim()) leadData.timeline = formData.timeline.trim();
       if (formData.description.trim()) leadData.description = formData.description.trim();
 
-      console.log('📝 Creating lead with data:', leadData);
       const newLead = await createLead(leadData);
-      console.log('✅ Lead created:', newLead);
+
+      // Ensure the lead has an ID before adding to context
+      if (!newLead.id) {
+        throw new Error('Lead created but ID is missing!');
+      }
+
       addLead(newLead);
 
       onSuccess?.(newLead);
@@ -356,11 +362,11 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onSu
                           className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
                           <option value="">Select project type</option>
-                          <option value="residential">Residential</option>
-                          <option value="commercial">Commercial</option>
-                          <option value="industrial">Industrial</option>
-                          <option value="institutional">Institutional</option>
-                          <option value="renovation">Renovation</option>
+                          {(settings?.projectTypes || ['Residential House', 'Commercial Building', 'Villa', 'Apartment Complex', 'Office Building']).map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
                         </select>
                       </div>
 
@@ -453,7 +459,7 @@ const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose, onSu
                           onChange={(e) => handleInputChange('source', e.target.value)}
                           className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
-                          {CRM_DEFAULTS.LEAD_SOURCES.map((source) => (
+                          {(settings?.leadSources || CRM_DEFAULTS.LEAD_SOURCES).map((source) => (
                             <option key={source} value={source.toLowerCase().replace(/\s+/g, '_')}>
                               {source}
                             </option>
