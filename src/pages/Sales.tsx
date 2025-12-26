@@ -7446,8 +7446,8 @@ TOTAL:       ₹${invoice.total}
                 </div>
               </div>
 
-              {/* Desktop Action Buttons - Fixed at bottom of page */}
-              <div className="hidden md:flex items-center justify-end gap-3 fixed bottom-3 right-6 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+              {/* Desktop Action Buttons - Inline at end of content */}
+              <div className="hidden md:flex items-center justify-end gap-3 mt-2">
                 {/* Back Button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}

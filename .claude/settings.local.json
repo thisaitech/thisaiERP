@@ -141,7 +141,11 @@
       "Bash(git -C d:/Project/Anna push origin main)",
       "Bash(git -C d:/Project/Anna diff --name-only)",
       "Bash(git -C d:/Project/Anna diff src/pages/Sales.tsx)",
-      "Bash(git -C d:/Project/Anna checkout -- src/pages/Sales.tsx)"
+      "Bash(git -C d:/Project/Anna checkout -- src/pages/Sales.tsx)",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && firebase deploy --only hosting\")",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && npx vite build && firebase deploy --only hosting\")",
+      "Bash(timeout /t 30 /nobreak)",
+      "Bash(git -C d:/Project/Anna commit -m \"fix: Revert buttons to inline position to remove empty space\")"
     ],
     "deny": [],
     "ask": []
