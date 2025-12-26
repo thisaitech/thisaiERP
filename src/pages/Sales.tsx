@@ -5090,7 +5090,7 @@ TOTAL:       ₹${invoice.total}
   return (
     <div className={cn(
       "overflow-x-hidden flex flex-col w-full",
-      viewMode === 'list' ? "px-3 py-2 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen" : "bg-white h-[calc(100vh-64px)] overflow-hidden"
+      viewMode === 'list' ? "px-3 py-2 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen" : "bg-white"
     )} style={{ maxWidth: '100vw' }}>
       {/* Header - Only show in list mode */}
       {viewMode === 'list' && (
