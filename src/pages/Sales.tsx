@@ -6107,186 +6107,7 @@ TOTAL:       ₹${invoice.total}
               </button>
             </div>
 
-            {/* Desktop Action Buttons - Right corner */}
-            <div className="hidden md:flex items-center gap-2 ml-auto">
-              {/* Back Button */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleBackToList}
-                className="flex px-4 py-2 rounded-lg font-semibold text-sm transition-all items-center gap-2 bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
-              >
-                <ArrowLeft size={16} weight="bold" />
-                Back
-              </motion.button>
-
-              {/* Generate Bill with dropdown */}
-              <div className="relative flex-none">
-                <div className="flex">
-                  <button
-                    type="button"
-                    onClick={createInvoiceOnly}
-                    disabled={invoiceItems.length === 0 || isCreatingInvoice}
-                    className={cn(
-                      "px-4 py-2 rounded-l-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 active:scale-95",
-                      invoiceItems.length > 0 && !isCreatingInvoice
-                        ? "bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
-                        : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300"
-                    )}
-                  >
-                    {isCreatingInvoice ? 'Creating...' : 'Generate Bill'}
-                  </button>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowBillDropdown(!showBillDropdown)}
-                      disabled={invoiceItems.length === 0 || isCreatingInvoice}
-                      className={cn(
-                        "px-2 py-2 rounded-r-lg font-medium text-sm transition-all active:scale-95",
-                        invoiceItems.length > 0 && !isCreatingInvoice
-                          ? "bg-slate-200 text-slate-700 border border-slate-300 border-l-0 hover:bg-slate-300 active:bg-slate-400"
-                          : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300 border-l-0"
-                      )}
-                    >
-                      <CaretDown size={16} weight="bold" className={cn("transition-transform", showBillDropdown && "rotate-180")} />
-                    </button>
-                    {/* Desktop Bill Dropdown Menu with Backdrop */}
-                    <AnimatePresence>
-                      {showBillDropdown && (
-                        <>
-                          {/* Backdrop */}
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/30 z-40"
-                            onClick={() => setShowBillDropdown(false)}
-                          />
-                          {/* Dropdown Menu */}
-                          <motion.div
-                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute top-full right-0 mt-1 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowBillDropdown(false)
-                                const invoice = buildCurrentInvoiceData()
-                                if (invoice) {
-                                  handleGenerateEInvoice(invoice)
-                                } else {
-                                  toast.error('Please add customer and items first')
-                                }
-                              }}
-                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors"
-                            >
-                              Generate e-Invoice
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowBillDropdown(false)
-                                const invoice = buildCurrentInvoiceData()
-                                if (invoice) {
-                                  handleGenerateEWayBill(invoice)
-                                } else {
-                                  toast.error('Please add customer and items first')
-                                }
-                              }}
-                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors"
-                            >
-                              Generate Eway Bill
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowBillDropdown(false)
-                                const invoice = buildCurrentInvoiceData()
-                                if (invoice) {
-                                  handleShareWhatsApp(invoice)
-                                } else {
-                                  toast.error('Please add customer and items first')
-                                }
-                              }}
-                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
-                            >
-                              Share <Share size={12} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowBillDropdown(false)
-                                if (customerName && invoiceItems.length > 0) {
-                                  setPrintOnlyPreview(true)
-                                  setShowInvoicePreview(true)
-                                } else {
-                                  toast.error('Please add customer and items first')
-                                }
-                              }}
-                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
-                            >
-                              Print <Printer size={12} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => { setShowPosPreview(true); setShowBillDropdown(false) }}
-                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 text-orange-600 font-medium"
-                            >
-                              POS Preview <Receipt size={12} />
-                            </button>
-                            <div className="border-t border-border my-1" />
-                            <button
-                              type="button"
-                              onClick={() => { createInvoiceOnly(); setShowBillDropdown(false) }}
-                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors"
-                            >
-                              Save & New
-                            </button>
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </div>
-              </div>
-
-              {/* Save Button */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={createInvoiceOnly}
-                disabled={invoiceItems.length === 0}
-                className={cn(
-                  "px-5 py-2 rounded-lg font-semibold text-sm transition-all",
-                  invoiceItems.length > 0
-                    ? "bg-slate-600 text-white hover:bg-slate-700"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
-                )}
-              >
-                Save
-              </motion.button>
-
-              {/* Save & Print Button */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowInvoicePreview(true)}
-                disabled={invoiceItems.length === 0}
-                className={cn(
-                  "flex px-5 py-2 rounded-lg font-semibold text-sm transition-all items-center justify-center gap-2",
-                  invoiceItems.length > 0
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
-                )}
-              >
-                {t.sales.saveAndPrint}
-              </motion.button>
-            </div>
-
-            {/* Mobile Back Button only */}
+{/* Mobile Back Button only */}
             <button
               onClick={handleBackToList}
               className="md:hidden flex items-center gap-1.5 px-3 py-1 bg-slate-700 text-white hover:bg-slate-600 rounded-lg font-semibold transition-colors text-xs shadow-sm"
@@ -7623,6 +7444,185 @@ TOTAL:       ₹${invoice.total}
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Desktop Action Buttons - Separate section below totals */}
+              <div className="hidden md:flex items-center justify-end gap-4 mt-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                {/* Back Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleBackToList}
+                  className="flex px-6 py-3 rounded-xl font-semibold text-base transition-all items-center gap-2.5 bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
+                >
+                  <ArrowLeft size={22} weight="bold" />
+                  Back
+                </motion.button>
+
+                {/* Generate Bill with dropdown */}
+                <div className="relative flex-none">
+                  <div className="flex">
+                    <button
+                      type="button"
+                      onClick={createInvoiceOnly}
+                      disabled={invoiceItems.length === 0 || isCreatingInvoice}
+                      className={cn(
+                        "px-6 py-3 rounded-l-xl font-semibold text-base transition-all flex items-center justify-center gap-2.5 active:scale-95",
+                        invoiceItems.length > 0 && !isCreatingInvoice
+                          ? "bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
+                          : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300"
+                      )}
+                    >
+                      {isCreatingInvoice ? 'Creating...' : 'Generate Bill'}
+                    </button>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowBillDropdown(!showBillDropdown)}
+                        disabled={invoiceItems.length === 0 || isCreatingInvoice}
+                        className={cn(
+                          "px-3 py-3 rounded-r-xl font-medium text-base transition-all active:scale-95",
+                          invoiceItems.length > 0 && !isCreatingInvoice
+                            ? "bg-slate-200 text-slate-700 border border-slate-300 border-l-0 hover:bg-slate-300 active:bg-slate-400"
+                            : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300 border-l-0"
+                        )}
+                      >
+                        <CaretDown size={22} weight="bold" className={cn("transition-transform", showBillDropdown && "rotate-180")} />
+                      </button>
+                      {/* Desktop Bill Dropdown Menu with Backdrop */}
+                      <AnimatePresence>
+                        {showBillDropdown && (
+                          <>
+                            {/* Backdrop */}
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="fixed inset-0 bg-black/30 z-40"
+                              onClick={() => setShowBillDropdown(false)}
+                            />
+                            {/* Dropdown Menu */}
+                            <motion.div
+                              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute bottom-full right-0 mb-1 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowBillDropdown(false)
+                                  const invoice = buildCurrentInvoiceData()
+                                  if (invoice) {
+                                    handleGenerateEInvoice(invoice)
+                                  } else {
+                                    toast.error('Please add customer and items first')
+                                  }
+                                }}
+                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted transition-colors"
+                              >
+                                Generate e-Invoice
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowBillDropdown(false)
+                                  const invoice = buildCurrentInvoiceData()
+                                  if (invoice) {
+                                    handleGenerateEWayBill(invoice)
+                                  } else {
+                                    toast.error('Please add customer and items first')
+                                  }
+                                }}
+                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted transition-colors"
+                              >
+                                Generate Eway Bill
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowBillDropdown(false)
+                                  const invoice = buildCurrentInvoiceData()
+                                  if (invoice) {
+                                    handleShareWhatsApp(invoice)
+                                  } else {
+                                    toast.error('Please add customer and items first')
+                                  }
+                                }}
+                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                              >
+                                Share <Share size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowBillDropdown(false)
+                                  if (customerName && invoiceItems.length > 0) {
+                                    setPrintOnlyPreview(true)
+                                    setShowInvoicePreview(true)
+                                  } else {
+                                    toast.error('Please add customer and items first')
+                                  }
+                                }}
+                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                              >
+                                Print <Printer size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setShowPosPreview(true); setShowBillDropdown(false) }}
+                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 text-orange-600 font-medium"
+                              >
+                                POS Preview <Receipt size={16} />
+                              </button>
+                              <div className="border-t border-border my-1" />
+                              <button
+                                type="button"
+                                onClick={() => { createInvoiceOnly(); setShowBillDropdown(false) }}
+                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted transition-colors"
+                              >
+                                Save & New
+                              </button>
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={createInvoiceOnly}
+                  disabled={invoiceItems.length === 0}
+                  className={cn(
+                    "px-6 py-3 rounded-xl font-semibold text-base transition-all",
+                    invoiceItems.length > 0
+                      ? "bg-slate-600 text-white hover:bg-slate-700"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                  )}
+                >
+                  Save
+                </motion.button>
+
+                {/* Save & Print Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowInvoicePreview(true)}
+                  disabled={invoiceItems.length === 0}
+                  className={cn(
+                    "flex px-6 py-3 rounded-xl font-semibold text-base transition-all items-center justify-center gap-2.5",
+                    invoiceItems.length > 0
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                  )}
+                >
+                  {t.sales.saveAndPrint}
+                </motion.button>
               </div>
               </div>
             {/* FOOTER - Mobile Only */}
