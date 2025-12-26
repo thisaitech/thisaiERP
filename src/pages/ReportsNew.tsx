@@ -14,7 +14,10 @@ import {
   FileText,
   Tag,
   Percent,
-  FileJs
+  FileJs,
+  ChartBar,
+  Eye,
+  FolderOpen
 } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -613,80 +616,139 @@ const ReportsNew = () => {
     { id: 'transactions', label: t.reports.transactions, icon: Receipt },
     { id: 'party', label: t.reports.partyReportsTitle, icon: Users },
     { id: 'gst', label: t.reports.gstReportsTitle, icon: Percent },
-    { id: 'inventory', label: t.reports.stockReports, icon: Package }
+    { id: 'inventory', label: t.reports.stockReports, icon: Package },
+    { id: 'business', label: 'Business', icon: FileText }
   ]
 
   return (
     <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen">
       {/* Header - Clean & Simple */}
       <div className="flex-shrink-0">
-        {/* Top Row: Period Filter Left + Export Buttons Right */}
-        <div className="flex items-center justify-between mb-3">
-          {/* Period Filter Tabs - Left Side */}
-          <div className="flex items-center gap-2 overflow-x-auto">
-            {[
-              { key: 'today', label: t.common.today },
-              { key: 'this-week', label: t.common.week },
-              { key: 'this-month', label: t.common.month },
-              { key: 'this-year', label: t.common.year },
-              { key: 'all-time', label: t.reports.all || 'All' }
-            ].map((filter) => (
-              <button
-                key={filter.key}
-                onClick={() => setSelectedPeriod(filter.key)}
-                className={cn(
-                  "px-4 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-200",
-                  selectedPeriod === filter.key
-                    ? "bg-blue-600 text-white shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]"
-                    : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]"
-                )}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Export Buttons - Right Side - show when report data available */}
-          {reportData && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleExportJSON}
-                className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-yellow-600 font-semibold flex items-center gap-1.5
-                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                  active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
-                  transition-all duration-200"
-              >
-                <FileJs size={14} weight="bold" />
-                <span>JSON</span>
-              </button>
-              <button
-                onClick={handleExportExcel}
-                className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-green-600 font-semibold flex items-center gap-1.5
-                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                  active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
-                  transition-all duration-200"
-              >
-                <Download size={14} weight="bold" />
-                <span>Excel</span>
-              </button>
-              <button
-                onClick={handleExportPDF}
-                className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-red-600 font-semibold flex items-center gap-1.5
-                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                  active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
-                  transition-all duration-200"
-              >
-                <Download size={14} weight="bold" />
-                <span>PDF</span>
+        {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
+        <div className="flex items-stretch justify-between gap-4 mb-3">
+          {/* Left Side: KPI Cards - Rectangular filling space */}
+          <div className="flex-1 grid grid-cols-4 gap-3">
+            {/* Reports Available Card - Blue Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <ChartBar size={20} weight="duotone" className="text-blue-500" />
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">Reports</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">12</span>
+                </div>
               </button>
             </div>
-          )}
+
+            {/* Downloaded Card - Green Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <Download size={20} weight="duotone" className="text-green-500" />
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">Downloaded</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">0</span>
+                </div>
+              </button>
+            </div>
+
+            {/* Views Card - Amber Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 shadow-[6px_6px_12px_rgba(245,158,11,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(245,158,11,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <Eye size={20} weight="duotone" className="text-amber-500" />
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent font-semibold">Views</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{currentReportType ? 1 : 0}</span>
+                </div>
+              </button>
+            </div>
+
+            {/* Categories Card - Purple Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-purple-400 to-violet-500 shadow-[6px_6px_12px_rgba(139,92,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(139,92,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <FolderOpen size={20} weight="duotone" className="text-purple-500" />
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">Categories</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">4</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Right Side: Date Filters + Export Buttons */}
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            {/* Export Buttons Row - show when report data available */}
+            {reportData && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleExportJSON}
+                  className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-yellow-600 font-semibold flex items-center gap-1.5
+                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                    active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
+                    transition-all duration-200"
+                >
+                  <FileJs size={14} weight="bold" />
+                  <span>JSON</span>
+                </button>
+                <button
+                  onClick={handleExportExcel}
+                  className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-green-600 font-semibold flex items-center gap-1.5
+                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                    active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
+                    transition-all duration-200"
+                >
+                  <Download size={14} weight="bold" />
+                  <span>Excel</span>
+                </button>
+                <button
+                  onClick={handleExportPDF}
+                  className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-red-600 font-semibold flex items-center gap-1.5
+                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                    active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
+                    transition-all duration-200"
+                >
+                  <Download size={14} weight="bold" />
+                  <span>PDF</span>
+                </button>
+              </div>
+            )}
+
+            {/* Date Filter Tabs */}
+            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+              {[
+                { key: 'today', label: t.common.today },
+                { key: 'this-week', label: t.common.week },
+                { key: 'this-month', label: t.common.month },
+                { key: 'this-year', label: t.common.year },
+                { key: 'all-time', label: t.reports.all || 'All' }
+              ].map((filter) => (
+                <button
+                  key={filter.key}
+                  onClick={() => setSelectedPeriod(filter.key)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                    selectedPeriod === filter.key
+                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Category Tabs - Second Row */}
@@ -2461,11 +2523,7 @@ const ReportsNew = () => {
                     { id: 'cash-bank-balance', label: 'Cash & Bank Balance', icon: CurrencyCircleDollar, description: 'Cash in hand & bank' },
                     { id: 'accounts-receivable', label: 'Pending Payments to Receive', icon: TrendUp, description: 'Customers who owe money' },
                     { id: 'accounts-payable', label: 'Pending Payments to Pay', icon: TrendDown, description: 'Suppliers you owe money' },
-                    { id: 'bill-profit', label: 'Bill-wise Profit', icon: TrendUp, description: 'Profit per invoice' },
-                    { id: 'profit-loss', label: 'Profit & Loss', icon: TrendUp, description: 'P&L statement' },
-                    { id: 'cash-flow', label: 'Cash Flow', icon: CurrencyCircleDollar, description: 'Cash movements' },
-                    { id: 'balance-sheet', label: 'Balance Sheet', icon: FileText, description: 'Assets & liabilities' },
-                    { id: 'trial-balance', label: 'Trial Balance', icon: FileText, description: 'Accounting balance' }
+                    { id: 'bill-profit', label: 'Bill-wise Profit', icon: TrendUp, description: 'Profit per invoice' }
                   ].map((report) => (
                     <button
                       key={report.id}
@@ -4688,6 +4746,395 @@ const ReportsNew = () => {
                         <li>• Ensure all supplier GSTINs are valid for ITC</li>
                       </ul>
                     </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Business Tab */}
+            {selectedTab === 'business' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    { id: 'profit-loss', label: 'Profit & Loss', icon: TrendUp, description: 'P&L statement' },
+                    { id: 'cash-flow', label: 'Cash Flow', icon: CurrencyCircleDollar, description: 'Cash movements' },
+                    { id: 'balance-sheet', label: 'Balance Sheet', icon: FileText, description: 'Assets & liabilities' },
+                    { id: 'trial-balance', label: 'Trial Balance', icon: FileText, description: 'Accounting balance' }
+                  ].map((report) => (
+                    <button
+                      key={report.id}
+                      onClick={() => loadReport(report.id)}
+                      className={cn(
+                        "flex items-start gap-3 p-4 bg-card rounded-lg transition-all text-left",
+                        currentReportType === report.id
+                          ? "border-2 border-primary bg-primary/5"
+                          : "border border-border hover:border-primary"
+                      )}
+                    >
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <report.icon size={20} className="text-primary" weight="duotone" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{report.label}</p>
+                        <p className="text-xs text-muted-foreground">{report.description}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Cash Flow Report */}
+                {reportData && reportData.transactions && currentReportType === 'cash-flow' && (
+                  <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+                    <h2 className="text-lg font-bold mb-2">Cash Flow Statement</h2>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      Period: {new Date(reportData.period?.startDate).toLocaleDateString('en-IN')} to {new Date(reportData.period?.endDate).toLocaleDateString('en-IN')}
+                    </p>
+
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className="p-4 bg-blue-500/5 border-2 border-blue-500/20 rounded-xl">
+                        <p className="text-xs text-muted-foreground mb-1">Opening Balance</p>
+                        <p className="text-xl font-bold text-blue-600">₹{(reportData.openingBalance || 0).toLocaleString('en-IN')}</p>
+                      </div>
+                      <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
+                        <p className="text-xs text-muted-foreground mb-1">Total Inflow</p>
+                        <p className="text-xl font-bold text-success">+₹{(reportData.totalInflow || 0).toLocaleString('en-IN')}</p>
+                      </div>
+                      <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
+                        <p className="text-xs text-muted-foreground mb-1">Total Outflow</p>
+                        <p className="text-xl font-bold text-destructive">-₹{(reportData.totalOutflow || 0).toLocaleString('en-IN')}</p>
+                      </div>
+                      <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
+                        <p className="text-xs text-muted-foreground mb-1">Closing Balance</p>
+                        <p className="text-xl font-bold text-primary">₹{(reportData.closingBalance || 0).toLocaleString('en-IN')}</p>
+                      </div>
+                    </div>
+
+                    {/* Category Breakdown */}
+                    {reportData.categoryBreakdown && (
+                      <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+                        <h3 className="font-semibold text-sm mb-3">Category Breakdown</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+                          <div className="p-2 bg-success/10 rounded">
+                            <p className="text-xs text-muted-foreground mb-1">Marketplace Payouts</p>
+                            <p className="text-sm font-bold text-success">₹{(reportData.categoryBreakdown.marketplacePayouts || 0).toLocaleString('en-IN')}</p>
+                          </div>
+                          <div className="p-2 bg-success/10 rounded">
+                            <p className="text-xs text-muted-foreground mb-1">Direct Sales</p>
+                            <p className="text-sm font-bold text-success">₹{(reportData.categoryBreakdown.directSales || 0).toLocaleString('en-IN')}</p>
+                          </div>
+                          <div className="p-2 bg-destructive/10 rounded">
+                            <p className="text-xs text-muted-foreground mb-1">Supplier Payments</p>
+                            <p className="text-sm font-bold text-destructive">₹{(reportData.categoryBreakdown.supplierPayments || 0).toLocaleString('en-IN')}</p>
+                          </div>
+                          <div className="p-2 bg-destructive/10 rounded">
+                            <p className="text-xs text-muted-foreground mb-1">Expenses</p>
+                            <p className="text-sm font-bold text-destructive">₹{(reportData.categoryBreakdown.expenses || 0).toLocaleString('en-IN')}</p>
+                          </div>
+                          <div className="p-2 bg-warning/10 rounded">
+                            <p className="text-xs text-muted-foreground mb-1">GST Payments</p>
+                            <p className="text-sm font-bold text-warning">₹{(reportData.categoryBreakdown.gstPayments || 0).toLocaleString('en-IN')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Transactions Table */}
+                    {reportData.transactions && reportData.transactions.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Date</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Type</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Description</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Reference</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Amount</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Running Balance</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {reportData.transactions.slice(0, 50).map((txn: any, i: number) => (
+                              <tr key={i} className="border-b border-border last:border-0">
+                                <td className="py-3 px-4 text-sm">{new Date(txn.date).toLocaleDateString('en-IN')}</td>
+                                <td className="py-3 px-4 text-sm">
+                                  <span className={cn("px-2 py-1 rounded text-xs font-medium",
+                                    txn.amount >= 0 ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
+                                    {txn.type === 'marketplace_payout' ? 'Payout' :
+                                     txn.type === 'sale_receipt' ? 'Receipt' :
+                                     txn.type === 'purchase_payment' ? 'Payment' :
+                                     txn.type === 'gst_payment' ? 'GST' : 'Expense'}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-sm">{txn.description}</td>
+                                <td className="py-3 px-4 text-sm text-muted-foreground">{txn.reference}</td>
+                                <td className={cn("py-3 px-4 text-sm text-right font-medium",
+                                  txn.amount >= 0 ? 'text-success' : 'text-destructive')}>
+                                  {txn.amount >= 0 ? '+' : ''}₹{Math.abs(txn.amount).toLocaleString('en-IN')}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-right font-bold">
+                                  ₹{(txn.runningBalance || 0).toLocaleString('en-IN')}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p className="text-lg">No transactions found</p>
+                        <p className="text-sm mt-2">No cash movements in this period.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Balance Sheet Report */}
+                {reportData && reportData.assets && currentReportType === 'balance-sheet' && (
+                  <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+                    <h2 className="text-lg font-bold mb-2">Balance Sheet</h2>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      As on: {new Date(reportData.asOfDate).toLocaleDateString('en-IN')}
+                    </p>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Assets Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-base font-bold text-primary border-b pb-2">ASSETS</h3>
+
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center p-3 bg-success/5 rounded-lg">
+                            <div>
+                              <p className="font-medium">Cash & Bank</p>
+                              <p className="text-xs text-muted-foreground">Today's closing balance</p>
+                            </div>
+                            <p className="text-lg font-bold text-success">₹{(reportData.assets.cashAndBank || 0).toLocaleString('en-IN')}</p>
+                          </div>
+
+                          <div className="flex justify-between items-center p-3 bg-blue-500/5 rounded-lg">
+                            <div>
+                              <p className="font-medium">Stock / Inventory</p>
+                              <p className="text-xs text-muted-foreground">Current stock valuation</p>
+                            </div>
+                            <p className="text-lg font-bold text-blue-600">₹{(reportData.assets.inventory || 0).toLocaleString('en-IN')}</p>
+                          </div>
+
+                          <div className="flex justify-between items-center p-3 bg-warning/5 rounded-lg">
+                            <div>
+                              <p className="font-medium">Receivables</p>
+                              <p className="text-xs text-muted-foreground">Money owed by customers</p>
+                            </div>
+                            <p className="text-lg font-bold text-warning">₹{(reportData.assets.receivables || 0).toLocaleString('en-IN')}</p>
+                          </div>
+
+                          <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                            <div>
+                              <p className="font-medium">Other Assets</p>
+                              <p className="text-xs text-muted-foreground">Deposits, advance tax, etc.</p>
+                            </div>
+                            <p className="text-lg font-bold">₹{(reportData.assets.otherAssets || 0).toLocaleString('en-IN')}</p>
+                          </div>
+
+                          <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg border-2 border-primary/30">
+                            <p className="font-bold text-lg">Total Assets</p>
+                            <p className="text-2xl font-bold text-primary">₹{(reportData.assets.totalAssets || 0).toLocaleString('en-IN')}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Liabilities + Capital Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-base font-bold text-destructive border-b pb-2">LIABILITIES</h3>
+
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center p-3 bg-destructive/5 rounded-lg">
+                            <div>
+                              <p className="font-medium">GST Payable</p>
+                              <p className="text-xs text-muted-foreground">Output GST - ITC - GST Paid</p>
+                            </div>
+                            <p className="text-lg font-bold text-destructive">₹{(reportData.liabilities.gstPayable || 0).toLocaleString('en-IN')}</p>
+                          </div>
+
+                          <div className="flex justify-between items-center p-3 bg-orange-500/5 rounded-lg">
+                            <div>
+                              <p className="font-medium">Suppliers Payable</p>
+                              <p className="text-xs text-muted-foreground">Unpaid purchase bills</p>
+                            </div>
+                            <p className="text-lg font-bold text-orange-600">₹{(reportData.liabilities.suppliersPayable || 0).toLocaleString('en-IN')}</p>
+                          </div>
+
+                          <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                            <div>
+                              <p className="font-medium">Loans Outstanding</p>
+                              <p className="text-xs text-muted-foreground">Business loans, credit cards</p>
+                            </div>
+                            <p className="text-lg font-bold">₹{(reportData.liabilities.loansOutstanding || 0).toLocaleString('en-IN')}</p>
+                          </div>
+
+                          <div className="flex justify-between items-center p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                            <p className="font-semibold">Total Liabilities</p>
+                            <p className="text-lg font-bold text-destructive">₹{(reportData.liabilities.totalLiabilities || 0).toLocaleString('en-IN')}</p>
+                          </div>
+                        </div>
+
+                        <h3 className="text-base font-bold text-accent border-b pb-2 mt-6">OWNER'S CAPITAL</h3>
+
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center p-3 bg-accent/5 rounded-lg">
+                            <div>
+                              <p className="font-medium">Capital Invested</p>
+                              <p className="text-xs text-muted-foreground">Initial business capital</p>
+                            </div>
+                            <p className="text-lg font-bold text-accent">₹{(reportData.ownersCapital?.capitalInvested || 0).toLocaleString('en-IN')}</p>
+                          </div>
+
+                          <div className="flex justify-between items-center p-3 bg-success/5 rounded-lg">
+                            <div>
+                              <p className="font-medium">Retained Earnings</p>
+                              <p className="text-xs text-muted-foreground">Current year profit</p>
+                            </div>
+                            <p className={cn("text-lg font-bold", (reportData.ownersCapital?.retainedEarnings || 0) >= 0 ? 'text-success' : 'text-destructive')}>
+                              ₹{(reportData.ownersCapital?.retainedEarnings || 0).toLocaleString('en-IN')}
+                            </p>
+                          </div>
+
+                          <div className="flex justify-between items-center p-4 bg-accent/10 rounded-lg border-2 border-accent/30">
+                            <p className="font-bold text-lg">Total Capital</p>
+                            <p className="text-2xl font-bold text-accent">₹{(reportData.ownersCapital?.total || 0).toLocaleString('en-IN')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Balance Verification */}
+                    <div className={cn("mt-6 p-4 rounded-lg border-2",
+                      reportData.isBalanced ? "bg-success/10 border-success/30" : "bg-destructive/10 border-destructive/30")}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{reportData.isBalanced ? '✅' : '⚠️'}</span>
+                        <div>
+                          <p className={cn("font-bold", reportData.isBalanced ? "text-success" : "text-destructive")}>
+                            {reportData.isBalanced ? 'Balance Sheet is Balanced' : 'Balance Sheet Mismatch'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Assets (₹{(reportData.assets.totalAssets || 0).toLocaleString('en-IN')}) =
+                            Liabilities (₹{(reportData.liabilities.totalLiabilities || 0).toLocaleString('en-IN')}) +
+                            Capital (₹{(reportData.ownersCapital?.total || 0).toLocaleString('en-IN')})
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Trial Balance Report */}
+                {reportData && reportData.accounts && currentReportType === 'trial-balance' && (
+                  <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+                    <h2 className="text-lg font-bold mb-2">Trial Balance</h2>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      As on: {new Date(reportData.asOfDate).toLocaleDateString('en-IN')}
+                    </p>
+
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
+                        <p className="text-xs text-muted-foreground mb-1">Total Debit</p>
+                        <p className="text-xl font-bold text-success">₹{(reportData.totalDebit || 0).toLocaleString('en-IN')}</p>
+                      </div>
+                      <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
+                        <p className="text-xs text-muted-foreground mb-1">Total Credit</p>
+                        <p className="text-xl font-bold text-destructive">₹{(reportData.totalCredit || 0).toLocaleString('en-IN')}</p>
+                      </div>
+                      <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
+                        <p className="text-xs text-muted-foreground mb-1">Difference</p>
+                        <p className="text-xl font-bold text-warning">₹{(reportData.difference || 0).toLocaleString('en-IN')}</p>
+                      </div>
+                      <div className={cn("p-4 rounded-xl border-2",
+                        reportData.balanced ? "bg-success/5 border-success/20" : "bg-destructive/5 border-destructive/20")}>
+                        <p className="text-xs text-muted-foreground mb-1">Status</p>
+                        <p className={cn("text-xl font-bold", reportData.balanced ? "text-success" : "text-destructive")}>
+                          {reportData.balanced ? '✓ Balanced' : '✗ Unbalanced'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Account Type Summary */}
+                    {reportData.summary && (
+                      <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+                        <h3 className="font-semibold text-sm mb-3">Account Summary</h3>
+                        <div className="grid grid-cols-5 gap-3 text-center">
+                          <div className="p-2 bg-blue-500/10 rounded">
+                            <p className="text-xs text-muted-foreground">Assets</p>
+                            <p className="text-lg font-bold text-blue-600">{reportData.summary.assetAccounts}</p>
+                          </div>
+                          <div className="p-2 bg-destructive/10 rounded">
+                            <p className="text-xs text-muted-foreground">Liabilities</p>
+                            <p className="text-lg font-bold text-destructive">{reportData.summary.liabilityAccounts}</p>
+                          </div>
+                          <div className="p-2 bg-success/10 rounded">
+                            <p className="text-xs text-muted-foreground">Income</p>
+                            <p className="text-lg font-bold text-success">{reportData.summary.incomeAccounts}</p>
+                          </div>
+                          <div className="p-2 bg-warning/10 rounded">
+                            <p className="text-xs text-muted-foreground">Expenses</p>
+                            <p className="text-lg font-bold text-warning">{reportData.summary.expenseAccounts}</p>
+                          </div>
+                          <div className="p-2 bg-accent/10 rounded">
+                            <p className="text-xs text-muted-foreground">Capital</p>
+                            <p className="text-lg font-bold text-accent">{reportData.summary.capitalAccounts}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Ledger Accounts Table */}
+                    {reportData.accounts && reportData.accounts.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-border bg-muted/30">
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Ledger Name</th>
+                              <th className="text-center py-3 px-4 text-sm font-semibold">Type</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Debit ₹</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Credit ₹</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {reportData.accounts.map((acc: any, i: number) => (
+                              <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/20">
+                                <td className="py-3 px-4 text-sm font-medium">{acc.accountName}</td>
+                                <td className="py-3 px-4 text-sm text-center">
+                                  <span className={cn("px-2 py-1 rounded text-xs font-medium",
+                                    acc.accountType === 'asset' ? 'bg-blue-500/10 text-blue-600' :
+                                    acc.accountType === 'liability' ? 'bg-destructive/10 text-destructive' :
+                                    acc.accountType === 'income' ? 'bg-success/10 text-success' :
+                                    acc.accountType === 'expense' ? 'bg-warning/10 text-warning' :
+                                    'bg-accent/10 text-accent')}>
+                                    {acc.accountType.charAt(0).toUpperCase() + acc.accountType.slice(1)}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-right font-medium">
+                                  {acc.debit > 0 ? `₹${acc.debit.toLocaleString('en-IN')}` : '-'}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-right font-medium">
+                                  {acc.credit > 0 ? `₹${acc.credit.toLocaleString('en-IN')}` : '-'}
+                                </td>
+                              </tr>
+                            ))}
+                            {/* Totals Row */}
+                            <tr className="border-t-2 border-border bg-muted/50 font-bold">
+                              <td className="py-4 px-4 text-base" colSpan={2}>Total</td>
+                              <td className="py-4 px-4 text-base text-right text-success">₹{(reportData.totalDebit || 0).toLocaleString('en-IN')}</td>
+                              <td className="py-4 px-4 text-base text-right text-destructive">₹{(reportData.totalCredit || 0).toLocaleString('en-IN')}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p className="text-lg">No accounts found</p>
+                        <p className="text-sm mt-2">Start adding transactions to see your trial balance.</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

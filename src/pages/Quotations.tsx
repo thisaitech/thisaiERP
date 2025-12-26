@@ -5117,10 +5117,184 @@ TOTAL:       ₹${invoice.total}
       {/* Header - Only show in list mode */}
       {viewMode === 'list' && (
       <div className="flex-shrink-0">
-        {/* Top Row: Period Filter Left + Action Button Right */}
-        <div className="flex items-center justify-between mb-3">
-          {/* Period Filter Tabs - Left Side */}
-          <div className="flex-shrink-0">
+        {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
+        <div className="flex items-stretch justify-between gap-4 mb-3">
+          {/* Left Side: KPI Cards - Rectangular filling space */}
+          <div className="flex-1 grid grid-cols-4 gap-3">
+            {/* Sales Card - Green Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button
+                onClick={() => setFilterStatus('all')}
+                className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{t.nav.quotations}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    ₹{dashboardStats.periodSales >= 10000000 ? (dashboardStats.periodSales / 10000000).toFixed(1) + ' Cr' : dashboardStats.periodSales >= 100000 ? (dashboardStats.periodSales / 100000).toFixed(1) + ' L' : dashboardStats.periodSales >= 1000 ? (dashboardStats.periodSales / 1000).toFixed(1) + ' K' : dashboardStats.periodSales.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Collected Card - Red Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button
+                onClick={() => setFilterStatus('paid')}
+                className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{t.sales.collected}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
+                    ₹{dashboardStats.totalPaid >= 10000000 ? (dashboardStats.totalPaid / 10000000).toFixed(1) + ' Cr' : dashboardStats.totalPaid >= 100000 ? (dashboardStats.totalPaid / 100000).toFixed(1) + ' L' : dashboardStats.totalPaid >= 1000 ? (dashboardStats.totalPaid / 1000).toFixed(1) + ' K' : dashboardStats.totalPaid.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Pending Card - Amber Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 shadow-[6px_6px_12px_rgba(245,158,11,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(245,158,11,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button
+                onClick={() => setFilterStatus('pending')}
+                className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent font-semibold">{t.sales.pending}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                    ₹{dashboardStats.pendingRecovery >= 10000000 ? (dashboardStats.pendingRecovery / 10000000).toFixed(1) + ' Cr' : dashboardStats.pendingRecovery >= 100000 ? (dashboardStats.pendingRecovery / 100000).toFixed(1) + ' L' : dashboardStats.pendingRecovery >= 1000 ? (dashboardStats.pendingRecovery / 1000).toFixed(1) + ' K' : dashboardStats.pendingRecovery.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Invoices Card - Blue Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button
+                onClick={() => setFilterStatus('all')}
+                className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{t.sales.invoice}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{dashboardStats.invoiceCount}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Right Side: Date Filters + Action Buttons */}
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            {/* Action Buttons Row */}
+            <div className="flex items-center gap-2">
+              {/* Tally Export Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    setTallyDropdownPosition({
+                      top: rect.bottom + 4,
+                      left: rect.right - 160
+                    })
+                    setShowTallyDropdown(!showTallyDropdown)
+                  }}
+                  className="h-9 px-4 rounded-xl text-xs bg-white text-emerald-600 font-semibold flex items-center gap-1.5
+                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                    active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                    transition-all duration-200 border border-emerald-200"
+                >
+                  <Download size={14} weight="bold" />
+                  <span className="hidden sm:inline">Tally</span>
+                  <CaretDown size={12} />
+                </button>
+                {showTallyDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-[100]" onClick={() => setShowTallyDropdown(false)} />
+                    <div
+                      className="fixed bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-[101] min-w-[160px]"
+                      style={{
+                        top: tallyDropdownPosition.top,
+                        left: Math.max(8, tallyDropdownPosition.left)
+                      }}
+                    >
+                      <button
+                        onClick={() => {
+                          exportToTallyExcel(invoices)
+                          setShowTallyDropdown(false)
+                          toast.success('Tally Excel exported!')
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2"
+                      >
+                        <Download size={14} className="text-emerald-600" />
+                        Export Excel
+                      </button>
+                      <button
+                        onClick={() => {
+                          exportToTallyCSV(invoices)
+                          setShowTallyDropdown(false)
+                          toast.success('Tally CSV exported!')
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2"
+                      >
+                        <Download size={14} className="text-emerald-600" />
+                        Export CSV
+                      </button>
+                      <button
+                        onClick={() => {
+                          downloadTallyXML(invoices)
+                          setShowTallyDropdown(false)
+                          toast.success('Tally XML exported!')
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2"
+                      >
+                        <Download size={14} className="text-emerald-600" />
+                        Export XML
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+              {/* Add Quotation/New POS Bill */}
+              <button
+                onClick={() => {
+                  if (location.pathname === '/pos') {
+                    setShowCafePOS(true)
+                    localStorage.removeItem('pos_viewMode')
+                  }
+                  setViewMode('create')
+                }}
+                className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
+                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                  active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                  transition-all duration-200"
+              >
+                <Plus size={14} weight="bold" />
+                <span>{location.pathname === '/pos' ? 'POS' : 'Quotation'}</span>
+              </button>
+            </div>
+
+            {/* Date Filter Tabs */}
             <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
               {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
                 <button
@@ -5146,166 +5320,6 @@ TOTAL:       ₹${invoice.total}
               ))}
             </div>
           </div>
-
-          {/* Action Buttons - Right Side */}
-          <div className="flex-shrink-0 flex items-center gap-2">
-                {/* Tally Export Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect()
-                      setTallyDropdownPosition({
-                        top: rect.bottom + 4,
-                        left: rect.right - 160
-                      })
-                      setShowTallyDropdown(!showTallyDropdown)
-                    }}
-                    className="h-9 px-4 rounded-xl text-xs bg-white text-emerald-600 font-semibold flex items-center gap-1.5
-                      shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                      dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                      hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                      active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                      transition-all duration-200 border border-emerald-200"
-                  >
-                    <Download size={14} weight="bold" />
-                    <span className="hidden sm:inline">Tally</span>
-                    <CaretDown size={12} />
-                  </button>
-                  {showTallyDropdown && (
-                    <>
-                      <div className="fixed inset-0 z-[100]" onClick={() => setShowTallyDropdown(false)} />
-                      <div
-                        className="fixed bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-[101] min-w-[160px]"
-                        style={{
-                          top: tallyDropdownPosition.top,
-                          left: Math.max(8, tallyDropdownPosition.left)
-                        }}
-                      >
-                        <button
-                          onClick={() => {
-                            exportToTallyExcel(invoices)
-                            setShowTallyDropdown(false)
-                            toast.success('Tally Excel exported!')
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2"
-                        >
-                          <Download size={14} className="text-emerald-600" />
-                          Export Excel
-                        </button>
-                        <button
-                          onClick={() => {
-                            exportToTallyCSV(invoices)
-                            setShowTallyDropdown(false)
-                            toast.success('Tally CSV exported!')
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2"
-                        >
-                          <Download size={14} className="text-emerald-600" />
-                          Export CSV
-                        </button>
-                        <button
-                          onClick={() => {
-                            downloadTallyXML(invoices)
-                            setShowTallyDropdown(false)
-                            toast.success('Tally XML exported!')
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2"
-                        >
-                          <Download size={14} className="text-emerald-600" />
-                          Export XML
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-                {/* Add Quotation/New POS Bill */}
-                <button
-                  onClick={() => {
-                    if (location.pathname === '/pos') {
-                      setShowCafePOS(true)
-                      localStorage.removeItem('pos_viewMode')
-                    }
-                    setViewMode('create')
-                  }}
-                  className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
-                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                    active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                    transition-all duration-200"
-                >
-                  <Plus size={14} weight="bold" />
-                  <span>{location.pathname === '/pos' ? 'POS' : 'Quotation'}</span>
-                </button>
-          </div>
-        </div>
-
-        {/* Stats Grid - Dashboard Style Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-
-          {/* Sales Card - Green Theme */}
-          <button
-            onClick={() => setFilterStatus('all')}
-            className="bg-green-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8e0c8,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-green-600 font-medium">{t.nav.sales}</span>
-              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]">
-                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-green-700">₹{dashboardStats.periodSales.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          </button>
-
-          {/* Collected Card - Emerald Theme */}
-          <button
-            onClick={() => setFilterStatus('paid')}
-            className="bg-emerald-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8e0c8,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-emerald-600 font-medium">{t.sales.collected}</span>
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]">
-                <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-emerald-700">₹{dashboardStats.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          </button>
-
-          {/* Pending Card - Orange Theme */}
-          <button
-            onClick={() => setFilterStatus('pending')}
-            className="bg-orange-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5e0b8,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#f5e0b8,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-orange-600 font-medium">{t.sales.pending}</span>
-              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5e0b8,inset_-3px_-3px_6px_#ffffff]">
-                <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-orange-700">₹{dashboardStats.pendingRecovery.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          </button>
-
-          {/* Invoices Card - Blue Theme */}
-          <button
-            onClick={() => setFilterStatus('all')}
-            className="bg-blue-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8d4f5,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-blue-600 font-medium">{t.sales.invoice}</span>
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]">
-                <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-blue-700">{dashboardStats.invoiceCount}</div>
-          </button>
         </div>
       </div>
       )}

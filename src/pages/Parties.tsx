@@ -9,7 +9,6 @@ import {
   UserCircle,
   Storefront,
   Phone,
-  Envelope,
   MapPin,
   TrendUp,
   TrendDown,
@@ -863,143 +862,158 @@ const Parties = () => {
         animate={{ opacity: 1, y: 0 }}
         className="mb-3"
       >
-        {/* Top Row: Period Filter (Left) + Actions (Right) */}
-        <div className="flex items-center justify-between mb-3">
-          {/* Period Filter Tabs - Left Side */}
-          <div className="flex-shrink-0">
-            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
-            {[
-              { value: 'today', label: t.common.today },
-              { value: 'week', label: t.common.week },
-              { value: 'month', label: t.common.month },
-              { value: 'year', label: t.common.year },
-              { value: 'all', label: t.common.all },
-              { value: 'custom', label: t.common.custom },
-            ].map((filter) => (
+        {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
+        <div className="flex items-stretch justify-between gap-4 mb-3">
+          {/* Left Side: KPI Cards - Rectangular filling space */}
+          <div className="flex-1 grid grid-cols-4 gap-3">
+            {/* Parties Card - Blue Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
-                key={filter.value}
-                onClick={() => {
-                  setStatsFilter(filter.value as any)
-                  if (filter.value === 'custom') {
-                    setShowCustomDatePicker(true)
-                  } else {
-                    setShowCustomDatePicker(false)
-                  }
-                }}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
-                  statsFilter === filter.value
-                    ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                )}
+                onClick={() => setActiveTab('all')}
+                className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3"
               >
-                {filter.label}
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <Users size={20} weight="duotone" className="text-blue-500" />
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'தரப்பினர்' : 'Parties'}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{partiesSummary.totalParties}</span>
+                </div>
               </button>
-            ))}
+            </div>
+
+            {/* To Receive Card - Green Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button
+                onClick={() => setActiveTab('customers')}
+                className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'பெற வேண்டியது' : 'To Receive'}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    ₹{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* To Pay Card - Red Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button
+                onClick={() => setActiveTab('suppliers')}
+                className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'To Pay'}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
+                    ₹{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Net Balance Card - Purple Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-purple-400 to-violet-500 shadow-[6px_6px_12px_rgba(139,92,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(139,92,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button
+                className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'நிகர இருப்பு' : 'Net Balance'}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                    ₹{Math.abs(partiesSummary.netBalance) >= 10000000 ? (partiesSummary.netBalance / 10000000).toFixed(1) + ' Cr' : Math.abs(partiesSummary.netBalance) >= 100000 ? (partiesSummary.netBalance / 100000).toFixed(1) + ' L' : Math.abs(partiesSummary.netBalance) >= 1000 ? (partiesSummary.netBalance / 1000).toFixed(1) + ' K' : partiesSummary.netBalance.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
             </div>
           </div>
 
-          {/* Action Buttons - Right Side */}
-          <div className="flex-shrink-0 flex items-center gap-2">
-            {/* Cleanup Duplicates Button */}
-            <button
-              onClick={handleCleanupDuplicates}
-              disabled={isCleaningDuplicates}
-              className="h-9 px-3 rounded-xl bg-amber-50 text-xs text-amber-700 font-medium flex items-center gap-1.5
-                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                disabled:opacity-50 disabled:cursor-not-allowed
-                transition-all duration-200"
-              title="Remove duplicate parties (case-insensitive)"
-            >
-              {isCleaningDuplicates ? (
-                <ArrowsClockwise size={14} weight="bold" className="animate-spin" />
-              ) : (
-                <ArrowsClockwise size={14} weight="bold" />
-              )}
-              <span className="hidden sm:inline">{isCleaningDuplicates ? 'Cleaning...' : 'Cleanup'}</span>
-            </button>
+          {/* Right Side: Date Filters + Action Buttons */}
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            {/* Action Buttons Row */}
+            <div className="flex items-center gap-2">
+              {/* Cleanup Duplicates Button */}
+              <button
+                onClick={handleCleanupDuplicates}
+                disabled={isCleaningDuplicates}
+                className="h-9 px-3 rounded-xl bg-amber-50 text-xs text-amber-700 font-medium flex items-center gap-1.5
+                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                  active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  transition-all duration-200"
+                title="Remove duplicate parties (case-insensitive)"
+              >
+                {isCleaningDuplicates ? (
+                  <ArrowsClockwise size={14} weight="bold" className="animate-spin" />
+                ) : (
+                  <ArrowsClockwise size={14} weight="bold" />
+                )}
+                <span className="hidden sm:inline">{isCleaningDuplicates ? 'Cleaning...' : 'Cleanup'}</span>
+              </button>
 
-            {/* Add Party Button */}
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
-                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                transition-all duration-200"
-            >
-              <Plus size={14} weight="bold" />
-              <span className="hidden sm:inline">{language === 'ta' ? 'தரப்பினர் சேர்' : 'Add Party'}</span>
-            </button>
+              {/* Add Party Button */}
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
+                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                  active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                  transition-all duration-200"
+              >
+                <Plus size={14} weight="bold" />
+                <span className="hidden sm:inline">{language === 'ta' ? 'தரப்பினர் சேர்' : 'Add Party'}</span>
+              </button>
+            </div>
+
+            {/* Date Filter Tabs */}
+            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+              {[
+                { value: 'today', label: t.common.today },
+                { value: 'week', label: t.common.week },
+                { value: 'month', label: t.common.month },
+                { value: 'year', label: t.common.year },
+                { value: 'all', label: t.common.all },
+                { value: 'custom', label: t.common.custom },
+              ].map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() => {
+                    setStatsFilter(filter.value as any)
+                    if (filter.value === 'custom') {
+                      setShowCustomDatePicker(true)
+                    } else {
+                      setShowCustomDatePicker(false)
+                    }
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                    statsFilter === filter.value
+                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {/* Parties Card - Blue Theme */}
-          <button
-            onClick={() => setActiveTab('all')}
-            className="bg-blue-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8d4f5,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-blue-600 font-medium">{language === 'ta' ? 'தரப்பினர்' : 'Parties'}</span>
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]">
-                <Users size={20} weight="duotone" className="text-blue-600" />
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-blue-700">{partiesSummary.totalParties}</div>
-          </button>
-
-          {/* To Receive Card - Green Theme */}
-          <button
-            onClick={() => setActiveTab('customers')}
-            className="bg-green-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#b8e0c8,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-green-600 font-medium">{language === 'ta' ? 'பெற வேண்டியது' : 'To Receive'}</span>
-              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]">
-                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-green-700">₹{(partiesSummary.totalReceivables / 100000).toFixed(2)}L</div>
-          </button>
-
-          {/* To Pay Card - Red Theme */}
-          <button
-            onClick={() => setActiveTab('suppliers')}
-            className="bg-red-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5c4c4,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#f5c4c4,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-red-600 font-medium">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'To Pay'}</span>
-              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]">
-                <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-red-600">₹{(partiesSummary.totalPayables / 100000).toFixed(2)}L</div>
-          </button>
-
-          {/* Net Balance Card - Purple Theme */}
-          <button
-            className="bg-purple-50 rounded-2xl p-4 shadow-[10px_10px_20px_#d8c4f5,-10px_-10px_20px_#ffffff] hover:shadow-[14px_14px_28px_#d8c4f5,-14px_-14px_28px_#ffffff] transition-all active:scale-[0.98]"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-purple-600 font-medium">{language === 'ta' ? 'நிகர இருப்பு' : 'Net Balance'}</span>
-              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#d8c4f5,inset_-3px_-3px_6px_#ffffff]">
-                <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-purple-700">₹{(partiesSummary.netBalance / 100000).toFixed(2)}L</div>
-          </button>
         </div>
       </motion.div>
 

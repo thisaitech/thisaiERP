@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Sun, Moon, CloudSun, Sparkle, TrendingUp, Target, Trophy } from '@phosphor-icons/react'
+import { Sun, Moon, CloudSun, Sparkle, TrendUp, Target, Trophy } from '@phosphor-icons/react'
 import { cn } from '../lib/utils'
 
 interface HeroStats {
@@ -188,7 +188,7 @@ const DynamicHeroGreeting: React.FC<DynamicHeroGreetingProps> = ({ stats, classN
             </motion.div>
           )}
           {motivation.type === 'encourage' && (
-            <TrendingUp size={20} weight="duotone" className="text-white/80" />
+            <TrendUp size={20} weight="duotone" className="text-white/80" />
           )}
           <p className="text-white/90 font-medium">{motivation.text}</p>
         </motion.div>

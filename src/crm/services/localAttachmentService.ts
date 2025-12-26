@@ -1,8 +1,6 @@
 // Local Attachment Service - Uses IndexedDB to store attachments locally
 // This avoids Firebase CORS and data consistency issues
 
-import { CRMAttachment, CRMSiteVisit } from '../types';
-
 interface LocalAttachment {
   id: string;
   leadId: string;
@@ -14,6 +12,22 @@ interface LocalAttachment {
   mimeType: string;
   category?: string;
   description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  updatedBy: string;
+}
+
+interface LocalSiteVisit {
+  id: string;
+  leadId: string;
+  engineerId: string;
+  engineerName: string;
+  visitAt: Date;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  notes?: string;
+  photos?: string[];
+  checklist: Record<string, boolean>;
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
@@ -37,6 +51,11 @@ class LocalAttachmentStorage {
           const store = db.createObjectStore('attachments', { keyPath: 'id' });
           store.createIndex('leadId', 'leadId', { unique: false });
           store.createIndex('createdAt', 'createdAt', { unique: false });
+        }
+        if (!db.objectStoreNames.contains('siteVisits')) {
+          const store = db.createObjectStore('siteVisits', { keyPath: 'id' });
+          store.createIndex('leadId', 'leadId', { unique: false });
+          store.createIndex('visitAt', 'visitAt', { unique: false });
         }
       };
     });
@@ -96,7 +115,7 @@ class LocalAttachmentStorage {
     });
   }
 
-  async clearAll(): Promise<void> {
+  async clearAllAttachments(): Promise<void> {
     const db = await this.openDB();
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(['attachments'], 'readwrite');
@@ -107,117 +126,8 @@ class LocalAttachmentStorage {
       request.onerror = () => reject(request.error);
     });
   }
-}
 
-// Singleton instance
-const localStorage = new LocalAttachmentStorage();
-
-// Convert file to base64
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
-}
-
-// Local attachment service functions
-export const uploadAttachmentLocal = async (
-  file: File,
-  leadId: string,
-  entityType: string,
-  entityId: string,
-  uploadedBy: string,
-  category?: string,
-  description?: string
-): Promise<LocalAttachment> => {
-  // Check file size (limit to 10MB for local storage)
-  if (file.size > 10 * 1024 * 1024) {
-    throw new Error('File size must be less than 10MB');
-  }
-
-  // Convert file to base64
-  const fileUrl = await fileToBase64(file);
-
-  // Create attachment record
-  const attachment: LocalAttachment = {
-    id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9), // Unique ID
-    leadId,
-    entityType,
-    entityId,
-    fileUrl, // Base64 data URL
-    fileName: file.name,
-    fileSize: file.size,
-    mimeType: file.type,
-    category,
-    description,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: uploadedBy,
-    updatedBy: uploadedBy
-  };
-
-  await localStorage.saveAttachment(attachment);
-
-  return attachment;
-};
-
-export const getLeadAttachmentsLocal = async (leadId: string): Promise<LocalAttachment[]> => {
-  return await localStorage.getAttachmentsByLeadId(leadId);
-};
-
-export const deleteAttachmentLocal = async (id: string): Promise<void> => {
-  await localStorage.deleteAttachment(id);
-};
-
-export const clearAllAttachmentsLocal = async (): Promise<void> => {
-  await localStorage.clearAll();
-};
-
-export const getAllAttachmentsLocal = async (): Promise<LocalAttachment[]> => {
-  return await localStorage.getAllAttachments();
-};
-
-// Site Visit Local Storage
-interface LocalSiteVisit {
-  id: string;
-  leadId: string;
-  engineerId: string;
-  engineerName: string;
-  visitAt: Date;
-  status: 'scheduled' | 'completed' | 'cancelled';
-  notes?: string;
-  photos?: string[];
-  checklist: Record<string, boolean>;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy: string;
-  updatedBy: string;
-}
-
-class LocalSiteVisitStorage {
-  private dbName = 'crm_site_visits';
-  private version = 1;
-
-  private async openDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.version);
-
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains('siteVisits')) {
-          const store = db.createObjectStore('siteVisits', { keyPath: 'id' });
-          store.createIndex('leadId', 'leadId', { unique: false });
-          store.createIndex('visitAt', 'visitAt', { unique: false });
-        }
-      };
-    });
-  }
-
+  // Site visit methods
   async saveSiteVisit(visit: LocalSiteVisit): Promise<void> {
     const db = await this.openDB();
     return new Promise((resolve, reject) => {
@@ -285,13 +195,90 @@ class LocalSiteVisitStorage {
   }
 }
 
-// Singleton instance
-const localSiteVisitStorage = new LocalSiteVisitStorage();
+// Singleton instances
+const localAttachmentStorage = new LocalAttachmentStorage();
 
-// Site Visit Local Storage Functions
+// Convert file to base64
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+}
+
+// Attachment functions
+export const uploadAttachmentLocal = async (
+  file: File,
+  leadId: string,
+  entityType: string,
+  entityId: string,
+  uploadedBy: string,
+  category?: string,
+  description?: string
+): Promise<LocalAttachment> => {
+  console.log('📎 uploadAttachmentLocal called for leadId:', leadId, 'file:', file.name);
+
+  // Check file size (limit to 10MB for local storage)
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error('File size must be less than 10MB');
+  }
+
+  // Convert file to base64
+  const fileUrl = await fileToBase64(file);
+  console.log('📎 File converted to base64, size:', fileUrl.length);
+
+  // Create attachment record
+  const attachment: LocalAttachment = {
+    id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
+    leadId,
+    entityType,
+    entityId,
+    fileUrl,
+    fileName: file.name,
+    fileSize: file.size,
+    mimeType: file.type,
+    category,
+    description,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    createdBy: uploadedBy,
+    updatedBy: uploadedBy
+  };
+
+  await localAttachmentStorage.saveAttachment(attachment);
+  console.log('📎 Attachment saved locally with ID:', attachment.id);
+
+  return attachment;
+};
+
+export const getLeadAttachmentsLocal = async (leadId: string): Promise<LocalAttachment[]> => {
+  console.log('📎 getLeadAttachmentsLocal called for leadId:', leadId);
+  return await localAttachmentStorage.getAttachmentsByLeadId(leadId);
+};
+
+export const getAllAttachmentsLocal = async (): Promise<LocalAttachment[]> => {
+  console.log('📎 getAllAttachmentsLocal called');
+  return await localAttachmentStorage.getAllAttachments();
+};
+
+export const deleteAttachmentLocal = async (id: string): Promise<void> => {
+  console.log('🗑️ deleteAttachmentLocal called for ID:', id);
+  await localAttachmentStorage.deleteAttachment(id);
+};
+
+export const clearAllAttachmentsLocal = async (): Promise<void> => {
+  console.log('🧹 clearAllAttachmentsLocal called');
+  await localAttachmentStorage.clearAllAttachments();
+};
+
+// Site visit functions
 export const createSiteVisitLocal = async (
   visitData: Omit<LocalSiteVisit, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<LocalSiteVisit> => {
+  console.log('🏗️ createSiteVisitLocal called for leadId:', visitData.leadId);
+
   const visit: LocalSiteVisit = {
     ...visitData,
     id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
@@ -300,33 +287,38 @@ export const createSiteVisitLocal = async (
     status: visitData.status || 'scheduled'
   };
 
-  await localSiteVisitStorage.saveSiteVisit(visit);
+  await localAttachmentStorage.saveSiteVisit(visit);
+  console.log('✅ Site visit saved locally with ID:', visit.id);
 
   return visit;
 };
 
 export const getLeadSiteVisitsLocal = async (leadId: string): Promise<LocalSiteVisit[]> => {
-  return await localSiteVisitStorage.getSiteVisitsByLeadId(leadId);
-};
-
-export const deleteSiteVisitLocal = async (id: string): Promise<void> => {
-  await localSiteVisitStorage.deleteSiteVisit(id);
-};
-
-export const clearAllSiteVisitsLocal = async (): Promise<void> => {
-  await localSiteVisitStorage.clearAllSiteVisits();
+  console.log('📍 getLeadSiteVisitsLocal called for leadId:', leadId);
+  return await localAttachmentStorage.getSiteVisitsByLeadId(leadId);
 };
 
 export const getAllSiteVisitsLocal = async (): Promise<LocalSiteVisit[]> => {
-  return await localSiteVisitStorage.getAllSiteVisits();
+  console.log('📍 getAllSiteVisitsLocal called');
+  return await localAttachmentStorage.getAllSiteVisits();
+};
+
+export const deleteSiteVisitLocal = async (id: string): Promise<void> => {
+  console.log('🗑️ deleteSiteVisitLocal called for ID:', id);
+  await localAttachmentStorage.deleteSiteVisit(id);
+};
+
+export const clearAllSiteVisitsLocal = async (): Promise<void> => {
+  console.log('🧹 clearAllSiteVisitsLocal called');
+  await localAttachmentStorage.clearAllSiteVisits();
 };
 
 // Type conversion functions
-export const localAttachmentToCRMAttachment = (local: LocalAttachment): CRMAttachment => {
+export const localAttachmentToCRMAttachment = (local: LocalAttachment): any => {
   return {
     id: local.id,
     leadId: local.leadId,
-    entityType: local.entityType as any,
+    entityType: local.entityType,
     entityId: local.entityId,
     fileUrl: local.fileUrl,
     fileName: local.fileName,
@@ -341,7 +333,7 @@ export const localAttachmentToCRMAttachment = (local: LocalAttachment): CRMAttac
   };
 };
 
-export const crmAttachmentToLocalAttachment = (crm: CRMAttachment): LocalAttachment => {
+export const crmAttachmentToLocalAttachment = (crm: any): LocalAttachment => {
   return {
     id: crm.id,
     leadId: crm.leadId,
@@ -361,7 +353,7 @@ export const crmAttachmentToLocalAttachment = (crm: CRMAttachment): LocalAttachm
 };
 
 // Site Visit type conversion functions
-export const localSiteVisitToCRMSiteVisit = (local: LocalSiteVisit): CRMSiteVisit => {
+export const localSiteVisitToCRMSiteVisit = (local: LocalSiteVisit): any => {
   return {
     id: local.id,
     leadId: local.leadId,
@@ -379,7 +371,7 @@ export const localSiteVisitToCRMSiteVisit = (local: LocalSiteVisit): CRMSiteVisi
   };
 };
 
-export const crmSiteVisitToLocalSiteVisit = (crm: CRMSiteVisit): LocalSiteVisit => {
+export const crmSiteVisitToLocalSiteVisit = (crm: any): LocalSiteVisit => {
   return {
     id: crm.id,
     leadId: crm.leadId,
@@ -396,4 +388,3 @@ export const crmSiteVisitToLocalSiteVisit = (crm: CRMSiteVisit): LocalSiteVisit 
     updatedBy: crm.updatedBy
   };
 };
-

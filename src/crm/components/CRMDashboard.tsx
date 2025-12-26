@@ -202,34 +202,6 @@ const CRMDashboard: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Total Leads"
-          value={metrics.totalLeads}
-          icon={Users}
-          color="text-blue-600"
-        />
-        <MetricCard
-          title="Active Leads"
-          value={activeLeads}
-          icon={Target}
-          color="text-green-600"
-        />
-        <MetricCard
-          title="Won Deals"
-          value={wonLeads}
-          icon={CheckCircle}
-          color="text-emerald-600"
-        />
-        <MetricCard
-          title="Conversion Rate"
-          value={`${Math.round(metrics.conversionRate)}%`}
-          icon={TrendUp}
-          color="text-purple-600"
-        />
-      </div>
-
       {/* Pipeline Overview */}
       <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">

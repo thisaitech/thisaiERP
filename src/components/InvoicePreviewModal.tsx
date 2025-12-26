@@ -232,7 +232,7 @@ export default function InvoicePreviewModal({ isOpen, onClose, documentType = 'i
   // Pinch-to-zoom state
   const [touchDistance, setTouchDistance] = useState(0)
   const [initialZoom, setInitialZoom] = useState(100)
-  const [selectedPaperSize, setSelectedPaperSize] = useState<'a4' | 'a5' | 'letter' | 'thermal3' | 'thermal2'>(() => {
+  const [selectedPaperSize, setSelectedPaperSize] = useState<'a4' | 'letter' | 'a5' | 'thermal3' | 'thermal2'>(() => {
     try {
       return (localStorage.getItem('invoice_paperSize') as any) || 'a4'
     } catch { return 'a4' }
@@ -248,7 +248,7 @@ export default function InvoicePreviewModal({ isOpen, onClose, documentType = 'i
     setSelectedColor(color)
     try { localStorage.setItem('invoice_color', color.id) } catch {}
   }
-  const handlePaperSizeChange = (size: 'a4' | 'a5' | 'letter' | 'thermal3' | 'thermal2') => {
+  const handlePaperSizeChange = (size: 'a4' | 'letter' | 'a5' | 'thermal3' | 'thermal2') => {
     setSelectedPaperSize(size)
     try { localStorage.setItem('invoice_paperSize', size) } catch {}
   }

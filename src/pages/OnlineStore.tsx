@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import {
-  Plus,
   Storefront,
   ShoppingCart,
   Globe,
@@ -11,19 +10,16 @@ import {
   Users,
   Star,
   ShareNetwork,
-  Link as LinkIcon,
   Copy,
   Palette,
   Gear,
-  ChartBar,
-  Bell
+  ChartBar
 } from '@phosphor-icons/react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { toast } from 'sonner'
 
 const OnlineStore = () => {
-  const [storeActive, setStoreActive] = useState(true)
   const [selectedTab, setSelectedTab] = useState('overview')
 
   const storeStats = {

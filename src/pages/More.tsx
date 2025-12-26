@@ -835,99 +835,165 @@ const More = () => {
   ]
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 pb-20 lg:pb-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
-      >
-        <div className="flex items-center gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{t.more.title}</h1>
-            <p className="text-sm text-muted-foreground">{t.more.subtitle}</p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Quick Actions - Proforma Invoice & Delivery Challan at TOP */}
+    <div className="min-h-screen p-3 sm:p-4 pb-20 lg:pb-4">
+      {/* Quick Actions - 2 rows of 3 cards each */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6"
+        className="mb-4"
       >
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">{t.more.quickActions}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Proforma Invoice Card */}
+        <h2 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{t.more.quickActions}</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {/* Row 1: Proforma Invoice */}
           <div
             className={cn(
-              "bg-gradient-to-br from-red-500 to-orange-500 rounded-xl p-5 text-white shadow-lg cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl",
-              selectedModule === 'proforma' && "ring-4 ring-orange-300"
+              "bg-gradient-to-br from-red-500 to-orange-500 rounded-xl p-4 text-white shadow-lg cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl",
+              selectedModule === 'proforma' && "ring-2 ring-orange-300"
             )}
             onClick={() => handleModuleClick('proforma', t.more.proformaInvoice)}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Receipt size={28} weight="duotone" />
-                  <h3 className="text-lg font-bold">{t.more.proformaInvoice}</h3>
-                </div>
-                <p className="text-sm text-white/80 mb-4">{t.more.proformaInvoiceDesc}</p>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleModuleClick('proforma', t.more.proformaInvoice)
-                    if (hasFeature('performanceInvoice' as any)) {
-                      setSelectedModule('proforma')
-                      setShowCreateModal(true)
-                    }
-                  }}
-                  className="px-4 py-2 bg-white text-orange-600 rounded-lg text-sm font-semibold hover:bg-white/90 flex items-center gap-2"
-                >
-                  <Plus size={16} weight="bold" /> {t.more.createNew}
-                </button>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold">{proformaInvoices.length}</p>
-                <p className="text-xs text-white/70">{t.more.totalCreated}</p>
-              </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Receipt size={24} weight="duotone" />
+              <h3 className="text-sm font-bold line-clamp-1">{t.more.proformaInvoice}</h3>
             </div>
+            <p className="text-xs text-white/80 mb-2 line-clamp-1">{t.more.proformaInvoiceDesc}</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleModuleClick('proforma', t.more.proformaInvoice)
+                if (hasFeature('performanceInvoice' as any)) {
+                  setSelectedModule('proforma')
+                  setShowCreateModal(true)
+                }
+              }}
+              className="px-3 py-1.5 bg-white text-orange-600 rounded-lg text-xs font-semibold hover:bg-white/90 flex items-center gap-1"
+            >
+              <Plus size={14} weight="bold" /> {t.more.createNew}
+            </button>
           </div>
 
-          {/* Delivery Challan Card */}
+          {/* Row 1: Delivery Challan */}
           <div
             className={cn(
-              "bg-gradient-to-br from-blue-600 to-cyan-500 rounded-xl p-5 text-white shadow-lg cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl",
-              selectedModule === 'delivery-challan' && "ring-4 ring-cyan-300"
+              "bg-gradient-to-br from-blue-600 to-cyan-500 rounded-xl p-4 text-white shadow-lg cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl",
+              selectedModule === 'delivery-challan' && "ring-2 ring-cyan-300"
             )}
             onClick={() => handleModuleClick('delivery-challan', t.more.deliveryChallan)}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Truck size={28} weight="duotone" />
-                  <h3 className="text-lg font-bold">{t.more.deliveryChallan}</h3>
-                </div>
-                <p className="text-sm text-white/80 mb-4">{t.more.deliveryChallanDesc}</p>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleModuleClick('delivery-challan', t.more.deliveryChallan)
-                    if (hasFeature('deliveryChallan' as any)) {
-                      setSelectedModule('delivery-challan')
-                      setShowCreateModal(true)
-                    }
-                  }}
-                  className="px-4 py-2 bg-white text-blue-600 rounded-lg text-sm font-semibold hover:bg-white/90 flex items-center gap-2"
-                >
-                  <Plus size={16} weight="bold" /> {t.more.createNew}
-                </button>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold">{deliveryChallans.length}</p>
-                <p className="text-xs text-white/70">{t.more.totalCreated}</p>
-              </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Truck size={24} weight="duotone" />
+              <h3 className="text-sm font-bold line-clamp-1">{t.more.deliveryChallan}</h3>
             </div>
+            <p className="text-xs text-white/80 mb-2 line-clamp-1">{t.more.deliveryChallanDesc}</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleModuleClick('delivery-challan', t.more.deliveryChallan)
+                if (hasFeature('deliveryChallan' as any)) {
+                  setSelectedModule('delivery-challan')
+                  setShowCreateModal(true)
+                }
+              }}
+              className="px-3 py-1.5 bg-white text-blue-600 rounded-lg text-xs font-semibold hover:bg-white/90 flex items-center gap-1"
+            >
+              <Plus size={14} weight="bold" /> {t.more.createNew}
+            </button>
+          </div>
+
+          {/* Row 1: Payment In */}
+          <div
+            className={cn(
+              "bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl p-4 text-white shadow-lg cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl",
+              selectedModule === 'payment-in' && "ring-2 ring-emerald-300"
+            )}
+            onClick={() => handleModuleClick('payment-in', t.more.paymentIn)}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <CurrencyCircleDollar size={24} weight="duotone" />
+              <h3 className="text-sm font-bold line-clamp-1">{t.more.paymentIn}</h3>
+            </div>
+            <p className="text-xs text-white/80 mb-2 line-clamp-1">{t.more.paymentInDesc}</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleModuleClick('payment-in', t.more.paymentIn)
+              }}
+              className="px-3 py-1.5 bg-white text-green-600 rounded-lg text-xs font-semibold hover:bg-white/90 flex items-center gap-1"
+            >
+              <Plus size={14} weight="bold" /> {t.more.createNew}
+            </button>
+          </div>
+
+          {/* Row 2: Payment Out */}
+          <div
+            className={cn(
+              "bg-gradient-to-br from-purple-500 to-violet-500 rounded-xl p-4 text-white shadow-lg cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl",
+              selectedModule === 'payment-out' && "ring-2 ring-violet-300"
+            )}
+            onClick={() => handleModuleClick('payment-out', t.more.paymentOut)}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Wallet size={24} weight="duotone" />
+              <h3 className="text-sm font-bold line-clamp-1">{t.more.paymentOut}</h3>
+            </div>
+            <p className="text-xs text-white/80 mb-2 line-clamp-1">{t.more.paymentOutDesc}</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleModuleClick('payment-out', t.more.paymentOut)
+              }}
+              className="px-3 py-1.5 bg-white text-purple-600 rounded-lg text-xs font-semibold hover:bg-white/90 flex items-center gap-1"
+            >
+              <Plus size={14} weight="bold" /> {t.more.createNew}
+            </button>
+          </div>
+
+          {/* Row 2: Barcode Generator */}
+          <div
+            className={cn(
+              "bg-gradient-to-br from-slate-600 to-slate-800 rounded-xl p-4 text-white shadow-lg cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl",
+              selectedModule === 'barcode-generator' && "ring-2 ring-slate-400"
+            )}
+            onClick={() => handleModuleClick('barcode-generator', t.more.barcodeGenerator)}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Barcode size={24} weight="duotone" />
+              <h3 className="text-sm font-bold line-clamp-1">{t.more.barcodeGenerator}</h3>
+            </div>
+            <p className="text-xs text-white/80 mb-2 line-clamp-1">{t.more.barcodeGeneratorDesc}</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleModuleClick('barcode-generator', t.more.barcodeGenerator)
+              }}
+              className="px-3 py-1.5 bg-white text-slate-700 rounded-lg text-xs font-semibold hover:bg-white/90 flex items-center gap-1"
+            >
+              <Plus size={14} weight="bold" /> Generate
+            </button>
+          </div>
+
+          {/* Row 2: Barcode Scanner */}
+          <div
+            className={cn(
+              "bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl p-4 text-white shadow-lg cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl",
+              selectedModule === 'barcode-scanner' && "ring-2 ring-teal-300"
+            )}
+            onClick={() => handleModuleClick('barcode-scanner', t.more.barcodeScanner)}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <QrCode size={24} weight="duotone" />
+              <h3 className="text-sm font-bold line-clamp-1">{t.more.barcodeScanner}</h3>
+            </div>
+            <p className="text-xs text-white/80 mb-2 line-clamp-1">{t.more.barcodeScannerDesc}</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleModuleClick('barcode-scanner', t.more.barcodeScanner)
+              }}
+              className="px-3 py-1.5 bg-white text-teal-600 rounded-lg text-xs font-semibold hover:bg-white/90 flex items-center gap-1"
+            >
+              <Plus size={14} weight="bold" /> Scan
+            </button>
           </div>
         </div>
       </motion.div>
@@ -2189,25 +2255,25 @@ const More = () => {
       </AnimatePresence>
 
       {/* Other Features Section */}
-      <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">{t.more.allFeatures}</h2>
+      <h2 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{t.more.allFeatures}</h2>
 
-      {/* Features Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
-          {modules.filter(m => m.id !== 'proforma' && m.id !== 'delivery-challan').map((module, index) => (
+      {/* Features Grid - Same size as Quick Actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+          {modules.filter(m => !['proforma', 'delivery-challan', 'payment-in', 'payment-out', 'barcode-generator', 'barcode-scanner'].includes(m.id)).map((module, index) => (
             <motion.div
               key={module.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: index * 0.02 }}
               onClick={() => handleModuleClick(module.id, module.title)}
               className={cn(
-                "bg-card rounded-lg shadow-lg border-2 p-4 lg:p-6 cursor-pointer transition-all hover:scale-105 relative",
-                selectedModule === module.id ? "border-primary" : "border-border hover:border-primary/50"
+                "bg-card rounded-xl shadow-lg border p-4 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-xl relative",
+                selectedModule === module.id ? "border-primary ring-2 ring-primary" : "border-border hover:border-primary/50"
               )}
             >
               {module.badge && (
                 <span className={cn(
-                  "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium",
+                  "absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-medium",
                   module.badge === 'Popular' && "bg-success/10 text-success",
                   module.badge === 'Essential' && "bg-primary/10 text-primary",
                   module.badge === 'New' && "bg-accent/10 text-accent",
@@ -2220,7 +2286,7 @@ const More = () => {
                 </span>
               )}
               <div className={cn(
-                "w-12 h-12 lg:w-16 lg:h-16 rounded-lg flex items-center justify-center mb-3",
+                "w-10 h-10 rounded-lg flex items-center justify-center mb-2",
                 module.color === 'primary' && "bg-primary/10",
                 module.color === 'accent' && "bg-accent/10",
                 module.color === 'success' && "bg-success/10",
@@ -2230,7 +2296,6 @@ const More = () => {
                 <module.icon
                   size={24}
                   className={cn(
-                    "lg:w-8 lg:h-8",
                     module.color === 'primary' && "text-primary",
                     module.color === 'accent' && "text-accent",
                     module.color === 'success' && "text-success",
@@ -2240,8 +2305,8 @@ const More = () => {
                   weight="duotone"
                 />
               </div>
-              <h3 className="font-bold text-sm lg:text-base mb-1">{module.title}</h3>
-              <p className="text-xs lg:text-sm text-muted-foreground">{module.description}</p>
+              <h3 className="font-semibold text-sm mb-1 line-clamp-1">{module.title}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-1">{module.description}</p>
             </motion.div>
           ))}
         </div>

@@ -5,6 +5,7 @@ import {
   Minus,
   Trash,
   User,
+  Phone,
   ShoppingCart,
   Coffee,
   Hamburger,
@@ -334,8 +335,8 @@ const demoItems: Item[] = [
     category: 'Hot Beverages',
     sellingPrice: 120,
     purchasePrice: 40,
-    unit: 'PCS',
-    taxPreference: 'taxable',
+    unit: 'PCS' as any,
+    taxPreference: 'taxable' as any,
     tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
     stock: 100,
     minStock: 10,
@@ -354,8 +355,8 @@ const demoItems: Item[] = [
     category: 'Hot Beverages',
     sellingPrice: 150,
     purchasePrice: 50,
-    unit: 'PCS',
-    taxPreference: 'taxable',
+    unit: 'PCS' as any,
+    taxPreference: 'taxable' as any,
     tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
     stock: 100,
     minStock: 10,
@@ -374,8 +375,8 @@ const demoItems: Item[] = [
     category: 'Cold Beverages',
     sellingPrice: 180,
     purchasePrice: 60,
-    unit: 'PCS',
-    taxPreference: 'taxable',
+    unit: 'PCS' as any,
+    taxPreference: 'taxable' as any,
     tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
     stock: 100,
     minStock: 10,
@@ -394,8 +395,8 @@ const demoItems: Item[] = [
     category: 'Fast Food',
     sellingPrice: 120,
     purchasePrice: 45,
-    unit: 'PCS',
-    taxPreference: 'taxable',
+    unit: 'PCS' as any,
+    taxPreference: 'taxable' as any,
     tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
     stock: 50,
     minStock: 5,
@@ -414,8 +415,8 @@ const demoItems: Item[] = [
     category: 'Snacks',
     sellingPrice: 90,
     purchasePrice: 30,
-    unit: 'PCS',
-    taxPreference: 'taxable',
+    unit: 'PCS' as any,
+    taxPreference: 'taxable' as any,
     tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
     stock: 80,
     minStock: 10,
@@ -434,8 +435,8 @@ const demoItems: Item[] = [
     category: 'Desserts',
     sellingPrice: 80,
     purchasePrice: 25,
-    unit: 'PCS',
-    taxPreference: 'taxable',
+    unit: 'PCS' as any,
+    taxPreference: 'taxable' as any,
     tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
     stock: 40,
     minStock: 5,
@@ -457,6 +458,8 @@ interface CartItem {
   unit?: string
   tax: number
   taxAmount: number
+  hsnCode?: string
+  discount?: number
 }
 
 // Payment method type for quick checkout
@@ -575,11 +578,13 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
     // Initialize from session cart
     return sessionCart.map(item => ({
       id: item.id,
+      itemId: item.itemId || item.id,
       name: item.name,
       price: item.price,
       quantity: item.quantity,
-      gstRate: item.gstRate || 0,
-      unit: item.unit || 'PCS'
+      unit: item.unit || 'PCS',
+      tax: item.gstRate || 0,
+      taxAmount: (item.price * item.quantity * (item.gstRate || 0)) / 100
     }))
   })
 
@@ -595,8 +600,10 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
       name: item.name,
       price: item.price,
       quantity: item.quantity,
-      gstRate: item.gstRate,
-      unit: item.unit
+      unit: item.unit,
+      tax: item.tax || 0,
+      taxAmount: item.taxAmount || 0,
+      itemId: item.itemId || item.id
     }))
     // Update session storage directly to avoid circular updates
     const sessions = JSON.parse(localStorage.getItem('thisai_pos_sessions') || '{}')
@@ -616,6 +623,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
   const [selectedParty, setSelectedParty] = useState<Party | null>(null)
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false)
+  const [customerPhone, setCustomerPhone] = useState('') // Phone number for WhatsApp
   const customerDropdownRef = useRef<HTMLDivElement>(null)
 
   // Quick Checkout state
@@ -630,6 +638,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
   const [discountType, setDiscountType] = useState<'percent' | 'amount'>('percent') // Discount type
   const [discountInputValue, setDiscountInputValue] = useState('') // For clean input handling
   const [isProcessingSale, setIsProcessingSale] = useState(false)
+  const [selectedShareMethod, setSelectedShareMethod] = useState<'whatsapp' | 'sms' | 'print' | 'none'>('none') // Share method selection
 
   // Post-checkout sharing panel state
   const [showBillComplete, setShowBillComplete] = useState(false)
@@ -942,6 +951,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
     setSelectedParty(party)
     setCustomerName(party.displayName || party.companyName)
     setCustomerSearch(party.displayName || party.companyName)
+    setCustomerPhone(party.phone || '') // Set phone from party
     setShowCustomerDropdown(false)
   }
 
@@ -1276,8 +1286,55 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
 
   // Quick denomination buttons for cash
   const quickAmounts = useMemo(() => {
-    const roundedTotal = Math.ceil(grandTotal / 10) * 10
-    return [roundedTotal, roundedTotal + 50, roundedTotal + 100, roundedTotal + 500].filter(amt => amt >= grandTotal)
+    // Smart Indian currency denomination logic
+    // Indian notes: ₹2000, ₹500, ₹200, ₹100, ₹50, ₹20, ₹10, ₹5, ₹2, ₹1
+    const denominations = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1]
+
+    // Calculate smart amounts based on total
+    const smartAmounts: number[] = []
+
+    // 1. Exact amount rounded to nearest ₹10
+    const exactRounded = Math.ceil(grandTotal / 10) * 10
+    if (exactRounded >= grandTotal) {
+      smartAmounts.push(exactRounded)
+    }
+
+    // 2. Calculate nearest round numbers using common denominations
+    // Find the best denomination combinations that customer would typically give
+    const generateSmartAmounts = (total: number): number[] => {
+      const amounts: number[] = []
+
+      // Round up to nearest common denomination
+      for (const denom of [500, 200, 100, 50, 20, 10]) {
+        const roundedUp = Math.ceil(total / denom) * denom
+        if (roundedUp >= total && roundedUp <= total * 2 && !amounts.includes(roundedUp)) {
+          amounts.push(roundedUp)
+          if (amounts.length >= 6) break
+        }
+      }
+
+      // Add some convenient extra amounts
+      if (total < 500) {
+        // For small amounts, add common note combinations
+        [100, 200, 500].forEach(amt => {
+          if (amt >= total && !amounts.includes(amt)) {
+            amounts.push(amt)
+          }
+        })
+      }
+
+      return amounts.sort((a, b) => a - b).slice(0, 6)
+    }
+
+    const generated = generateSmartAmounts(grandTotal)
+    generated.forEach(amt => {
+      if (!smartAmounts.includes(amt)) {
+        smartAmounts.push(amt)
+      }
+    })
+
+    // Return unique sorted amounts, maximum 6
+    return [...new Set(smartAmounts)].sort((a, b) => a - b).slice(0, 6)
   }, [grandTotal])
 
   // Complete quick checkout - NON-BLOCKING (QueueBuster-style)
@@ -1298,7 +1355,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
     // Capture current data BEFORE clearing (for background processing)
     const capturedCart = [...cart]
     const capturedCustomerName = customerName || 'Walk-in Customer'
-    const capturedCustomerPhone = selectedParty?.phone
+    const capturedCustomerPhone = customerPhone || selectedParty?.phone // Use manual phone or party phone
     const capturedGrandTotal = grandTotal
     const capturedSubtotal = subtotal
     const capturedTotalTax = totalTax
@@ -2162,24 +2219,105 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           )}
         </div>
 
-        {/* Categories - Simple horizontal scroll on mobile, wrap on desktop */}
+        {/* Mobile Customer Tabs Bar */}
+        <div className="md:hidden mb-2 bg-white rounded-lg shadow-sm border border-gray-200 flex-shrink-0">
+          <div className="flex items-center overflow-x-auto scrollbar-hide">
+            {/* Customer Tabs */}
+            {customerTabs.filter(tab => tab.status !== 'completed').map((tab) => (
+              <div
+                key={tab.id}
+                onClick={() => switchToTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-2 cursor-pointer border-r border-gray-200 min-w-[70px] transition-all relative group",
+                  tab.id === activeTabId
+                    ? "bg-emerald-50 text-emerald-700 shadow-sm"
+                    : "text-gray-600 active:bg-gray-50",
+                  tab.status === 'processing' && "bg-amber-50"
+                )}
+              >
+                {/* Status indicator dot */}
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                  tab.status === 'processing' ? "bg-amber-500 animate-pulse" :
+                  tab.items.length > 0 ? "bg-emerald-500" : "bg-gray-300"
+                )} />
+
+                {/* Tab content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="font-bold text-[10px]">#{tab.tokenNumber}</span>
+                    {tab.items.length > 0 && (
+                      <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1 rounded">
+                        {tab.items.reduce((sum, i) => sum + i.quantity, 0)}
+                      </span>
+                    )}
+                  </div>
+                  {tab.customerName ? (
+                    <p className="text-[9px] truncate max-w-[50px]">{tab.customerName}</p>
+                  ) : (
+                    <p className="text-[9px] text-gray-400 italic">Walk-in</p>
+                  )}
+                </div>
+
+                {/* Close button (show if more than 1 tab) */}
+                {customerTabs.filter(t => t.status !== 'completed').length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      removeCustomerTab(tab.id)
+                    }}
+                    className="w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center active:scale-95 transition-transform"
+                  >
+                    <X size={10} weight="bold" />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {/* Add New Customer Tab Button */}
+            <button
+              onClick={createNewCustomerTab}
+              disabled={customerTabs.length >= MAX_CUSTOMER_TABS}
+              className={cn(
+                "flex items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-all flex-shrink-0",
+                customerTabs.length >= MAX_CUSTOMER_TABS
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-emerald-600 active:bg-emerald-50"
+              )}
+              title={customerTabs.length >= MAX_CUSTOMER_TABS ? `Max ${MAX_CUSTOMER_TABS} customers` : "Add new customer"}
+            >
+              <Plus size={16} weight="bold" />
+              <span className="text-xs font-semibold">New</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Categories - Horizontal scroll on mobile with large icons, wrap on desktop */}
         <div className="flex-shrink-0 mb-3 md:mb-4">
-          {/* Mobile: Simple horizontal scroll */}
-          <div className="md:hidden flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+          {/* Mobile: Horizontal scroll with large icons above text */}
+          <div className="md:hidden flex gap-3 overflow-x-auto pb-2 px-1" style={{ scrollbarWidth: 'thin' }}>
             <button
               onClick={() => {
                 setSelectedCategory('All')
                 setSelectedSubcategory(null)
               }}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0",
-                selectedCategory === 'All'
-                  ? "bg-emerald-500 text-white shadow-md"
-                  : "neu-btn text-gray-700"
+                "flex flex-col items-center gap-1.5 min-w-[70px] transition-all flex-shrink-0",
+                selectedCategory === 'All' && "scale-105"
               )}
             >
-              <Squares size={14} weight="fill" />
-              All
+              <div className={cn(
+                "w-14 h-14 rounded-2xl flex items-center justify-center shadow-md transition-all",
+                selectedCategory === 'All'
+                  ? "bg-gradient-to-br from-emerald-500 to-teal-500 text-white"
+                  : "bg-white text-gray-600"
+              )}>
+                <Squares size={28} weight="fill" />
+              </div>
+              <span className={cn(
+                "text-xs font-semibold text-center",
+                selectedCategory === 'All' ? "text-emerald-600" : "text-gray-600"
+              )}>All</span>
             </button>
             {categories.filter(c => c !== 'All').map(category => (
               <button
@@ -2189,14 +2327,22 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                   setSelectedSubcategory(null)
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0",
-                  selectedCategory === category
-                    ? "bg-emerald-500 text-white shadow-md"
-                    : "neu-btn text-gray-700"
+                  "flex flex-col items-center gap-1.5 min-w-[70px] transition-all flex-shrink-0",
+                  selectedCategory === category && "scale-105"
                 )}
               >
-                <span className="[&>svg]:w-4 [&>svg]:h-4">{categoryIcons[category] || categoryIcons['default']}</span>
-                {category}
+                <div className={cn(
+                  "w-14 h-14 rounded-2xl flex items-center justify-center shadow-md transition-all",
+                  selectedCategory === category
+                    ? "bg-gradient-to-br from-emerald-500 to-teal-500 text-white"
+                    : "bg-white text-gray-600"
+                )}>
+                  <span className="[&>svg]:w-7 [&>svg]:h-7">{categoryIcons[category] || categoryIcons['default']}</span>
+                </div>
+                <span className={cn(
+                  "text-xs font-semibold text-center leading-tight max-w-[70px] line-clamp-2",
+                  selectedCategory === category ? "text-emerald-600" : "text-gray-600"
+                )}>{category}</span>
               </button>
             ))}
           </div>
@@ -2489,8 +2635,8 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
         </div>
       </div>
 
-      {/* Right Side - Cart / Bill - Wider for typical POS */}
-      <div className="flex w-96 xl:w-[420px] h-full bg-white border-l border-gray-200 flex-col shadow-xl overflow-hidden flex-shrink-0">
+      {/* Right Side - Cart / Bill - Wider for typical POS (Hidden on mobile, drawer used instead) */}
+      <div className="hidden md:flex w-96 xl:w-[420px] h-full bg-white border-l border-gray-200 flex-col shadow-xl overflow-hidden flex-shrink-0">
         {/* ========== MULTI-CUSTOMER TABS BAR ========== */}
         <div className="bg-gray-100 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center overflow-x-auto scrollbar-hide">
@@ -3207,6 +3353,68 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                   </div>
                 </div>
               )}
+
+              {/* Share Receipt Options - Select Method */}
+              <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                <p className="text-xs font-semibold text-gray-700 mb-2.5">📤 Choose Receipt Option:</p>
+                <div className="flex gap-2 justify-center">
+                  {/* None Option */}
+                  <button
+                    onClick={() => setSelectedShareMethod('none')}
+                    className={cn(
+                      "w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-1 transition-all shadow-md",
+                      selectedShareMethod === 'none'
+                        ? "bg-gradient-to-br from-gray-600 to-gray-700 text-white scale-105 ring-2 ring-gray-500 ring-offset-2"
+                        : "bg-white text-gray-500 hover:bg-gray-50"
+                    )}
+                  >
+                    <X size={24} weight="bold" />
+                    <span className="text-[9px] font-semibold">None</span>
+                  </button>
+
+                  {/* WhatsApp Option */}
+                  <button
+                    onClick={() => setSelectedShareMethod('whatsapp')}
+                    className={cn(
+                      "w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-1 transition-all shadow-md",
+                      selectedShareMethod === 'whatsapp'
+                        ? "bg-gradient-to-br from-green-500 to-green-600 text-white scale-105 ring-2 ring-green-500 ring-offset-2"
+                        : "bg-white text-green-600 hover:bg-green-50"
+                    )}
+                  >
+                    <WhatsappLogo size={24} weight="fill" />
+                    <span className="text-[9px] font-semibold">WhatsApp</span>
+                  </button>
+
+                  {/* SMS Option */}
+                  <button
+                    onClick={() => setSelectedShareMethod('sms')}
+                    className={cn(
+                      "w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-1 transition-all shadow-md",
+                      selectedShareMethod === 'sms'
+                        ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white scale-105 ring-2 ring-blue-500 ring-offset-2"
+                        : "bg-white text-blue-600 hover:bg-blue-50"
+                    )}
+                  >
+                    <EnvelopeSimple size={24} weight="fill" />
+                    <span className="text-[9px] font-semibold">SMS</span>
+                  </button>
+
+                  {/* Print Option */}
+                  <button
+                    onClick={() => setSelectedShareMethod('print')}
+                    className={cn(
+                      "w-16 h-16 rounded-xl flex flex-col items-center justify-center gap-1 transition-all shadow-md",
+                      selectedShareMethod === 'print'
+                        ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white scale-105 ring-2 ring-purple-500 ring-offset-2"
+                        : "bg-white text-purple-600 hover:bg-purple-50"
+                    )}
+                  >
+                    <Printer size={24} weight="fill" />
+                    <span className="text-[9px] font-semibold">Print</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Checkout Footer - Action Buttons - Fixed at bottom */}
@@ -3226,7 +3434,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                 Full
               </button>
               <button
-                onClick={() => handleQuickCheckoutComplete()}
+                onClick={() => handleQuickCheckoutComplete({ shareVia: selectedShareMethod })}
                 disabled={isProcessingSale || (paymentMethod === 'cash' && (parseFloat(amountTendered) || 0) < grandTotal)}
                 className="flex-1 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               >
@@ -3403,6 +3611,20 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                       </>
                     )}
                   </AnimatePresence>
+                </div>
+
+                {/* Phone Number Input - Mobile */}
+                <div className="mt-2">
+                  <div className="relative">
+                    <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600 z-10" />
+                    <input
+                      type="tel"
+                      placeholder="Phone number (for WhatsApp)"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-emerald-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all text-sm"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -3626,19 +3848,19 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                   <X size={20} weight="bold" />
                 </button>
               </div>
-              {/* Checkout Body */}
-              <div className="flex-1 overflow-y-auto p-4">
-                {/* Total Amount */}
-                <div className="text-center mb-4 p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border-2 border-emerald-200">
-                  <p className="text-xs text-emerald-600 font-medium">Total Amount</p>
-                  <p className="text-4xl font-bold text-emerald-700">₹{grandTotal.toFixed(2)}</p>
-                  <p className="text-xs text-emerald-500">{cart.reduce((s, i) => s + i.quantity, 0)} items</p>
+              {/* Checkout Body - Compact spacing to prevent scrolling */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                {/* Total Amount - Compact */}
+                <div className="text-center p-2.5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
+                  <p className="text-[10px] text-emerald-600 font-medium">Total Amount</p>
+                  <p className="text-2xl font-bold text-emerald-700">₹{grandTotal.toFixed(2)}</p>
+                  <p className="text-[10px] text-emerald-500">{cart.reduce((s, i) => s + i.quantity, 0)} items</p>
                 </div>
 
                 {/* Payment Method Selection */}
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Payment Method</label>
-                  <div className="grid grid-cols-4 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Payment Method</label>
+                  <div className="grid grid-cols-4 gap-1.5">
                     {[
                       { method: 'cash' as PaymentMethod, icon: <Money size={20} weight="fill" />, label: 'Cash', color: 'emerald' },
                       { method: 'upi' as PaymentMethod, icon: <QrCode size={20} weight="fill" />, label: 'UPI', color: 'purple' },
@@ -3649,7 +3871,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                         key={method}
                         onClick={() => setPaymentMethod(method)}
                         className={cn(
-                          "flex flex-col items-center gap-1 p-3 rounded-xl transition-all",
+                          "flex flex-col items-center gap-0.5 p-2 rounded-lg transition-all text-xs",
                           paymentMethod === method
                             ? "border-2 border-emerald-500 bg-emerald-50"
                             : "neu-btn"
@@ -3676,19 +3898,19 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                   </div>
                 </div>
 
-                {/* Cash Payment Section */}
+                {/* Cash Payment Section - Compact */}
                 {paymentMethod === 'cash' && (
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     {/* Quick Amount Buttons */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">Quick Select</label>
-                      <div className="flex flex-wrap gap-2">
-                        {quickAmounts.slice(0, 6).map((amount) => (
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Quick Select</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {quickAmounts.slice(0, 4).map((amount) => (
                           <button
                             key={amount}
                             onClick={() => setAmountTendered(amount.toString())}
                             className={cn(
-                              "px-4 py-2 rounded-lg font-semibold text-sm transition-all",
+                              "px-3 py-1.5 rounded-lg font-semibold text-xs transition-all",
                               parseFloat(amountTendered) === amount
                                 ? "bg-emerald-500 text-white shadow-md"
                                 : "neu-btn text-gray-700"
@@ -3702,7 +3924,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
 
                     {/* Amount Tendered Input */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">Amount Received</label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Amount Received</label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-medium">₹</span>
                         <input
@@ -3710,76 +3932,138 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
                           value={amountTendered}
                           onChange={(e) => setAmountTendered(e.target.value)}
                           placeholder={grandTotal.toFixed(0)}
-                          className="w-full pl-10 pr-4 py-3 text-xl font-bold text-center rounded-xl neu-input border-0 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                          className="w-full pl-8 pr-3 py-2 text-lg font-bold text-center rounded-lg neu-input border-0 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all"
                           autoFocus
                         />
                       </div>
                     </div>
 
-                    {/* Change Amount */}
+                    {/* Change Amount - Compact */}
                     {parseFloat(amountTendered) > grandTotal && (
-                      <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl text-center">
-                        <p className="text-sm text-green-600 font-medium">Change to Return</p>
-                        <p className="text-3xl font-bold text-green-700">₹{(parseFloat(amountTendered) - grandTotal).toFixed(2)}</p>
+                      <div className="p-2 bg-green-50 border border-green-200 rounded-lg text-center">
+                        <p className="text-[10px] text-green-600 font-medium">Change to Return</p>
+                        <p className="text-xl font-bold text-green-700">₹{(parseFloat(amountTendered) - grandTotal).toFixed(2)}</p>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* UPI Payment */}
+                {/* UPI Payment - Compact */}
                 {paymentMethod === 'upi' && (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">Transaction ID</label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Transaction ID</label>
                       <input
                         type="text"
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value)}
                         placeholder="Enter UPI Transaction ID"
-                        className="w-full px-4 py-3 rounded-xl neu-input border-0 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all"
+                        className="w-full px-3 py-2 rounded-lg neu-input border-0 focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all text-sm"
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Card Payment */}
+                {/* Card Payment - Compact */}
                 {paymentMethod === 'card' && (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-2">Transaction ID</label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Transaction ID</label>
                       <input
                         type="text"
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value)}
                         placeholder="Enter Card Transaction ID"
-                        className="w-full px-4 py-3 rounded-xl neu-input border-0 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
+                        className="w-full px-3 py-2 rounded-lg neu-input border-0 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-sm"
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Credit Payment */}
+                {/* Credit Payment - Compact */}
                 {paymentMethod === 'credit' && (
-                  <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-xl">
-                    <p className="text-sm text-amber-700 font-medium text-center">
+                  <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-xs text-amber-700 font-medium text-center">
                       Amount of ₹{grandTotal.toFixed(2)} will be added to {customerName || 'Walk-in Customer'}'s credit balance
                     </p>
                   </div>
                 )}
+
+                {/* Share Receipt Options - Compact */}
+                <div className="p-2.5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <p className="text-xs font-bold text-gray-700 mb-2">📤 Receipt:</p>
+                  <div className="flex gap-1.5 justify-center">
+                    {/* None Option */}
+                    <button
+                      onClick={() => setSelectedShareMethod('none')}
+                      className={cn(
+                        "w-14 h-14 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all shadow-sm",
+                        selectedShareMethod === 'none'
+                          ? "bg-gradient-to-br from-gray-600 to-gray-700 text-white ring-2 ring-gray-500"
+                          : "bg-white text-gray-500"
+                      )}
+                    >
+                      <X size={20} weight="bold" />
+                      <span className="text-[8px] font-semibold">None</span>
+                    </button>
+
+                    {/* WhatsApp Option */}
+                    <button
+                      onClick={() => setSelectedShareMethod('whatsapp')}
+                      className={cn(
+                        "w-14 h-14 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all shadow-sm",
+                        selectedShareMethod === 'whatsapp'
+                          ? "bg-gradient-to-br from-green-500 to-green-600 text-white ring-2 ring-green-500"
+                          : "bg-white text-green-600"
+                      )}
+                    >
+                      <WhatsappLogo size={20} weight="fill" />
+                      <span className="text-[8px] font-semibold">WhatsApp</span>
+                    </button>
+
+                    {/* SMS Option */}
+                    <button
+                      onClick={() => setSelectedShareMethod('sms')}
+                      className={cn(
+                        "w-14 h-14 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all shadow-sm",
+                        selectedShareMethod === 'sms'
+                          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white ring-2 ring-blue-500"
+                          : "bg-white text-blue-600"
+                      )}
+                    >
+                      <EnvelopeSimple size={20} weight="fill" />
+                      <span className="text-[8px] font-semibold">SMS</span>
+                    </button>
+
+                    {/* Print Option */}
+                    <button
+                      onClick={() => setSelectedShareMethod('print')}
+                      className={cn(
+                        "w-14 h-14 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-all shadow-sm",
+                        selectedShareMethod === 'print'
+                          ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white ring-2 ring-purple-500"
+                          : "bg-white text-purple-600"
+                      )}
+                    >
+                      <Printer size={20} weight="fill" />
+                      <span className="text-[8px] font-semibold">Print</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Checkout Footer */}
-              <div className="p-4 bg-gray-50 border-t border-gray-200 flex gap-3">
+              {/* Checkout Footer - Compact */}
+              <div className="p-2.5 bg-gray-50 border-t border-gray-200 flex gap-2">
                 <button
                   onClick={handleQuickCheckoutCancel}
-                  className="px-4 py-3 rounded-xl neu-btn text-gray-600 font-semibold text-sm"
+                  className="px-3 py-2.5 rounded-lg neu-btn text-gray-600 font-semibold text-xs"
                 >
                   Back
                 </button>
                 <button
-                  onClick={() => handleQuickCheckoutComplete()}
+                  onClick={() => handleQuickCheckoutComplete({ shareVia: selectedShareMethod })}
                   disabled={isProcessingSale || (paymentMethod === 'cash' && (parseFloat(amountTendered) || 0) < grandTotal)}
-                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isProcessingSale ? (
                     <>

@@ -146,6 +146,7 @@ function App() {
 
               {/* CRM Module */}
               <Route path="crm" element={<CRMPage />} />
+              <Route path="crm/leads/:id" element={<CRMPage />} />
             </Route>
           </Routes>
         </div>

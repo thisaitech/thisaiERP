@@ -1,10 +1,10 @@
 // KPICards.tsx - Billi 2025
-// Swipeable 4 KPI Cards with animated numbers
+// 6 KPI Cards in a single row
 
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import {
-  CurrencyInr, ShoppingCart, TrendingUp, Bank,
+  CurrencyInr, ShoppingCart, TrendUp, Bank, Wallet, Package,
   ArrowUp, ArrowDown, CaretLeft, CaretRight
 } from '@phosphor-icons/react'
 import { cn } from '../lib/utils'
@@ -20,17 +20,22 @@ interface KPIData {
   icon: React.ReactNode
   color: string
   bgColor: string
+  subLabel?: string
 }
 
 interface KPICardsProps {
   sales: number
   purchases: number
+  expenses: number
   profit: number
-  cashBank: number
+  bankBalance: number
+  inventoryValue: number
   previousSales?: number
   previousPurchases?: number
+  previousExpenses?: number
   previousProfit?: number
-  previousCashBank?: number
+  previousBankBalance?: number
+  previousInventoryValue?: number
   className?: string
 }
 
@@ -79,30 +84,27 @@ const KPICard: React.FC<{ kpi: KPIData; isActive: boolean }> = ({ kpi, isActive 
       animate={{ opacity: 1, scale: 1 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "flex-shrink-0 w-[calc(50%-8px)] lg:w-[calc(25%-12px)] p-4 rounded-xl border transition-all cursor-pointer",
+        "flex-shrink-0 w-[calc(50%-8px)] lg:w-[calc(16.666%-10px)] p-3 lg:p-4 rounded-xl border transition-all cursor-pointer",
         "hover:shadow-lg hover:-translate-y-0.5",
         isActive ? "ring-2 ring-primary/50" : "",
         kpi.bgColor
       )}
     >
-      {/* Icon & Label */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className={cn("p-2 rounded-lg", kpi.color)}>
+      {/* Header with Label and Icon */}
+      <div className="flex items-start justify-between mb-2">
+        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">{kpi.label}</p>
+        <div className={cn("p-1.5 rounded-lg", kpi.color)}>
           {kpi.icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground truncate">{kpi.label}</p>
-          <p className="text-[10px] text-muted-foreground/70 truncate">{kpi.labelTamil}</p>
         </div>
       </div>
 
       {/* Value */}
-      <div className="text-xl font-bold mb-1">
+      <div className="text-xl lg:text-2xl font-bold mb-1">
         <AnimatedNumber value={kpi.value} prefix={kpi.prefix} suffix={kpi.suffix} />
       </div>
 
-      {/* Change Indicator */}
-      {kpi.previousValue !== undefined && change !== 0 && (
+      {/* Change Indicator or Sub Label */}
+      {kpi.previousValue !== undefined && change !== 0 ? (
         <div className={cn(
           "flex items-center gap-1 text-xs font-medium",
           isPositive ? "text-green-600" : "text-red-500"
@@ -113,9 +115,11 @@ const KPICard: React.FC<{ kpi: KPIData; isActive: boolean }> = ({ kpi, isActive 
             <ArrowDown size={12} weight="bold" />
           )}
           <span>{Math.abs(change).toFixed(1)}%</span>
-          <span className="text-muted-foreground font-normal">vs yesterday</span>
+          <span className="text-muted-foreground font-normal text-[10px]">{kpi.subLabel || 'vs yesterday'}</span>
         </div>
-      )}
+      ) : kpi.subLabel ? (
+        <p className="text-xs text-muted-foreground">{kpi.subLabel}</p>
+      ) : null}
     </motion.div>
   )
 }
@@ -123,12 +127,16 @@ const KPICard: React.FC<{ kpi: KPIData; isActive: boolean }> = ({ kpi, isActive 
 const KPICards: React.FC<KPICardsProps> = ({
   sales,
   purchases,
+  expenses,
   profit,
-  cashBank,
+  bankBalance,
+  inventoryValue,
   previousSales,
   previousPurchases,
+  previousExpenses,
   previousProfit,
-  previousCashBank,
+  previousBankBalance,
+  previousInventoryValue,
   className
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -138,14 +146,15 @@ const KPICards: React.FC<KPICardsProps> = ({
   const kpis: KPIData[] = [
     {
       id: 'sales',
-      label: "Today's Sales",
-      labelTamil: 'இன்றைய விற்பனை',
+      label: 'Sales',
+      labelTamil: 'விற்பனை',
       value: sales,
       previousValue: previousSales,
       prefix: '₹',
       icon: <CurrencyInr size={18} weight="duotone" className="text-green-600" />,
       color: 'bg-green-100',
-      bgColor: 'bg-card border-green-200'
+      bgColor: 'bg-card border-green-200',
+      subLabel: 'vs yesterday'
     },
     {
       id: 'purchases',
@@ -154,9 +163,22 @@ const KPICards: React.FC<KPICardsProps> = ({
       value: purchases,
       previousValue: previousPurchases,
       prefix: '₹',
-      icon: <ShoppingCart size={18} weight="duotone" className="text-blue-600" />,
-      color: 'bg-blue-100',
-      bgColor: 'bg-card border-blue-200'
+      icon: <ShoppingCart size={18} weight="duotone" className="text-red-600" />,
+      color: 'bg-red-100',
+      bgColor: 'bg-card border-red-200',
+      subLabel: 'Total spend'
+    },
+    {
+      id: 'expenses',
+      label: 'Expenses',
+      labelTamil: 'செலவுகள்',
+      value: expenses,
+      previousValue: previousExpenses,
+      prefix: '₹',
+      icon: <Wallet size={18} weight="duotone" className="text-orange-600" />,
+      color: 'bg-orange-100',
+      bgColor: 'bg-card border-orange-200',
+      subLabel: 'This period'
     },
     {
       id: 'profit',
@@ -165,20 +187,34 @@ const KPICards: React.FC<KPICardsProps> = ({
       value: profit,
       previousValue: previousProfit,
       prefix: '₹',
-      icon: <TrendingUp size={18} weight="duotone" className="text-purple-600" />,
-      color: 'bg-purple-100',
-      bgColor: 'bg-card border-purple-200'
+      icon: <TrendUp size={18} weight="duotone" className="text-blue-600" />,
+      color: 'bg-blue-100',
+      bgColor: 'bg-card border-blue-200',
+      subLabel: 'Net earnings'
     },
     {
-      id: 'cashbank',
-      label: 'Cash + Bank',
-      labelTamil: 'கையிருப்பு',
-      value: cashBank,
-      previousValue: previousCashBank,
+      id: 'bankBalance',
+      label: 'Bank Balance',
+      labelTamil: 'வங்கி இருப்பு',
+      value: bankBalance,
+      previousValue: previousBankBalance,
       prefix: '₹',
-      icon: <Bank size={18} weight="duotone" className="text-amber-600" />,
-      color: 'bg-amber-100',
-      bgColor: 'bg-card border-amber-200'
+      icon: <Bank size={18} weight="duotone" className="text-purple-600" />,
+      color: 'bg-purple-100',
+      bgColor: 'bg-card border-purple-200',
+      subLabel: 'Available'
+    },
+    {
+      id: 'inventoryValue',
+      label: 'Inventory Value',
+      labelTamil: 'சரக்கு மதிப்பு',
+      value: inventoryValue,
+      previousValue: previousInventoryValue,
+      prefix: '₹',
+      icon: <Package size={18} weight="duotone" className="text-teal-600" />,
+      color: 'bg-teal-100',
+      bgColor: 'bg-card border-teal-200',
+      subLabel: 'Stock worth'
     }
   ]
 

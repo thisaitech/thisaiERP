@@ -214,10 +214,102 @@ const Expenses = () => {
     <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen">
       {/* Header - Clean & Simple like Parties */}
       <div className="flex-shrink-0">
-        {/* Top Row: Period Filter Left + Action Button Right */}
-        <div className="flex items-center justify-between mb-3">
-          {/* Period Filter Tabs - Left Side */}
-          <div className="flex-shrink-0">
+        {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
+        <div className="flex items-stretch justify-between gap-4 mb-3">
+          {/* Left Side: KPI Cards - Rectangular filling space */}
+          <div className="flex-1 grid grid-cols-4 gap-3">
+            {/* Total Expenses Card - Red Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <Wallet size={20} weight="duotone" className="text-red-500" />
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{t.expenses?.totalExpenses || 'Total'}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
+                    ₹{stats.totalExpenses >= 10000000 ? (stats.totalExpenses / 10000000).toFixed(1) + ' Cr' : stats.totalExpenses >= 100000 ? (stats.totalExpenses / 100000).toFixed(1) + ' L' : stats.totalExpenses >= 1000 ? (stats.totalExpenses / 1000).toFixed(1) + ' K' : stats.totalExpenses.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* This Month Card - Blue Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <Calendar size={20} weight="duotone" className="text-blue-500" />
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{t.expenses?.thisMonth || 'This Month'}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                    ₹{stats.thisMonth >= 10000000 ? (stats.thisMonth / 10000000).toFixed(1) + ' Cr' : stats.thisMonth >= 100000 ? (stats.thisMonth / 100000).toFixed(1) + ' L' : stats.thisMonth >= 1000 ? (stats.thisMonth / 1000).toFixed(1) + ' K' : stats.thisMonth.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Pending Card - Amber Theme */}
+            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 shadow-[6px_6px_12px_rgba(245,158,11,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(245,158,11,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <Receipt size={20} weight="duotone" className="text-amber-500" />
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className="text-xs bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent font-semibold">{t.common?.pending || 'Pending'}</span>
+                  <span className="text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+                    ₹{stats.pending >= 10000000 ? (stats.pending / 10000000).toFixed(1) + ' Cr' : stats.pending >= 100000 ? (stats.pending / 100000).toFixed(1) + ' L' : stats.pending >= 1000 ? (stats.pending / 1000).toFixed(1) + ' K' : stats.pending.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Change Card - Green Theme */}
+            <div className={cn(
+              "p-[2px] rounded-2xl transition-all",
+              stats.percentChange >= 0
+                ? "bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff]"
+                : "bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff]"
+            )}>
+              <button className="w-full h-full bg-[#e4ebf5] rounded-[14px] px-4 py-3 transition-all active:scale-[0.98] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  {stats.percentChange >= 0 ?
+                    <TrendUp size={20} weight="duotone" className="text-green-500" /> :
+                    <TrendDown size={20} weight="duotone" className="text-red-500" />
+                  }
+                </div>
+                <div className="flex flex-col items-start flex-1">
+                  <span className={cn(
+                    "text-xs font-semibold bg-clip-text text-transparent",
+                    stats.percentChange >= 0 ? "bg-gradient-to-r from-green-600 to-emerald-600" : "bg-gradient-to-r from-red-600 to-rose-600"
+                  )}>{t.expenses?.change || 'Change'}</span>
+                  <span className={cn(
+                    "text-xl font-bold bg-clip-text text-transparent",
+                    stats.percentChange >= 0 ? "bg-gradient-to-r from-green-600 to-emerald-600" : "bg-gradient-to-r from-red-600 to-rose-600"
+                  )}>
+                    {stats.percentChange >= 0 ? '+' : ''}{stats.percentChange.toFixed(1)}%
+                  </span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Right Side: Date Filters + Action Buttons */}
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            {/* Action Button */}
+            <button
+              onClick={() => setShowNewExpense(true)}
+              className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
+                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                transition-all duration-200"
+            >
+              <Plus size={14} weight="bold" />
+              <span>Expense</span>
+            </button>
+
+            {/* Date Filter Tabs */}
             <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
               {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
                 <button
@@ -235,87 +327,6 @@ const Expenses = () => {
               ))}
             </div>
           </div>
-
-          {/* Action Button - Right Side */}
-          <div className="flex-shrink-0">
-            <button
-              onClick={() => setShowNewExpense(true)}
-              className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
-                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                transition-all duration-200"
-            >
-              <Plus size={14} weight="bold" />
-              <span>Expense</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Stats Cards - Second Row with Colored Backgrounds */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-          {/* Total Expenses Card - Red Theme */}
-          <button className="bg-red-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5c4c4,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5c4c4,-15px_-15px_30px_#ffffff] transition-all duration-200">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-red-700 font-medium">{t.expenses?.totalExpenses || 'Total'}</span>
-              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]">
-                <Wallet size={20} weight="duotone" className="text-red-600" />
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-red-600">₹{stats.totalExpenses.toLocaleString()}</div>
-          </button>
-
-          {/* This Month Card - Blue Theme */}
-          <button className="bg-blue-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8d4f5,-15px_-15px_30px_#ffffff] transition-all duration-200">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-blue-700 font-medium">{t.expenses?.thisMonth || 'This Month'}</span>
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]">
-                <Calendar size={20} weight="duotone" className="text-blue-600" />
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-blue-600">₹{stats.thisMonth.toLocaleString()}</div>
-          </button>
-
-          {/* Pending Card - Orange Theme */}
-          <button className="bg-orange-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5e0b8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5e0b8,-15px_-15px_30px_#ffffff] transition-all duration-200">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-orange-700 font-medium">{t.common?.pending || 'Pending'}</span>
-              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5e0b8,inset_-3px_-3px_6px_#ffffff]">
-                <Receipt size={20} weight="duotone" className="text-orange-600" />
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-orange-600">₹{stats.pending.toLocaleString()}</div>
-          </button>
-
-          {/* Change Card - Dynamic Green/Red Theme */}
-          <button className={cn(
-            "rounded-2xl p-4 transition-all duration-200",
-            stats.percentChange >= 0
-              ? "bg-green-50 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8e0c8,-15px_-15px_30px_#ffffff]"
-              : "bg-red-50 shadow-[10px_10px_20px_#f5c4c4,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5c4c4,-15px_-15px_30px_#ffffff]"
-          )}>
-            <div className="flex items-center justify-between mb-3">
-              <span className={cn("text-sm font-medium", stats.percentChange >= 0 ? "text-green-700" : "text-red-700")}>{t.expenses?.change || 'Change'}</span>
-              <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center",
-                stats.percentChange >= 0
-                  ? "bg-green-100 shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]"
-                  : "bg-red-100 shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]"
-              )}>
-                {stats.percentChange >= 0 ?
-                  <TrendUp size={20} weight="duotone" className="text-green-600" /> :
-                  <TrendDown size={20} weight="duotone" className="text-red-600" />
-                }
-              </div>
-            </div>
-            <div className={cn(
-              "text-2xl font-bold",
-              stats.percentChange >= 0 ? "text-green-600" : "text-red-600"
-            )}>
-              {stats.percentChange >= 0 ? '+' : ''}{stats.percentChange.toFixed(1)}%
-            </div>
-          </button>
         </div>
 
         <div className="space-y-2">

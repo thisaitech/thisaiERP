@@ -32,6 +32,7 @@ import {
   Clock,
   ArrowsClockwise,
   Gear,
+  Bank,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -930,88 +931,97 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Stats Cards - Colored Neumorphic Style (4 Cards) */}
+          {/* Stats Cards - Professional Neutral Style (6 Cards in a row) */}
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
             initial="hidden"
             animate="visible"
             variants={{
-              visible: { transition: { staggerChildren: 0.1 } },
+              visible: { transition: { staggerChildren: 0.08 } },
             }}
           >
             {[
-              { label: 'Sales', sublabel: 'vs yesterday', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, color: 'green', borderColor: 'border-green-300', shadow: 'shadow-[10px_10px_20px_rgba(34,197,94,0.15),-10px_-10px_20px_#ffffff]', hoverShadow: 'hover:shadow-[14px_14px_28px_rgba(34,197,94,0.25),-14px_-14px_28px_#ffffff]' },
-              { label: 'Purchases', sublabel: 'Total spend', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, color: 'red', borderColor: 'border-red-300', shadow: 'shadow-[10px_10px_20px_rgba(239,68,68,0.15),-10px_-10px_20px_#ffffff]', hoverShadow: 'hover:shadow-[14px_14px_28px_rgba(239,68,68,0.25),-14px_-14px_28px_#ffffff]' },
-              { label: 'Expenses', sublabel: 'This period', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, color: 'amber', borderColor: 'border-amber-300', shadow: 'shadow-[10px_10px_20px_rgba(245,158,11,0.15),-10px_-10px_20px_#ffffff]', hoverShadow: 'hover:shadow-[14px_14px_28px_rgba(245,158,11,0.25),-14px_-14px_28px_#ffffff]' },
-              { label: 'Profit', sublabel: 'Net earnings', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, color: 'blue', borderColor: 'border-blue-300', shadow: 'shadow-[10px_10px_20px_rgba(59,130,246,0.15),-10px_-10px_20px_#ffffff]', hoverShadow: 'hover:shadow-[14px_14px_28px_rgba(59,130,246,0.25),-14px_-14px_28px_#ffffff]' },
-            ].map((stat, i) => (
+              { label: 'Sales', sublabel: 'vs yesterday', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, accentColor: 'green' },
+              { label: 'Purchases', sublabel: 'Total spend', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, accentColor: 'red' },
+              { label: 'Expenses', sublabel: 'This period', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, accentColor: 'amber' },
+              { label: 'Profit', sublabel: 'Net earnings', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, accentColor: 'green' },
+              { label: 'Bank Balance', sublabel: 'Available', value: metrics.cash.inHand, growth: null, route: '/banking', icon: Bank, accentColor: 'blue', isBalance: true },
+              { label: 'Inventory Value', sublabel: 'Stock worth', value: metrics.inventory.value, growth: null, route: '/inventory', icon: Package, accentColor: 'slate' },
+            ].map((stat, i) => {
+              const isNegative = stat.value < 0
+              const displayValue = Math.abs(stat.value)
+              const valueColor = stat.isBalance && isNegative ? 'text-red-600 dark:text-red-400' :
+                                stat.accentColor === 'green' ? 'text-green-600 dark:text-green-400' :
+                                stat.accentColor === 'red' ? 'text-red-600 dark:text-red-400' :
+                                stat.accentColor === 'blue' ? 'text-blue-600 dark:text-blue-400' :
+                                stat.accentColor === 'amber' ? 'text-amber-600 dark:text-amber-400' :
+                                'text-slate-700 dark:text-slate-200'
+
+              return (
               <motion.div
                 key={i}
                 variants={{
-                  hidden: { opacity: 0, y: 30 },
+                  hidden: { opacity: 0, y: 20 },
                   visible: { opacity: 1, y: 0 },
                 }}
                 onClick={() => navigate(stat.route)}
                 className={cn(
-                  "relative p-6 rounded-3xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group",
-                  "bg-[#e4ebf5] dark:bg-slate-800",
-                  "border-2",
-                  stat.borderColor,
-                  stat.shadow,
-                  stat.hoverShadow,
-                  "dark:border-opacity-30 dark:shadow-[10px_10px_20px_#1e293b,-10px_-10px_20px_#334155] dark:hover:shadow-[14px_14px_28px_#1e293b,-14px_-14px_28px_#334155]"
+                  "relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group",
+                  "bg-white dark:bg-slate-800",
+                  "border border-slate-200 dark:border-slate-700",
+                  "shadow-[4px_4px_12px_rgba(0,0,0,0.06),-2px_-2px_8px_rgba(255,255,255,0.8)]",
+                  "hover:shadow-[6px_6px_16px_rgba(0,0,0,0.1),-3px_-3px_12px_rgba(255,255,255,0.9)]",
+                  "dark:shadow-[4px_4px_12px_#1e293b,-2px_-2px_8px_#334155]",
+                  stat.isBalance && isNegative && "border-l-4 border-l-red-500"
                 )}
               >
-                <div className="flex justify-between items-start mb-4">
-                  <p className={cn(
-                    "text-sm font-medium",
-                    stat.color === 'green' && 'text-green-700 dark:text-green-300',
-                    stat.color === 'red' && 'text-red-700 dark:text-red-300',
-                    stat.color === 'amber' && 'text-amber-700 dark:text-amber-300',
-                    stat.color === 'blue' && 'text-blue-700 dark:text-blue-300',
-                  )}>{stat.label}</p>
+                {/* Accent line at top */}
+                <div className={cn(
+                  "absolute top-0 left-0 right-0 h-1 rounded-t-2xl opacity-70",
+                  stat.accentColor === 'green' && 'bg-green-500',
+                  stat.accentColor === 'red' && 'bg-red-500',
+                  stat.accentColor === 'blue' && 'bg-blue-500',
+                  stat.accentColor === 'amber' && 'bg-amber-500',
+                  stat.accentColor === 'slate' && 'bg-slate-400 dark:bg-slate-600',
+                  stat.isBalance && isNegative && 'bg-red-500 opacity-100'
+                )} />
+
+                <div className="flex justify-between items-start mb-2 mt-1">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
                   <div className={cn(
-                    "w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
-                    stat.color === 'green' && 'bg-green-100 shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]',
-                    stat.color === 'red' && 'bg-red-100 shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]',
-                    stat.color === 'amber' && 'bg-amber-100 shadow-[inset_3px_3px_6px_#f5e0b8,inset_-3px_-3px_6px_#ffffff]',
-                    stat.color === 'blue' && 'bg-blue-100 shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]',
+                    "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:scale-110",
+                    "bg-slate-100 dark:bg-slate-700"
                   )}>
-                    <stat.icon size={24} weight="bold" className={cn(
-                      stat.color === 'green' && 'text-green-600 dark:text-green-400',
-                      stat.color === 'red' && 'text-red-600 dark:text-red-400',
-                      stat.color === 'amber' && 'text-amber-600 dark:text-amber-400',
-                      stat.color === 'blue' && 'text-blue-600 dark:text-blue-400',
+                    <stat.icon size={16} weight="bold" className={cn(
+                      stat.accentColor === 'green' && 'text-green-600 dark:text-green-400',
+                      stat.accentColor === 'red' && 'text-red-600 dark:text-red-400',
+                      stat.accentColor === 'blue' && 'text-blue-600 dark:text-blue-400',
+                      stat.accentColor === 'amber' && 'text-amber-600 dark:text-amber-400',
+                      stat.accentColor === 'slate' && 'text-slate-600 dark:text-slate-400',
+                      stat.isBalance && isNegative && 'text-red-600 dark:text-red-400'
                     )} />
                   </div>
                 </div>
-                <p className={cn(
-                  "text-3xl font-bold mb-2",
-                  stat.color === 'green' && 'text-green-600 dark:text-green-400',
-                  stat.color === 'red' && 'text-red-600 dark:text-red-400',
-                  stat.color === 'amber' && 'text-amber-600 dark:text-amber-400',
-                  stat.color === 'blue' && 'text-blue-600 dark:text-blue-400',
-                )}>
-                  {`₹${(stat.value / 1000).toLocaleString('en-IN', { maximumFractionDigits: 0 })}K`}
+                <p className={cn("text-xl lg:text-2xl font-bold mb-1", valueColor)}>
+                  {isNegative && '-'}₹{displayValue >= 100000 ? `${(displayValue / 100000).toLocaleString('en-IN', { maximumFractionDigits: 1 })}L` : `${(displayValue / 1000).toLocaleString('en-IN', { maximumFractionDigits: displayValue < 1000 ? 0 : 1 })}K`}
                 </p>
                 {stat.growth !== null ? (
                   <p className={cn(
-                    "text-sm font-medium",
+                    "text-xs font-medium",
                     stat.growth >= 0 ? 'text-green-600' : 'text-red-600',
                   )}>
                     {stat.growth >= 0 ? `+${stat.growth.toFixed(1)}%` : `${stat.growth.toFixed(1)}%`} {stat.sublabel}
                   </p>
+                ) : stat.isBalance && isNegative ? (
+                  <p className="text-xs font-medium text-red-500 flex items-center gap-1">
+                    <WarningCircle size={12} weight="fill" />
+                    Overdraft
+                  </p>
                 ) : (
-                  <p className={cn(
-                    "text-sm font-medium",
-                    stat.color === 'green' && 'text-green-500',
-                    stat.color === 'red' && 'text-red-500',
-                    stat.color === 'amber' && 'text-amber-500',
-                    stat.color === 'blue' && 'text-blue-500',
-                  )}>{stat.sublabel}</p>
+                  <p className="text-xs font-medium text-slate-400 dark:text-slate-500">{stat.sublabel}</p>
                 )}
               </motion.div>
-            ))}
+            )})}
           </motion.div>
 
           {/* Quick Shortcuts - Neumorphic Panel */}
@@ -1019,11 +1029,10 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="p-7 rounded-3xl bg-[#e4ebf5] dark:bg-slate-800
+            className="p-5 rounded-3xl bg-[#e4ebf5] dark:bg-slate-800
               shadow-[12px_12px_24px_#c5ccd6,-12px_-12px_24px_#ffffff]
               dark:shadow-[12px_12px_24px_#1e293b,-12px_-12px_24px_#334155]"
           >
-            <h2 className="text-lg font-bold text-slate-700 dark:text-slate-100 mb-5">Quick Shortcuts</h2>
             <div className="flex flex-wrap gap-4">
               {/* Create Invoice - Primary Action */}
               <button
@@ -1097,20 +1106,6 @@ const Dashboard = () => {
               >
                 <UserPlus size={18} className="text-slate-500" />
                 Add Party
-              </button>
-              {/* Check Inventory */}
-              <button
-                onClick={() => navigate('/inventory')}
-                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-200
-                  bg-[#e4ebf5] dark:bg-slate-700
-                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
-                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
-                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
-                  active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
-                  transition-all duration-200"
-              >
-                <Package size={18} className="text-blue-500" />
-                Check Inventory
               </button>
             </div>
           </motion.div>

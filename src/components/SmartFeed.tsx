@@ -4,7 +4,7 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Warning, WhatsappLogo, TrendingUp, Lightbulb,
+  Warning, WhatsappLogo, TrendUp, Lightbulb,
   Package, CurrencyInr, ArrowRight, X, ShoppingCart
 } from '@phosphor-icons/react'
 import { cn } from '../lib/utils'
@@ -39,7 +39,7 @@ const getFeedIcon = (type: FeedItem['type']) => {
     case 'payment_due':
       return <CurrencyInr size={20} weight="duotone" className="text-amber-500" />
     case 'insight':
-      return <TrendingUp size={20} weight="duotone" className="text-green-500" />
+      return <TrendUp size={20} weight="duotone" className="text-green-500" />
     case 'tip':
       return <Lightbulb size={20} weight="duotone" className="text-blue-500" />
     case 'achievement':

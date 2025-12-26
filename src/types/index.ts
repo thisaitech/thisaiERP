@@ -730,3 +730,16 @@ export interface CartItem {
   discount?: number;
   gstRate?: number;
 }
+
+export interface CRMEngineer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  specialization: string;
+  experience: number; // years
+  status: 'active' | 'inactive';
+  companyId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}

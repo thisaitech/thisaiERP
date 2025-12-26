@@ -393,3 +393,40 @@ export const seedCRMData = async (): Promise<void> => {
 };
 
 export const seedTestDataWithoutCompanyId = seedCRMData;
+
+// Debug function to check activities and site visits for a specific lead
+export const debugLeadData = async (leadId: string): Promise<void> => {
+  console.log('🔍 === DEBUG: Checking data for lead:', leadId, '===');
+
+  try {
+    // Import local storage functions
+    const {
+      getAllAttachmentsLocal,
+      getAllSiteVisitsLocal
+    } = await import('./localAttachmentService');
+
+    // Check activities (stored as attachments in local storage)
+    const allAttachments = await getAllAttachmentsLocal();
+    const activityAttachments = allAttachments.filter(att =>
+      att.leadId === leadId && att.entityType === 'activity'
+    );
+
+    console.log(`📋 Activities for lead ${leadId}: ${activityAttachments.length}`);
+    activityAttachments.forEach(att => {
+      console.log(`  - ${att.id}: ${att.fileName} (${att.category})`);
+    });
+
+    // Check site visits
+    const allSiteVisits = await getAllSiteVisitsLocal();
+    const leadSiteVisits = allSiteVisits.filter(visit => visit.leadId === leadId);
+
+    console.log(`📍 Site visits for lead ${leadId}: ${leadSiteVisits.length}`);
+    leadSiteVisits.forEach(visit => {
+      console.log(`  - ${visit.id}: ${visit.engineerName} (${visit.status})`);
+    });
+
+    console.log('🔍 === DEBUG END ===');
+  } catch (error) {
+    console.error('❌ Debug failed:', error);
+  }
+};
