@@ -1450,7 +1450,7 @@
     min-height: auto;
     max-height: none;
     overflow: visible;
-    background: #F8FAFC;
+    background: #FFFFFF;
   }
 
   /* Fixed Header Section - Invoice tabs, search, customer info */
@@ -1468,7 +1468,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding: 16px 24px;
-    background: #F8FAFC;
+    background: #FFFFFF;
     scroll-behavior: smooth;
   }
 
