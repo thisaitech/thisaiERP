@@ -196,6 +196,7 @@ export interface Item {
   barcode?: string
   sku?: string
   imageUrl?: string
+  expiryDate?: string  // Optional expiry date for perishable items
   isActive: boolean
   createdAt: string
   updatedAt: string

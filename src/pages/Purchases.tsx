@@ -1996,8 +1996,8 @@ const Sales = () => {
     setNewItemPurchasePrice(masterItem.purchase_price.toString())
     setShowNewItemPurchasePrice(true)
 
-    // Auto-fill Wholesale Price (70% of MRP)
-    const wholesalePrice = (masterItem.mrp * 0.7).toFixed(2)
+    // Auto-fill Wholesale Price (30% of MRP)
+    const wholesalePrice = (masterItem.mrp * 0.3).toFixed(2)
     setNewItemWholesalePrice(wholesalePrice)
     setShowNewItemWholesalePrice(true)
 
@@ -10186,9 +10186,9 @@ TOTAL:       ₹${invoice.total}
                                 const retailPrice = e.target.value
                                 setNewItemRetailPrice(retailPrice)
 
-                                // Auto-calculate wholesale price as 70% of retail price
+                                // Auto-calculate wholesale price as 30% of retail price
                                 if (retailPrice && parseFloat(retailPrice) > 0) {
-                                  const wholesalePrice = (parseFloat(retailPrice) * 0.7).toFixed(2)
+                                  const wholesalePrice = (parseFloat(retailPrice) * 0.3).toFixed(2)
                                   setNewItemWholesalePrice(wholesalePrice)
                                   setShowNewItemWholesalePrice(true)
                                 }
@@ -10239,7 +10239,7 @@ TOTAL:       ₹${invoice.total}
                             >
                               <label className="text-xs font-medium mb-1.5 block">
                                 Wholesale Price
-                                <span className="ml-1.5 text-[10px] text-emerald-600 font-normal">(Auto-filled: 70% of MRP)</span>
+                                <span className="ml-1.5 text-[10px] text-emerald-600 font-normal">(Auto-filled: 30% of MRP)</span>
                               </label>
                               <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>

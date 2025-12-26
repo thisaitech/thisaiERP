@@ -2026,8 +2026,8 @@ const Sales = () => {
     setNewItemPurchasePrice(masterItem.purchase_price.toString())
     setShowNewItemPurchasePrice(true)
 
-    // Auto-fill Wholesale Price (70% of MRP)
-    const wholesalePrice = (masterItem.mrp * 0.7).toFixed(2)
+    // Auto-fill Wholesale Price (30% of MRP)
+    const wholesalePrice = (masterItem.mrp * 0.3).toFixed(2)
     setNewItemWholesalePrice(wholesalePrice)
     setShowNewItemWholesalePrice(true)
 
@@ -5083,14 +5083,14 @@ TOTAL:       ₹${invoice.total}
   }
 
   const desktopTableStyle = {
-    maxHeight: 'calc(100vh - 380px)', // Leave room for header, sticky bottom bar, and action buttons
+    maxHeight: 'calc(100vh - 380px)',
     minHeight: invoiceItems.length > 0 ? '100px' : '0',
   }
 
   return (
     <div className={cn(
       "overflow-x-hidden flex flex-col w-full",
-      viewMode === 'list' ? "px-3 py-2 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen" : "bg-white min-h-screen"
+      viewMode === 'list' ? "px-3 py-2 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen" : "bg-white"
     )} style={{ maxWidth: '100vw' }}>
       {/* Header - Only show in list mode */}
       {viewMode === 'list' && (
@@ -6044,14 +6044,14 @@ TOTAL:       ₹${invoice.total}
           ) : (
           <div
             className={cn(
-              "flex flex-col min-h-0 overflow-hidden",
+              "flex flex-col",
               (salesMode === 'pos' || showPosPreview)
                 ? "lg:flex-row gap-2"
                 : ""
             )}
           >
           {/* Left Column - Invoice Form / POS Product Area */}
-          <div className="flex flex-col min-h-0 bg-white dark:bg-slate-900 overflow-hidden">
+          <div className="flex flex-col flex-1 bg-white dark:bg-slate-900">
 
 
           {/* Tabs for multiple invoices + Mode Toggle + Back */}
@@ -7447,7 +7447,7 @@ TOTAL:       ₹${invoice.total}
               </div>
 
               {/* Desktop Action Buttons - Inline at end of content */}
-              <div className="hidden md:flex items-center justify-end gap-3 mt-2">
+              <div className="hidden md:flex items-center justify-end gap-3 flex-shrink-0">
                 {/* Back Button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -10661,9 +10661,9 @@ TOTAL:       ₹${invoice.total}
                                 const retailPrice = e.target.value
                                 setNewItemRetailPrice(retailPrice)
 
-                                // Auto-calculate wholesale price as 70% of retail price
+                                // Auto-calculate wholesale price as 30% of retail price
                                 if (retailPrice && parseFloat(retailPrice) > 0) {
-                                  const wholesalePrice = (parseFloat(retailPrice) * 0.7).toFixed(2)
+                                  const wholesalePrice = (parseFloat(retailPrice) * 0.3).toFixed(2)
                                   setNewItemWholesalePrice(wholesalePrice)
                                   setShowNewItemWholesalePrice(true)
                                 }
@@ -10714,7 +10714,7 @@ TOTAL:       ₹${invoice.total}
                             >
                               <label className="text-xs font-medium mb-1.5 block">
                                 Wholesale Price
-                                <span className="ml-1.5 text-[10px] text-emerald-600 font-normal">(Auto-filled: 70% of MRP)</span>
+                                <span className="ml-1.5 text-[10px] text-emerald-600 font-normal">(Auto-filled: 30% of MRP)</span>
                               </label>
                               <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>

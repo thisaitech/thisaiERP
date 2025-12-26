@@ -530,7 +530,7 @@ export const en = {
     profitMargin: 'Profit Margin',
     margin: 'margin',
     wholesalePrice: 'Wholesale Price',
-    autoFilledMrp: '(Auto-filled: 70% of MRP)',
+    autoFilledMrp: '(Auto-filled: 30% of MRP)',
     taxCompliance: 'Tax & Compliance',
     intrastate: 'Intrastate',
     interstate: 'Interstate',

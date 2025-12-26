@@ -31,7 +31,8 @@ import {
   Stack,
   Camera,
   QrCode,
-  DotsThreeVertical
+  DotsThreeVertical,
+  Calendar
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -178,6 +179,7 @@ const Inventory = () => {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
   const [lowStockAlert, setLowStockAlert] = useState('')
+  const [expiryDate, setExpiryDate] = useState('')
   const [itemType, setItemType] = useState('sales') // sales, purchase, both
   const [brandName, setBrandName] = useState('')
   const [barcodeNumber, setBarcodeNumber] = useState('')
@@ -342,6 +344,7 @@ const Inventory = () => {
     setStockQuantity('')
     setStockEntryUnit('Pcs') // Reset stock entry unit
     setLowStockAlert('')
+    setExpiryDate('')
     setItemType('sales')
     // Reset multi-unit fields
     setHasMultiUnit(false)
@@ -552,7 +555,9 @@ const Inventory = () => {
             return qty * (parseInt(piecesPerPurchaseUnit) || 12)
           }
           return qty
-        })()
+        })(),
+        // Expiry Date - optional
+        expiryDate: expiryDate || undefined
       })
 
       setItems([newItem, ...items])
@@ -971,12 +976,12 @@ const Inventory = () => {
   })
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 lg:p-4 pb-16 sm:pb-20 lg:pb-6 bg-[#f5f7fa] dark:bg-slate-900">
+    <div className="h-screen overflow-hidden flex flex-col p-3 sm:p-4 lg:p-4 pb-2 bg-[#f5f7fa] dark:bg-slate-900">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-3"
+        className="mb-3 flex-shrink-0"
       >
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex items-stretch justify-between gap-4 mb-3">
@@ -1133,7 +1138,7 @@ const Inventory = () => {
       </motion.div>
 
       {/* Tab Filters */}
-      <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
+      <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 flex-shrink-0">
         {[
           { id: 'all', label: t.inventory.allItems, count: items.length },
           { id: 'normal', label: t.inventory.inStock, count: items.filter(item => {
@@ -1164,7 +1169,7 @@ const Inventory = () => {
       </div>
 
       {/* Desktop Table Header (Hidden on Mobile) */}
-      <div className="hidden md:flex items-center px-3 py-2 mb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+      <div className="hidden md:flex items-center px-3 py-2 mb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex-shrink-0">
         <div style={{ width: '20%' }}>Item Name</div>
         <div style={{ width: '12%' }}>Category</div>
         <div style={{ width: '10%' }} className="text-right">Stock</div>
@@ -1176,7 +1181,7 @@ const Inventory = () => {
       </div>
 
       {/* Items List */}
-      <div className="space-y-1">
+      <div className="flex-1 overflow-y-auto space-y-1 pb-2">
         {isLoadingItems ? (
           <div className="flex items-center justify-center py-20">
             <ArrowsClockwise size={32} weight="duotone" className="text-blue-600 animate-spin" />
@@ -1387,19 +1392,19 @@ const Inventory = () => {
               }}
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
             />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => { setShowAddModal(false); resetForm(); }}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-2" onClick={() => { setShowAddModal(false); resetForm(); }}>
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-card text-card-foreground rounded-xl shadow-2xl border border-border w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col"
+                className="bg-card text-card-foreground rounded-xl shadow-2xl border border-border w-full max-w-3xl max-h-[98vh] overflow-hidden flex flex-col"
               >
                 {/* Header */}
-                <div className="px-4 sm:px-6 py-4 border-b border-border bg-gradient-to-r from-blue-50 to-purple-50">
+                <div className="px-4 py-2 border-b border-border bg-gradient-to-r from-blue-50 to-purple-50">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
-                      <Package size={24} weight="duotone" className="text-primary" />
+                    <h2 className="text-base font-bold flex items-center gap-2">
+                      <Package size={20} weight="duotone" className="text-primary" />
                       {t.inventory.addNewItem}
                     </h2>
                     <button
@@ -1407,29 +1412,29 @@ const Inventory = () => {
                         setShowAddModal(false)
                         resetForm()
                       }}
-                      className="p-2 hover:bg-muted rounded-lg transition-colors"
+                      className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                     >
-                      <X size={20} weight="bold" />
+                      <X size={18} weight="bold" />
                     </button>
                   </div>
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-                  <div className="space-y-5">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+                  <div className="space-y-2">
                     {/* Section 1: Basic Info */}
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
-                        <Cube size={16} weight="duotone" />
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                        <Cube size={14} weight="duotone" />
                         {t.inventory.basicInfo}
                       </h3>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {/* Item Name with Magic Autocomplete */}
                         <div className="sm:col-span-2 relative">
-                          <label className="text-xs font-medium mb-1.5 block flex items-center gap-2">
+                          <label className="text-xs font-medium mb-1 block flex items-center gap-2">
                             {t.inventory.itemName} <span className="text-destructive">*</span>
-                            <span className="text-[10px] bg-success/10 text-success px-2 py-0.5 rounded-full font-semibold">
+                            <span className="text-[10px] bg-success/10 text-success px-1.5 py-0.5 rounded-full font-semibold">
                               ✨ {t.inventory.autoFillMagic}
                             </span>
                           </label>
@@ -1440,7 +1445,7 @@ const Inventory = () => {
                             onKeyDown={handleKeyDown}
                             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                             placeholder={t.inventory.startTyping}
-                            className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                           />
 
                           {/* Autocomplete Suggestions Dropdown */}
@@ -1758,7 +1763,7 @@ const Inventory = () => {
 
                                 // Auto-calculate wholesale price as 70% of retail price
                                 if (retailPriceValue && parseFloat(retailPriceValue) > 0) {
-                                  const wholesalePriceValue = (parseFloat(retailPriceValue) * 0.7).toFixed(2)
+                                  const wholesalePriceValue = (parseFloat(retailPriceValue) * 0.3).toFixed(2)
                                   setWholesalePrice(wholesalePriceValue)
                                   setShowWholesalePrice(true)
                                 }
@@ -1978,7 +1983,7 @@ const Inventory = () => {
                           >
                             <label className="text-xs font-medium mb-1.5 block">
                               {t.inventory.wholesalePrice}
-                              <span className="ml-1.5 text-[10px] text-emerald-600 font-normal">(Auto-filled: 70% of MRP)</span>
+                              <span className="ml-1.5 text-[10px] text-emerald-600 font-normal">(Auto-filled: 30% of MRP)</span>
                             </label>
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
@@ -2270,6 +2275,24 @@ const Inventory = () => {
                             </motion.div>
                           )}
                         </div>
+                      </div>
+
+                      {/* Expiry Date - Optional */}
+                      <div>
+                        <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
+                          <Calendar size={12} weight="duotone" />
+                          Expiry Date
+                          <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={expiryDate}
+                          onChange={(e) => setExpiryDate(e.target.value)}
+                          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
+                        />
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          For perishable items only
+                        </p>
                       </div>
                     </div>
 
@@ -2573,20 +2596,20 @@ const Inventory = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="px-4 sm:px-6 py-4 border-t border-border flex gap-3">
+                <div className="px-4 py-2 border-t border-border flex gap-3">
                   <button
                     onClick={() => {
                       setShowAddModal(false)
                       resetForm()
                     }}
-                    className="flex-1 px-4 py-2.5 bg-muted hover:bg-muted/80 rounded-lg font-medium transition-colors text-sm"
+                    className="flex-1 px-4 py-2 bg-muted hover:bg-muted/80 rounded-lg font-medium transition-colors text-sm"
                   >
                     {t.inventory.cancel}
                   </button>
                   <button
                     onClick={handleAddItem}
                     disabled={isLoading}
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-accent text-white rounded-lg font-medium hover:shadow-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-primary to-accent text-white rounded-lg font-medium hover:shadow-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <>
@@ -2838,7 +2861,7 @@ const Inventory = () => {
 
                                 // Auto-calculate wholesale price as 70% of retail price
                                 if (retailPriceValue && parseFloat(retailPriceValue) > 0) {
-                                  const wholesalePriceValue = (parseFloat(retailPriceValue) * 0.7).toFixed(2)
+                                  const wholesalePriceValue = (parseFloat(retailPriceValue) * 0.3).toFixed(2)
                                   setWholesalePrice(wholesalePriceValue)
                                   setShowWholesalePrice(true)
                                 }

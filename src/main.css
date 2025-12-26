@@ -1443,13 +1443,10 @@
      - Fixed bottom totals bar
      ======================================== */
 
-  /* Main Invoice Container - Compact, no forced height */
+  /* Main Invoice Container - Natural flow layout */
   .invoice-layout-container {
     display: flex;
     flex-direction: column;
-    min-height: auto;
-    max-height: none;
-    overflow: visible;
     background: #FFFFFF;
   }
 
