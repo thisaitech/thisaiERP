@@ -7447,15 +7447,15 @@ TOTAL:       ₹${invoice.total}
               </div>
 
               {/* Desktop Action Buttons - Separate section below totals */}
-              <div className="hidden md:flex items-center justify-end gap-4 mt-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="hidden md:flex items-center justify-end gap-3 mt-2">
                 {/* Back Button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleBackToList}
-                  className="flex px-6 py-3 rounded-xl font-semibold text-base transition-all items-center gap-2.5 bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
+                  className="flex px-4 py-2 rounded-lg font-semibold text-sm transition-all items-center gap-2 bg-slate-200 text-slate-600 hover:bg-slate-300 active:bg-slate-400"
                 >
-                  <ArrowLeft size={22} weight="bold" />
+                  <ArrowLeft size={18} weight="bold" />
                   Back
                 </motion.button>
 
@@ -7467,10 +7467,10 @@ TOTAL:       ₹${invoice.total}
                       onClick={createInvoiceOnly}
                       disabled={invoiceItems.length === 0 || isCreatingInvoice}
                       className={cn(
-                        "px-6 py-3 rounded-l-xl font-semibold text-base transition-all flex items-center justify-center gap-2.5 active:scale-95",
+                        "px-4 py-2 rounded-l-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 active:scale-95",
                         invoiceItems.length > 0 && !isCreatingInvoice
-                          ? "bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
-                          : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300"
+                          ? "bg-slate-200 text-slate-700 hover:bg-slate-300 active:bg-slate-400"
+                          : "bg-slate-300 text-slate-400 cursor-not-allowed"
                       )}
                     >
                       {isCreatingInvoice ? 'Creating...' : 'Generate Bill'}
@@ -7481,13 +7481,13 @@ TOTAL:       ₹${invoice.total}
                         onClick={() => setShowBillDropdown(!showBillDropdown)}
                         disabled={invoiceItems.length === 0 || isCreatingInvoice}
                         className={cn(
-                          "px-3 py-3 rounded-r-xl font-medium text-base transition-all active:scale-95",
+                          "px-2 py-2 rounded-r-lg font-medium text-sm transition-all active:scale-95",
                           invoiceItems.length > 0 && !isCreatingInvoice
-                            ? "bg-slate-200 text-slate-700 border border-slate-300 border-l-0 hover:bg-slate-300 active:bg-slate-400"
-                            : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300 border-l-0"
+                            ? "bg-slate-200 text-slate-700 hover:bg-slate-300 active:bg-slate-400"
+                            : "bg-slate-300 text-slate-400 cursor-not-allowed"
                         )}
                       >
-                        <CaretDown size={22} weight="bold" className={cn("transition-transform", showBillDropdown && "rotate-180")} />
+                        <CaretDown size={18} weight="bold" className={cn("transition-transform", showBillDropdown && "rotate-180")} />
                       </button>
                       {/* Desktop Bill Dropdown Menu with Backdrop */}
                       <AnimatePresence>
@@ -7599,7 +7599,7 @@ TOTAL:       ₹${invoice.total}
                   onClick={createInvoiceOnly}
                   disabled={invoiceItems.length === 0}
                   className={cn(
-                    "px-6 py-3 rounded-xl font-semibold text-base transition-all",
+                    "px-4 py-2 rounded-lg font-semibold text-sm transition-all",
                     invoiceItems.length > 0
                       ? "bg-slate-600 text-white hover:bg-slate-700"
                       : "bg-muted text-muted-foreground cursor-not-allowed"
@@ -7615,7 +7615,7 @@ TOTAL:       ₹${invoice.total}
                   onClick={() => setShowInvoicePreview(true)}
                   disabled={invoiceItems.length === 0}
                   className={cn(
-                    "flex px-6 py-3 rounded-xl font-semibold text-base transition-all items-center justify-center gap-2.5",
+                    "flex px-4 py-2 rounded-lg font-semibold text-sm transition-all items-center justify-center gap-2",
                     invoiceItems.length > 0
                       ? "bg-primary text-primary-foreground hover:bg-primary/90"
                       : "bg-muted text-muted-foreground cursor-not-allowed"
