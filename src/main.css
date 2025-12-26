@@ -1443,13 +1443,13 @@
      - Fixed bottom totals bar
      ======================================== */
 
-  /* Main Invoice Container - Full viewport height minus top nav */
+  /* Main Invoice Container - Compact, no forced height */
   .invoice-layout-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 64px);
-    max-height: calc(100vh - 64px);
-    overflow: hidden !important; /* NO page scroll */
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
     background: #F8FAFC;
   }
 
