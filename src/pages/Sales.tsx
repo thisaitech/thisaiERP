@@ -6107,13 +6107,189 @@ TOTAL:       ₹${invoice.total}
               </button>
             </div>
 
-            {/* Spacer to push back button to right */}
-            <div className="ml-auto" />
+            {/* Desktop Action Buttons - Right corner */}
+            <div className="hidden md:flex items-center gap-2 ml-auto">
+              {/* Back Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleBackToList}
+                className="flex px-4 py-2 rounded-lg font-semibold text-sm transition-all items-center gap-2 bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
+              >
+                <ArrowLeft size={16} weight="bold" />
+                Back
+              </motion.button>
 
-            {/* Back Button */}
+              {/* Generate Bill with dropdown */}
+              <div className="relative flex-none">
+                <div className="flex">
+                  <button
+                    type="button"
+                    onClick={createInvoiceOnly}
+                    disabled={invoiceItems.length === 0 || isCreatingInvoice}
+                    className={cn(
+                      "px-4 py-2 rounded-l-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 active:scale-95",
+                      invoiceItems.length > 0 && !isCreatingInvoice
+                        ? "bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
+                        : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300"
+                    )}
+                  >
+                    {isCreatingInvoice ? 'Creating...' : 'Generate Bill'}
+                  </button>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowBillDropdown(!showBillDropdown)}
+                      disabled={invoiceItems.length === 0 || isCreatingInvoice}
+                      className={cn(
+                        "px-2 py-2 rounded-r-lg font-medium text-sm transition-all active:scale-95",
+                        invoiceItems.length > 0 && !isCreatingInvoice
+                          ? "bg-slate-200 text-slate-700 border border-slate-300 border-l-0 hover:bg-slate-300 active:bg-slate-400"
+                          : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300 border-l-0"
+                      )}
+                    >
+                      <CaretDown size={16} weight="bold" className={cn("transition-transform", showBillDropdown && "rotate-180")} />
+                    </button>
+                    {/* Desktop Bill Dropdown Menu with Backdrop */}
+                    <AnimatePresence>
+                      {showBillDropdown && (
+                        <>
+                          {/* Backdrop */}
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/30 z-40"
+                            onClick={() => setShowBillDropdown(false)}
+                          />
+                          {/* Dropdown Menu */}
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute top-full right-0 mt-1 w-48 bg-card border border-border rounded-lg shadow-xl z-50 py-1"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowBillDropdown(false)
+                                const invoice = buildCurrentInvoiceData()
+                                if (invoice) {
+                                  handleGenerateEInvoice(invoice)
+                                } else {
+                                  toast.error('Please add customer and items first')
+                                }
+                              }}
+                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors"
+                            >
+                              Generate e-Invoice
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowBillDropdown(false)
+                                const invoice = buildCurrentInvoiceData()
+                                if (invoice) {
+                                  handleGenerateEWayBill(invoice)
+                                } else {
+                                  toast.error('Please add customer and items first')
+                                }
+                              }}
+                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors"
+                            >
+                              Generate Eway Bill
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowBillDropdown(false)
+                                const invoice = buildCurrentInvoiceData()
+                                if (invoice) {
+                                  handleShareWhatsApp(invoice)
+                                } else {
+                                  toast.error('Please add customer and items first')
+                                }
+                              }}
+                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                            >
+                              Share <Share size={12} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowBillDropdown(false)
+                                if (customerName && invoiceItems.length > 0) {
+                                  setPrintOnlyPreview(true)
+                                  setShowInvoicePreview(true)
+                                } else {
+                                  toast.error('Please add customer and items first')
+                                }
+                              }}
+                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                            >
+                              Print <Printer size={12} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setShowPosPreview(true); setShowBillDropdown(false) }}
+                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center gap-2 text-orange-600 font-medium"
+                            >
+                              POS Preview <Receipt size={12} />
+                            </button>
+                            <div className="border-t border-border my-1" />
+                            <button
+                              type="button"
+                              onClick={() => { createInvoiceOnly(); setShowBillDropdown(false) }}
+                              className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors"
+                            >
+                              Save & New
+                            </button>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={createInvoiceOnly}
+                disabled={invoiceItems.length === 0}
+                className={cn(
+                  "px-5 py-2 rounded-lg font-semibold text-sm transition-all",
+                  invoiceItems.length > 0
+                    ? "bg-slate-600 text-white hover:bg-slate-700"
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                )}
+              >
+                Save
+              </motion.button>
+
+              {/* Save & Print Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowInvoicePreview(true)}
+                disabled={invoiceItems.length === 0}
+                className={cn(
+                  "flex px-5 py-2 rounded-lg font-semibold text-sm transition-all items-center justify-center gap-2",
+                  invoiceItems.length > 0
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                )}
+              >
+                {t.sales.saveAndPrint}
+              </motion.button>
+            </div>
+
+            {/* Mobile Back Button only */}
             <button
               onClick={handleBackToList}
-              className="flex items-center gap-1.5 px-3 py-1 bg-slate-700 text-white hover:bg-slate-600 rounded-lg font-semibold transition-colors text-xs shadow-sm"
+              className="md:hidden flex items-center gap-1.5 px-3 py-1 bg-slate-700 text-white hover:bg-slate-600 rounded-lg font-semibold transition-colors text-xs shadow-sm"
             >
               <ArrowLeft size={14} weight="bold" />
               <span>Back to List</span>
@@ -6808,27 +6984,27 @@ TOTAL:       ₹${invoice.total}
                             <Plus size={12} weight="bold" />
                           </button>
                         </th>
-                        <th className="px-1 py-0.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '170px', minWidth: '170px' }}>ITEM NAME</th>
+                        <th className="px-1 py-0.5 text-left text-sm font-bold text-slate-600 uppercase tracking-wide" style={{ width: '170px', minWidth: '170px' }}>ITEM NAME</th>
                         {visibleColumns.hsnCode && (
-                          <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '65px', minWidth: '65px' }}>HSN</th>
+                          <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide" style={{ width: '65px', minWidth: '65px' }}>HSN</th>
                         )}
                         {visibleColumns.description && (
-                          <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '45px', minWidth: '45px' }}>DESC</th>
+                          <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide" style={{ width: '45px', minWidth: '45px' }}>DESC</th>
                         )}
-                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '30px', minWidth: '30px' }}>QTY</th>
-                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '48px', minWidth: '48px' }}>UNIT</th>
-                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '58px', minWidth: '58px' }}>TAX</th>
-                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide" style={{ width: '60px', minWidth: '60px' }}>MRP</th>
-                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '60px', minWidth: '60px' }}>TAXABLE</th>
+                        <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide" style={{ width: '30px', minWidth: '30px' }}>QTY</th>
+                        <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide" style={{ width: '48px', minWidth: '48px' }}>UNIT</th>
+                        <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide" style={{ width: '58px', minWidth: '58px' }}>TAX</th>
+                        <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide" style={{ width: '60px', minWidth: '60px' }}>MRP</th>
+                        <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '60px', minWidth: '60px' }}>TAXABLE</th>
                         {visibleColumns.discount && (
                           <>
-                            <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>DIS%</th>
-                            <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>DIS₹</th>
+                            <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>DIS%</th>
+                            <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>DIS₹</th>
                           </>
                         )}
                         {/* Single GST % column - always visible */}
-                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>GST%</th>
-                        <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>GST₹</th>
+                        <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '38px', minWidth: '38px' }}>GST%</th>
+                        <th className="px-1 py-0.5 text-center text-sm font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>GST₹</th>
                         {/* CGST/SGST/IGST breakdown - optional */}
                         {visibleColumns.gstBreakdown && (
                           <>
@@ -6837,7 +7013,7 @@ TOTAL:       ₹${invoice.total}
                             <th className="px-1 py-0.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wide" style={{ width: '35px', minWidth: '35px' }}>IGST%</th>
                           </>
                         )}
-                        <th className="px-1 py-0.5 text-right pr-4 text-xs font-bold text-emerald-600 uppercase tracking-wide" style={{ width: '75px', minWidth: '75px' }}>TOTAL</th>
+                        <th className="px-1 py-0.5 text-right pr-4 text-sm font-bold text-emerald-600 uppercase tracking-wide" style={{ width: '75px', minWidth: '75px' }}>TOTAL</th>
                         <th className="px-1 py-0.5 relative" style={{ width: '28px', minWidth: '28px' }}>
                           <button
                             onClick={() => setShowColumnMenu(!showColumnMenu)}
@@ -6930,7 +7106,7 @@ TOTAL:       ₹${invoice.total}
                                   type="text"
                                   value={item.name}
                                   onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                                  className="w-full h-6 px-1 bg-transparent border-0 text-[13px] font-semibold text-slate-700 focus:ring-0 focus:outline-none placeholder:text-slate-300 tracking-tight"
+                                  className="w-full h-6 px-1 bg-transparent border-0 text-sm font-semibold text-slate-700 focus:ring-0 focus:outline-none placeholder:text-slate-300 tracking-tight"
                                   style={{ minWidth: '140px' }}
                                   placeholder="Item name"
                                 />
@@ -6942,7 +7118,7 @@ TOTAL:       ₹${invoice.total}
                                     value={item.hsnCode || ''}
                                     onChange={(e) => updateItem(item.id, 'hsnCode', e.target.value)}
                                     className={cn(
-                                      "w-full h-6 px-1 bg-transparent border-0 text-xs text-center font-medium focus:ring-0 focus:outline-none placeholder:text-slate-300/70 font-mono tracking-wide",
+                                      "w-full h-6 px-1 bg-transparent border-0 text-sm text-center font-medium focus:ring-0 focus:outline-none placeholder:text-slate-300/70 font-mono tracking-wide",
                                       isHSNRequired(customerGST) && (!item.hsnCode || item.hsnCode.trim() === '')
                                         ? "text-orange-500 placeholder:text-orange-300"
                                         : "text-slate-600"
@@ -6957,7 +7133,7 @@ TOTAL:       ₹${invoice.total}
                                     type="text"
                                     value={item.description || ''}
                                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                                    className="w-full h-6 px-1.5 bg-transparent border-0 text-xs focus:ring-0 focus:outline-none text-slate-600 placeholder:text-slate-300"
+                                    className="w-full h-6 px-1.5 bg-transparent border-0 text-sm focus:ring-0 focus:outline-none text-slate-600 placeholder:text-slate-300"
                                     placeholder="Desc"
                                   />
                                 </td>
@@ -6986,7 +7162,7 @@ TOTAL:       ₹${invoice.total}
                                       updateItem(item.id, 'qty', 1)
                                     }
                                   }}
-                                  className="w-full h-6 px-0.5 bg-transparent border-0 text-xs text-center font-semibold focus:ring-0 focus:outline-none text-slate-700"
+                                  className="w-full h-6 px-0.5 bg-transparent border-0 text-sm text-center font-semibold focus:ring-0 focus:outline-none text-slate-700"
                                 />
                               </td>
                               <td className="px-1 py-0.5 align-middle" style={{ width: '48px', minWidth: '48px' }}>
@@ -6994,7 +7170,7 @@ TOTAL:       ₹${invoice.total}
                                   <select
                                     value={item.unit || item.baseUnit || 'Pcs'}
                                     onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                                    className="w-full h-6 px-0 bg-transparent border-0 text-xs font-medium text-slate-600 focus:ring-0 focus:outline-none cursor-pointer"
+                                    className="w-full h-6 px-0 bg-transparent border-0 text-sm font-medium text-slate-600 focus:ring-0 focus:outline-none cursor-pointer"
                                     title={`1 ${item.purchaseUnit || 'Box'} = ${item.piecesPerPurchaseUnit || 12} ${item.baseUnit || 'Pcs'}`}
                                   >
                                     <option value={item.baseUnit || 'Pcs'}>{item.baseUnit || 'Pcs'}</option>
@@ -7004,7 +7180,7 @@ TOTAL:       ₹${invoice.total}
                                   <select
                                     value={item.unit || 'NONE'}
                                     onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                                    className="w-full h-6 px-0.5 bg-transparent border-0 text-xs font-medium focus:ring-0 focus:outline-none text-slate-600 cursor-pointer"
+                                    className="w-full h-6 px-0.5 bg-transparent border-0 text-sm font-medium focus:ring-0 focus:outline-none text-slate-600 cursor-pointer"
                                   >
                                     <option value="NONE">-</option>
                                     <option value="PCS">PCS</option>
@@ -7021,7 +7197,7 @@ TOTAL:       ₹${invoice.total}
                                 <select
                                   value={item.taxMode || 'exclusive'}
                                   onChange={(e) => updateItem(item.id, 'taxMode', e.target.value)}
-                                  className="h-6 text-[9px] px-0.5 bg-transparent border-0 rounded font-medium text-slate-600 focus:ring-0 focus:outline-none cursor-pointer"
+                                  className="h-6 text-xs px-0.5 bg-transparent border-0 rounded font-medium text-slate-600 focus:ring-0 focus:outline-none cursor-pointer"
                                   title="GST Tax Mode"
                                 >
                                   <option value="exclusive">Without GST</option>
@@ -7039,12 +7215,12 @@ TOTAL:       ₹${invoice.total}
                                     // Simply store what user enters - updateItem handles tax calculation based on mode
                                     updateItem(item.id, 'price', enteredPrice)
                                   }}
-                                  className="w-full h-6 px-1 bg-transparent border-0 text-xs text-center font-semibold text-slate-700 focus:ring-0 focus:outline-none"
+                                  className="w-full h-6 px-1 bg-transparent border-0 text-sm text-center font-semibold text-slate-700 focus:ring-0 focus:outline-none"
                                   placeholder="0"
                                 />
                               </td>
                               <td className="px-1 py-0.5 text-center align-middle" style={{ width: '60px', minWidth: '60px' }}>
-                                <span className="text-xs font-semibold text-slate-600">₹{(item.basePrice || item.price).toFixed(2)}</span>
+                                <span className="text-sm font-semibold text-slate-600">₹{(item.basePrice || item.price).toFixed(2)}</span>
                               </td>
                               {visibleColumns.discount && (
                                 <>
@@ -7061,7 +7237,7 @@ TOTAL:       ₹${invoice.total}
                                           parseFloat(e.target.value) || 0
                                         )
                                       }
-                                      className="w-full h-6 px-0.5 bg-transparent border-0 text-xs text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-0.5 bg-transparent border-0 text-sm text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
                                     />
                                   </td>
                                   <td className="px-1 py-0.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
@@ -7079,7 +7255,7 @@ TOTAL:       ₹${invoice.total}
                                         updateItem(item.id, 'discount', Math.round(discPercent * 100) / 100)
                                       }}
                                       placeholder="0"
-                                      className="w-full h-6 px-1 bg-transparent border-0 text-xs text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
+                                      className="w-full h-6 px-1 bg-transparent border-0 text-sm text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
                                     />
                                   </td>
                                 </>
@@ -7097,13 +7273,13 @@ TOTAL:       ₹${invoice.total}
                                     // Update the main tax field for calculations
                                     updateItem(item.id, 'tax', totalGst)
                                   }}
-                                  className="w-full h-6 px-0.5 bg-transparent border-0 text-xs font-semibold text-center text-slate-700 focus:ring-0 focus:outline-none"
+                                  className="w-full h-6 px-0.5 bg-transparent border-0 text-sm font-semibold text-center text-slate-700 focus:ring-0 focus:outline-none"
                                   title="GST % (Total)"
                                 />
                               </td>
                               {/* GST ₹ - Always visible */}
                               <td className="px-1 py-0.5 text-center align-middle" style={{ width: '42px', minWidth: '42px' }}>
-                                <span className="text-xs font-medium text-slate-600">₹{(item.taxAmount || 0).toFixed(2)}</span>
+                                <span className="text-sm font-medium text-slate-600">₹{(item.taxAmount || 0).toFixed(2)}</span>
                               </td>
                               {/* CGST/SGST/IGST breakdown - Optional */}
                               {visibleColumns.gstBreakdown && (
@@ -7185,40 +7361,40 @@ TOTAL:       ₹${invoice.total}
                   </table>
                 </div>
                 {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) - STICKY BOTTOM */}
-                <div className="hidden md:grid md:grid-cols-2 gap-3 mt-1 px-1 items-stretch sticky-bottom-bar flex-shrink-0">
+                <div className="hidden md:grid md:grid-cols-2 gap-1.5 mt-0.5 px-1 items-stretch sticky-bottom-bar flex-shrink-0">
                 {/* Left Column - Invoice Details + Discount/Payment/Notes */}
-                <div className="premium-card-subtle p-2.5 dark:bg-slate-800 flex flex-col justify-between rounded-lg">
+                <div className="premium-card-subtle p-1.5 dark:bg-slate-800 flex flex-col justify-between rounded-lg">
                 {/* Line 1: Invoice #, Date and Discount - All on same line */}
-                <div className="grid grid-cols-[1.5fr_1fr_1fr] gap-1.5 mb-0">
+                <div className="grid grid-cols-[1.5fr_1fr_1fr] gap-1 mb-0">
                   <div className="flex items-center gap-1">
-                    <label className="text-xs font-semibold text-slate-700 whitespace-nowrap">Inv #</label>
+                    <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">Inv #</label>
                     <input
                       type="text"
                       value={invoiceNumber}
                       onChange={(e) => setInvoiceNumber(e.target.value)}
                       placeholder="INV/2024-25/001"
-                      className="w-full px-1.5 py-1 text-xs font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
+                      className="w-full px-1.5 py-1 text-sm font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                     />
                   </div>
                   <div className="flex items-center gap-1">
-                    <label className="text-xs font-semibold text-slate-700">Date</label>
+                    <label className="text-sm font-semibold text-slate-700">Date</label>
                     <input
                       type="date"
                       value={invoiceDate}
                       onChange={(e) => setInvoiceDate(e.target.value)}
-                      className="w-full px-1 py-1 text-xs font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
+                      className="w-full px-1 py-1 text-sm font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                     />
                   </div>
                   {/* Discount */}
                   <div className="flex items-center gap-1">
-                    <label className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                    <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">
                       Disc
                     </label>
                     <div className="flex items-center bg-white rounded border border-slate-300 shadow-sm">
                       <button
                         type="button"
                         onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
-                        className={`px-1 py-0.5 text-xs font-bold border-r border-slate-300 transition-colors ${
+                        className={`px-1 py-0.5 text-sm font-bold border-r border-slate-300 transition-colors ${
                           discountType === 'percent'
                             ? 'text-orange-600'
                             : 'text-green-600'
@@ -7236,16 +7412,16 @@ TOTAL:       ₹${invoice.total}
                           setInvoiceDiscount(parseFloat(val) || 0)
                         }}
                         placeholder="0"
-                        className="w-10 px-1 py-0.5 text-xs font-medium text-center bg-transparent outline-none"
+                        className="w-10 px-1 py-0.5 text-sm font-medium text-center bg-transparent outline-none"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Line 2: Terms & Conditions */}
-                <div className="flex items-center gap-1 mt-0.5">
-                  <label className="text-xs font-semibold text-slate-700 flex items-center gap-0.5 whitespace-nowrap">
-                    <Pencil size={10} className="text-purple-500" />
+                <div className="flex items-center gap-1 mt-1">
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-1 whitespace-nowrap">
+                    <Pencil size={14} className="text-purple-500" />
                     Terms
                   </label>
                   <input
@@ -7253,16 +7429,16 @@ TOTAL:       ₹${invoice.total}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Thank you"
-                    className="flex-1 min-w-0 px-1.5 py-1 text-xs font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
+                    className="flex-1 min-w-0 px-1.5 py-1 text-sm font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                   />
                 </div>
 
                 {/* Line 3: Payment */}
-                <div className="space-y-0.5 mt-0.5">
+                <div className="space-y-0.5 mt-1">
                   {payments.map((payment, index) => (
                     <div key={index} className="flex items-center gap-1 flex-wrap">
-                      <label className={cn("text-xs font-semibold text-slate-700 flex items-center gap-0.5", index > 0 && "invisible")}>
-                        <CreditCard size={10} className="text-green-600" />
+                      <label className={cn("text-sm font-semibold text-slate-700 flex items-center gap-1", index > 0 && "invisible")}>
+                        <CreditCard size={14} className="text-green-600" />
                         Pay
                       </label>
                       <select
@@ -7275,7 +7451,7 @@ TOTAL:       ₹${invoice.total}
                             setSelectedBankAccountId('')
                           }
                         }}
-                        className="px-1.5 py-1 text-xs font-medium bg-white rounded outline-none border border-slate-300 shadow-sm"
+                        className="px-1.5 py-1 text-sm font-medium bg-white rounded outline-none border border-slate-300 shadow-sm"
                       >
                         <option value="cash">Cash</option>
                         <option value="card">Card</option>
@@ -7301,7 +7477,7 @@ TOTAL:       ₹${invoice.total}
                                 setSelectedBankAccountId('')
                               }
                             }}
-                            className="px-2 py-1.5 text-xs bg-white rounded-md outline-none border border-slate-300 shadow-sm min-w-[100px]"
+                            className="px-1.5 py-1 text-sm bg-white rounded outline-none border border-slate-300 shadow-sm min-w-[90px]"
                           >
                             <option value="">{bankAccounts.length > 0 ? '-- Select --' : 'No accounts'}</option>
                             {bankAccounts.map((account) => (
@@ -7314,7 +7490,7 @@ TOTAL:       ₹${invoice.total}
                             <button
                               type="button"
                               onClick={() => navigate('/banking')}
-                              className="px-1.5 py-1 text-[10px] bg-blue-500 text-white rounded shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff] hover:shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff] active:shadow-[inset_3px_3px_6px_#d1d5db,inset_-3px_-3px_6px_#ffffff]"
+                              className="px-1.5 py-1 text-xs bg-blue-500 text-white rounded shadow-sm"
                             >
                               Add Bank
                             </button>
@@ -7330,7 +7506,7 @@ TOTAL:       ₹${invoice.total}
                           setPayments(newPayments)
                         }}
                         placeholder="₹0"
-                        className="w-16 px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
+                        className="w-16 px-1.5 py-1 text-sm font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                       />
                       <input
                         type="text"
@@ -7341,18 +7517,18 @@ TOTAL:       ₹${invoice.total}
                           setPayments(newPayments)
                         }}
                         placeholder="Ref No."
-                        className="flex-1 min-w-0 px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
+                        className="flex-1 min-w-0 px-1.5 py-1 text-sm font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                       />
                       {payments.length > 1 && (
-                        <button type="button" onClick={() => setPayments(payments.filter((_, i) => i !== index))} className="p-0.5 text-red-500 hover:bg-red-50 rounded shadow-[2px_2px_4px_#d1d5db,-2px_-2px_4px_#ffffff]">
-                          <X size={10} />
+                        <button type="button" onClick={() => setPayments(payments.filter((_, i) => i !== index))} className="p-1 text-red-500 hover:bg-red-50 rounded shadow-[2px_2px_4px_#d1d5db,-2px_-2px_4px_#ffffff]">
+                          <X size={12} />
                         </button>
                       )}
                       {index === payments.length - 1 && (
                         <button
                           type="button"
                           onClick={() => setPayments([...payments, { type: 'cash', amount: 0, reference: '' }])}
-                          className="w-5 h-5 flex-shrink-0 flex items-center justify-center text-primary rounded shadow-[3px_3px_6px_#d1d5db,-3px_-3px_6px_#ffffff] hover:shadow-[5px_5px_10px_#d1d5db,-5px_-5px_10px_#ffffff] active:shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]"
+                          className="w-5 h-5 flex-shrink-0 flex items-center justify-center text-primary rounded shadow-sm"
                           title="Add Payment"
                         >
                           <Plus size={12} />
@@ -7363,76 +7539,76 @@ TOTAL:       ₹${invoice.total}
                 </div>
                 </div>
                 {/* Right Side - Totals Summary */}
-                <div className="totals-card p-2.5 dark:bg-slate-800 rounded-lg">
+                <div className="totals-card p-2 dark:bg-slate-800 rounded-lg">
                   {invoiceItems.length > 0 ? (
                     <div className="space-y-1">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-semibold text-slate-600">Subtotal:</span>
-                        <span className="text-sm font-bold text-slate-800 text-right w-[70px] pr-2">₹{totals.subtotal.toFixed(2)}</span>
+                        <span className="text-sm font-semibold text-slate-600">Subtotal:</span>
+                        <span className="text-base font-bold text-slate-800 text-right w-[80px] pr-1">₹{totals.subtotal.toFixed(2)}</span>
                       </div>
                       {invoiceDiscount > 0 && (
                         <div className="flex justify-between items-center">
-                          <span className="text-xs font-semibold text-slate-600">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
-                          <span className="text-sm font-bold text-orange-500 text-right w-[70px] pr-2">-₹{totals.discount.toFixed(2)}</span>
+                          <span className="text-sm font-semibold text-slate-600">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
+                          <span className="text-base font-bold text-orange-500 text-right w-[80px] pr-1">-₹{totals.discount.toFixed(2)}</span>
                         </div>
                       )}
                       {/* Tax Row - Consolidated with CGST/SGST/IGST breakdown inline */}
                       {totals.totalTax > 0 && (
                         <div className="flex justify-between items-center py-0.5 border-t border-slate-300/50">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-semibold text-slate-600">Tax</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm font-semibold text-slate-600">Tax</span>
                             {totals.totalIGST > 0 ? (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-white text-blue-600 rounded font-semibold border border-slate-300">Inter</span>
+                              <span className="text-[10px] px-1 py-0.5 bg-white text-blue-600 rounded font-semibold border border-slate-300">Inter</span>
                             ) : (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-white text-emerald-600 rounded font-semibold border border-slate-300">Intra</span>
+                              <span className="text-[10px] px-1 py-0.5 bg-white text-emerald-600 rounded font-semibold border border-slate-300">Intra</span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1">
                             {totals.totalIGST > 0 ? (
-                              <span className="text-xs font-semibold text-slate-700">IGST ₹{totals.totalIGST.toFixed(2)}</span>
+                              <span className="text-sm font-semibold text-slate-700">IGST ₹{totals.totalIGST.toFixed(2)}</span>
                             ) : (
                               <>
-                                <span className="text-[10px] text-slate-600">CGST</span>
-                                <span className="text-xs font-bold text-slate-700">₹{totals.totalCGST.toFixed(2)}</span>
+                                <span className="text-xs text-slate-600">CGST</span>
+                                <span className="text-sm font-bold text-slate-700">₹{totals.totalCGST.toFixed(2)}</span>
                                 <span className="text-slate-400">|</span>
-                                <span className="text-[10px] text-slate-600">SGST</span>
-                                <span className="text-xs font-bold text-slate-700">₹{totals.totalSGST.toFixed(2)}</span>
+                                <span className="text-xs text-slate-600">SGST</span>
+                                <span className="text-sm font-bold text-slate-700">₹{totals.totalSGST.toFixed(2)}</span>
                               </>
                             )}
                           </div>
-                          <span className="text-sm font-bold text-slate-800 text-right w-[70px] pr-2">₹{totals.totalTax.toFixed(2)}</span>
+                          <span className="text-base font-bold text-slate-800 text-right w-[80px] pr-1">₹{totals.totalTax.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="grand-total-container mt-1.5 -mx-2.5 -mb-2.5 rounded-b-lg">
+                      <div className="grand-total-container mt-0.5 -mx-1.5 -mb-1.5 rounded-b-lg">
                         <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <span className="grand-total-label text-[#166534]">GRAND TOTAL</span>
-                            <span className="item-count-badge bg-[#DCFCE7] text-[#16A34A] border border-[#86EFAC]">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="grand-total-label text-[#166534] text-base font-bold">GRAND TOTAL</span>
+                            <span className="item-count-badge bg-[#DCFCE7] text-[#16A34A] border border-[#86EFAC] text-xs px-1.5 py-0.5 rounded">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <label className="flex items-center gap-1 cursor-pointer bg-white/60 px-1.5 py-0.5 rounded border border-[#86EFAC]">
+                          <div className="flex items-center gap-0.5">
+                            <label className="flex items-center gap-0.5 cursor-pointer bg-white/60 px-1 py-0 rounded border border-[#86EFAC]">
                               <input
                                 type="checkbox"
                                 checked={roundOff}
                                 onChange={(e) => setRoundOff(e.target.checked)}
-                                className="w-3 h-3 rounded accent-[#16A34A]"
+                                className="w-2.5 h-2.5 rounded accent-[#16A34A]"
                               />
-                              <span className="text-[10px] font-medium text-[#166534]">Round Off</span>
+                              <span className="text-xs font-medium text-[#166534]">Round Off</span>
                             </label>
                             {roundOff && totals.roundOffAmount !== 0 && (
-                              <span className="text-xs font-semibold text-[#16A34A] bg-white/60 px-1.5 py-0.5 rounded">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
+                              <span className="text-xs font-semibold text-[#16A34A] bg-white/60 px-0.5 py-0 rounded">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
                             )}
                           </div>
-                          <span className="grand-total-value">₹{totals.total.toFixed(0)}</span>
+                          <span className="grand-total-value text-lg font-extrabold">₹{totals.total.toFixed(0)}</span>
                         </div>
                       </div>
                       {totals.received > 0 && (
                         <>
-                          <div className="flex justify-between text-xs pt-0.5 border-t border-border/50">
+                          <div className="flex justify-between text-sm pt-1 border-t border-border/50">
                             <span className="font-medium text-slate-600">Paid:</span>
                             <span className="font-bold text-emerald-600">₹{totals.received.toFixed(2)}</span>
                           </div>
-                          <div className="flex justify-between text-xs">
+                          <div className="flex justify-between text-sm">
                             <span className="font-medium text-slate-600">Balance:</span>
                             <span className={cn("font-bold", totals.balance > 0 ? "text-red-600" : "text-emerald-600")}>
                               ₹{Math.abs(totals.balance).toFixed(2)}
@@ -7442,7 +7618,7 @@ TOTAL:       ₹${invoice.total}
                       )}
                     </div>
                   ) : (
-                    <div className="text-center text-muted-foreground text-xs py-2">
+                    <div className="text-center text-muted-foreground text-sm py-2">
                       Add items to see totals
                     </div>
                   )}
@@ -7655,8 +7831,8 @@ TOTAL:       ₹${invoice.total}
             </div>
 
           </div>
-          {/* Bottom Action Bar */}
-          <div className="px-3 md:px-3 py-1.5 md:py-1 border-t border-slate-200 bg-white dark:bg-slate-900 flex-shrink-0">
+          {/* Bottom Action Bar - Mobile only, desktop buttons moved to top header */}
+          <div className="px-3 py-1 border-t border-slate-200 bg-white dark:bg-slate-900 flex-shrink-0 md:hidden">
             
             {/* Mobile Search Bar - MOVED TO TOP (near customer search) */}
             <div className="hidden">
@@ -7947,19 +8123,20 @@ TOTAL:       ₹${invoice.total}
                 </button>
               </div>
 
+              {/* Desktop buttons moved to top header - hidden here */}
               {/* Desktop: Back Button - Before Generate Bill */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleBackToList}
-                className="hidden md:flex px-3 py-1.5 rounded-lg font-semibold text-xs transition-all items-center gap-1.5 bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
+                className="hidden px-3 py-1.5 rounded-lg font-semibold text-xs transition-all items-center gap-1.5 bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
               >
                 <ArrowLeft size={14} weight="bold" />
                 Back
               </motion.button>
 
               {/* Desktop: Generate Bill with dropdown */}
-              <div className="relative hidden md:block flex-none">
+              <div className="relative hidden flex-none">
                 <div className="flex">
                   <button
                     type="button"
@@ -8091,7 +8268,7 @@ TOTAL:       ₹${invoice.total}
                 </div>
               </div>
 
-              {/* POS Preview Button - Shows when in POS mode (hide on mobile, show preview directly) */}
+              {/* POS Preview Button - Hidden, moved to top header */}
               {salesMode === 'pos' && (
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -8099,7 +8276,7 @@ TOTAL:       ₹${invoice.total}
                   onClick={() => setShowPosPreview(true)}
                   disabled={invoiceItems.length === 0}
                   className={cn(
-                    "hidden md:flex px-6 py-2.5 rounded-lg font-semibold text-sm transition-all items-center gap-2",
+                    "hidden px-6 py-2.5 rounded-lg font-semibold text-sm transition-all items-center gap-2",
                     invoiceItems.length > 0
                       ? "bg-orange-500 text-white hover:bg-orange-600"
                       : "bg-muted text-muted-foreground cursor-not-allowed"
@@ -8110,14 +8287,14 @@ TOTAL:       ₹${invoice.total}
                 </motion.button>
               )}
 
-              {/* Save Button (without print) */}
+              {/* Save Button (without print) - Hidden, moved to top header */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={createInvoiceOnly}
                 disabled={invoiceItems.length === 0}
                 className={cn(
-                  "hidden md:block px-4 py-1.5 rounded-lg font-semibold text-xs transition-all",
+                  "hidden px-4 py-1.5 rounded-lg font-semibold text-xs transition-all",
                   invoiceItems.length > 0
                     ? "bg-slate-600 text-white hover:bg-slate-700"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
@@ -8126,14 +8303,14 @@ TOTAL:       ₹${invoice.total}
                 Save
               </motion.button>
 
-              {/* Save & Print Button - Desktop only */}
+              {/* Save & Print Button - Hidden, moved to top header */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowInvoicePreview(true)}
                 disabled={invoiceItems.length === 0}
                 className={cn(
-                  "hidden md:flex px-4 py-1.5 rounded-lg font-semibold text-xs transition-all items-center justify-center gap-1.5",
+                  "hidden px-4 py-1.5 rounded-lg font-semibold text-xs transition-all items-center justify-center gap-1.5",
                   invoiceItems.length > 0
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "bg-muted text-muted-foreground cursor-not-allowed"

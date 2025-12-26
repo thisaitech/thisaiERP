@@ -19,36 +19,36 @@ export const GeneralSettingsSection = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h2 className="text-sm font-semibold mb-2 text-slate-800">{t.settings.generalSettings}</h2>
-      <div className="space-y-3">
+      <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-200">{t.settings.generalSettings}</h2>
+      <div className="space-y-5">
         <div>
-          <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.businessName}</label>
+          <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400">{t.settings.businessName}</label>
           <input
             type="text"
             value={generalSettings.businessName}
             onChange={(e) => setGeneralSettings({ ...generalSettings, businessName: e.target.value })}
-            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+            className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.financialYear}</label>
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400">{t.settings.financialYear}</label>
             <select
               value={generalSettings.financialYear}
               onChange={(e) => setGeneralSettings({ ...generalSettings, financialYear: e.target.value })}
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
             >
               <option>2023-2024</option>
               <option>2024-2025</option>
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.currency}</label>
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400">{t.settings.currency}</label>
             <select
               value={generalSettings.currency}
               onChange={(e) => setGeneralSettings({ ...generalSettings, currency: e.target.value as 'INR' | 'USD' | 'EUR', currencySymbol: e.target.value === 'INR' ? '₹' : e.target.value === 'USD' ? '$' : '€' })}
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
             >
               <option value="INR">INR (₹)</option>
               <option value="USD">USD ($)</option>
@@ -57,13 +57,13 @@ export const GeneralSettingsSection = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.dateFormat}</label>
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400">{t.settings.dateFormat}</label>
             <select
               value={generalSettings.dateFormat}
               onChange={(e) => setGeneralSettings({ ...generalSettings, dateFormat: e.target.value as 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD' })}
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
             >
               <option value="DD/MM/YYYY">DD/MM/YYYY</option>
               <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -71,11 +71,11 @@ export const GeneralSettingsSection = () => {
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.timeFormat}</label>
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400">{t.settings.timeFormat}</label>
             <select
               value={generalSettings.timeFormat}
               onChange={(e) => setGeneralSettings({ ...generalSettings, timeFormat: e.target.value as '12' | '24' })}
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
             >
               <option value="12">{t.settings.hour12}</option>
               <option value="24">{t.settings.hour24}</option>
@@ -83,12 +83,12 @@ export const GeneralSettingsSection = () => {
           </div>
         </div>
 
-        <div className="p-2 bg-slate-50 rounded-lg border border-slate-200">
-          <h3 className="font-medium mb-1.5 text-xs text-slate-700">{t.settings.appearance}</h3>
+        <div className="p-5 bg-slate-50 dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600">
+          <h3 className="font-medium mb-3 text-lg text-slate-700 dark:text-slate-300">{t.settings.appearance}</h3>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              {isDarkMode ? <Moon size={14} weight="duotone" className="text-slate-600" /> : <Sun size={14} weight="duotone" className="text-slate-600" />}
-              <span className="text-[10px] text-slate-600">{t.settings.darkMode}</span>
+            <div className="flex items-center gap-3">
+              {isDarkMode ? <Moon size={22} weight="duotone" className="text-slate-600 dark:text-slate-400" /> : <Sun size={22} weight="duotone" className="text-slate-600 dark:text-slate-400" />}
+              <span className="text-base text-slate-600 dark:text-slate-400">{t.settings.darkMode}</span>
             </div>
             <label className="relative inline-block w-9 h-4.5">
               <input
@@ -116,7 +116,7 @@ export const GeneralSettingsSection = () => {
 
         <button
           onClick={handleSaveGeneralSettings}
-          className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
+          className="w-full px-5 py-3.5 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-colors"
         >
           {t.settings.saveChanges}
         </button>

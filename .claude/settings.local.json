@@ -137,7 +137,8 @@
       "Bash(git -C d:/Project/Anna status --short)",
       "Bash(git -C d:/Project/Anna log --oneline -3)",
       "Bash(git -C d:/Project/Anna add -A)",
-      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nfeat: Sales page spacing optimization for better row visibility\n\n- Reduced table row padding for denser display \\(8-10 visible rows\\)\n- Compressed search bar section with smaller inputs\n- Reduced header and container padding\n- Made bottom summary panel more compact\n- Added sidebar sub-text labels in Layout\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nfeat: Sales page spacing optimization for better row visibility\n\n- Reduced table row padding for denser display \\(8-10 visible rows\\)\n- Compressed search bar section with smaller inputs\n- Reduced header and container padding\n- Made bottom summary panel more compact\n- Added sidebar sub-text labels in Layout\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C d:/Project/Anna push origin main)"
     ],
     "deny": [],
     "ask": []

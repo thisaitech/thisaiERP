@@ -17,50 +17,50 @@ export const CompanySettingsSection = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h2 className="text-sm font-semibold mb-2 text-slate-800">{t.settings.companyInfo}</h2>
-      <div className="space-y-3">
+      <h2 className="text-xl font-semibold mb-4 text-slate-800 dark:text-slate-200">{t.settings.companyInfo}</h2>
+      <div className="space-y-5">
         <div>
-          <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.companyName}</label>
+          <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400">{t.settings.companyName}</label>
           <input
             type="text"
             value={companySettings.companyName}
             onChange={(e) => setCompanySettings({ ...companySettings, companyName: e.target.value })}
-            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+            className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
           />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.gstin}</label>
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400">{t.settings.gstin}</label>
             <input
               type="text"
               value={companySettings.gstin}
               onChange={(e) => setCompanySettings({ ...companySettings, gstin: e.target.value })}
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
             />
           </div>
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.panNumber}</label>
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400">{t.settings.panNumber}</label>
             <input
               type="text"
               value={companySettings.pan}
               onChange={(e) => setCompanySettings({ ...companySettings, pan: e.target.value })}
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
             />
           </div>
         </div>
         <div>
-          <label className="block text-[10px] font-medium mb-1 text-slate-600">{t.settings.address}</label>
+          <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400">{t.settings.address}</label>
           <textarea
             rows={3}
             value={companySettings.address}
             onChange={(e) => setCompanySettings({ ...companySettings, address: e.target.value })}
-            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+            className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
           ></textarea>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600 flex items-center gap-1">
-              <MapPin size={12} />
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400 flex items-center gap-2">
+              <MapPin size={16} />
               City
             </label>
             <input
@@ -68,12 +68,12 @@ export const CompanySettingsSection = () => {
               value={companySettings.city || ''}
               onChange={(e) => setCompanySettings({ ...companySettings, city: e.target.value })}
               placeholder="Enter city"
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
             />
           </div>
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600 flex items-center gap-1">
-              <MapPin size={12} />
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400 flex items-center gap-2">
+              <MapPin size={16} />
               State <span className="text-red-500">*</span>
             </label>
             <select
@@ -87,7 +87,7 @@ export const CompanySettingsSection = () => {
                   stateCode: stateCode
                 });
               }}
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 bg-white"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100 bg-white dark:bg-slate-700"
             >
               <option value="">Select State</option>
               {INDIAN_STATES_WITH_CODES.map((state) => (
@@ -97,51 +97,51 @@ export const CompanySettingsSection = () => {
               ))}
             </select>
             {companySettings.state && (
-              <p className="text-[10px] text-slate-500 mt-1">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 State Code: {companySettings.stateCode || getStateCode(companySettings.state)}
               </p>
             )}
           </div>
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600">Pincode</label>
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400">Pincode</label>
             <input
               type="text"
               value={companySettings.pincode || ''}
               onChange={(e) => setCompanySettings({ ...companySettings, pincode: e.target.value })}
               placeholder="Enter pincode"
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
             />
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600 flex items-center gap-1">
-              <Phone size={12} />
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400 flex items-center gap-2">
+              <Phone size={16} />
               {t.settings.phone}
             </label>
             <input
               type="tel"
               value={companySettings.phone}
               onChange={(e) => setCompanySettings({ ...companySettings, phone: e.target.value })}
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
             />
           </div>
           <div>
-            <label className="block text-[10px] font-medium mb-1 text-slate-600 flex items-center gap-1">
-              <Envelope size={12} />
+            <label className="block text-base font-medium mb-2 text-slate-600 dark:text-slate-400 flex items-center gap-2">
+              <Envelope size={16} />
               {t.settings.email}
             </label>
             <input
               type="email"
               value={companySettings.email}
               onChange={(e) => setCompanySettings({ ...companySettings, email: e.target.value })}
-              className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-lg text-slate-800 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
             />
           </div>
         </div>
         <button
           onClick={handleSaveCompanySettings}
-          className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
+          className="w-full px-5 py-3.5 bg-purple-600 text-white rounded-lg font-semibold text-lg hover:bg-purple-700 transition-colors"
         >
           {t.settings.updateCompanyInfo}
         </button>

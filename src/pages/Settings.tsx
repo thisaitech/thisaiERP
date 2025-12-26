@@ -97,13 +97,13 @@ const Settings = () => {
                 key={section.id}
                 onClick={() => setSelectedSection(section.id)}
                 className={cn(
-                  "px-3 py-2 rounded-xl text-[11px] font-medium transition-all whitespace-nowrap flex items-center gap-1.5 duration-200",
+                  "px-4 py-3 rounded-xl text-base font-medium transition-all whitespace-nowrap flex items-center gap-2.5 duration-200",
                   selectedSection === section.id
                     ? `bg-purple-600 text-white ${activeShadow}`
                     : `bg-[#f5f7fa] dark:bg-slate-800 text-slate-600 dark:text-slate-400 ${inactiveShadow} hover:text-purple-600 dark:hover:text-purple-400`
                 )}
               >
-                <section.icon size={14} weight={selectedSection === section.id ? "duotone" : "regular"} />
+                <section.icon size={18} weight={selectedSection === section.id ? "duotone" : "regular"} />
                 {section.label}
               </button>
             ))}
