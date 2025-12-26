@@ -6055,7 +6055,7 @@ TOTAL:       ₹${invoice.total}
 
 
           {/* Tabs for multiple invoices + Mode Toggle + Back */}
-          <div className="flex items-center gap-2 px-2 py-0.5 border-b border-slate-200 flex-shrink-0 bg-white dark:bg-slate-900">
+          <div className="flex items-center gap-1.5 px-1 py-0 border-b border-slate-200 flex-shrink-0 bg-white dark:bg-slate-900">
             {/* Invoice Tabs */}
             <div className="flex items-center gap-1 overflow-x-auto">
               {invoiceTabs.map((tab) => (
@@ -6113,16 +6113,16 @@ TOTAL:       ₹${invoice.total}
             {/* Back Button */}
             <button
               onClick={handleBackToList}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white hover:bg-slate-600 rounded-lg font-semibold transition-colors text-sm shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1 bg-slate-700 text-white hover:bg-slate-600 rounded-lg font-semibold transition-colors text-xs shadow-sm"
             >
-              <ArrowLeft size={18} weight="bold" />
+              <ArrowLeft size={14} weight="bold" />
               <span>Back to List</span>
             </button>
           </div>
 
           <div className={cn(
             "flex flex-col flex-1 min-h-0 overflow-hidden",
-            salesMode === 'pos' ? "p-2" : "p-4"
+            salesMode === 'pos' ? "p-1" : "p-2"
           )}>
             {/* HEADER - Fixed at top */}
             <div className="flex-shrink-0">
@@ -6335,11 +6335,11 @@ TOTAL:       ₹${invoice.total}
             </div>
 
             {/* Desktop Header - Item Search on Left, Customer on Right - 50/50 split */}
-            <div className="hidden md:grid md:grid-cols-2 gap-4 mb-0.5 px-2 py-1">
+            <div className="hidden md:grid md:grid-cols-2 gap-3 mb-0 px-1">
               {/* Left: Item Search Bar - 50% width */}
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-amber-100 dark:bg-slate-700 rounded-full shadow-sm border border-amber-200">
-                  <MagnifyingGlass size={16} className="text-amber-600" />
+              <div className="flex items-center gap-1.5">
+                <div className="p-1 bg-amber-100 dark:bg-slate-700 rounded-full shadow-sm border border-amber-200">
+                  <MagnifyingGlass size={14} className="text-amber-600" />
                 </div>
                 <div ref={desktopItemDropdownRef} className="relative flex-1">
                   <input
@@ -6384,7 +6384,7 @@ TOTAL:       ₹${invoice.total}
                         setHighlightedItemIndex(-1)
                       }
                     }}
-                    className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 rounded-xl text-sm placeholder:text-slate-400 transition-all border border-slate-200 outline-none focus:border-blue-400 shadow-sm dark:text-white"
+                    className="w-full px-2 py-1.5 bg-white dark:bg-slate-700 rounded-lg text-sm placeholder:text-slate-400 transition-all border border-slate-200 outline-none focus:border-blue-400 shadow-sm dark:text-white"
                   />
                   {/* Desktop Item Search Dropdown - Top Header */}
                   {showItemDropdown && desktopItemDropdownRef.current && createPortal(
@@ -6453,17 +6453,17 @@ TOTAL:       ₹${invoice.total}
                 <button
                   type="button"
                   onClick={() => setShowBarcodeScanner(true)}
-                  className="px-3 py-2.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-xl text-amber-600 flex items-center font-medium text-sm hover:bg-[#d9e2f0] transition-colors"
+                  className="px-2 py-1.5 bg-[#e4ebf5] dark:bg-slate-700 rounded-lg text-amber-600 flex items-center font-medium text-sm hover:bg-[#d9e2f0] transition-colors"
                   title="Scan Barcode"
                 >
-                  <Barcode size={20} weight="bold" />
+                  <Barcode size={18} weight="bold" />
                 </button>
               </div>
 
               {/* Right: Customer Search + Details */}
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-100 dark:bg-slate-700 rounded-full shadow-sm border border-blue-200">
-                  <User size={16} className="text-blue-600" />
+              <div className="flex items-center gap-1.5">
+                <div className="p-1 bg-blue-100 dark:bg-slate-700 rounded-full shadow-sm border border-blue-200">
+                  <User size={14} className="text-blue-600" />
                 </div>
                 {/* Customer Search Input */}
                 <div className={cn("relative", customerName ? "w-48" : "flex-1")} ref={customerDropdownRef}>
@@ -6501,7 +6501,7 @@ TOTAL:       ₹${invoice.total}
                         setHighlightedCustomerIndex(-1)
                       }
                     }}
-                    className="w-full px-3 py-2.5 bg-white dark:bg-slate-700 rounded-xl text-sm placeholder:text-slate-400 transition-all border border-slate-200 outline-none focus:border-blue-400 shadow-sm dark:text-white"
+                    className="w-full px-2 py-1.5 bg-white dark:bg-slate-700 rounded-lg text-sm placeholder:text-slate-400 transition-all border border-slate-200 outline-none focus:border-blue-400 shadow-sm dark:text-white"
                   />
                   {/* Desktop Customer Dropdown */}
                   {showCustomerDropdown && (
@@ -6920,23 +6920,23 @@ TOTAL:       ₹${invoice.total}
                       {invoiceItems.length > 0 && invoiceItems.map((item, index) => (
                             <tr
                               key={item.id}
-                              className="hover:bg-gradient-to-r hover:from-blue-50/60 hover:to-indigo-50/40 transition-all duration-200 border-b border-slate-100/60 group"
+                              className="hover:bg-gradient-to-r hover:from-blue-50/60 hover:to-indigo-50/40 transition-all duration-150 border-b border-slate-100/60 group"
                             >
-                              <td className="px-2 py-2 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
+                              <td className="px-1 py-1 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-slate-100 to-slate-200/80 text-[10px] font-bold text-slate-500">{index + 1}</span>
                               </td>
-                              <td className="px-1 py-1.5 align-middle" style={{ width: '170px', minWidth: '170px' }}>
+                              <td className="px-1 py-0.5 align-middle" style={{ width: '170px', minWidth: '170px' }}>
                                 <input
                                   type="text"
                                   value={item.name}
                                   onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                                  className="w-full h-7 px-1 bg-transparent border-0 text-sm font-semibold text-slate-700 focus:ring-0 focus:outline-none placeholder:text-slate-300 tracking-tight"
+                                  className="w-full h-6 px-1 bg-transparent border-0 text-[13px] font-semibold text-slate-700 focus:ring-0 focus:outline-none placeholder:text-slate-300 tracking-tight"
                                   style={{ minWidth: '140px' }}
                                   placeholder="Item name"
                                 />
                               </td>
                               {visibleColumns.hsnCode && (
-                                <td className="px-1 py-1.5 align-middle" style={{ width: '65px', minWidth: '65px' }}>
+                                <td className="px-1 py-0.5 align-middle" style={{ width: '65px', minWidth: '65px' }}>
                                   <input
                                     type="text"
                                     value={item.hsnCode || ''}
@@ -6952,7 +6952,7 @@ TOTAL:       ₹${invoice.total}
                                 </td>
                               )}
                               {visibleColumns.description && (
-                                <td className="px-1 py-1.5 align-middle" style={{ width: '45px', minWidth: '45px' }}>
+                                <td className="px-1 py-0.5 align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                   <input
                                     type="text"
                                     value={item.description || ''}
@@ -6962,7 +6962,7 @@ TOTAL:       ₹${invoice.total}
                                   />
                                 </td>
                               )}
-                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '30px', minWidth: '30px' }}>
+                              <td className="px-1 py-0.5 text-center align-middle" style={{ width: '30px', minWidth: '30px' }}>
                                 <input
                                   type="number"
                                   min="1"
@@ -6989,7 +6989,7 @@ TOTAL:       ₹${invoice.total}
                                   className="w-full h-6 px-0.5 bg-transparent border-0 text-xs text-center font-semibold focus:ring-0 focus:outline-none text-slate-700"
                                 />
                               </td>
-                              <td className="px-1 py-1.5 align-middle" style={{ width: '48px', minWidth: '48px' }}>
+                              <td className="px-1 py-0.5 align-middle" style={{ width: '48px', minWidth: '48px' }}>
                                 {item.hasMultiUnit ? (
                                   <select
                                     value={item.unit || item.baseUnit || 'Pcs'}
@@ -7017,7 +7017,7 @@ TOTAL:       ₹${invoice.total}
                                   </select>
                                 )}
                               </td>
-                              <td className="px-0.5 py-1.5 text-center align-middle" style={{ width: '58px', minWidth: '58px' }}>
+                              <td className="px-0.5 py-0.5 text-center align-middle" style={{ width: '58px', minWidth: '58px' }}>
                                 <select
                                   value={item.taxMode || 'exclusive'}
                                   onChange={(e) => updateItem(item.id, 'taxMode', e.target.value)}
@@ -7028,7 +7028,7 @@ TOTAL:       ₹${invoice.total}
                                   <option value="inclusive">With GST</option>
                                 </select>
                               </td>
-                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '60px', minWidth: '60px' }}>
+                              <td className="px-1 py-0.5 text-center align-middle" style={{ width: '60px', minWidth: '60px' }}>
                                 <input
                                   type="number"
                                   step="0.01"
@@ -7043,12 +7043,12 @@ TOTAL:       ₹${invoice.total}
                                   placeholder="0"
                                 />
                               </td>
-                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '60px', minWidth: '60px' }}>
+                              <td className="px-1 py-0.5 text-center align-middle" style={{ width: '60px', minWidth: '60px' }}>
                                 <span className="text-xs font-semibold text-slate-600">₹{(item.basePrice || item.price).toFixed(2)}</span>
                               </td>
                               {visibleColumns.discount && (
                                 <>
-                                  <td className="px-0.5 py-1.5 text-center align-middle" style={{ width: '32px', minWidth: '32px' }}>
+                                  <td className="px-0.5 py-0.5 text-center align-middle" style={{ width: '32px', minWidth: '32px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -7064,7 +7064,7 @@ TOTAL:       ₹${invoice.total}
                                       className="w-full h-6 px-0.5 bg-transparent border-0 text-xs text-center text-slate-600 font-medium focus:ring-0 focus:outline-none"
                                     />
                                   </td>
-                                  <td className="px-1 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-1 py-0.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -7085,7 +7085,7 @@ TOTAL:       ₹${invoice.total}
                                 </>
                               )}
                               {/* Single GST % - Always visible */}
-                              <td className="px-0.5 py-1.5 text-center align-middle" style={{ width: '35px', minWidth: '35px' }}>
+                              <td className="px-0.5 py-0.5 text-center align-middle" style={{ width: '35px', minWidth: '35px' }}>
                                 <input
                                   type="number"
                                   min="0"
@@ -7102,14 +7102,14 @@ TOTAL:       ₹${invoice.total}
                                 />
                               </td>
                               {/* GST ₹ - Always visible */}
-                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '42px', minWidth: '42px' }}>
+                              <td className="px-1 py-0.5 text-center align-middle" style={{ width: '42px', minWidth: '42px' }}>
                                 <span className="text-xs font-medium text-slate-600">₹{(item.taxAmount || 0).toFixed(2)}</span>
                               </td>
                               {/* CGST/SGST/IGST breakdown - Optional */}
                               {visibleColumns.gstBreakdown && (
                                 <>
                                   {/* CGST% */}
-                                  <td className="px-2 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-1 py-0.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -7128,7 +7128,7 @@ TOTAL:       ₹${invoice.total}
                                     />
                                   </td>
                                   {/* SGST% */}
-                                  <td className="px-2 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-1 py-0.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -7147,7 +7147,7 @@ TOTAL:       ₹${invoice.total}
                                     />
                                   </td>
                                   {/* IGST% */}
-                                  <td className="px-2 py-1.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
+                                  <td className="px-1 py-0.5 text-center align-middle" style={{ width: '45px', minWidth: '45px' }}>
                                     <input
                                       type="number"
                                       min="0"
@@ -7167,10 +7167,10 @@ TOTAL:       ₹${invoice.total}
                                   </td>
                                 </>
                               )}
-                              <td className="px-1 py-1.5 text-right align-middle pr-4" style={{ width: '75px', minWidth: '75px' }}>
+                              <td className="px-1 py-0.5 text-right align-middle pr-4" style={{ width: '75px', minWidth: '75px' }}>
                                 <span className="text-sm font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">₹{item.total.toFixed(2)}</span>
                               </td>
-                              <td className="px-1 py-1.5 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
+                              <td className="px-1 py-0.5 text-center align-middle" style={{ width: '28px', minWidth: '28px' }}>
                                 <button
                                   type="button"
                                   onClick={() => removeItem(item.id)}
@@ -7185,40 +7185,40 @@ TOTAL:       ₹${invoice.total}
                   </table>
                 </div>
                 {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) - STICKY BOTTOM */}
-                <div className="hidden md:grid md:grid-cols-2 gap-4 mt-2 px-2 items-stretch sticky-bottom-bar flex-shrink-0">
+                <div className="hidden md:grid md:grid-cols-2 gap-3 mt-1 px-1 items-stretch sticky-bottom-bar flex-shrink-0">
                 {/* Left Column - Invoice Details + Discount/Payment/Notes */}
-                <div className="premium-card-subtle p-4 dark:bg-slate-800 flex flex-col justify-between rounded-xl">
+                <div className="premium-card-subtle p-2.5 dark:bg-slate-800 flex flex-col justify-between rounded-lg">
                 {/* Line 1: Invoice #, Date and Discount - All on same line */}
-                <div className="grid grid-cols-[1.5fr_1fr_1fr] gap-2 mb-0.5">
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">Inv #</label>
+                <div className="grid grid-cols-[1.5fr_1fr_1fr] gap-1.5 mb-0">
+                  <div className="flex items-center gap-1">
+                    <label className="text-xs font-semibold text-slate-700 whitespace-nowrap">Inv #</label>
                     <input
                       type="text"
                       value={invoiceNumber}
                       onChange={(e) => setInvoiceNumber(e.target.value)}
                       placeholder="INV/2024-25/001"
-                      className="w-full px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
+                      className="w-full px-1.5 py-1 text-xs font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                     />
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Date</label>
+                  <div className="flex items-center gap-1">
+                    <label className="text-xs font-semibold text-slate-700">Date</label>
                     <input
                       type="date"
                       value={invoiceDate}
                       onChange={(e) => setInvoiceDate(e.target.value)}
-                      className="w-full px-1.5 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
+                      className="w-full px-1 py-1 text-xs font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                     />
                   </div>
                   {/* Discount */}
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">
-                      Discount
+                  <div className="flex items-center gap-1">
+                    <label className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                      Disc
                     </label>
-                    <div className="flex items-center bg-white rounded-md border border-slate-300 shadow-sm">
+                    <div className="flex items-center bg-white rounded border border-slate-300 shadow-sm">
                       <button
                         type="button"
                         onClick={() => setDiscountType(discountType === 'percent' ? 'amount' : 'percent')}
-                        className={`px-1.5 py-1.5 text-sm font-bold border-r border-slate-300 transition-colors ${
+                        className={`px-1 py-0.5 text-xs font-bold border-r border-slate-300 transition-colors ${
                           discountType === 'percent'
                             ? 'text-orange-600'
                             : 'text-green-600'
@@ -7236,16 +7236,16 @@ TOTAL:       ₹${invoice.total}
                           setInvoiceDiscount(parseFloat(val) || 0)
                         }}
                         placeholder="0"
-                        className="w-14 px-1.5 py-1 text-sm font-medium text-center bg-transparent outline-none"
+                        className="w-10 px-1 py-0.5 text-xs font-medium text-center bg-transparent outline-none"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Line 2: Terms & Conditions */}
-                <div className="flex items-center gap-1.5 mt-1">
-                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-0.5 whitespace-nowrap">
-                    <Pencil size={12} className="text-purple-500" />
+                <div className="flex items-center gap-1 mt-0.5">
+                  <label className="text-xs font-semibold text-slate-700 flex items-center gap-0.5 whitespace-nowrap">
+                    <Pencil size={10} className="text-purple-500" />
                     Terms
                   </label>
                   <input
@@ -7253,17 +7253,17 @@ TOTAL:       ₹${invoice.total}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Thank you"
-                    className="flex-1 min-w-0 px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
+                    className="flex-1 min-w-0 px-1.5 py-1 text-xs font-medium bg-white rounded outline-none border border-slate-300 focus:border-blue-400 shadow-sm"
                   />
                 </div>
 
                 {/* Line 3: Payment */}
-                <div className="space-y-1 mt-1">
+                <div className="space-y-0.5 mt-0.5">
                   {payments.map((payment, index) => (
-                    <div key={index} className="flex items-center gap-1.5 flex-wrap">
-                      <label className={cn("text-sm font-semibold text-slate-700 flex items-center gap-0.5", index > 0 && "invisible")}>
-                        <CreditCard size={12} className="text-green-600" />
-                        Payment
+                    <div key={index} className="flex items-center gap-1 flex-wrap">
+                      <label className={cn("text-xs font-semibold text-slate-700 flex items-center gap-0.5", index > 0 && "invisible")}>
+                        <CreditCard size={10} className="text-green-600" />
+                        Pay
                       </label>
                       <select
                         value={payment.type}
@@ -7275,7 +7275,7 @@ TOTAL:       ₹${invoice.total}
                             setSelectedBankAccountId('')
                           }
                         }}
-                        className="px-2 py-1.5 text-sm font-medium bg-white rounded-md outline-none border border-slate-300 shadow-sm"
+                        className="px-1.5 py-1 text-xs font-medium bg-white rounded outline-none border border-slate-300 shadow-sm"
                       >
                         <option value="cash">Cash</option>
                         <option value="card">Card</option>
@@ -7363,64 +7363,64 @@ TOTAL:       ₹${invoice.total}
                 </div>
                 </div>
                 {/* Right Side - Totals Summary */}
-                <div className="totals-card p-4 dark:bg-slate-800 rounded-xl">
+                <div className="totals-card p-2.5 dark:bg-slate-800 rounded-lg">
                   {invoiceItems.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-semibold text-slate-600">Subtotal:</span>
-                        <span className="text-base font-bold text-slate-800 text-right w-[75px] pr-4">₹{totals.subtotal.toFixed(2)}</span>
+                        <span className="text-xs font-semibold text-slate-600">Subtotal:</span>
+                        <span className="text-sm font-bold text-slate-800 text-right w-[70px] pr-2">₹{totals.subtotal.toFixed(2)}</span>
                       </div>
                       {invoiceDiscount > 0 && (
                         <div className="flex justify-between items-center">
-                          <span className="text-sm font-semibold text-slate-600">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
-                          <span className="text-base font-bold text-orange-500 text-right w-[75px] pr-4">-₹{totals.discount.toFixed(2)}</span>
+                          <span className="text-xs font-semibold text-slate-600">Discount ({discountType === 'percent' ? `${invoiceDiscount}%` : `₹${invoiceDiscount}`}):</span>
+                          <span className="text-sm font-bold text-orange-500 text-right w-[70px] pr-2">-₹{totals.discount.toFixed(2)}</span>
                         </div>
                       )}
                       {/* Tax Row - Consolidated with CGST/SGST/IGST breakdown inline */}
                       {totals.totalTax > 0 && (
                         <div className="flex justify-between items-center py-0.5 border-t border-slate-300/50">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-slate-600">Tax</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-semibold text-slate-600">Tax</span>
                             {totals.totalIGST > 0 ? (
-                              <span className="text-xs px-2 py-0.5 bg-white text-blue-600 rounded-lg font-semibold border border-slate-300">Interstate</span>
+                              <span className="text-[10px] px-1.5 py-0.5 bg-white text-blue-600 rounded font-semibold border border-slate-300">Inter</span>
                             ) : (
-                              <span className="text-xs px-2 py-0.5 bg-white text-emerald-600 rounded-lg font-semibold border border-slate-300">Intra</span>
+                              <span className="text-[10px] px-1.5 py-0.5 bg-white text-emerald-600 rounded font-semibold border border-slate-300">Intra</span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             {totals.totalIGST > 0 ? (
-                              <span className="text-sm font-semibold text-slate-700">IGST ₹{totals.totalIGST.toFixed(2)}</span>
+                              <span className="text-xs font-semibold text-slate-700">IGST ₹{totals.totalIGST.toFixed(2)}</span>
                             ) : (
                               <>
-                                <span className="text-sm text-slate-600">CGST</span>
-                                <span className="text-sm font-bold text-slate-700">₹{totals.totalCGST.toFixed(2)}</span>
+                                <span className="text-[10px] text-slate-600">CGST</span>
+                                <span className="text-xs font-bold text-slate-700">₹{totals.totalCGST.toFixed(2)}</span>
                                 <span className="text-slate-400">|</span>
-                                <span className="text-sm text-slate-600">SGST</span>
-                                <span className="text-sm font-bold text-slate-700">₹{totals.totalSGST.toFixed(2)}</span>
+                                <span className="text-[10px] text-slate-600">SGST</span>
+                                <span className="text-xs font-bold text-slate-700">₹{totals.totalSGST.toFixed(2)}</span>
                               </>
                             )}
                           </div>
-                          <span className="text-base font-bold text-slate-800 text-right w-[75px] pr-4">₹{totals.totalTax.toFixed(2)}</span>
+                          <span className="text-sm font-bold text-slate-800 text-right w-[70px] pr-2">₹{totals.totalTax.toFixed(2)}</span>
                         </div>
                       )}
-                      <div className="grand-total-container mt-3 -mx-4 -mb-4 rounded-b-xl">
+                      <div className="grand-total-container mt-1.5 -mx-2.5 -mb-2.5 rounded-b-lg">
                         <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
                             <span className="grand-total-label text-[#166534]">GRAND TOTAL</span>
                             <span className="item-count-badge bg-[#DCFCE7] text-[#16A34A] border border-[#86EFAC]">{invoiceItems.length} item{invoiceItems.length !== 1 ? 's' : ''}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <label className="flex items-center gap-1.5 cursor-pointer bg-white/60 px-2 py-1 rounded-lg border border-[#86EFAC]">
+                          <div className="flex items-center gap-1.5">
+                            <label className="flex items-center gap-1 cursor-pointer bg-white/60 px-1.5 py-0.5 rounded border border-[#86EFAC]">
                               <input
                                 type="checkbox"
                                 checked={roundOff}
                                 onChange={(e) => setRoundOff(e.target.checked)}
-                                className="w-4 h-4 rounded accent-[#16A34A]"
+                                className="w-3 h-3 rounded accent-[#16A34A]"
                               />
-                              <span className="text-xs font-medium text-[#166534]">Round Off</span>
+                              <span className="text-[10px] font-medium text-[#166534]">Round Off</span>
                             </label>
                             {roundOff && totals.roundOffAmount !== 0 && (
-                              <span className="text-sm font-semibold text-[#16A34A] bg-white/60 px-2 py-1 rounded-lg">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
+                              <span className="text-xs font-semibold text-[#16A34A] bg-white/60 px-1.5 py-0.5 rounded">{totals.roundOffAmount >= 0 ? '+' : ''}₹{totals.roundOffAmount.toFixed(2)}</span>
                             )}
                           </div>
                           <span className="grand-total-value">₹{totals.total.toFixed(0)}</span>
@@ -7428,11 +7428,11 @@ TOTAL:       ₹${invoice.total}
                       </div>
                       {totals.received > 0 && (
                         <>
-                          <div className="flex justify-between text-sm pt-1 border-t border-border/50">
+                          <div className="flex justify-between text-xs pt-0.5 border-t border-border/50">
                             <span className="font-medium text-slate-600">Paid:</span>
                             <span className="font-bold text-emerald-600">₹{totals.received.toFixed(2)}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs">
                             <span className="font-medium text-slate-600">Balance:</span>
                             <span className={cn("font-bold", totals.balance > 0 ? "text-red-600" : "text-emerald-600")}>
                               ₹{Math.abs(totals.balance).toFixed(2)}
@@ -7442,7 +7442,7 @@ TOTAL:       ₹${invoice.total}
                       )}
                     </div>
                   ) : (
-                    <div className="text-center text-muted-foreground text-sm py-4">
+                    <div className="text-center text-muted-foreground text-xs py-2">
                       Add items to see totals
                     </div>
                   )}
@@ -7952,9 +7952,9 @@ TOTAL:       ₹${invoice.total}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleBackToList}
-                className="hidden md:flex px-4 py-2.5 rounded-lg font-semibold text-sm transition-all items-center gap-2 bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
+                className="hidden md:flex px-3 py-1.5 rounded-lg font-semibold text-xs transition-all items-center gap-1.5 bg-slate-200 text-slate-600 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
               >
-                <ArrowLeft size={16} weight="bold" />
+                <ArrowLeft size={14} weight="bold" />
                 Back
               </motion.button>
 
@@ -7966,7 +7966,7 @@ TOTAL:       ₹${invoice.total}
                     onClick={createInvoiceOnly}
                     disabled={invoiceItems.length === 0 || isCreatingInvoice}
                     className={cn(
-                      "px-4 py-2 rounded-l-lg font-medium text-sm transition-all flex items-center justify-center gap-2 active:scale-95",
+                      "px-3 py-1.5 rounded-l-lg font-medium text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95",
                       invoiceItems.length > 0 && !isCreatingInvoice
                         ? "bg-slate-200 text-slate-700 border border-slate-300 hover:bg-slate-300 active:bg-slate-400"
                         : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300"
@@ -7980,7 +7980,7 @@ TOTAL:       ₹${invoice.total}
                       onClick={() => setShowBillDropdown(!showBillDropdown)}
                       disabled={invoiceItems.length === 0 || isCreatingInvoice}
                       className={cn(
-                        "px-2 py-2 rounded-r-lg font-medium text-sm transition-all active:scale-95",
+                        "px-1.5 py-1.5 rounded-r-lg font-medium text-xs transition-all active:scale-95",
                         invoiceItems.length > 0 && !isCreatingInvoice
                           ? "bg-slate-200 text-slate-700 border border-slate-300 border-l-0 hover:bg-slate-300 active:bg-slate-400"
                           : "bg-slate-300 text-slate-400 cursor-not-allowed border border-slate-300 border-l-0"
@@ -8117,7 +8117,7 @@ TOTAL:       ₹${invoice.total}
                 onClick={createInvoiceOnly}
                 disabled={invoiceItems.length === 0}
                 className={cn(
-                  "hidden md:block px-5 py-2.5 rounded-lg font-semibold text-sm transition-all",
+                  "hidden md:block px-4 py-1.5 rounded-lg font-semibold text-xs transition-all",
                   invoiceItems.length > 0
                     ? "bg-slate-600 text-white hover:bg-slate-700"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
@@ -8133,7 +8133,7 @@ TOTAL:       ₹${invoice.total}
                 onClick={() => setShowInvoicePreview(true)}
                 disabled={invoiceItems.length === 0}
                 className={cn(
-                  "hidden md:flex px-5 py-2.5 rounded-lg font-semibold text-sm transition-all items-center justify-center gap-2",
+                  "hidden md:flex px-4 py-1.5 rounded-lg font-semibold text-xs transition-all items-center justify-center gap-1.5",
                   invoiceItems.length > 0
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
