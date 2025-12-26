@@ -1578,23 +1578,6 @@ const Sales = () => {
     // Try ALL possible name field variations
     const customerName = getPartyName(party)
 
-    console.log('✅ Final customer name selected:', customerName)
-
-    // If still unknown, show alert with debug info
-    if (customerName === 'Unknown Customer') {
-      const allKeys = Object.keys(party).join(', ')
-      const nameFieldsStr = JSON.stringify({
-        displayName: party.displayName,
-        companyName: party.companyName,
-        name: party.name,
-        customerName: party.customerName,
-        partyName: party.partyName,
-        fullName: party.fullName,
-        businessName: party.businessName
-      }, null, 2)
-      alert('🔍 DEBUG INFO:\n\nAll fields in customer:\n' + allKeys + '\n\nName field values:\n' + nameFieldsStr)
-    }
-
     setCustomerName(customerName)
     setCustomerPhone(party.phone || '')
     setCustomerEmail(party.email || '')
@@ -2617,19 +2600,6 @@ const Sales = () => {
         // Final total: for inclusive, recalculate based on discounted taxable
         // For exclusive, add GST to discounted taxable
         const total = taxableAmount + gstBreakdown.totalTaxAmount
-
-        // DEBUG - Remove after testing
-        console.log('🧮 GST CALC DEBUG:', {
-          field,
-          value,
-          price,
-          taxMode,
-          taxPercent,
-          taxablePerUnit,
-          taxableAmount,
-          gstFromBreakdown: gstBreakdown.totalTaxAmount,
-          total
-        })
 
         // Calculate base units for multi-unit items
         let qtyInBaseUnits = updated.qtyInBaseUnits

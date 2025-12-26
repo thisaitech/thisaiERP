@@ -37,8 +37,7 @@ import {
   getLeadSiteVisits,
   createActivity,
   uploadAttachment,
-  getLeadAttachments,
-  debugLeadData
+  getLeadAttachments
 } from '../services/crmService';
 
 // Tab components
@@ -364,136 +363,6 @@ const ActivitiesTab: React.FC<{ leadId: string; refreshTrigger?: number }> = ({ 
         </h2>
         <div className="flex gap-2">
           <button
-            onClick={() => debugLeadData(leadId)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg"
-            title="Debug lead data"
-          >
-            Debug
-          </button>
-          <button
-            onClick={async () => {
-              console.log('🔍 === DEBUG: Checking attachments for lead:', leadId, '===');
-
-              try {
-                // Check local attachments
-                const { getAllAttachmentsLocal } = await import('../services/localAttachmentService');
-                const allAttachments = await getAllAttachmentsLocal();
-                console.log(`📎 Total attachments in local storage: ${allAttachments.length}`);
-
-                console.log('📎 All local attachments:');
-                allAttachments.forEach(attachment => {
-                  console.log(`  - ${attachment.id}: leadId = "${attachment.leadId}", fileName = "${attachment.fileName}"`);
-                });
-
-                // Check for this specific lead
-                const matchingAttachments = allAttachments.filter(att => att.leadId === leadId);
-                console.log(`📎 Attachments for this lead: ${matchingAttachments.length}`);
-
-                console.log('🔍 === DEBUG END ===');
-                alert(`Debug info logged to console. Total attachments: ${allAttachments.length}, For this lead: ${matchingAttachments.length}`);
-              } catch (error) {
-                console.error('❌ Debug failed:', error);
-                alert('Debug failed. Check console.');
-              }
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg"
-            title="Debug attachments"
-          >
-            Debug Attachments
-          </button>
-          <button
-            onClick={async () => {
-              console.log('🔍 === DEBUG: Checking site visits for lead:', leadId, '===');
-
-              try {
-                // Check local site visits
-                const { getAllSiteVisitsLocal } = await import('../services/localAttachmentService');
-                const allSiteVisits = await getAllSiteVisitsLocal();
-                console.log(`📍 Total site visits in local storage: ${allSiteVisits.length}`);
-
-                console.log('📍 All local site visits:');
-                allSiteVisits.forEach(visit => {
-                  console.log(`  - ${visit.id}: leadId = "${visit.leadId}", engineer = "${visit.engineerName}", status = "${visit.status}"`);
-                });
-
-                // Check for this specific lead
-                const matchingVisits = allSiteVisits.filter(visit => visit.leadId === leadId);
-                console.log(`📍 Site visits for this lead: ${matchingVisits.length}`);
-
-                console.log('🔍 === DEBUG END ===');
-                alert(`Debug info logged to console. Total site visits: ${allSiteVisits.length}, For this lead: ${matchingVisits.length}`);
-              } catch (error) {
-                console.error('❌ Debug failed:', error);
-                alert('Debug failed. Check console.');
-              }
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg"
-            title="Debug site visits"
-          >
-            Debug Site Visits
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                console.log('🧪 TEST: Creating test activity and site visit for lead:', leadId);
-
-                // Create test site visit
-                const { createSiteVisit } = await import('../services/crmService');
-                const visitDateTime = new Date();
-                visitDateTime.setDate(visitDateTime.getDate() + 1); // Tomorrow
-
-                const visit = await createSiteVisit({
-                  leadId: leadId,
-                  engineerId: 'test-engineer',
-                  engineerName: 'Test Engineer',
-                  visitAt: visitDateTime,
-                  notes: 'Test site visit created manually',
-                  checklist: {},
-                  createdBy: 'test'
-                });
-                console.log('✅ Test site visit created:', visit);
-
-                // Create test activity
-                const { createActivity } = await import('../services/crmService');
-                const activity = await createActivity({
-                  leadId: leadId,
-                  type: 'site_visit',
-                  title: 'Test Site Visit Activity',
-                  description: 'Test activity created manually',
-                  scheduledAt: visitDateTime,
-                  createdBy: 'test'
-                });
-                console.log('✅ Test activity created:', activity);
-
-                // Refresh tabs
-                handleRefreshTabs();
-
-                alert('Test activity and site visit created! Check the tabs.');
-              } catch (error) {
-                console.error('❌ Test failed:', error);
-                alert('Test failed: ' + error);
-              }
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg"
-            title="Create test activity and site visit"
-          >
-            Create Test Data
-          </button>
-          <button
-            onClick={async () => {
-              if (window.confirm('This will delete ALL attachments from local storage. Are you sure?')) {
-                const { clearAllAttachmentsLocal } = await import('../services/localAttachmentService');
-                await clearAllAttachmentsLocal();
-                handleRefreshTabs();
-                alert('All local attachments cleared!');
-              }
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-            title="Clear all local attachments"
-          >
-            Clear All
-          </button>
-          <button
             onClick={() => { setLoading(true); loadActivities(); }}
             className="flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
             title="Refresh activities"
@@ -502,8 +371,6 @@ const ActivitiesTab: React.FC<{ leadId: string; refreshTrigger?: number }> = ({ 
           </button>
         </div>
       </div>
-
-      <div className="text-xs text-slate-400 mb-2">Lead ID: {leadId}</div>
 
       {activities.length === 0 ? (
         <div className="text-center py-12 text-slate-500 dark:text-slate-400">

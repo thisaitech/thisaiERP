@@ -164,7 +164,15 @@
       "Bash(wc:*)",
       "Bash(grep:*)",
       "Bash(git -C \"d:\\\\Project\\\\Anna\" log --oneline)",
-      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && tasklist /FI \"IMAGENAME eq node.exe\" 2>nul | findstr node\")"
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && tasklist /FI \"IMAGENAME eq node.exe\" 2>nul | findstr node\")",
+      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nfix: Remove empty space below action buttons in Sales invoice create view\n\n- Removed h-screen overflow-hidden from outer container in create mode\n- Removed flex-1 min-h-0 overflow-hidden from inner containers\n- Simplified invoice-layout-container CSS to natural flow\n- Removed mt-2 margin from desktop action buttons\n- Kept items table maxHeight for internal scrolling\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && dir /b *.txt *.log ts_errors*.txt 2>nul\")",
+      "Bash(cmd.exe:*)",
+      "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && call npm run build 2>&1\")",
+      "Bash(del /q \"d:\\\\Project\\\\Anna\\\\ts_errors.txt\" \"d:\\\\Project\\\\Anna\\\\ts_errors_new.txt\" \"d:\\\\Project\\\\Anna\\\\nul\" \"d:\\\\Project\\\\Anna\\\\firebase-debug.log\")",
+      "Bash(del /q \"d:\\\\Project\\\\Anna\\\\crm_complete_file_list.txt\" \"d:\\\\Project\\\\Anna\\\\crm_export_inventory.txt\" \"d:\\\\Project\\\\Anna\\\\final_export_contents.txt\")",
+      "Bash(del /q \"d:\\\\Project\\\\Anna\\\\CRM_Complete_Package.zip\" \"d:\\\\Project\\\\Anna\\\\CRM_FINAL_EXPORT_READY.zip\" \"d:\\\\Project\\\\Anna\\\\CRM_Module_Complete_Export.zip\" \"d:\\\\Project\\\\Anna\\\\CRM_Module_Export.zip\")",
+      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nchore: Pre-delivery cleanup - remove debug code and unused files\n\n- Remove DEBUG alert\\(\\) and console.log statements from Sales, Quotations, Purchases pages\n- Remove debugLeadData function and debug buttons from CRM module\n- Remove temporary files \\(ts_errors.txt, firebase-debug.log, zip packages\\)\n- Remove dev-dist folder\n- Clean up unused imports\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []
