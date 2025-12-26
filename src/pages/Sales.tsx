@@ -6044,14 +6044,14 @@ TOTAL:       ₹${invoice.total}
           ) : (
           <div
             className={cn(
-              "flex flex-col flex-1 min-h-0 overflow-hidden",
+              "flex flex-col min-h-0 overflow-hidden",
               (salesMode === 'pos' || showPosPreview)
                 ? "lg:flex-row gap-2"
                 : ""
             )}
           >
           {/* Left Column - Invoice Form / POS Product Area */}
-          <div className="flex flex-col flex-1 min-h-0 bg-white dark:bg-slate-900 overflow-hidden">
+          <div className="flex flex-col min-h-0 bg-white dark:bg-slate-900 overflow-hidden">
 
 
           {/* Tabs for multiple invoices + Mode Toggle + Back */}

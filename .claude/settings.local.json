@@ -146,7 +146,8 @@
       "Bash(cmd.exe /c \"cd /d d:\\\\Project\\\\Anna && npx vite build && firebase deploy --only hosting\")",
       "Bash(timeout /t 30 /nobreak)",
       "Bash(git -C d:/Project/Anna commit -m \"fix: Revert buttons to inline position to remove empty space\")",
-      "Bash(git -C d:/Project/Anna commit -m \"fix: Remove forced height from invoice container to eliminate empty space\")"
+      "Bash(git -C d:/Project/Anna commit -m \"fix: Remove forced height from invoice container to eliminate empty space\")",
+      "Bash(git -C d:/Project/Anna commit -m \"fix: Remove flex-1 from containers to eliminate extra space below buttons\")"
     ],
     "deny": [],
     "ask": []
