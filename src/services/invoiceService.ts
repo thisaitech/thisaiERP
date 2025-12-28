@@ -161,9 +161,16 @@ export async function getInvoices(type?: 'sale' | 'purchase' | 'quote', limit?: 
     }
 
     // Client-side filtering for companyId
+    // IMPORTANT: Show data if companyId matches OR if data has no companyId (legacy data)
+    // This prevents data from "disappearing" due to companyId mismatch
     if (companyId) {
-      serverInvoices = serverInvoices.filter(inv => (inv as any).companyId === companyId)
-      console.log('[getInvoices] After companyId filter:', serverInvoices.length, 'invoices')
+      const beforeFilter = serverInvoices.length
+      serverInvoices = serverInvoices.filter(inv => {
+        const invCompanyId = (inv as any).companyId
+        // Show if: no companyId on invoice (legacy) OR companyId matches
+        return !invCompanyId || invCompanyId === companyId
+      })
+      console.log('[getInvoices] After companyId filter:', serverInvoices.length, 'of', beforeFilter, 'invoices (companyId:', companyId, ')')
     }
 
     // Client-side sorting by invoiceDate descending
@@ -284,9 +291,12 @@ export async function getInvoicesPaginated(
     const snapshot = await getDocs(invoicesRef)
     let serverInvoices = snapshot.docs.map(docToInvoice)
 
-    // Apply company filtering
+    // Apply company filtering - show data with matching companyId OR no companyId (legacy)
     if (companyId) {
-      serverInvoices = serverInvoices.filter(inv => (inv as any).companyId === companyId)
+      serverInvoices = serverInvoices.filter(inv => {
+        const invCompanyId = (inv as any).companyId
+        return !invCompanyId || invCompanyId === companyId
+      })
     }
 
     // Apply type filtering

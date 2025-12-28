@@ -88,9 +88,11 @@ export async function getItems(): Promise<Item[]> {
   // STEP 3: If online, try to fetch from Firebase and merge
   try {
     const itemsRef = collection(db!, COLLECTIONS.ITEMS)
-    const q = query(itemsRef, orderBy('createdAt', 'desc'))
-    const snapshot = await getDocs(q)
-    const serverItems = snapshot.docs.map(docToItem)
+    // Use simple query without orderBy to avoid index requirement
+    const snapshot = await getDocs(itemsRef)
+    let serverItems = snapshot.docs.map(docToItem)
+    // Sort client-side instead
+    serverItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
     // Merge: Keep local-only items (offline created, not yet synced)
     const localOnlyItems = localItems.filter(item => isOfflineId(item.id))

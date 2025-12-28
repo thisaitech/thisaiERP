@@ -348,18 +348,14 @@ const Layout = () => {
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
 
         {/* Logo at top */}
-        <NavLink to="/" className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex flex-col items-center justify-center
-          shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-          dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-          hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-          dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-          transition-all duration-200 mb-2"
+        <NavLink to="/" className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 flex flex-col items-center justify-center
+          shadow-[0_8px_32px_rgba(59,130,246,0.4),0_4px_12px_rgba(0,0,0,0.1)]
+          hover:shadow-[0_12px_40px_rgba(59,130,246,0.5)] hover:scale-105 hover:-translate-y-1
+          active:scale-95 transition-all duration-300 ease-out mb-2 overflow-hidden
+          before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-t before:from-transparent before:to-white/20"
         >
-          <div className="p-1.5 bg-blue-600 rounded-lg">
-            <Sparkle size={22} weight="fill" className="text-white" />
-          </div>
-          <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 mt-1">Dashboard</span>
-          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+          <span className="text-[18px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">HOME</span>
+          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
             Billi - Home
           </span>
         </NavLink>
@@ -367,17 +363,15 @@ const Layout = () => {
         {/* 1. POS Billing */}
         <button
           onClick={() => navigate('/pos')}
-          className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex flex-col items-center justify-center
-            shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-            dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-            hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-            dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-            transition-all duration-200"
+          className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-violet-400 via-purple-500 to-fuchsia-600 flex flex-col items-center justify-center
+            shadow-[0_8px_32px_rgba(139,92,246,0.4),0_4px_12px_rgba(0,0,0,0.1)]
+            hover:shadow-[0_12px_40px_rgba(139,92,246,0.5)] hover:scale-105 hover:-translate-y-1
+            active:scale-95 transition-all duration-300 ease-out overflow-hidden
+            before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-t before:from-transparent before:to-white/20"
           title="POS Billing"
         >
-          <Storefront size={26} weight="duotone" className="text-blue-500" />
-          <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 mt-1">POS</span>
-          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+          <span className="text-[20px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">POS</span>
+          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
             POS Billing
           </span>
         </button>
@@ -385,17 +379,15 @@ const Layout = () => {
         {/* 2. Create Invoice / Sale */}
         <button
           onClick={() => navigate('/sales?action=new')}
-          className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex flex-col items-center justify-center
-            shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-            dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-            hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-            dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-            transition-all duration-200"
+          className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 flex flex-col items-center justify-center
+            shadow-[0_8px_32px_rgba(16,185,129,0.4),0_4px_12px_rgba(0,0,0,0.1)]
+            hover:shadow-[0_12px_40px_rgba(16,185,129,0.5)] hover:scale-105 hover:-translate-y-1
+            active:scale-95 transition-all duration-300 ease-out overflow-hidden
+            before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-t before:from-transparent before:to-white/20"
           title="Create Invoice"
         >
-          <Receipt size={26} weight="duotone" className="text-green-500" />
-          <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 mt-1">+ Sale</span>
-          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+          <span className="text-[18px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">SALE</span>
+          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
             Create Invoice / Sale
           </span>
         </button>
@@ -403,17 +395,15 @@ const Layout = () => {
         {/* 3. Add Payment (In/Out) */}
         <button
           onClick={() => navigate('/banking?action=payment')}
-          className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex flex-col items-center justify-center
-            shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-            dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-            hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-            dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-            transition-all duration-200"
+          className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600 flex flex-col items-center justify-center
+            shadow-[0_8px_32px_rgba(6,182,212,0.4),0_4px_12px_rgba(0,0,0,0.1)]
+            hover:shadow-[0_12px_40px_rgba(6,182,212,0.5)] hover:scale-105 hover:-translate-y-1
+            active:scale-95 transition-all duration-300 ease-out overflow-hidden
+            before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-t before:from-transparent before:to-white/20"
           title="Add Payment"
         >
-          <CurrencyCircleDollar size={26} weight="duotone" className="text-emerald-500" />
-          <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 mt-1">+ Payment</span>
-          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+          <span className="text-[20px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">PAY</span>
+          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
             Add Payment (In/Out)
           </span>
         </button>
@@ -421,17 +411,15 @@ const Layout = () => {
         {/* 4. Add Party (Customer/Supplier) */}
         <button
           onClick={() => navigate('/parties?action=new')}
-          className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex flex-col items-center justify-center
-            shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-            dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-            hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-            dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-            transition-all duration-200"
+          className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-pink-400 via-rose-500 to-red-600 flex flex-col items-center justify-center
+            shadow-[0_8px_32px_rgba(244,63,94,0.4),0_4px_12px_rgba(0,0,0,0.1)]
+            hover:shadow-[0_12px_40px_rgba(244,63,94,0.5)] hover:scale-105 hover:-translate-y-1
+            active:scale-95 transition-all duration-300 ease-out overflow-hidden
+            before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-t before:from-transparent before:to-white/20"
           title="Add Party"
         >
-          <UserPlus size={26} weight="duotone" className="text-purple-500" />
-          <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 mt-1">+ Party</span>
-          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+          <span className="text-[16px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">PARTY</span>
+          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
             Add Party (Customer/Supplier)
           </span>
         </button>
@@ -439,17 +427,15 @@ const Layout = () => {
         {/* 5. Add Product / Stock Update */}
         <button
           onClick={() => navigate('/inventory?action=new')}
-          className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex flex-col items-center justify-center
-            shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-            dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-            hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-            dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-            transition-all duration-200"
+          className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-yellow-600 flex flex-col items-center justify-center
+            shadow-[0_8px_32px_rgba(245,158,11,0.4),0_4px_12px_rgba(0,0,0,0.1)]
+            hover:shadow-[0_12px_40px_rgba(245,158,11,0.5)] hover:scale-105 hover:-translate-y-1
+            active:scale-95 transition-all duration-300 ease-out overflow-hidden
+            before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-t before:from-transparent before:to-white/20"
           title="Add Product"
         >
-          <Cube size={26} weight="duotone" className="text-teal-500" />
-          <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 mt-1">+ Product</span>
-          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+          <span className="text-[20px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">ITEM</span>
+          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
             Add Product / Stock Update
           </span>
         </button>
@@ -457,17 +443,15 @@ const Layout = () => {
         {/* New Purchase */}
         <button
           onClick={() => navigate('/purchases?action=new')}
-          className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex flex-col items-center justify-center
-            shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-            dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-            hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-            dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-            transition-all duration-200"
+          className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-orange-400 via-red-500 to-rose-600 flex flex-col items-center justify-center
+            shadow-[0_8px_32px_rgba(249,115,22,0.4),0_4px_12px_rgba(0,0,0,0.1)]
+            hover:shadow-[0_12px_40px_rgba(249,115,22,0.5)] hover:scale-105 hover:-translate-y-1
+            active:scale-95 transition-all duration-300 ease-out overflow-hidden
+            before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-t before:from-transparent before:to-white/20"
           title="New Purchase"
         >
-          <ShoppingCart size={26} weight="duotone" className="text-orange-500" />
-          <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 mt-1">+ Purchase</span>
-          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+          <span className="text-[20px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">BUY</span>
+          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
             New Purchase
           </span>
         </button>
@@ -475,17 +459,15 @@ const Layout = () => {
         {/* Add Expense */}
         <button
           onClick={() => navigate('/expenses?action=new')}
-          className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex flex-col items-center justify-center
-            shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-            dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-            hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-            dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-            transition-all duration-200"
+          className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-red-400 via-rose-500 to-pink-600 flex flex-col items-center justify-center
+            shadow-[0_8px_32px_rgba(225,29,72,0.4),0_4px_12px_rgba(0,0,0,0.1)]
+            hover:shadow-[0_12px_40px_rgba(225,29,72,0.5)] hover:scale-105 hover:-translate-y-1
+            active:scale-95 transition-all duration-300 ease-out overflow-hidden
+            before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-t before:from-transparent before:to-white/20"
           title="Add Expense"
         >
-          <Money size={26} weight="duotone" className="text-red-500" />
-          <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 mt-1">+ Expense</span>
-          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+          <span className="text-[15px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">SPEND</span>
+          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
             Add Expense
           </span>
         </button>
@@ -493,17 +475,15 @@ const Layout = () => {
         {/* New Quotation */}
         <button
           onClick={() => navigate('/quotations?action=new')}
-          className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex flex-col items-center justify-center
-            shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-            dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-            hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-            dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-            transition-all duration-200"
+          className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-indigo-400 via-purple-500 to-violet-600 flex flex-col items-center justify-center
+            shadow-[0_8px_32px_rgba(99,102,241,0.4),0_4px_12px_rgba(0,0,0,0.1)]
+            hover:shadow-[0_12px_40px_rgba(99,102,241,0.5)] hover:scale-105 hover:-translate-y-1
+            active:scale-95 transition-all duration-300 ease-out overflow-hidden
+            before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-t before:from-transparent before:to-white/20"
           title="New Quotation"
         >
-          <FileText size={26} weight="duotone" className="text-indigo-500" />
-          <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 mt-1">+ Quote</span>
-          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+          <span className="text-[16px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">QUOTE</span>
+          <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
             New Quotation
           </span>
         </button>
@@ -512,17 +492,15 @@ const Layout = () => {
         {canAccessSettings && (
           <button
             onClick={() => navigate('/settings')}
-            className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex flex-col items-center justify-center
-              shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-              dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-              hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-              dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-              transition-all duration-200"
+            className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-slate-400 via-slate-500 to-slate-700 flex flex-col items-center justify-center
+              shadow-[0_8px_32px_rgba(100,116,139,0.4),0_4px_12px_rgba(0,0,0,0.1)]
+              hover:shadow-[0_12px_40px_rgba(100,116,139,0.5)] hover:scale-105 hover:-translate-y-1
+              active:scale-95 transition-all duration-300 ease-out overflow-hidden
+              before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-t before:from-transparent before:to-white/20"
             title="Settings"
           >
-            <Gear size={26} weight="duotone" className="text-slate-500" />
-            <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 mt-1">Settings</span>
-            <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
+            <span className="text-[14px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">SETUP</span>
+            <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
               Settings
             </span>
           </button>

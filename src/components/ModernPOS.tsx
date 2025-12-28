@@ -2167,29 +2167,29 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
   }
 
   return (
-    <div className="h-full flex bg-slate-50 overflow-hidden">
+    <div className="h-full flex bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-50/30 overflow-hidden">
       {/* Left Side - Items Grid */}
       <div className="flex-1 flex flex-col p-2 md:p-4 pb-20 md:pb-4 overflow-y-auto">
-        {/* Header with Search */}
+        {/* Header with Search - Premium Glass Effect */}
         <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
           {/* Search */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative group">
             <MagnifyingGlass
               size={20}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500 z-10"
             />
             <input
               type="text"
               placeholder={t.posPage.searchItems}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 md:pl-10 pr-12 md:pr-14 py-2.5 md:py-3 neu-input text-sm md:text-base border-0 outline-none dark:text-white"
+              className="w-full pl-9 md:pl-10 pr-12 md:pr-14 py-2.5 md:py-3 bg-white/80 backdrop-blur-sm text-sm md:text-base border-2 border-white/50 rounded-2xl outline-none shadow-lg shadow-emerald-500/5 focus:border-emerald-400 focus:shadow-emerald-500/10 transition-all duration-300 dark:text-white dark:bg-slate-800/80"
               autoFocus
             />
             {/* Barcode scanner icon button */}
             <button
               type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-all"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white p-2 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-all duration-300 hover:scale-105"
               onClick={() => setShowBarcodeScanner(true)}
               title="Scan Barcode"
             >

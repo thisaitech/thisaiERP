@@ -12,7 +12,6 @@ import {
   Package,
   Globe,
   Building,
-  Database,
   Table,
   CloudArrowUp,
   HardDrive,
@@ -24,7 +23,6 @@ import {
 import { cn } from '../lib/utils';
 import Loading from '../components/Loading';
 
-const DeveloperToolsSection = lazy(() => import('../components/settings/DeveloperToolsSection').then(module => ({ default: module.DeveloperToolsSection })));
 const LanguageSettingsSection = lazy(() => import('../components/settings/LanguageSettingsSection').then(module => ({ default: module.LanguageSettingsSection })));
 const GeneralSettingsSection = lazy(() => import('../components/settings/GeneralSettings').then(module => ({ default: module.GeneralSettingsSection })));
 const CompanySettingsSection = lazy(() => import('../components/settings/CompanySettings').then(module => ({ default: module.CompanySettingsSection })));
@@ -70,7 +68,6 @@ const Settings = () => {
       { id: 'party', label: t.settings.partySettings, icon: ShareNetwork, component: PartySettingsSection },
       { id: 'items', label: t.settings.itemSettings, icon: Package, component: ItemSettingsSection },
       { id: 'utilities', label: t.settings.utilities, icon: Toolbox, component: UtilitiesSettingsSection },
-      { id: 'developer', label: t.settings.developerTools, icon: Database, component: DeveloperToolsSection },
     ],
     [t]
   );

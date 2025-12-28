@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import {
   Package,
@@ -49,9 +50,19 @@ import { getItemSettings } from '../services/settingsService'
 const Inventory = () => {
   // Language support
   const { t, language } = useLanguage()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  // Check for action=add parameter to open Add Item modal
+  const searchParams = new URLSearchParams(location.search)
+  const actionParam = searchParams.get('action')
+  const returnToParam = searchParams.get('returnTo')
 
   const [activeTab, setActiveTab] = useState('all')
   const [selectedPeriod, setSelectedPeriod] = useState('all')
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false)
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
@@ -243,6 +254,22 @@ const Inventory = () => {
     const itemSettings = getItemSettings()
     setCustomUnits(itemSettings.itemUnits || [])
   }, [])
+
+  // Store returnTo URL in state so it persists after URL clears
+  const [returnToUrl, setReturnToUrl] = useState<string | null>(null)
+
+  // Handle action=add URL parameter to open Add Item modal
+  useEffect(() => {
+    if (actionParam === 'add') {
+      setShowAddModal(true)
+      // Store returnTo URL before clearing params
+      if (returnToParam) {
+        setReturnToUrl(returnToParam)
+      }
+      // Clear the URL parameter after opening modal
+      navigate('/inventory', { replace: true })
+    }
+  }, [actionParam, returnToParam])
 
   // Reload items and units when page becomes visible (e.g., when navigating back from Settings)
   useEffect(() => {
@@ -564,6 +591,12 @@ const Inventory = () => {
       toast.success('Item added successfully!')
       setShowAddModal(false)
       resetForm()
+
+      // Navigate back to the page that opened this modal (if any)
+      if (returnToUrl) {
+        navigate(returnToUrl)
+        setReturnToUrl(null)
+      }
     } catch (error) {
       console.error('Error adding item:', error)
       toast.error('Failed to add item. Please try again.')
@@ -1074,11 +1107,18 @@ const Inventory = () => {
             </button>
 
             {/* Date Filter Tabs */}
-            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+            <div className="relative inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
               {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
                 <button
                   key={period}
-                  onClick={() => setSelectedPeriod(period)}
+                  onClick={() => {
+                    setSelectedPeriod(period)
+                    if (period === 'custom') {
+                      setShowCustomDatePicker(true)
+                    } else {
+                      setShowCustomDatePicker(false)
+                    }
+                  }}
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
                     selectedPeriod === period
@@ -1086,9 +1126,58 @@ const Inventory = () => {
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                   )}
                 >
-                  {period.charAt(0).toUpperCase() + period.slice(1)}
+                  {period === 'custom' && customStartDate && customEndDate
+                    ? `${new Date(customStartDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} - ${new Date(customEndDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
+                    : period.charAt(0).toUpperCase() + period.slice(1)}
                 </button>
               ))}
+
+              {/* Custom Date Picker Dropdown */}
+              {showCustomDatePicker && (
+                <div className="absolute top-full right-0 mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 min-w-[280px]">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Select Date Range</span>
+                    <button
+                      onClick={() => setShowCustomDatePicker(false)}
+                      className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                    >
+                      <X size={16} className="text-slate-500" />
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">From Date</label>
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">To Date</label>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setShowCustomDatePicker(false)}
+                      disabled={!customStartDate || !customEndDate}
+                      className={cn(
+                        "w-full py-2 rounded-lg text-sm font-semibold transition-all",
+                        customStartDate && customEndDate
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                      )}
+                    >
+                      Apply Filter
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1389,10 +1478,15 @@ const Inventory = () => {
               onClick={() => {
                 setShowAddModal(false)
                 resetForm()
+                // Navigate back if came from another page
+                if (returnToUrl) {
+                  navigate(returnToUrl)
+                  setReturnToUrl(null)
+                }
               }}
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
             />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-2" onClick={() => { setShowAddModal(false); resetForm(); }}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-2" onClick={() => { setShowAddModal(false); resetForm(); if (returnToUrl) { navigate(returnToUrl); setReturnToUrl(null); } }}>
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -1411,6 +1505,11 @@ const Inventory = () => {
                       onClick={() => {
                         setShowAddModal(false)
                         resetForm()
+                        // Navigate back if came from another page
+                        if (returnToUrl) {
+                          navigate(returnToUrl)
+                          setReturnToUrl(null)
+                        }
                       }}
                       className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                     >
@@ -2601,6 +2700,11 @@ const Inventory = () => {
                     onClick={() => {
                       setShowAddModal(false)
                       resetForm()
+                      // Navigate back if came from another page
+                      if (returnToUrl) {
+                        navigate(returnToUrl)
+                        setReturnToUrl(null)
+                      }
                     }}
                     className="flex-1 px-4 py-2 bg-muted hover:bg-muted/80 rounded-lg font-medium transition-colors text-sm"
                   >

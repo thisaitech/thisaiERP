@@ -54,8 +54,10 @@ export async function getParties(type?: 'customer' | 'supplier' | 'both'): Promi
   let localParties: Party[] = []
   try {
     localParties = await getAllFromOffline<Party>(STORES.PARTIES)
-    if (type) {
-      localParties = localParties.filter(p => p.type === type)
+    if (type && type !== 'both') {
+      // For 'customer': show parties with type 'customer' OR 'both'
+      // For 'supplier': show parties with type 'supplier' OR 'both'
+      localParties = localParties.filter(p => p.type === type || p.type === 'both')
     }
     // Sort by companyName
     localParties.sort((a, b) => (a.companyName || '').localeCompare(b.companyName || ''))
@@ -73,16 +75,19 @@ export async function getParties(type?: 'customer' | 'supplier' | 'both'): Promi
   // STEP 3: If online, try to fetch from Firebase and merge
   try {
     const partiesRef = collection(db!, COLLECTIONS.PARTIES)
-    let q
-
-    if (type) {
-      q = query(partiesRef, where('type', '==', type))
-    } else {
-      q = query(partiesRef)
-    }
+    // Fetch all parties and filter in memory to support OR logic
+    // (Firebase doesn't support OR queries on same field easily)
+    const q = query(partiesRef)
 
     const snapshot = await getDocs(q)
-    const serverParties = snapshot.docs.map(docToParty)
+    let serverParties = snapshot.docs.map(docToParty)
+
+    // Filter by type if specified
+    if (type && type !== 'both') {
+      // For 'customer': show parties with type 'customer' OR 'both'
+      // For 'supplier': show parties with type 'supplier' OR 'both'
+      serverParties = serverParties.filter(p => p.type === type || p.type === 'both')
+    }
 
     // Merge: Keep local-only items (offline created, not yet synced)
     const localOnlyParties = localParties.filter(p => isOfflineId(p.id))
@@ -554,8 +559,10 @@ function getPartiesFromLocalStorage(type?: 'customer' | 'supplier' | 'both'): Pa
 
     const parties: Party[] = JSON.parse(stored)
 
-    if (type) {
-      return parties.filter(p => p.type === type)
+    if (type && type !== 'both') {
+      // For 'customer': show parties with type 'customer' OR 'both'
+      // For 'supplier': show parties with type 'supplier' OR 'both'
+      return parties.filter(p => p.type === type || p.type === 'both')
     }
 
     return parties

@@ -49,6 +49,22 @@
     overscroll-behavior-x: none;
   }
 
+  /* Hide scrollbar globally when invoice create page is active */
+  body:has(.fixed-bottom-container),
+  body:has(.fixed-bottom-container) main,
+  html:has(.fixed-bottom-container) {
+    overflow: hidden !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+
+  body:has(.fixed-bottom-container)::-webkit-scrollbar,
+  html:has(.fixed-bottom-container)::-webkit-scrollbar,
+  body:has(.fixed-bottom-container) main::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+  }
+
   body {
     font-family: var(--font-body);
     font-feature-settings: 'tnum', 'ss01', 'ss02';
@@ -1443,11 +1459,12 @@
      - Fixed bottom totals bar
      ======================================== */
 
-  /* Main Invoice Container - Natural flow layout */
+  /* Main Invoice Container - Fill viewport height */
   .invoice-layout-container {
     display: flex;
     flex-direction: column;
     background: #FFFFFF;
+    min-height: calc(100vh - 60px);
   }
 
   /* Fixed Header Section - Invoice tabs, search, customer info */
@@ -1508,16 +1525,56 @@
     pointer-events: none;
   }
 
-  /* Sticky Bottom Bar (fallback for existing code) */
-  .sticky-bottom-bar {
-    flex-shrink: 0;
+  /* Fixed Bottom Container - Contains both bottom bar and action buttons */
+  .fixed-bottom-container {
+    position: fixed;
+    bottom: 0;
+    left: 80px;
+    right: 0;
     background: linear-gradient(to top, #FFFFFF 0%, #F8FAFC 100%);
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08), 0 -1px 4px rgba(0, 0, 0, 0.04);
     z-index: 50;
-    padding: 6px 8px;
+    padding: 6px 12px 8px 12px;
     border-top: 1px solid #E2E8F0;
-    margin-top: 0;
-    margin-bottom: 0;
+  }
+
+  /* Hide main page scrollbar when fixed bottom is used */
+  .invoice-layout-container,
+  .invoice-create-view {
+    overflow: hidden !important;
+    max-height: calc(100vh - 64px);
+  }
+
+  /* Ensure all child containers don't create extra scrollbars */
+  .invoice-layout-container > div,
+  .invoice-create-view > div {
+    overflow: hidden;
+  }
+
+  /* Hide scrollbar but allow scrolling for invoice content */
+  .invoice-layout-container::-webkit-scrollbar,
+  .invoice-create-view::-webkit-scrollbar,
+  .invoice-layout-container *::-webkit-scrollbar,
+  .invoice-create-view *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
+  .invoice-layout-container,
+  .invoice-create-view,
+  .invoice-layout-container *,
+  .invoice-create-view * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Sticky Bottom Bar - Inside fixed container */
+  .sticky-bottom-bar {
+    background: transparent;
+    padding: 0;
+    border: none;
+    box-shadow: none;
   }
 
   .sticky-bottom-bar::before {
