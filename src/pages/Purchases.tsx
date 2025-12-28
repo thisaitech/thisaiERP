@@ -1450,7 +1450,7 @@ const Sales = () => {
         setLoadingParties(true)
         // Use getPartiesWithOutstanding to get live outstanding balances (2025 Standard)
         const { getPartiesWithOutstanding } = await import('../services/partyService')
-        const parties = await getPartiesWithOutstanding()
+        const parties = await getPartiesWithOutstanding('supplier')
         if (!mounted) return
         setAllParties(parties || [])
       } catch (error) {
@@ -5997,7 +5997,7 @@ TOTAL:       ₹${invoice.total}
                           </div>
                         ))
                       )}
-                      {/* Add New Customer Button - At Bottom */}
+                      {/* Add New Supplier Button - At Bottom */}
                       <div
                         onMouseDown={(e) => {
                           e.preventDefault()
@@ -6008,7 +6008,7 @@ TOTAL:       ₹${invoice.total}
                         className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium cursor-pointer sticky bottom-0 bg-card"
                       >
                         <Plus size={14} weight="bold" />
-                        Add New Customer
+                        Add New Supplier
                       </div>
                     </motion.div>
                   </>
@@ -6322,7 +6322,7 @@ TOTAL:       ₹${invoice.total}
                             </div>
                           ))
                         )}
-                        {/* Add New Customer Button - At Bottom */}
+                        {/* Add New Supplier Button - At Bottom */}
                         <div
                           onMouseDown={(e) => {
                             e.preventDefault()
@@ -6333,7 +6333,7 @@ TOTAL:       ₹${invoice.total}
                           className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium cursor-pointer sticky bottom-0 bg-card"
                         >
                           <Plus size={14} weight="bold" />
-                          Add New Customer
+                          Add New Supplier
                         </div>
                       </motion.div>
                     </>
@@ -8648,7 +8648,7 @@ TOTAL:       ₹${invoice.total}
                             </button>
                           ))
                         )}
-                        {/* Add New Customer - At Bottom */}
+                        {/* Add New Supplier - At Bottom */}
                         <button
                           type="button"
                           onClick={() => {
@@ -8658,7 +8658,7 @@ TOTAL:       ₹${invoice.total}
                           className="w-full px-4 py-3 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium sticky bottom-0 bg-card"
                         >
                           <Plus size={16} weight="bold" />
-                          Add New Customer
+                          Add New Supplier
                         </button>
                       </motion.div>
                       </>
@@ -9698,7 +9698,7 @@ TOTAL:       ₹${invoice.total}
               className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-xl shadow-2xl p-4 sm:p-6"
             >
               <div className="space-y-4">
-                <h2 className="text-xl font-bold">Add New Customer</h2>
+                <h2 className="text-xl font-bold">Add New Supplier</h2>
 
                 {/* Mandatory Fields */}
                 <div className="space-y-3">
@@ -11646,3 +11646,5 @@ TOTAL:       ₹${invoice.total}
 }
 
 export default Sales
+
+
