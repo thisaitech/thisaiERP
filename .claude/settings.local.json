@@ -202,7 +202,11 @@
       "Bash(git -C d:/Project/Anna diff b89173c 284b935 --stat)",
       "Bash(git -C d:/Project/Anna diff 284b935 HEAD -- src/components/Layout.tsx)",
       "Bash(git -C d:/Project/Anna diff 284b935 HEAD --stat)",
-      "Bash(git -C d:/Project/Anna commit -m \"fix: Restore all fixes from commit 284b935\")"
+      "Bash(git -C d:/Project/Anna commit -m \"fix: Restore all fixes from commit 284b935\")",
+      "Bash(git -C d:/Project/Anna log --oneline --all -50)",
+      "Bash(git -C d:/Project/Anna stash list)",
+      "Bash(git -C d:/Project/Anna stash show:*)",
+      "Bash(git -C d:/Project/Anna commit -m \"fix: Add missing resetCustomerForm and state variables in Sales.tsx\")"
     ],
     "deny": [],
     "ask": []

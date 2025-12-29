@@ -347,6 +347,28 @@ const Sales = () => {
   const [newCustomerOpeningBalance, setNewCustomerOpeningBalance] = useState('')
   const [newCustomerCreditDays, setNewCustomerCreditDays] = useState(0)
   const [savingCustomer, setSavingCustomer] = useState(false)
+  const [showAddressField, setShowAddressField] = useState(false)
+  const [showStateField, setShowStateField] = useState(false)
+  const [showGSTField, setShowGSTField] = useState(false)
+  const [showEmailField, setShowEmailField] = useState(false)
+
+  const resetCustomerForm = () => {
+    setNewCustomerName('')
+    setNewCustomerPhone('')
+    setNewCustomerAddress('')
+    setNewCustomerState('')
+    setNewCustomerGST('')
+    setNewCustomerEmail('')
+    setNewCustomerType('customer')
+    setNewCustomerNotes('')
+    setNewCustomerOpeningBalance('')
+    setNewCustomerCreditDays(0)
+    setShowAddressField(false)
+    setShowStateField(false)
+    setShowGSTField(false)
+    setShowEmailField(false)
+  }
+
 
   // Banking accounts (subscribe for live updates)
   const [bankAccounts, setBankAccounts] = useState<any[]>([])
