@@ -405,24 +405,6 @@ const Sales = () => {
   // Add Customer Modal State
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false)
 
-  // Reset customer form function
-  const resetCustomerForm = () => {
-    setNewCustomerName('')
-    setNewCustomerPhone('')
-    setNewCustomerAddress('')
-    setNewCustomerState('')
-    setNewCustomerGST('')
-    setNewCustomerEmail('')
-    setNewCustomerType('customer')
-    setNewCustomerNotes('')
-    setNewCustomerOpeningBalance('')
-    setNewCustomerCreditDays(0)
-    setShowAddressField(false)
-    setShowStateField(false)
-    setShowGSTField(false)
-    setShowEmailField(false)
-  }
-
   // POS Preview Modal State
   const [showPosPreview, setShowPosPreview] = useState(false)
 
@@ -6032,7 +6014,7 @@ TOTAL:       ₹${invoice.total}
           ) : (
           <div
             className={cn(
-              "flex flex-col flex-1",
+              "flex flex-col",
               (salesMode === 'pos' || showPosPreview)
                 ? "lg:flex-row gap-2"
                 : ""
@@ -6264,8 +6246,7 @@ TOTAL:       ₹${invoice.total}
                           e.preventDefault()
                           e.stopPropagation()
                           setShowItemDropdown(false)
-                          // Navigate to Inventory page to add new item
-                          window.location.href = '/inventory?action=add&returnTo=/sales'
+                          setShowAddItemModal(true)
                         }}
                         className="w-full px-3 py-2 text-left hover:bg-blue-50 border-b border-slate-200 flex items-center gap-2 text-blue-600 font-medium cursor-pointer text-sm"
                       >
@@ -6425,8 +6406,7 @@ TOTAL:       ₹${invoice.total}
                           e.preventDefault()
                           e.stopPropagation()
                           setShowItemDropdown(false)
-                          // Navigate to Inventory page to add new item
-                          window.location.href = '/inventory?action=add&returnTo=/sales'
+                          setShowAddItemModal(true)
                         }}
                         className="w-full px-4 py-2.5 text-left hover:bg-emerald-50 border-t border-slate-200 flex items-center gap-2 text-emerald-600 font-medium cursor-pointer sticky bottom-0 bg-white"
                       >
@@ -6612,7 +6592,7 @@ TOTAL:       ₹${invoice.total}
             </div>
 
               {/* Items List - Scrollable Table for All Devices */}
-              <div className="flex flex-col flex-1">
+              <div className="flex flex-col">
                 {/* Mobile Card Layout - Clean & Consistent */}
                 <div ref={mobileItemsContainerRef} className="md:hidden space-y-1.5 max-h-[35vh] overflow-y-auto">
                   {invoiceItems.length === 0 ? (
@@ -7171,9 +7151,8 @@ TOTAL:       ₹${invoice.total}
                     </tbody>
                   </table>
                 </div>
-                {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) - FIXED BOTTOM */}
-                <div className="hidden md:block fixed-bottom-container">
-                <div className="grid grid-cols-2 gap-1.5 items-stretch sticky-bottom-bar">
+                {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) - STICKY BOTTOM */}
+                <div className="hidden md:grid md:grid-cols-2 gap-1.5 mt-0.5 px-1 items-stretch sticky-bottom-bar flex-shrink-0">
                 {/* Left Column - Invoice Details + Discount/Payment/Notes */}
                 <div className="premium-card-subtle p-1.5 dark:bg-slate-800 flex flex-col justify-between rounded-lg">
                 {/* Line 1: Invoice #, Date and Discount - All on same line */}
@@ -7437,8 +7416,8 @@ TOTAL:       ₹${invoice.total}
                 </div>
               </div>
 
-              {/* Desktop Action Buttons - Inside fixed bottom container */}
-              <div className="flex items-center justify-end gap-3 mt-2">
+              {/* Desktop Action Buttons - Inline at end of content */}
+              <div className="hidden md:flex items-center justify-end gap-3 flex-shrink-0">
                 {/* Back Button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -7614,7 +7593,6 @@ TOTAL:       ₹${invoice.total}
                 >
                   {t.sales.saveAndPrint}
                 </motion.button>
-              </div>
               </div>
               </div>
             {/* FOOTER - Mobile Only */}
@@ -7860,8 +7838,7 @@ TOTAL:       ₹${invoice.total}
                         e.preventDefault()
                         e.stopPropagation()
                         setShowItemDropdown(false)
-                        // Navigate to Inventory page to add new item
-                        window.location.href = '/inventory?action=add&returnTo=/sales'
+                        setShowAddItemModal(true)
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-slate-200 flex items-center gap-2 text-blue-600 font-medium cursor-pointer"
                     >
@@ -9383,8 +9360,7 @@ TOTAL:       ₹${invoice.total}
                           type="button"
                           onClick={() => {
                             setShowItemDropdown(false)
-                            // Navigate to Inventory page to add new item
-                            window.location.href = '/inventory?action=add&returnTo=/sales'
+                            setShowAddItemModal(true)
                           }}
                           className="w-full px-4 py-3 text-left hover:bg-primary/10 border-b border-border flex items-center gap-2 text-primary font-medium"
                         >
@@ -12062,5 +12038,4 @@ TOTAL:       ₹${invoice.total}
 }
 
 export default Sales
-
 

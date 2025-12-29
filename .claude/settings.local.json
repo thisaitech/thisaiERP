@@ -186,7 +186,18 @@
       "Bash(git -C d:/Project/Anna diff src/components/ModernPOS.tsx)",
       "Bash(git -C d:/Project/Anna diff src/pages/Settings.tsx)",
       "Bash(git -C d:/Project/Anna diff src/services/invoiceService.ts)",
-      "Bash(git -C d:/Project/Anna diff src/crm/services/crmService.ts)"
+      "Bash(git -C d:/Project/Anna diff src/crm/services/crmService.ts)",
+      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nfeat: Major UI/UX improvements and bug fixes\n\n- Fixed bottom bar positioning \\(fixed to viewport bottom\\) on Sales, Purchases, Quotations\n- Added action buttons inside fixed bottom container for all invoice pages\n- Hidden scrollbar when invoice create page is active\n- Customer/supplier party filtering \\(customers in Sales, suppliers in Purchases\\)\n- \"Create New Item\" in search navigates to Inventory page with return URL\n- Premium sidebar with gradient buttons and text labels\n- Premium glass effect styling in ModernPOS\n- Fixed companyId filtering to show legacy invoices\n- Fixed Firebase query \\(client-side sorting for compatibility\\)\n- Removed Developer Tools from Settings\n- CRM module improvements and type fixes\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C d:/Project/Anna diff HEAD~1 src/services/partyService.ts)",
+      "Bash(git -C d:/Project/Anna diff HEAD~1 src/pages/Sales.tsx)",
+      "Bash(git -C d:/Project/Anna diff HEAD~1 src/pages/Purchases.tsx)",
+      "Bash(git -C d:/Project/Anna add:*)",
+      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nfix: Customer/Supplier filtering in party dropdowns\n\n- Sales.tsx: Load only customers \\(type=''customer''\\)\n- Purchases.tsx: Load only suppliers \\(type=''supplier''\\)\n- Quotations.tsx: Load only customers \\(type=''customer''\\)\n- Fixed \"Add New Customer\" to \"Add New Supplier\" in Purchases page\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C d:/Project/Anna commit -m \"fix: Add missing resetCustomerForm function in Sales.tsx\")",
+      "Bash(git -C d:/Project/Anna log --oneline -20)",
+      "Bash(git -C d:/Project/Anna show b89173c --stat)",
+      "Bash(git -C d:/Project/Anna log --oneline --before=\"2025-12-26\" -10)",
+      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nfix: Restore original code and apply party filtering\n\n- Restored Sales, Purchases, Quotations from b89173c \\(before bottom bar changes\\)\n- Applied customer/supplier filtering:\n  - Sales: customers only\n  - Purchases: suppliers only  \n  - Quotations: customers only\n- Fixed \"Add New Supplier\" text in Purchases\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []
