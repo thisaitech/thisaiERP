@@ -1449,7 +1449,7 @@ const Sales = () => {
         setLoadingParties(true)
         // Use getPartiesWithOutstanding to get live outstanding balances (2025 Standard)
         const { getPartiesWithOutstanding } = await import('../services/partyService')
-        const parties = await getPartiesWithOutstanding('customer')
+        const parties = await getPartiesWithOutstanding()
         if (!mounted) return
         setAllParties(parties || [])
       } catch (error) {
@@ -6000,14 +6000,14 @@ TOTAL:       ₹${invoice.total}
           ) : (
           <div
             className={cn(
-              "flex flex-col",
+              "flex flex-col flex-1",
               (salesMode === 'pos' || showPosPreview)
                 ? "lg:flex-row gap-2"
                 : ""
             )}
           >
           {/* Left Column - Invoice Form / POS Product Area */}
-          <div className="flex flex-col bg-white">
+          <div className="flex flex-col flex-1 bg-white">
 
 
           {/* Tabs for multiple invoices + Mode Toggle + Back */}
@@ -6083,7 +6083,7 @@ TOTAL:       ₹${invoice.total}
           </div>
 
           <div className={cn(
-            "flex flex-col overflow-y-auto",
+            "flex flex-col flex-1 min-h-0 overflow-hidden",
             salesMode === 'pos' ? "p-2" : "p-2"
           )}>
             {/* HEADER - Fixed at top */}
@@ -6241,7 +6241,8 @@ TOTAL:       ₹${invoice.total}
                           e.preventDefault()
                           e.stopPropagation()
                           setShowItemDropdown(false)
-                          setShowAddItemModal(true)
+                          // Navigate to Inventory page to add new item
+                          window.location.href = '/inventory?action=add&returnTo=/quotations'
                         }}
                         className="w-full px-3 py-2 text-left hover:bg-blue-50 border-b border-slate-200 flex items-center gap-2 text-blue-600 font-medium cursor-pointer text-sm"
                       >
@@ -6401,7 +6402,8 @@ TOTAL:       ₹${invoice.total}
                           e.preventDefault()
                           e.stopPropagation()
                           setShowItemDropdown(false)
-                          setShowAddItemModal(true)
+                          // Navigate to Inventory page to add new item
+                          window.location.href = '/inventory?action=add&returnTo=/quotations'
                         }}
                         className="w-full px-4 py-2.5 text-left hover:bg-emerald-50 border-t border-slate-200 flex items-center gap-2 text-emerald-600 font-medium cursor-pointer sticky bottom-0 bg-white"
                       >
@@ -6587,7 +6589,7 @@ TOTAL:       ₹${invoice.total}
             </div>
 
               {/* Items List - Scrollable Table for All Devices */}
-              <div>
+              <div className="flex flex-col flex-1">
                 {/* Mobile Card Layout - Clean & Consistent */}
                 <div ref={mobileItemsContainerRef} className="md:hidden space-y-1.5 max-h-[35vh] overflow-y-auto">
                   {invoiceItems.length === 0 ? (
@@ -7146,8 +7148,9 @@ TOTAL:       ₹${invoice.total}
                     </tbody>
                   </table>
                 </div>
-                {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) - STICKY BOTTOM */}
-                <div className="hidden md:grid md:grid-cols-2 gap-4 mt-2 px-2 items-stretch sticky-bottom-bar flex-shrink-0">
+                {/* Invoice Details + Discount/Payment/Notes + Totals - Desktop (side by side) - FIXED BOTTOM */}
+                <div className="hidden md:block fixed-bottom-container">
+                <div className="grid grid-cols-2 gap-4 items-stretch sticky-bottom-bar">
                 {/* Left Column - Invoice Details + Discount/Payment/Notes */}
                 <div className="premium-card-subtle p-4 dark:bg-slate-800 flex flex-col justify-between rounded-xl">
                 {/* Line 1: Invoice #, Date and Discount - All on same line */}
@@ -7410,6 +7413,84 @@ TOTAL:       ₹${invoice.total}
                   )}
                 </div>
               </div>
+              {/* Desktop Action Buttons - Inside fixed bottom container */}
+              <div className="flex items-center justify-end gap-3 mt-2">
+                {/* Back Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleBackToList}
+                  className="flex px-4 py-2 rounded-lg font-semibold text-sm transition-all items-center gap-2 bg-slate-200 text-slate-600 hover:bg-slate-300 active:bg-slate-400"
+                >
+                  <ArrowLeft size={18} weight="bold" />
+                  Back
+                </motion.button>
+
+                {/* Generate Bill with dropdown */}
+                <div className="relative flex-none">
+                  <div className="flex">
+                    <button
+                      type="button"
+                      onClick={createInvoiceOnly}
+                      disabled={invoiceItems.length === 0 || isCreatingInvoice}
+                      className={cn(
+                        "px-4 py-2 rounded-l-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 active:scale-95",
+                        invoiceItems.length > 0 && !isCreatingInvoice
+                          ? "bg-slate-200 text-slate-700 hover:bg-slate-300 active:bg-slate-400"
+                          : "bg-slate-300 text-slate-400 cursor-not-allowed"
+                      )}
+                    >
+                      {isCreatingInvoice ? 'Creating...' : 'Generate Bill'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowBillDropdown(!showBillDropdown)}
+                      disabled={invoiceItems.length === 0 || isCreatingInvoice}
+                      className={cn(
+                        "px-2 py-2 rounded-r-lg font-medium text-sm transition-all active:scale-95",
+                        invoiceItems.length > 0 && !isCreatingInvoice
+                          ? "bg-slate-200 text-slate-700 hover:bg-slate-300 active:bg-slate-400"
+                          : "bg-slate-300 text-slate-400 cursor-not-allowed"
+                      )}
+                    >
+                      <CaretDown size={18} weight="bold" className={cn("transition-transform", showBillDropdown && "rotate-180")} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={createInvoiceOnly}
+                  disabled={invoiceItems.length === 0}
+                  className={cn(
+                    "px-4 py-2 rounded-lg font-semibold text-sm transition-all",
+                    invoiceItems.length > 0
+                      ? "bg-slate-600 text-white hover:bg-slate-700"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                  )}
+                >
+                  Save
+                </motion.button>
+
+                {/* Save & Print Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowInvoicePreview(true)}
+                  disabled={invoiceItems.length === 0}
+                  className={cn(
+                    "flex px-4 py-2 rounded-lg font-semibold text-sm transition-all items-center justify-center gap-2",
+                    invoiceItems.length > 0
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                  )}
+                >
+                  Save & Print
+                </motion.button>
+              </div>
+              </div>
               </div>
             {/* FOOTER - Mobile Only */}
             <div className="md:hidden flex flex-col gap-2">
@@ -7654,7 +7735,8 @@ TOTAL:       ₹${invoice.total}
                         e.preventDefault()
                         e.stopPropagation()
                         setShowItemDropdown(false)
-                        setShowAddItemModal(true)
+                        // Navigate to Inventory page to add new item
+                        window.location.href = '/inventory?action=add&returnTo=/quotations'
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-slate-200 flex items-center gap-2 text-blue-600 font-medium cursor-pointer"
                     >
@@ -9116,7 +9198,8 @@ TOTAL:       ₹${invoice.total}
                           type="button"
                           onClick={() => {
                             setShowItemDropdown(false)
-                            setShowAddItemModal(true)
+                            // Navigate to Inventory page to add new item
+                            window.location.href = '/inventory?action=add&returnTo=/quotations'
                           }}
                           className="w-full px-4 py-3 text-left hover:bg-primary/10 border-b border-border flex items-center gap-2 text-primary font-medium"
                         >
@@ -11794,4 +11877,3 @@ TOTAL:       ₹${invoice.total}
 }
 
 export default Sales
-

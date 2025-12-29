@@ -197,7 +197,12 @@
       "Bash(git -C d:/Project/Anna log --oneline -20)",
       "Bash(git -C d:/Project/Anna show b89173c --stat)",
       "Bash(git -C d:/Project/Anna log --oneline --before=\"2025-12-26\" -10)",
-      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nfix: Restore original code and apply party filtering\n\n- Restored Sales, Purchases, Quotations from b89173c \\(before bottom bar changes\\)\n- Applied customer/supplier filtering:\n  - Sales: customers only\n  - Purchases: suppliers only  \n  - Quotations: customers only\n- Fixed \"Add New Supplier\" text in Purchases\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nfix: Restore original code and apply party filtering\n\n- Restored Sales, Purchases, Quotations from b89173c \\(before bottom bar changes\\)\n- Applied customer/supplier filtering:\n  - Sales: customers only\n  - Purchases: suppliers only  \n  - Quotations: customers only\n- Fixed \"Add New Supplier\" text in Purchases\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C d:/Project/Anna log --oneline -30)",
+      "Bash(git -C d:/Project/Anna diff b89173c 284b935 --stat)",
+      "Bash(git -C d:/Project/Anna diff 284b935 HEAD -- src/components/Layout.tsx)",
+      "Bash(git -C d:/Project/Anna diff 284b935 HEAD --stat)",
+      "Bash(git -C d:/Project/Anna commit -m \"fix: Restore all fixes from commit 284b935\")"
     ],
     "deny": [],
     "ask": []
