@@ -10218,9 +10218,9 @@ TOTAL:       ₹${invoice.total}
 
                   {/* GST Number */}
                   <div>
-                    {!showGstField ? (
+                    {!showGSTField ? (
                       <button
-                        onClick={() => setShowGstField(true)}
+                        onClick={() => setShowGSTField(true)}
                         className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                       >
                         <Plus size={14} weight="bold" />
