@@ -405,6 +405,24 @@ const Sales = () => {
   // Add Customer Modal State
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false)
 
+  // Reset customer form function
+  const resetCustomerForm = () => {
+    setNewCustomerName('')
+    setNewCustomerPhone('')
+    setNewCustomerAddress('')
+    setNewCustomerState('')
+    setNewCustomerGST('')
+    setNewCustomerEmail('')
+    setNewCustomerType('customer')
+    setNewCustomerNotes('')
+    setNewCustomerOpeningBalance('')
+    setNewCustomerCreditDays(0)
+    setShowAddressField(false)
+    setShowStateField(false)
+    setShowGSTField(false)
+    setShowEmailField(false)
+  }
+
   // POS Preview Modal State
   const [showPosPreview, setShowPosPreview] = useState(false)
 
@@ -12044,4 +12062,5 @@ TOTAL:       ₹${invoice.total}
 }
 
 export default Sales
+
 
