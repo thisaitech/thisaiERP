@@ -1486,7 +1486,7 @@ const Sales = () => {
         setLoadingParties(true)
         // Use getPartiesWithOutstanding to get live outstanding balances (2025 Standard)
         const { getPartiesWithOutstanding } = await import('../services/partyService')
-        const parties = await getPartiesWithOutstanding()
+        const parties = await getPartiesWithOutstanding('customer')
         if (!mounted) return
         setAllParties(parties || [])
       } catch (error) {

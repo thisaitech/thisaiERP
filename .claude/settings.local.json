@@ -206,7 +206,8 @@
       "Bash(git -C d:/Project/Anna log --oneline --all -50)",
       "Bash(git -C d:/Project/Anna stash list)",
       "Bash(git -C d:/Project/Anna stash show:*)",
-      "Bash(git -C d:/Project/Anna commit -m \"fix: Add missing resetCustomerForm and state variables in Sales.tsx\")"
+      "Bash(git -C d:/Project/Anna commit -m \"fix: Add missing resetCustomerForm and state variables in Sales.tsx\")",
+      "Bash(git -C d:/Project/Anna commit -m \"fix: Customer/Supplier filtering - Sales shows customers, Purchases shows suppliers\")"
     ],
     "deny": [],
     "ask": []
