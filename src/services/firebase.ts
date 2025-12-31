@@ -1,5 +1,5 @@
 // Firebase Configuration and Initialization
-import { initializeApp, FirebaseApp } from 'firebase/app'
+import { initializeApp, FirebaseApp, getApp, deleteApp } from 'firebase/app'
 import { getFirestore, Firestore } from 'firebase/firestore'
 import { getAuth, Auth } from 'firebase/auth'
 import { getStorage, FirebaseStorage } from 'firebase/storage'
@@ -43,6 +43,31 @@ if (isFirebaseConfigured()) {
 } else {
   console.warn('⚠️ Firebase not configured. Add credentials to .env file.')
   console.warn('   The app will work in demo mode with local storage.')
+}
+
+// Secondary Firebase app for creating users without affecting main auth session
+export const getSecondaryAuth = (): Auth | null => {
+  if (!isFirebaseConfigured()) return null
+
+  try {
+    // Try to get existing secondary app
+    const secondaryApp = getApp('secondary')
+    return getAuth(secondaryApp)
+  } catch {
+    // Create new secondary app if it doesn't exist
+    const secondaryApp = initializeApp(firebaseConfig, 'secondary')
+    return getAuth(secondaryApp)
+  }
+}
+
+// Clean up secondary app after use
+export const cleanupSecondaryAuth = async () => {
+  try {
+    const secondaryApp = getApp('secondary')
+    await deleteApp(secondaryApp)
+  } catch {
+    // App doesn't exist, nothing to clean up
+  }
 }
 
 // Export Firebase instances

@@ -73,6 +73,45 @@ const getCurrentCompanyId = (): string | null => {
   }
 }
 
+// Helper: get current user info (for role-based filtering)
+const getCurrentUserInfo = (): { uid: string; role: string; companyId: string } | null => {
+  try {
+    const userRaw = localStorage.getItem('user')
+    if (!userRaw) return null
+    const user = JSON.parse(userRaw)
+    return {
+      uid: user.uid || null,
+      role: user.role || 'cashier',
+      companyId: user.companyId || null
+    }
+  } catch {
+    return null
+  }
+}
+
+// Helper: filter invoices based on user role
+// - Cashier: only sees their own invoices (createdByUserId matches)
+// - Manager/Admin: sees all company invoices
+const filterByUserRole = (invoices: Invoice[], userInfo: { uid: string; role: string } | null): Invoice[] => {
+  if (!userInfo) return invoices
+
+  // Admin and Manager see all invoices
+  if (userInfo.role === 'admin' || userInfo.role === 'manager') {
+    return invoices
+  }
+
+  // Cashier only sees their own invoices
+  if (userInfo.role === 'cashier') {
+    return invoices.filter(inv => {
+      const createdBy = (inv as any).createdByUserId
+      // Show invoice if: created by this user OR no createdByUserId (legacy data)
+      return !createdBy || createdBy === userInfo.uid
+    })
+  }
+
+  return invoices
+}
+
 // Pagination interface for scalable data fetching
 export interface PaginationOptions {
   limit?: number
@@ -127,7 +166,12 @@ export async function getInvoices(type?: 'sale' | 'purchase' | 'quote', limit?: 
 
   // STEP 2: If offline or Firebase not ready, return local data immediately
   if (!isDeviceOnline() || !isFirebaseReady()) {
-    console.log('📱 Offline mode: Returning', localInvoices.length, 'invoices from local storage')
+    // Apply role-based filtering even for offline data
+    const userInfo = getCurrentUserInfo()
+    if (userInfo) {
+      localInvoices = filterByUserRole(localInvoices, userInfo)
+    }
+    console.log('📱 Offline mode: Returning', localInvoices.length, 'invoices from local storage (role:', userInfo?.role || 'unknown', ')')
     return localInvoices
   }
 
@@ -171,6 +215,14 @@ export async function getInvoices(type?: 'sale' | 'purchase' | 'quote', limit?: 
         return !invCompanyId || invCompanyId === companyId
       })
       console.log('[getInvoices] After companyId filter:', serverInvoices.length, 'of', beforeFilter, 'invoices (companyId:', companyId, ')')
+    }
+
+    // Role-based filtering: Cashiers only see their own invoices
+    const userInfo = getCurrentUserInfo()
+    if (userInfo) {
+      const beforeRoleFilter = serverInvoices.length
+      serverInvoices = filterByUserRole(serverInvoices, userInfo)
+      console.log('[getInvoices] After role filter:', serverInvoices.length, 'of', beforeRoleFilter, 'invoices (role:', userInfo.role, ')')
     }
 
     // Client-side sorting by invoiceDate descending
@@ -299,6 +351,12 @@ export async function getInvoicesPaginated(
       })
     }
 
+    // Role-based filtering: Cashiers only see their own invoices
+    const userInfo = getCurrentUserInfo()
+    if (userInfo) {
+      serverInvoices = filterByUserRole(serverInvoices, userInfo)
+    }
+
     // Apply type filtering
     if (type) {
       serverInvoices = serverInvoices.filter(inv => inv.type === type)
@@ -425,6 +483,7 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'createdAt
   const now = new Date().toISOString()
   const id = `invoice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   const companyId = getCurrentCompanyId()
+  const userInfo = getCurrentUserInfo()
 
   // Remove undefined values - Firestore doesn't accept them
   const cleanData = Object.fromEntries(
@@ -437,6 +496,8 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'createdAt
     createdAt: now,
     updatedAt: now,
     ...(companyId ? { companyId } : {}),
+    // Track who created this invoice (for role-based filtering)
+    ...(userInfo?.uid ? { createdByUserId: userInfo.uid, createdByUserRole: userInfo.role } : {}),
     // Offline-first metadata
     _pendingSync: !isDeviceOnline(),
     _savedAt: now,
@@ -460,7 +521,9 @@ export async function createInvoice(invoiceData: Omit<Invoice, 'id' | 'createdAt
         ...cleanData,
         createdAt: now,
         updatedAt: now,
-        ...(companyId ? { companyId } : {})
+        ...(companyId ? { companyId } : {}),
+        // Track who created this invoice (for role-based filtering)
+        ...(userInfo?.uid ? { createdByUserId: userInfo.uid, createdByUserRole: userInfo.role } : {})
       })
 
       const docRef = await addDoc(collection(db!, COLLECTIONS.INVOICES), dataToSync)

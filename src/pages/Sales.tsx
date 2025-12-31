@@ -88,6 +88,7 @@ import { getItemSettings } from '../services/settingsService'
 import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../services/firebase'
 import { getPartyName } from '../utils/partyUtils'
+import { createParty } from '../services/partyService'
 import AddCustomerModal from '../components/sales/AddCustomerModal'
 
 // Indian States list with priority states first
@@ -351,6 +352,10 @@ const Sales = () => {
   const [showStateField, setShowStateField] = useState(false)
   const [showGSTField, setShowGSTField] = useState(false)
   const [showEmailField, setShowEmailField] = useState(false)
+  const [showCustomerTypeField, setShowCustomerTypeField] = useState(false)
+  const [showNotesField, setShowNotesField] = useState(false)
+  const [showOpeningBalanceField, setShowOpeningBalanceField] = useState(false)
+  const [showCreditDaysField, setShowCreditDaysField] = useState(false)
 
   const resetCustomerForm = () => {
     setNewCustomerName('')
@@ -367,6 +372,10 @@ const Sales = () => {
     setShowStateField(false)
     setShowGSTField(false)
     setShowEmailField(false)
+    setShowCustomerTypeField(false)
+    setShowNotesField(false)
+    setShowOpeningBalanceField(false)
+    setShowCreditDaysField(false)
   }
 
 
@@ -1568,11 +1577,13 @@ const Sales = () => {
   }, [])
 
   // Filter customers based on search
-  const filteredCustomers = allParties.filter(party =>
-    getPartyName(party).toLowerCase().includes(customerSearch.toLowerCase()) ||
-    party.phone?.includes(customerSearch) ||
-    party.email?.toLowerCase().includes(customerSearch.toLowerCase())
-  ).slice(0, 10) // Limit to 10 results
+  const customerSearchLower = (customerSearch || '').toLowerCase()
+  const filteredCustomers = allParties.filter(party => {
+    const partyName = getPartyName(party) || party.name || ''
+    return partyName.toLowerCase().includes(customerSearchLower) ||
+      (party.phone || '').includes(customerSearch || '') ||
+      (party.email || '').toLowerCase().includes(customerSearchLower)
+  }).slice(0, 10) // Limit to 10 results
 
   // Filter items based on search - show all items if no search text
   const filteredItems = itemSearch.trim()
@@ -6099,12 +6110,12 @@ TOTAL:       ₹${invoice.total}
               </button>
             </div>
 
-{/* Mobile Back Button only */}
+{/* Back to List Button - right corner */}
             <button
               onClick={handleBackToList}
-              className="md:hidden flex items-center gap-1.5 px-3 py-1 bg-slate-700 text-white hover:bg-slate-600 rounded-lg font-semibold transition-colors text-xs shadow-sm"
+              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 text-white hover:bg-slate-600 rounded-lg font-semibold transition-colors text-sm shadow-sm"
             >
-              <ArrowLeft size={14} weight="bold" />
+              <ArrowLeft size={16} weight="bold" />
               <span>Back to List</span>
             </button>
           </div>
@@ -10100,7 +10111,7 @@ TOTAL:       ₹${invoice.total}
       {/* Add Customer Modal - Matching Parties page design */}
       <AnimatePresence>
         {showAddCustomerModal && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -10109,270 +10120,222 @@ TOTAL:       ₹${invoice.total}
                 setShowAddCustomerModal(false)
                 resetCustomerForm()
               }}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-xl shadow-2xl p-4 sm:p-6"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              onClick={() => {
+                setShowAddCustomerModal(false)
+                resetCustomerForm()
+              }}
             >
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold">Add New Customer</h2>
+              <div
+                className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-lg shadow-2xl p-4 sm:p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="space-y-4">
+                  <h2 className="text-xl font-bold">Add New Customer</h2>
 
-                {/* Mandatory Fields */}
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">
-                      Customer Name <span className="text-destructive">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={newCustomerName}
-                      onChange={(e) => setNewCustomerName(validateCustomerName(e.target.value))}
-                      placeholder="Enter customer name (letters only)"
-                      className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                      autoFocus
-                    />
+                  {/* Mandatory Fields */}
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">
+                        Customer Name <span className="text-destructive">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={newCustomerName}
+                        onChange={(e) => setNewCustomerName(validateCustomerName(e.target.value))}
+                        placeholder="Enter customer name (letters only)"
+                        className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        autoFocus
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">
+                        Phone Number <span className="text-destructive">*</span>
+                      </label>
+                      <div className="flex">
+                        <div className="flex items-center justify-center px-3 py-2.5 bg-muted border border-r-0 border-border rounded-l-lg text-muted-foreground font-medium select-none">
+                          +91
+                        </div>
+                        <input
+                          type="tel"
+                          value={newCustomerPhone}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                            setNewCustomerPhone(digits)
+                          }}
+                          placeholder="10 digit number"
+                          maxLength={10}
+                          className="flex-1 px-3 py-2.5 bg-background border border-border rounded-r-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        />
+                      </div>
+                      {newCustomerPhone && newCustomerPhone.length > 0 && newCustomerPhone.length < 10 && (
+                        <p className="text-xs text-destructive mt-1">Phone number must be 10 digits ({newCustomerPhone.length}/10)</p>
+                      )}
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">
-                      Phone Number <span className="text-destructive">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      value={newCustomerPhone}
-                      onChange={(e) => setNewCustomerPhone(validatePhoneNumber(e.target.value))}
-                      placeholder="Enter phone number (e.g., +919876543210)"
-                      maxLength={16}
-                      className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                    />
-                  </div>
-                </div>
+                  {/* Optional Fields - Expandable */}
+                  <div className="space-y-2 pt-2 border-t border-border">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Optional Information</p>
 
-                {/* Optional Fields - Expandable */}
-                <div className="space-y-2 pt-2 border-t border-border">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Optional Information</p>
-
-                  {/* Billing Address */}
-                  <div>
-                    {!showAddressField ? (
-                      <button
-                        onClick={() => setShowAddressField(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        Billing Address
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">Billing Address</label>
-                        <textarea
-                          rows={2}
-                          value={newCustomerAddress}
-                          onChange={(e) => setNewCustomerAddress(e.target.value)}
-                          placeholder="Enter billing address"
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
-                        ></textarea>
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* State */}
-                  <div>
-                    {!showStateField ? (
-                      <button
-                        onClick={() => setShowStateField(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        State
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">State</label>
-                        <select
-                          value={newCustomerState}
-                          onChange={(e) => setNewCustomerState(e.target.value)}
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                    {/* Billing Address */}
+                    <div>
+                      {!showAddressField ? (
+                        <button
+                          onClick={() => setShowAddressField(true)}
+                          className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                         >
-                          <option value="">Select State</option>
-                          {INDIAN_STATES.map((state) => (
-                            <option key={state} value={state}>
-                              {state}
-                            </option>
-                          ))}
-                        </select>
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* GST Number */}
-                  <div>
-                    {!showGSTField ? (
-                      <button
-                        onClick={() => setShowGSTField(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        GST Number
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">GST Number</label>
-                        <input
-                          type="text"
-                          value={newCustomerGST}
-                          onChange={(e) => setNewCustomerGST(validateGSTIN(e.target.value))}
-                          placeholder="Enter GST number (15 chars)"
-                          maxLength={15}
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all uppercase"
-                        />
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* Email Address */}
-                  <div>
-                    {!showEmailField ? (
-                      <button
-                        onClick={() => setShowEmailField(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        Email Address
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">Email Address</label>
-                        <input
-                          type="email"
-                          value={newCustomerEmail}
-                          onChange={(e) => setNewCustomerEmail(e.target.value)}
-                          placeholder="Enter email address"
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                        />
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* Customer Type */}
-                  <div>
-                    {!showCustomerTypeField ? (
-                      <button
-                        onClick={() => setShowCustomerTypeField(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        Customer Type
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">Customer Type</label>
-                        <select
-                          value={newCustomerType}
-                          onChange={(e) => setNewCustomerType(e.target.value)}
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          <Plus size={14} weight="bold" />
+                          Billing Address
+                        </button>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-2"
                         >
-                          <option>Regular</option>
-                          <option>Wholesale</option>
-                          <option>Retail</option>
-                          <option>Distributor</option>
-                        </select>
-                      </motion.div>
-                    )}
-                  </div>
+                          <label className="text-sm font-medium mb-1.5 block">Billing Address</label>
+                          <textarea
+                            rows={2}
+                            value={newCustomerAddress}
+                            onChange={(e) => setNewCustomerAddress(e.target.value)}
+                            placeholder="Enter billing address"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
+                          ></textarea>
+                        </motion.div>
+                      )}
+                    </div>
 
-                  {/* Notes */}
-                  <div>
-                    {!showNotesField ? (
-                      <button
-                        onClick={() => setShowNotesField(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        Notes
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">Notes</label>
-                        <textarea
-                          rows={2}
-                          value={newCustomerNotes}
-                          onChange={(e) => setNewCustomerNotes(e.target.value)}
-                          placeholder="Add any additional notes"
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
-                        ></textarea>
-                      </motion.div>
-                    )}
-                  </div>
+                    {/* State */}
+                    <div>
+                      {!showStateField ? (
+                        <button
+                          onClick={() => setShowStateField(true)}
+                          className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                        >
+                          <Plus size={14} weight="bold" />
+                          State
+                        </button>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-2"
+                        >
+                          <label className="text-sm font-medium mb-1.5 block">State</label>
+                          <select
+                            value={newCustomerState}
+                            onChange={(e) => setNewCustomerState(e.target.value)}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          >
+                            <option value="">Select State</option>
+                            {INDIAN_STATES.map((state) => (
+                              <option key={state} value={state}>
+                                {state}
+                              </option>
+                            ))}
+                          </select>
+                        </motion.div>
+                      )}
+                    </div>
 
-                  {/* Opening Balance */}
-                  <div>
-                    {!showOpeningBalanceField ? (
-                      <button
-                        onClick={() => setShowOpeningBalanceField(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        Opening Balance
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">Opening Balance (₹)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={newCustomerOpeningBalance}
-                          onChange={(e) => setNewCustomerOpeningBalance(e.target.value)}
-                          placeholder="Enter opening balance (e.g., 5000)"
-                          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                        />
-                        <p className="text-xs text-muted-foreground">Positive = Customer owes you, Negative = You owe customer</p>
-                      </motion.div>
-                    )}
-                  </div>
+                    {/* GST Number */}
+                    <div>
+                      {!showGSTField ? (
+                        <button
+                          onClick={() => setShowGSTField(true)}
+                          className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                        >
+                          <Plus size={14} weight="bold" />
+                          GST Number
+                        </button>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-2"
+                        >
+                          <label className="text-sm font-medium mb-1.5 block">GST Number</label>
+                          <input
+                            type="text"
+                            value={newCustomerGST}
+                            onChange={(e) => setNewCustomerGST(e.target.value.toUpperCase())}
+                            placeholder="Enter GST number (e.g., 33AAAAA0000A1Z5)"
+                            maxLength={15}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          />
+                        </motion.div>
+                      )}
+                    </div>
 
-                  {/* Credit Days */}
-                  <div>
-                    {!showCreditDaysField ? (
-                      <button
-                        onClick={() => setShowCreditDaysField(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        Credit Period (Days)
-                      </button>
-                    ) : (
+                    {/* Email Address */}
+                    <div>
+                      {!showEmailField ? (
+                        <button
+                          onClick={() => setShowEmailField(true)}
+                          className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                        >
+                          <Plus size={14} weight="bold" />
+                          Email Address
+                        </button>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-2"
+                        >
+                          <label className="text-sm font-medium mb-1.5 block">Email Address</label>
+                          <input
+                            type="email"
+                            value={newCustomerEmail}
+                            onChange={(e) => setNewCustomerEmail(e.target.value)}
+                            placeholder="Enter email address"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          />
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Party Category */}
+                    <div>
+                      {!showCustomerTypeField ? (
+                        <button
+                          onClick={() => setShowCustomerTypeField(true)}
+                          className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                        >
+                          <Plus size={14} weight="bold" />
+                          Party Category
+                        </button>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-2"
+                        >
+                          <label className="text-sm font-medium mb-1.5 block">Party Category</label>
+                          <select
+                            value={newCustomerType}
+                            onChange={(e) => setNewCustomerType(e.target.value)}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          >
+                            <option>Regular</option>
+                            <option>Wholesale</option>
+                            <option>Retail</option>
+                            <option>Distributor</option>
+                          </select>
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Credit Period (Days) - Always visible like Parties page */}
+                    <div>
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -10385,44 +10348,102 @@ TOTAL:       ₹${invoice.total}
                           max="365"
                           value={newCustomerCreditDays}
                           onChange={(e) => setNewCustomerCreditDays(Number(e.target.value) || 0)}
-                          placeholder="Enter credit period in days"
-                          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          placeholder="Credit period in days"
+                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                         />
                         <p className="text-xs text-muted-foreground">Default: 30 days</p>
                       </motion.div>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-4 border-t border-border">
-                  <button
-                    onClick={() => {
-                      setShowAddCustomerModal(false)
-                      resetCustomerForm()
-                    }}
-                    className="flex-1 px-4 py-2.5 bg-muted rounded-lg font-medium hover:bg-muted/80 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveNewCustomer}
-                    disabled={savingCustomer || !newCustomerName.trim()}
-                    className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {savingCustomer ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      'Add Customer'
-                    )}
-                  </button>
+                    {/* Opening Balance */}
+                    <div>
+                      {!showOpeningBalanceField ? (
+                        <button
+                          onClick={() => setShowOpeningBalanceField(true)}
+                          className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                        >
+                          <Plus size={14} weight="bold" />
+                          Opening Balance
+                        </button>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-2"
+                        >
+                          <label className="text-sm font-medium mb-1.5 block">Opening Balance (₹)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={newCustomerOpeningBalance}
+                            onChange={(e) => setNewCustomerOpeningBalance(e.target.value)}
+                            placeholder="Enter opening balance (e.g., 5000)"
+                            className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          />
+                          <p className="text-xs text-muted-foreground">Positive = They owe you, Negative = You owe them</p>
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      {!showNotesField ? (
+                        <button
+                          onClick={() => setShowNotesField(true)}
+                          className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                        >
+                          <Plus size={14} weight="bold" />
+                          Notes
+                        </button>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-2"
+                        >
+                          <label className="text-sm font-medium mb-1.5 block">Notes</label>
+                          <textarea
+                            rows={2}
+                            value={newCustomerNotes}
+                            onChange={(e) => setNewCustomerNotes(e.target.value)}
+                            placeholder="Add any additional notes"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
+                          ></textarea>
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4 border-t border-border">
+                    <button
+                      onClick={() => {
+                        setShowAddCustomerModal(false)
+                        resetCustomerForm()
+                      }}
+                      className="flex-1 px-4 py-2.5 bg-muted rounded-lg font-medium hover:bg-muted/80 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveNewCustomer}
+                      disabled={savingCustomer || !newCustomerName.trim() || !newCustomerPhone || newCustomerPhone.length !== 10}
+                      className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {savingCustomer ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        'Add Customer'
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
-          </div>
+          </>
         )}
       </AnimatePresence>
 

@@ -16,7 +16,7 @@ import {
   getRedirectResult
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, updateDoc } from 'firebase/firestore'
-import { auth, db, COLLECTIONS } from './firebase'
+import { auth, db, COLLECTIONS, getSecondaryAuth, cleanupSecondaryAuth } from './firebase'
 
 
 export type UserRole = 'admin' | 'manager' | 'cashier'
@@ -449,6 +449,7 @@ const getAuthErrorMessage = (errorCode: string): string => {
 // ============ STAFF MANAGEMENT FUNCTIONS ============
 
 // Create a staff user (Manager or Cashier) - Admin only
+// Uses secondary Firebase app to avoid logging out the admin
 export const createStaffUser = async (
   email: string,
   password: string,
@@ -465,19 +466,28 @@ export const createStaffUser = async (
     throw new Error('Only administrators can create staff accounts')
   }
 
-  try {
-    // Store current admin user credentials temporarily
-    const currentUser = auth.currentUser
-    if (!currentUser) {
-      throw new Error('Admin must be logged in to create users')
-    }
+  // Store current admin user credentials temporarily
+  const currentUser = auth.currentUser
+  if (!currentUser) {
+    throw new Error('Admin must be logged in to create users')
+  }
 
-    // Create the new user
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+  // Get secondary auth instance to create user without affecting main session
+  const secondaryAuth = getSecondaryAuth()
+  if (!secondaryAuth) {
+    throw new Error('Failed to initialize secondary auth')
+  }
+
+  try {
+    // Create the new user using secondary auth (doesn't affect main auth session)
+    const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password)
     const newUser = userCredential.user
 
     // Update profile with display name
     await updateProfile(newUser, { displayName })
+
+    // Sign out the new user from secondary auth immediately
+    await secondaryAuth.signOut()
 
     // Create user document in Firestore
     const userData: UserData = {
@@ -496,11 +506,14 @@ export const createStaffUser = async (
     const userDocRef = doc(db, COLLECTIONS.USERS, newUser.uid)
     await setDoc(userDocRef, userData)
 
-    // Note: After createUserWithEmailAndPassword, Firebase automatically signs in as the new user
-    // The admin will need to sign back in. We return the new user data for display purposes.
+    // Clean up secondary auth app
+    await cleanupSecondaryAuth()
 
     return userData
   } catch (error) {
+    // Clean up secondary auth on error too
+    await cleanupSecondaryAuth()
+
     console.error('Create staff user error:', error)
     if (error && typeof error === 'object' && 'code' in error) {
         throw new Error(getAuthErrorMessage((error as {code: string}).code))

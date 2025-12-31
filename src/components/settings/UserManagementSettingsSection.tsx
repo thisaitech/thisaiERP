@@ -165,9 +165,9 @@ export const UserManagementSettingsSection = () => {
         userData
       );
 
-      setPendingNewUser(newUser);
       setShowAddUserModal(false);
-      setShowAdminReauth(true);
+      // No need for re-auth modal - we use secondary auth that doesn't affect admin session
+      loadCompanyUsers();
       toast.success(`User ${name} created successfully!`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create user');

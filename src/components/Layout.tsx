@@ -509,8 +509,8 @@ const Layout = () => {
         {/* Spacer to push profile to bottom */}
         <div className="flex-1" />
 
-        {/* Profile with dropdown */}
-        <div className="relative mb-2" ref={sidebarProfileRef}>
+        {/* Profile with Company Info & Logout */}
+        <div className="relative mb-2 mt-2" ref={sidebarProfileRef}>
           <button
             onClick={() => setIsSidebarProfileOpen(!isSidebarProfileOpen)}
             className="group relative w-[72px] h-[72px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-700 flex items-center justify-center
@@ -518,53 +518,78 @@ const Layout = () => {
               dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
               hover:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
               dark:hover:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-              transition-all duration-200"
+              transition-all duration-200 cursor-pointer"
           >
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-lg font-bold text-white shadow-md">
-              {userData?.displayName?.charAt(0).toUpperCase() || 'A'}
+              {userData?.companyName?.charAt(0).toUpperCase() || userData?.displayName?.charAt(0).toUpperCase() || 'A'}
             </div>
             {!isSidebarProfileOpen && (
               <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800 text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg">
-                {userData?.displayName || 'Profile'}
+                {userData?.companyName || userData?.displayName || 'Profile'}
               </span>
             )}
           </button>
-          {isSidebarProfileOpen && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="fixed left-24 bottom-4 w-52 rounded-xl overflow-hidden
-                bg-white dark:bg-slate-800
-                shadow-xl border border-slate-200 dark:border-slate-700
-                z-[100]"
-            >
-              <div className="p-3">
-                <div className="flex items-center gap-3 mb-3 pb-3 border-b border-slate-200 dark:border-slate-700">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold text-white">
-                    {userData?.displayName?.charAt(0).toUpperCase() || 'A'}
+
+          {/* Profile Popup */}
+          <AnimatePresence>
+            {isSidebarProfileOpen && (
+              <motion.div
+                initial={{ opacity: 0, x: -10, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -10, scale: 0.95 }}
+                className="fixed left-24 bottom-4 w-64 rounded-xl overflow-visible
+                  bg-white dark:bg-slate-800
+                  shadow-2xl border border-slate-200 dark:border-slate-700"
+                style={{ zIndex: 9999 }}
+              >
+                <div className="p-4">
+                  {/* Company Info */}
+                  <div className="flex items-center gap-3 mb-3 pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-lg font-bold text-white shadow-md">
+                      {userData?.companyName?.charAt(0).toUpperCase() || 'C'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">
+                        {userData?.companyName || 'My Company'}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Company</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{userData?.displayName || 'User'}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 lowercase">{userData?.role || 'guest'}</p>
+
+                  {/* User Info */}
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-sm font-bold text-white shadow-md">
+                      {userData?.displayName?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {userData?.displayName || 'User'}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">
+                        {userData?.role || 'guest'}
+                      </p>
+                    </div>
                   </div>
+
+                  {/* Logout Button */}
+                  <button
+                    onClick={() => {
+                      setIsSidebarProfileOpen(false)
+                      handleLogout()
+                    }}
+                    className="w-full flex items-center justify-center gap-2.5 px-4 py-3 text-sm font-semibold text-white rounded-lg
+                      bg-gradient-to-r from-red-500 to-rose-600
+                      hover:from-red-600 hover:to-rose-700
+                      shadow-lg shadow-red-500/30
+                      transition-all duration-200"
+                  >
+                    <SignOut size={20} weight="bold" />
+                    <span>Logout</span>
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    setIsSidebarProfileOpen(false)
-                    handleLogout()
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 rounded-lg
-                    bg-red-50 dark:bg-red-900/20
-                    hover:bg-red-100 dark:hover:bg-red-900/30
-                    transition-all duration-200"
-                >
-                  <SignOut size={18} />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
