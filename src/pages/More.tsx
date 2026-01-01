@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import QRCode from 'qrcode'
 import { useLanguage } from '../contexts/LanguageContext'
 import { usePlan } from '../hooks/usePlan'
 import {
@@ -238,6 +241,8 @@ const More = () => {
   const [ewayTransId, setEwayTransId] = useState('')
   const [ewayVehicleNo, setEwayVehicleNo] = useState('')
   const [ewayVehicleType, setEwayVehicleType] = useState<'R' | 'O'>('R') // Regular, Over Dimensional
+  const [ewayTransDocNo, setEwayTransDocNo] = useState('')
+  const [ewayTransDocDate, setEwayTransDocDate] = useState('')
   const [ewayTotalValue, setEwayTotalValue] = useState(0)
   const [ewayTaxableValue, setEwayTaxableValue] = useState(0)
   const [ewayCgst, setEwayCgst] = useState(0)
@@ -257,6 +262,8 @@ const More = () => {
     cessRate: number
   }[]>([])
   const [ewayItemSearch, setEwayItemSearch] = useState('')
+  const [ewayCustomerSearch, setEwayCustomerSearch] = useState('')
+  const [ewaySelectedCustomer, setEwaySelectedCustomer] = useState<Party | null>(null)
   const [ewayBillsList, setEwayBillsList] = useState<{
     ewbNo: string
     ewbDate: string
@@ -362,6 +369,8 @@ const More = () => {
       loadPartiesAndItems()
     } else if (selectedModule === 'price-lists') {
       loadPriceListsData()
+    } else if (selectedModule === 'eway-bill') {
+      loadPartiesAndItems()
     }
   }, [selectedModule])
 
@@ -1644,7 +1653,10 @@ const More = () => {
                   </h2>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setShowEwayBillModal(true)}
+                      onClick={() => {
+                        loadPartiesAndItems()
+                        setShowEwayBillModal(true)
+                      }}
                       className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90"
                     >
                       + Generate E-Way Bill
@@ -4384,6 +4396,882 @@ const More = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* E-Way Bill Modal - Production Style */}
+      {showEwayBillModal && (
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4" onClick={() => setShowEwayBillModal(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {/* Purple Header */}
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <FileArrowUp size={24} weight="duotone" />
+                Generate E-Way Bill
+              </h2>
+              <button onClick={() => setShowEwayBillModal(false)} className="p-2 hover:bg-white/20 rounded-lg text-white">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-6 space-y-6">
+              {/* Document Details */}
+              <div className="bg-white border rounded-xl p-4">
+                <h3 className="font-semibold text-sm text-gray-700 mb-3">Document Details</h3>
+                <div className="grid grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Document Type *</label>
+                    <select
+                      value={ewayDocType}
+                      onChange={(e) => setEwayDocType(e.target.value as any)}
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="INV">Tax Invoice</option>
+                      <option value="CHL">Challan</option>
+                      <option value="BIL">Bill of Supply</option>
+                      <option value="BOE">Bill of Entry</option>
+                      <option value="OTH">Others</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Document No *</label>
+                    <input
+                      type="text"
+                      value={ewayDocNo}
+                      onChange={(e) => setEwayDocNo(e.target.value)}
+                      placeholder="INV-001"
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Document Date *</label>
+                    <input
+                      type="date"
+                      value={ewayDocDate}
+                      onChange={(e) => setEwayDocDate(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Supply Type *</label>
+                    <select
+                      value={ewaySupplyType}
+                      onChange={(e) => setEwaySupplyType(e.target.value as any)}
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="O">Outward</option>
+                      <option value="I">Inward</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Select Customer (Bill To) */}
+              <div className="bg-white border rounded-xl p-4">
+                <h3 className="font-semibold text-sm text-purple-700 mb-3">Select Customer (Bill To)</h3>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={ewaySelectedCustomer ? getPartyName(ewaySelectedCustomer) : ewayCustomerSearch}
+                    placeholder="Type to search customer by name or GSTIN..."
+                    className="w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    onChange={(e) => {
+                      setEwayCustomerSearch(e.target.value)
+                      setEwaySelectedCustomer(null)
+                    }}
+                  />
+                  {/* Customer Dropdown */}
+                  {ewayCustomerSearch.trim().length > 0 && availableParties.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-[999] max-h-48 overflow-y-auto">
+                      {availableParties
+                        .filter(p => {
+                          const gstin = p.gstin || p.gstDetails?.gstin || (p as any).gstNumber || (p as any).GSTIN || (p as any).gstNo
+                          return getPartyName(p).toLowerCase().includes(ewayCustomerSearch.toLowerCase()) ||
+                            (gstin && gstin.toLowerCase().includes(ewayCustomerSearch.toLowerCase()))
+                        })
+                        .slice(0, 6)
+                        .map((party, idx) => (
+                          <div
+                            key={idx}
+                            className="px-4 py-3 hover:bg-purple-50 cursor-pointer border-b last:border-b-0"
+                            onClick={() => {
+                              // Fill To (Consignee) details - check all possible GSTIN field locations
+                              const partyGstin = party.gstin || party.gstDetails?.gstin || (party as any).gstNumber || (party as any).GSTIN || (party as any).gstNo || ''
+                              setEwayToGstin(partyGstin)
+                              setEwayToName(getPartyName(party))
+                              setEwayToAddr(party.billingAddress?.street || '')
+                              setEwayToPlace(party.billingAddress?.city || '')
+                              setEwayToPincode(party.billingAddress?.pincode || '')
+                              setEwayToState(party.billingAddress?.state || party.state || '')
+                              setEwayCustomerSearch('')
+                              setEwaySelectedCustomer(party)
+                              toast.success(`${getPartyName(party)} selected as consignee`)
+                            }}
+                          >
+                            <p className="font-medium text-sm">{getPartyName(party)}</p>
+                            <p className="text-xs text-gray-500">
+                              {(() => {
+                                const gstin = party.gstin || party.gstDetails?.gstin || (party as any).gstNumber || (party as any).GSTIN || (party as any).gstNo
+                                return gstin ? <span>GSTIN: {gstin} • </span> : null
+                              })()}
+                              {party.billingAddress?.city || 'No city'}
+                            </p>
+                          </div>
+                        ))
+                      }
+                      {availableParties.filter(p => {
+                        const gstin = p.gstin || p.gstDetails?.gstin || (p as any).gstNumber || (p as any).GSTIN || (p as any).gstNo
+                        return getPartyName(p).toLowerCase().includes(ewayCustomerSearch.toLowerCase()) ||
+                          (gstin && gstin.toLowerCase().includes(ewayCustomerSearch.toLowerCase()))
+                      }).length === 0 && (
+                        <div className="px-4 py-3 text-sm text-gray-500">No customers found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* From and To Section */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* From (Consignor) */}
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-sm text-amber-700">From (Consignor)</h3>
+                    <button
+                      onClick={() => {
+                        // Load company details from settings service
+                        const company = getCompanySettings()
+                        if (company && company.companyName) {
+                          setEwayFromGstin(company.gstin || '')
+                          setEwayFromName(company.companyName || '')
+                          setEwayFromAddr(company.address || '')
+                          setEwayFromPlace(company.city || '')
+                          setEwayFromPincode(company.pincode || '')
+                          setEwayFromState(company.state || '')
+                        } else {
+                          toast.error('Please set up company info in Settings first')
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700"
+                    >
+                      Load My Company
+                    </button>
+                  </div>
+                  {/* White inner box */}
+                  <div className="bg-white rounded-lg p-3 min-h-[80px]">
+                    {ewayFromName ? (
+                      <div className="space-y-0.5">
+                        <p className="font-semibold text-sm text-gray-900">{ewayFromName}</p>
+                        <p className="text-xs text-blue-600">{ewayFromGstin || 'No GSTIN'}</p>
+                        <p className="text-xs text-gray-500">-</p>
+                        <button
+                          onClick={() => {
+                            setEwayFromGstin('')
+                            setEwayFromName('')
+                            setEwayFromAddr('')
+                            setEwayFromPlace('')
+                            setEwayFromPincode('')
+                            setEwayFromState('')
+                          }}
+                          className="text-xs text-red-500 hover:text-red-700 font-medium"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">Click "Load My Company" above</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* To (Consignee) */}
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                  <h3 className="font-semibold text-sm text-green-700 mb-3">To (Consignee)</h3>
+                  {/* White inner box */}
+                  <div className="bg-white rounded-lg p-3 min-h-[80px]">
+                    {ewayToName ? (
+                      <div className="space-y-0.5">
+                        <p className="font-semibold text-sm text-gray-900">{ewayToName}</p>
+                        <p className="text-xs text-purple-600">{ewayToGstin || 'URP'}</p>
+                        <p className="text-xs text-gray-500">-</p>
+                        <button
+                          onClick={() => {
+                            setEwayToGstin('')
+                            setEwayToName('')
+                            setEwayToAddr('')
+                            setEwayToPlace('')
+                            setEwayToPincode('')
+                            setEwayToState('')
+                            setEwaySelectedCustomer(null)
+                          }}
+                          className="text-xs text-red-500 hover:text-red-700 font-medium"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">Select customer from list above</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Transport Details */}
+              <div className="bg-white border rounded-xl p-4">
+                <h3 className="font-semibold text-sm text-red-600 mb-3">Transport Details</h3>
+                {/* Row 1: Mode, Distance, Vehicle No */}
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Mode *</label>
+                    <select
+                      value={ewayTransMode}
+                      onChange={(e) => setEwayTransMode(e.target.value as any)}
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    >
+                      <option value="1">Road</option>
+                      <option value="2">Rail</option>
+                      <option value="3">Air</option>
+                      <option value="4">Ship</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Distance (KM) *</label>
+                    <input
+                      type="number"
+                      value={ewayDistance}
+                      onChange={(e) => setEwayDistance(e.target.value)}
+                      placeholder="100"
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Vehicle No *</label>
+                    <input
+                      type="text"
+                      value={ewayVehicleNo}
+                      onChange={(e) => setEwayVehicleNo(e.target.value.toUpperCase())}
+                      placeholder="MH12AB1234"
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+                {/* Row 2: Transporter ID, Transporter Name */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Transporter ID (GSTIN)</label>
+                    <input
+                      type="text"
+                      value={ewayTransId}
+                      onChange={(e) => setEwayTransId(e.target.value.toUpperCase())}
+                      placeholder="Enter GSTIN or leave blank for Self"
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1">Leave blank if using own vehicle (Self Transport)</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Transporter Name</label>
+                    <input
+                      type="text"
+                      value={ewayTransName}
+                      onChange={(e) => setEwayTransName(e.target.value)}
+                      placeholder="Self / Transport Co. Name"
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Item Details */}
+              <div className="bg-white border rounded-xl p-4 relative">
+                <h3 className="font-semibold text-sm text-purple-700 mb-3">Item Details</h3>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={ewayItemSearch}
+                    onChange={(e) => setEwayItemSearch(e.target.value)}
+                    placeholder="Search items by name or HSN code..."
+                    className="w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                  {/* Item Dropdown */}
+                  {ewayItemSearch.trim().length > 0 && availableItems.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-[999] max-h-48 overflow-y-auto">
+                      {availableItems
+                        .filter(item =>
+                          item.name.toLowerCase().includes(ewayItemSearch.toLowerCase()) ||
+                          (item.hsnCode && item.hsnCode.toLowerCase().includes(ewayItemSearch.toLowerCase()))
+                        )
+                        .slice(0, 8)
+                        .map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="px-4 py-3 hover:bg-purple-50 cursor-pointer border-b last:border-b-0"
+                            onClick={() => {
+                              // Add item to ewayItems
+                              const gstRate = item.tax?.gstRate || 0
+                              const newItem = {
+                                productName: item.name,
+                                productDesc: item.description || '',
+                                hsnCode: item.hsnCode || '',
+                                quantity: 1,
+                                unit: item.unit || 'NOS',
+                                taxableAmount: item.sellingPrice || 0,
+                                cgstRate: gstRate / 2,
+                                sgstRate: gstRate / 2,
+                                igstRate: 0,
+                                cessRate: item.tax?.cessRate || 0
+                              }
+                              setEwayItems(prev => [...prev, newItem])
+                              setEwayItemSearch('')
+                              toast.success(`${item.name} added`)
+                            }}
+                          >
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-medium text-sm">{item.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {item.hsnCode && <span>HSN: {item.hsnCode} • </span>}
+                                  GST: {item.tax?.gstRate || 0}%
+                                </p>
+                              </div>
+                              <p className="font-medium text-sm text-purple-600">₹{(item.sellingPrice || 0).toLocaleString()}</p>
+                            </div>
+                          </div>
+                        ))
+                      }
+                      {availableItems.filter(item =>
+                        item.name.toLowerCase().includes(ewayItemSearch.toLowerCase()) ||
+                        (item.hsnCode && item.hsnCode.toLowerCase().includes(ewayItemSearch.toLowerCase()))
+                      ).length === 0 && (
+                        <div className="px-4 py-3 text-sm text-gray-500">No items found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Added Items List */}
+                <div className="mt-3">
+                  {ewayItems.length > 0 ? (
+                    <div className="space-y-2">
+                      {ewayItems.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-sm">{item.productName}</p>
+                            <p className="text-xs text-gray-500">HSN: {item.hsnCode} | Qty: {item.quantity} {item.unit}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-sm">₹{item.taxableAmount.toLocaleString()}</p>
+                            <button
+                              onClick={() => setEwayItems(prev => prev.filter((_, i) => i !== idx))}
+                              className="text-xs text-red-500 hover:text-red-700"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
+                      <p className="text-sm text-gray-500">No items added. Search and add items above.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 border-t px-6 py-4 flex justify-end gap-3">
+              <button
+                onClick={() => setShowEwayBillModal(false)}
+                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  // Validate required fields per GST/NIC compliance
+                  if (!ewayDocNo) {
+                    toast.error('Please enter Document No')
+                    return
+                  }
+                  if (!ewayFromName) {
+                    toast.error('Please load your company details')
+                    return
+                  }
+                  // MANDATORY: FROM GSTIN is required for Tax Invoice (URP → URP is not allowed)
+                  if (!ewayFromGstin || ewayFromGstin.trim() === '') {
+                    toast.error('Supplier GSTIN is mandatory for E-Way Bill generation')
+                    return
+                  }
+                  // Validate GSTIN format (15 characters)
+                  if (ewayFromGstin.length !== 15) {
+                    toast.error('Invalid Supplier GSTIN format (must be 15 characters)')
+                    return
+                  }
+
+                  // Calculate total value from items
+                  const totalTaxable = ewayItems.reduce((sum, item) => sum + item.taxableAmount, 0)
+                  const totalCgst = ewayItems.reduce((sum, item) => sum + (item.taxableAmount * item.cgstRate / 100), 0)
+                  const totalSgst = ewayItems.reduce((sum, item) => sum + (item.taxableAmount * item.sgstRate / 100), 0)
+                  const totalIgst = ewayItems.reduce((sum, item) => sum + (item.taxableAmount * item.igstRate / 100), 0)
+
+                  // Generate E-Way Bill
+                  const ewbNo = 'EWB' + Date.now().toString().slice(-10)
+                  const ewbDate = new Date().toLocaleDateString()
+                  const validUpto = new Date(Date.now() + 24*60*60*1000).toLocaleDateString()
+                  const totalValue = totalTaxable + totalCgst + totalSgst + totalIgst || ewayTotalValue
+
+                  const newBill = {
+                    ewbNo,
+                    docNo: ewayDocNo,
+                    ewbDate,
+                    validUpto,
+                    fromGstin: ewayFromGstin,
+                    toGstin: ewayToGstin,
+                    totalValue,
+                    status: 'active' as const
+                  }
+                  setEwayBillsList(prev => [newBill, ...prev])
+
+                  // Generate NIC-Compliant E-Way Bill PDF
+                  const generateNICEwayBillPDF = async () => {
+                    const doc = new jsPDF()
+
+                    // Document type and supply type labels
+                    const docTypeLabels: Record<string, string> = { 'INV': 'Tax Invoice', 'CHL': 'Delivery Challan', 'BIL': 'Bill of Supply', 'BOE': 'Bill of Entry', 'OTH': 'Others' }
+                    const supplyTypeLabels: Record<string, string> = { 'O': 'Outward', 'I': 'Inward' }
+                    const subSupplyTypeLabels: Record<string, string> = { '1': 'Supply', '2': 'Import', '3': 'Export', '4': 'Job Work', '5': 'For Own Use', '6': 'Job Work Returns', '7': 'Sales Return', '8': 'Others', '9': 'SKD/CKD', '10': 'Line Sales', '11': 'Recipient Not Known', '12': 'Exhibition or Fairs' }
+                    const transModeLabels: Record<string, string> = { '1': 'Road', '2': 'Rail', '3': 'Air', '4': 'Ship' }
+                    const vehicleTypeLabels: Record<string, string> = { 'R': 'Regular', 'O': 'Over Dimensional Cargo' }
+
+                    // Generate QR Code data (NIC format JSON)
+                    const qrData = JSON.stringify({
+                      ewbNo: ewbNo,
+                      ewbDt: ewbDate,
+                      status: 'ACT',
+                      fromGstin: ewayFromGstin || '',
+                      toGstin: ewayToGstin || '',
+                      docNo: ewayDocNo,
+                      docDt: ewayDocDate,
+                      totValue: totalValue,
+                      fromPlace: ewayFromPlace,
+                      toPlace: ewayToPlace
+                    })
+
+                    // Generate QR code as data URL
+                    let qrDataUrl = ''
+                    try {
+                      qrDataUrl = await QRCode.toDataURL(qrData, { width: 100, margin: 1 })
+                    } catch (err) {
+                      console.error('QR Code generation failed:', err)
+                    }
+
+                    // ===== NIC HEADER =====
+                    // Top border line
+                    doc.setDrawColor(0, 0, 0)
+                    doc.setLineWidth(0.5)
+                    doc.line(10, 8, 200, 8)
+
+                    // Government header
+                    doc.setTextColor(0, 0, 0)
+                    doc.setFontSize(12)
+                    doc.setFont('helvetica', 'bold')
+                    doc.text('GOVERNMENT OF INDIA', 105, 15, { align: 'center' })
+
+                    doc.setFontSize(16)
+                    doc.text('E-WAY BILL', 105, 23, { align: 'center' })
+
+                    doc.setFontSize(8)
+                    doc.setFont('helvetica', 'normal')
+                    doc.setTextColor(80, 80, 80)
+                    doc.text('Generated by National Informatics Centre', 105, 29, { align: 'center' })
+
+                    // Bottom header line
+                    doc.setDrawColor(0, 0, 0)
+                    doc.setLineWidth(0.5)
+                    doc.line(10, 32, 200, 32)
+
+                    // ===== E-Way Bill Number and Dates Row =====
+                    let yPos = 40
+
+                    doc.setFillColor(245, 245, 245)
+                    doc.rect(10, yPos - 5, 190, 18, 'F')
+                    doc.setDrawColor(0, 0, 0)
+                    doc.setLineWidth(0.3)
+                    doc.rect(10, yPos - 5, 190, 18)
+
+                    doc.setTextColor(0, 0, 0)
+                    doc.setFontSize(9)
+                    doc.setFont('helvetica', 'bold')
+                    doc.text('E-Way Bill No:', 15, yPos + 2)
+                    doc.setFont('helvetica', 'normal')
+                    doc.text(ewbNo, 50, yPos + 2)
+
+                    doc.setFont('helvetica', 'bold')
+                    doc.text('Generated Date:', 90, yPos + 2)
+                    doc.setFont('helvetica', 'normal')
+                    doc.text(ewbDate, 125, yPos + 2)
+
+                    doc.setFont('helvetica', 'bold')
+                    doc.text('Valid Upto:', 155, yPos + 2)
+                    doc.setFont('helvetica', 'normal')
+                    doc.text(validUpto, 180, yPos + 2)
+
+                    doc.setFont('helvetica', 'bold')
+                    doc.text('Mode:', 15, yPos + 9)
+                    doc.setFont('helvetica', 'normal')
+                    doc.text(transModeLabels[ewayTransMode] || 'Road', 30, yPos + 9)
+
+                    doc.setFont('helvetica', 'bold')
+                    doc.text('Approx Distance:', 90, yPos + 9)
+                    doc.setFont('helvetica', 'normal')
+                    doc.text(`${ewayDistance || '0'} KM`, 125, yPos + 9)
+
+                    // ===== PART-A: SUPPLY DETAILS =====
+                    yPos = 60
+                    doc.setFillColor(220, 220, 220)
+                    doc.rect(10, yPos, 190, 8, 'F')
+                    doc.setDrawColor(0, 0, 0)
+                    doc.rect(10, yPos, 190, 8)
+
+                    doc.setTextColor(0, 0, 0)
+                    doc.setFontSize(10)
+                    doc.setFont('helvetica', 'bold')
+                    doc.text('PART-A', 15, yPos + 6)
+                    doc.setFontSize(9)
+                    doc.text('Supply Details', 105, yPos + 6, { align: 'center' })
+
+                    yPos = 70
+
+                    // Transaction Details Table
+                    autoTable(doc, {
+                      startY: yPos,
+                      head: [['Transaction Type', 'Document Type', 'Document No', 'Document Date']],
+                      body: [[
+                        supplyTypeLabels[ewaySupplyType] || 'Outward',
+                        docTypeLabels[ewayDocType] || 'Tax Invoice',
+                        ewayDocNo,
+                        ewayDocDate
+                      ]],
+                      theme: 'grid',
+                      headStyles: {
+                        fillColor: [240, 240, 240],
+                        textColor: [0, 0, 0],
+                        fontSize: 8,
+                        fontStyle: 'bold',
+                        halign: 'center'
+                      },
+                      bodyStyles: {
+                        fontSize: 8,
+                        halign: 'center',
+                        textColor: [0, 0, 0]
+                      },
+                      styles: {
+                        lineColor: [0, 0, 0],
+                        lineWidth: 0.2
+                      },
+                      margin: { left: 10, right: 10 }
+                    })
+
+                    yPos = (doc as any).lastAutoTable?.finalY || yPos + 20
+
+                    // FROM (Supplier) Details
+                    autoTable(doc, {
+                      startY: yPos,
+                      head: [['FROM (Supplier / Consignor)', '']],
+                      body: [
+                        ['GSTIN', ewayFromGstin],
+                        ['Legal Name', ewayFromName || '-'],
+                        ['Address', ewayFromAddr || '-'],
+                        ['Place', `${ewayFromPlace || '-'}, ${ewayFromState || '-'} - ${ewayFromPincode || ''}`]
+                      ],
+                      theme: 'grid',
+                      headStyles: {
+                        fillColor: [240, 240, 240],
+                        textColor: [0, 0, 0],
+                        fontSize: 8,
+                        fontStyle: 'bold'
+                      },
+                      bodyStyles: {
+                        fontSize: 8,
+                        textColor: [0, 0, 0]
+                      },
+                      columnStyles: {
+                        0: { cellWidth: 30, fontStyle: 'bold' },
+                        1: { cellWidth: 160 }
+                      },
+                      styles: {
+                        lineColor: [0, 0, 0],
+                        lineWidth: 0.2
+                      },
+                      margin: { left: 10, right: 10 }
+                    })
+
+                    yPos = (doc as any).lastAutoTable?.finalY || yPos + 30
+
+                    // TO (Recipient) Details
+                    autoTable(doc, {
+                      startY: yPos,
+                      head: [['TO (Recipient / Consignee)', '']],
+                      body: [
+                        ['GSTIN', ewayToGstin || 'URP'],
+                        ['Legal Name', ewayToName || '-'],
+                        ['Address', ewayToAddr || '-'],
+                        ['Place', `${ewayToPlace || '-'}, ${ewayToState || '-'} - ${ewayToPincode || ''}`]
+                      ],
+                      theme: 'grid',
+                      headStyles: {
+                        fillColor: [240, 240, 240],
+                        textColor: [0, 0, 0],
+                        fontSize: 8,
+                        fontStyle: 'bold'
+                      },
+                      bodyStyles: {
+                        fontSize: 8,
+                        textColor: [0, 0, 0]
+                      },
+                      columnStyles: {
+                        0: { cellWidth: 30, fontStyle: 'bold' },
+                        1: { cellWidth: 160 }
+                      },
+                      styles: {
+                        lineColor: [0, 0, 0],
+                        lineWidth: 0.2
+                      },
+                      margin: { left: 10, right: 10 }
+                    })
+
+                    yPos = (doc as any).lastAutoTable?.finalY || yPos + 30
+
+                    // Item Details Table
+                    autoTable(doc, {
+                      startY: yPos,
+                      head: [['S.No', 'Product Name', 'Description', 'HSN Code', 'Quantity', 'Unit', 'Value (₹)', 'CGST (₹)', 'SGST (₹)', 'IGST (₹)']],
+                      body: ewayItems.length > 0 ? ewayItems.map((item, idx) => [
+                        idx + 1,
+                        item.productName,
+                        item.productName,
+                        item.hsnCode || '-',
+                        item.quantity,
+                        item.unit,
+                        item.taxableAmount.toFixed(2),
+                        (item.taxableAmount * item.cgstRate / 100).toFixed(2),
+                        (item.taxableAmount * item.sgstRate / 100).toFixed(2),
+                        (item.taxableAmount * item.igstRate / 100).toFixed(2)
+                      ]) : [[1, '-', '-', '-', '-', '-', '0.00', '0.00', '0.00', '0.00']],
+                      theme: 'grid',
+                      headStyles: {
+                        fillColor: [240, 240, 240],
+                        textColor: [0, 0, 0],
+                        fontSize: 7,
+                        fontStyle: 'bold',
+                        halign: 'center'
+                      },
+                      bodyStyles: {
+                        fontSize: 7,
+                        halign: 'center',
+                        textColor: [0, 0, 0]
+                      },
+                      columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 30 },
+                        2: { cellWidth: 25 },
+                        3: { cellWidth: 18 },
+                        4: { cellWidth: 15 },
+                        5: { cellWidth: 12 },
+                        6: { cellWidth: 20 },
+                        7: { cellWidth: 18 },
+                        8: { cellWidth: 18 },
+                        9: { cellWidth: 18 }
+                      },
+                      styles: {
+                        lineColor: [0, 0, 0],
+                        lineWidth: 0.2
+                      },
+                      margin: { left: 10, right: 10 }
+                    })
+
+                    yPos = (doc as any).lastAutoTable?.finalY || yPos + 25
+
+                    // Totals Row
+                    const itemsTotalValue = ewayItems.reduce((sum, item) => sum + item.taxableAmount, 0)
+                    const itemsTotalCGST = ewayItems.reduce((sum, item) => sum + (item.taxableAmount * item.cgstRate / 100), 0)
+                    const itemsTotalSGST = ewayItems.reduce((sum, item) => sum + (item.taxableAmount * item.sgstRate / 100), 0)
+                    const itemsTotalIGST = ewayItems.reduce((sum, item) => sum + (item.taxableAmount * item.igstRate / 100), 0)
+
+                    autoTable(doc, {
+                      startY: yPos,
+                      head: [['', '', '', '', '', 'Total',
+                        (itemsTotalValue || totalValue).toFixed(2),
+                        itemsTotalCGST.toFixed(2),
+                        itemsTotalSGST.toFixed(2),
+                        itemsTotalIGST.toFixed(2)
+                      ]],
+                      body: [],
+                      theme: 'grid',
+                      headStyles: {
+                        fillColor: [245, 245, 245],
+                        textColor: [0, 0, 0],
+                        fontSize: 7,
+                        fontStyle: 'bold',
+                        halign: 'center'
+                      },
+                      columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 30 },
+                        2: { cellWidth: 25 },
+                        3: { cellWidth: 18 },
+                        4: { cellWidth: 15 },
+                        5: { cellWidth: 12, halign: 'right' },
+                        6: { cellWidth: 20 },
+                        7: { cellWidth: 18 },
+                        8: { cellWidth: 18 },
+                        9: { cellWidth: 18 }
+                      },
+                      styles: {
+                        lineColor: [0, 0, 0],
+                        lineWidth: 0.2
+                      },
+                      margin: { left: 10, right: 10 }
+                    })
+
+                    yPos = (doc as any).lastAutoTable?.finalY || yPos + 10
+
+                    // Total Invoice Value
+                    doc.setFillColor(240, 240, 240)
+                    doc.rect(10, yPos, 190, 10, 'F')
+                    doc.setDrawColor(0, 0, 0)
+                    doc.rect(10, yPos, 190, 10)
+
+                    doc.setTextColor(0, 0, 0)
+                    doc.setFontSize(9)
+                    doc.setFont('helvetica', 'bold')
+                    doc.text('Total Invoice Value:', 15, yPos + 7)
+                    doc.text(`₹ ${totalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 195, yPos + 7, { align: 'right' })
+
+                    yPos += 15
+
+                    // ===== PART-B: TRANSPORT DETAILS =====
+                    doc.setFillColor(220, 220, 220)
+                    doc.rect(10, yPos, 190, 8, 'F')
+                    doc.setDrawColor(0, 0, 0)
+                    doc.rect(10, yPos, 190, 8)
+
+                    doc.setTextColor(0, 0, 0)
+                    doc.setFontSize(10)
+                    doc.setFont('helvetica', 'bold')
+                    doc.text('PART-B', 15, yPos + 6)
+                    doc.setFontSize(9)
+                    doc.text('Transport Details', 105, yPos + 6, { align: 'center' })
+
+                    yPos += 10
+
+                    autoTable(doc, {
+                      startY: yPos,
+                      body: [
+                        ['Mode of Transport', transModeLabels[ewayTransMode] || 'Road', 'Vehicle Type', vehicleTypeLabels[ewayVehicleType] || 'Regular'],
+                        ['Transporter ID', ewayTransId || '-', 'Transporter Name', ewayTransName || '-'],
+                        ['Vehicle Number', ewayVehicleNo || '-', 'From Place', ewayFromPlace || '-'],
+                        ['Transporter Doc No', ewayTransDocNo || '-', 'Transporter Doc Date', ewayTransDocDate || '-']
+                      ],
+                      theme: 'grid',
+                      bodyStyles: {
+                        fontSize: 8,
+                        textColor: [0, 0, 0]
+                      },
+                      columnStyles: {
+                        0: { cellWidth: 40, fontStyle: 'bold', fillColor: [245, 245, 245] },
+                        1: { cellWidth: 55 },
+                        2: { cellWidth: 40, fontStyle: 'bold', fillColor: [245, 245, 245] },
+                        3: { cellWidth: 55 }
+                      },
+                      styles: {
+                        lineColor: [0, 0, 0],
+                        lineWidth: 0.2
+                      },
+                      margin: { left: 10, right: 10 }
+                    })
+
+                    yPos = (doc as any).lastAutoTable?.finalY || yPos + 35
+
+                    // ===== QR CODE SECTION =====
+                    if (qrDataUrl) {
+                      doc.setDrawColor(0, 0, 0)
+                      doc.setLineWidth(0.3)
+                      doc.rect(10, yPos + 5, 40, 40)
+                      doc.addImage(qrDataUrl, 'PNG', 12, yPos + 7, 36, 36)
+
+                      doc.setFontSize(7)
+                      doc.setFont('helvetica', 'normal')
+                      doc.setTextColor(80, 80, 80)
+                      doc.text('Scan to verify', 30, yPos + 48, { align: 'center' })
+                    }
+
+                    // E-Way Bill Status (NO IRN - IRN belongs to e-Invoice, not E-Way Bill)
+                    doc.setFontSize(8)
+                    doc.setFont('helvetica', 'bold')
+                    doc.setTextColor(0, 0, 0)
+                    doc.text('E-Way Bill Status:', 60, yPos + 15)
+                    doc.setFont('helvetica', 'normal')
+                    doc.setTextColor(0, 128, 0)
+                    doc.text('ACTIVE', 100, yPos + 15)
+
+                    doc.setTextColor(0, 0, 0)
+                    doc.setFont('helvetica', 'bold')
+                    doc.text('Generated On:', 60, yPos + 25)
+                    doc.setFont('helvetica', 'normal')
+                    doc.text(new Date().toLocaleString('en-IN'), 100, yPos + 25)
+
+                    // ===== FOOTER =====
+                    doc.setDrawColor(0, 0, 0)
+                    doc.setLineWidth(0.3)
+                    doc.line(10, 280, 200, 280)
+
+                    doc.setTextColor(80, 80, 80)
+                    doc.setFontSize(7)
+                    doc.setFont('helvetica', 'normal')
+                    doc.text('This is a system generated E-Way Bill.', 105, 285, { align: 'center' })
+
+                    // Download PDF
+                    doc.save(`EWayBill_${ewbNo}.pdf`)
+                  }
+
+                  // Execute the async PDF generation
+                  generateNICEwayBillPDF()
+
+                  toast.success('E-Way Bill generated and downloaded!')
+                  setShowEwayBillModal(false)
+
+                  // Reset form
+                  setEwayDocNo('')
+                  setEwayFromGstin('')
+                  setEwayFromName('')
+                  setEwayFromAddr('')
+                  setEwayFromPlace('')
+                  setEwayFromPincode('')
+                  setEwayFromState('')
+                  setEwayToGstin('')
+                  setEwayToName('')
+                  setEwayToAddr('')
+                  setEwayToPlace('')
+                  setEwayToPincode('')
+                  setEwayToState('')
+                  setEwayVehicleNo('')
+                  setEwayTransId('')
+                  setEwayTransName('')
+                  setEwayDistance('')
+                  setEwayItems([])
+                  setEwayItemSearch('')
+                  setEwayCustomerSearch('')
+                  setEwaySelectedCustomer(null)
+                }}
+                className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 text-sm font-medium flex items-center gap-2"
+              >
+                <FileArrowUp size={18} />
+                Generate E-Way Bill
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
