@@ -5175,20 +5175,182 @@ TOTAL:       ₹${invoice.total}
             </div>
           </div>
 
-          {/* Right Side: Action Buttons Row */}
-          <div className="flex-shrink-0 flex items-center gap-1.5 md:gap-2 justify-end">
-            {/* Date Filter Dropdown */}
-            <div className="relative">
+          {/* Right Side: Action Buttons + Date Filters (2 rows on desktop) */}
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            {/* Row 1: Action Buttons */}
+            <div className="flex items-center gap-1.5 md:gap-2">
+              {/* Export Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportDropdown(!showExportDropdown)}
+                  className="h-8 md:h-9 px-2.5 md:px-3 rounded-xl text-xs bg-white text-emerald-600 font-semibold flex items-center gap-1
+                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                    active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                    transition-all duration-200 border border-emerald-200"
+                >
+                  <Download size={14} weight="bold" />
+                  <span className="text-[10px] md:text-[11px]">Excel</span>
+                  <CaretDown size={12} />
+                </button>
+                {showExportDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-[100]" onClick={() => setShowExportDropdown(false)} />
+                    <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-[101] min-w-[140px]">
+                      <button
+                        onClick={() => {
+                          exportToTallyExcel(invoices)
+                          toast.success('Excel exported!')
+                          setShowExportDropdown(false)
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2 text-slate-700"
+                      >
+                        <FileXls size={16} className="text-emerald-600" weight="bold" />
+                        Excel (.xlsx)
+                      </button>
+                      <button
+                        onClick={() => {
+                          exportToTallyCSV(invoices)
+                          toast.success('CSV exported!')
+                          setShowExportDropdown(false)
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2 text-slate-700"
+                      >
+                        <FileCsv size={16} className="text-blue-600" weight="bold" />
+                        CSV (.csv)
+                      </button>
+                      <button
+                        onClick={() => {
+                          downloadTallyXML(invoices)
+                          toast.success('Tally XML exported!')
+                          setShowExportDropdown(false)
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2 text-slate-700"
+                      >
+                        <FileCode size={16} className="text-orange-600" weight="bold" />
+                        Tally XML
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Add Button */}
               <button
-                onClick={() => setShowDateFilterDropdown(!showDateFilterDropdown)}
-                className="h-8 md:h-9 px-2.5 md:px-3 rounded-xl text-xs bg-white text-slate-700 font-medium flex items-center gap-1
+                onClick={() => {
+                  setViewMode('create')
+                }}
+                className="h-8 md:h-9 px-3 md:px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1
                   shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
                   dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
                   hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
                   active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                  transition-all duration-200"
+              >
+                <Plus size={16} weight="bold" />
+                <span className="text-[11px] md:text-xs">Add</span>
+              </button>
+            </div>
+
+            {/* Row 2: Date Filters - Desktop: Inline Buttons, Mobile: Dropdown */}
+            {/* Desktop Inline Buttons */}
+            <div className="relative hidden md:inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+              {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
+                <button
+                  key={period}
+                  onClick={() => {
+                    setSelectedPeriod(period)
+                    setStatsFilter(period as any)
+                    if (period === 'custom') {
+                      setShowCustomDatePicker(true)
+                    } else {
+                      setShowCustomDatePicker(false)
+                    }
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                    selectedPeriod === period
+                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  {period.charAt(0).toUpperCase() + period.slice(1)}
+                </button>
+              ))}
+
+              {/* Custom Date Picker Dropdown - Positioned near button */}
+              {showCustomDatePicker && (
+                <>
+                  <div className="fixed inset-0 z-[100]" onClick={() => setShowCustomDatePicker(false)} />
+                  <div
+                    className="absolute top-full right-0 mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-[101] min-w-[280px]"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Select Date Range</span>
+                      <button
+                        onClick={() => setShowCustomDatePicker(false)}
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                      >
+                        <X size={16} className="text-slate-500" />
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">From Date</label>
+                        <input
+                          type="date"
+                          value={customDateFrom}
+                          onChange={(e) => setCustomDateFrom(e.target.value)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            (e.target as HTMLInputElement).showPicker?.();
+                          }}
+                          className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">To Date</label>
+                        <input
+                          type="date"
+                          value={customDateTo}
+                          onChange={(e) => setCustomDateTo(e.target.value)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            (e.target as HTMLInputElement).showPicker?.();
+                          }}
+                          className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer"
+                        />
+                      </div>
+                      <button
+                        onClick={() => setShowCustomDatePicker(false)}
+                        disabled={!customDateFrom || !customDateTo}
+                        className={cn(
+                          "w-full py-2 rounded-lg text-sm font-semibold transition-all",
+                          customDateFrom && customDateTo
+                            ? "bg-blue-600 text-white hover:bg-blue-700"
+                            : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        )}
+                      >
+                        Apply Filter
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Dropdown */}
+            <div className="relative md:hidden">
+              <button
+                onClick={() => setShowDateFilterDropdown(!showDateFilterDropdown)}
+                className="h-8 px-2.5 rounded-xl text-xs bg-white text-slate-700 font-medium flex items-center gap-1
+                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                  active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
                   transition-all duration-200 border border-slate-200"
               >
-                <span className="text-[11px] md:text-xs">
+                <span className="text-[11px]">
                   {selectedPeriod === 'today' ? 'Today' :
                    selectedPeriod === 'week' ? 'Week' :
                    selectedPeriod === 'month' ? 'Month' :
@@ -5227,79 +5389,6 @@ TOTAL:       ₹${invoice.total}
                 </>
               )}
             </div>
-
-            {/* Export Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowExportDropdown(!showExportDropdown)}
-                className="h-8 md:h-9 px-2.5 md:px-3 rounded-xl text-xs bg-white text-emerald-600 font-semibold flex items-center gap-1
-                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                  active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                  transition-all duration-200 border border-emerald-200"
-              >
-                <Download size={14} weight="bold" />
-                <span className="text-[10px] md:text-[11px]">Excel</span>
-                <CaretDown size={12} />
-              </button>
-              {showExportDropdown && (
-                <>
-                  <div className="fixed inset-0 z-[100]" onClick={() => setShowExportDropdown(false)} />
-                  <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-[101] min-w-[140px]">
-                    <button
-                      onClick={() => {
-                        exportToTallyExcel(invoices)
-                        toast.success('Excel exported!')
-                        setShowExportDropdown(false)
-                      }}
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2 text-slate-700"
-                    >
-                      <FileXls size={16} className="text-emerald-600" weight="bold" />
-                      Excel (.xlsx)
-                    </button>
-                    <button
-                      onClick={() => {
-                        exportToTallyCSV(invoices)
-                        toast.success('CSV exported!')
-                        setShowExportDropdown(false)
-                      }}
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2 text-slate-700"
-                    >
-                      <FileCsv size={16} className="text-blue-600" weight="bold" />
-                      CSV (.csv)
-                    </button>
-                    <button
-                      onClick={() => {
-                        downloadTallyXML(invoices)
-                        toast.success('Tally XML exported!')
-                        setShowExportDropdown(false)
-                      }}
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50 flex items-center gap-2 text-slate-700"
-                    >
-                      <FileCode size={16} className="text-orange-600" weight="bold" />
-                      Tally XML
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Add Button */}
-            <button
-              onClick={() => {
-                setViewMode('create')
-              }}
-              className="h-8 md:h-9 px-3 md:px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1
-                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                transition-all duration-200"
-            >
-              <Plus size={16} weight="bold" />
-              <span className="text-[11px] md:text-xs">Add</span>
-            </button>
           </div>
         </div>
       </div>
@@ -11883,6 +11972,7 @@ TOTAL:       ₹${invoice.total}
           invoiceData={listInvoicePreviewData}
         />
       )}
+
     </div>
   )
 }

@@ -5186,8 +5186,10 @@ TOTAL:       ₹${invoice.total}
             </div>
           </div>
 
-          {/* Right Side: Action Buttons Row */}
-          <div className="flex-shrink-0 flex items-center gap-1.5 md:gap-2 justify-end">
+          {/* Right Side: Action Buttons + Date Filters (2 rows on desktop) */}
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            {/* Row 1: Action Buttons */}
+            <div className="flex items-center gap-1.5 md:gap-2">
                 {/* AI Sale Button */}
                 <button
                   onClick={() => setShowAIAssistant(true)}
@@ -5201,63 +5203,6 @@ TOTAL:       ₹${invoice.total}
                   <Sparkle size={14} weight="fill" />
                   <span className="text-[11px] md:text-xs">AI Sale</span>
                 </button>
-
-                {/* Date Filter Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setShowDateFilterDropdown(!showDateFilterDropdown)}
-                    className="h-8 md:h-9 px-2.5 md:px-3 rounded-xl text-xs bg-white text-slate-700 font-medium flex items-center gap-1
-                      shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                      dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                      hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                      active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                      transition-all duration-200 border border-slate-200"
-                  >
-                    <span className="text-[11px] md:text-xs">
-                      {statsFilter === 'today' ? t.common.today :
-                       statsFilter === 'week' ? t.common.week :
-                       statsFilter === 'month' ? t.common.month :
-                       statsFilter === 'year' ? t.common.year :
-                       statsFilter === 'all' ? t.common.all :
-                       t.common.custom}
-                    </span>
-                    <CaretDown size={12} />
-                  </button>
-                  {showDateFilterDropdown && (
-                    <>
-                      <div className="fixed inset-0 z-[100]" onClick={() => setShowDateFilterDropdown(false)} />
-                      <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-[101] min-w-[120px]">
-                        {[
-                          { value: 'today', label: t.common.today },
-                          { value: 'week', label: t.common.week },
-                          { value: 'month', label: t.common.month },
-                          { value: 'year', label: t.common.year },
-                          { value: 'all', label: t.common.all },
-                          { value: 'custom', label: t.common.custom },
-                        ].map((filter) => (
-                          <button
-                            key={filter.value}
-                            onClick={() => {
-                              setStatsFilter(filter.value as any)
-                              setShowDateFilterDropdown(false)
-                              if (filter.value === 'custom') {
-                                setShowCustomDatePicker(true)
-                              } else {
-                                setShowCustomDatePicker(false)
-                              }
-                            }}
-                            className={cn(
-                              "w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2",
-                              statsFilter === filter.value ? "bg-blue-50 text-blue-600 font-medium" : "text-slate-700"
-                            )}
-                          >
-                            {filter.label}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
 
                 {/* Export Dropdown */}
                 <div className="relative">
@@ -5335,6 +5280,156 @@ TOTAL:       ₹${invoice.total}
                   <Plus size={16} weight="bold" />
                   <span className="text-[11px] md:text-xs">Add</span>
                 </button>
+            </div>
+
+            {/* Row 2: Date Filters - Desktop: Inline Buttons, Mobile: Dropdown */}
+            {/* Desktop Inline Buttons */}
+            <div className="relative hidden md:inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+              {[
+                { value: 'today', label: t.common.today },
+                { value: 'week', label: t.common.week },
+                { value: 'month', label: t.common.month },
+                { value: 'year', label: t.common.year },
+                { value: 'all', label: t.common.all },
+                { value: 'custom', label: t.common.custom },
+              ].map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() => {
+                    setStatsFilter(filter.value as any)
+                    if (filter.value === 'custom') {
+                      setShowCustomDatePicker(true)
+                    } else {
+                      setShowCustomDatePicker(false)
+                    }
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                    statsFilter === filter.value
+                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  )}
+                >
+                  {filter.label}
+                </button>
+              ))}
+
+              {/* Custom Date Picker Dropdown - Positioned near button */}
+              {showCustomDatePicker && (
+                <>
+                  <div className="fixed inset-0 z-[100]" onClick={() => setShowCustomDatePicker(false)} />
+                  <div
+                    className="absolute top-full right-0 mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-[101] min-w-[280px]"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Select Date Range</span>
+                      <button
+                        onClick={() => setShowCustomDatePicker(false)}
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                      >
+                        <X size={16} className="text-slate-500" />
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">From Date</label>
+                        <input
+                          type="date"
+                          value={customDateFrom}
+                          onChange={(e) => setCustomDateFrom(e.target.value)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            (e.target as HTMLInputElement).showPicker?.();
+                          }}
+                          className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">To Date</label>
+                        <input
+                          type="date"
+                          value={customDateTo}
+                          onChange={(e) => setCustomDateTo(e.target.value)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            (e.target as HTMLInputElement).showPicker?.();
+                          }}
+                          className="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none cursor-pointer"
+                        />
+                      </div>
+                      <button
+                        onClick={() => setShowCustomDatePicker(false)}
+                        disabled={!customDateFrom || !customDateTo}
+                        className={cn(
+                          "w-full py-2 rounded-lg text-sm font-semibold transition-all",
+                          customDateFrom && customDateTo
+                            ? "bg-blue-600 text-white hover:bg-blue-700"
+                            : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        )}
+                      >
+                        Apply Filter
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Dropdown */}
+            <div className="relative md:hidden">
+              <button
+                onClick={() => setShowDateFilterDropdown(!showDateFilterDropdown)}
+                className="h-8 px-2.5 rounded-xl text-xs bg-white text-slate-700 font-medium flex items-center gap-1
+                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                  active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                  transition-all duration-200 border border-slate-200"
+              >
+                <span className="text-[11px]">
+                  {statsFilter === 'today' ? t.common.today :
+                   statsFilter === 'week' ? t.common.week :
+                   statsFilter === 'month' ? t.common.month :
+                   statsFilter === 'year' ? t.common.year :
+                   statsFilter === 'all' ? t.common.all :
+                   t.common.custom}
+                </span>
+                <CaretDown size={12} />
+              </button>
+              {showDateFilterDropdown && (
+                <>
+                  <div className="fixed inset-0 z-[100]" onClick={() => setShowDateFilterDropdown(false)} />
+                  <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-[101] min-w-[120px]">
+                    {[
+                      { value: 'today', label: t.common.today },
+                      { value: 'week', label: t.common.week },
+                      { value: 'month', label: t.common.month },
+                      { value: 'year', label: t.common.year },
+                      { value: 'all', label: t.common.all },
+                      { value: 'custom', label: t.common.custom },
+                    ].map((filter) => (
+                      <button
+                        key={filter.value}
+                        onClick={() => {
+                          setStatsFilter(filter.value as any)
+                          setShowDateFilterDropdown(false)
+                          if (filter.value === 'custom') {
+                            setShowCustomDatePicker(true)
+                          } else {
+                            setShowCustomDatePicker(false)
+                          }
+                        }}
+                        className={cn(
+                          "w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2",
+                          statsFilter === filter.value ? "bg-blue-50 text-blue-600 font-medium" : "text-slate-700"
+                        )}
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -11071,6 +11166,7 @@ TOTAL:       ₹${invoice.total}
           setShowBarcodeScanner(false)
         }}
       />
+
 
       {/* AI Bill Assistant */}
       <AIAssistant
