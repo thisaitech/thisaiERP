@@ -2344,10 +2344,10 @@ const More = () => {
                   </div>
                 </div>
                 
-                <div className="p-6 space-y-5">
+                <div className="p-6 space-y-5 bg-white">
                   {/* Customer & Purpose */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    <div className="relative">
                       <label className="text-sm font-medium text-muted-foreground">{t.more.partyCustomer} *</label>
                       <input
                         type="text"
@@ -2360,28 +2360,24 @@ const More = () => {
                         className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                         placeholder={t.more.searchOrTypeParty}
                       />
-                      {(() => {
-                        const filteredParties = dcCustomerSearch && dcCustomerSearch.trim().length > 0
-                          ? availableParties.filter(p => getPartyName(p).toLowerCase().includes(dcCustomerSearch.toLowerCase())).slice(0, 5)
-                          : [];
+                      {dcCustomerSearch && dcCustomerSearch.trim().length > 0 && (() => {
+                        const filteredParties = availableParties.filter(p => getPartyName(p).toLowerCase().includes(dcCustomerSearch.toLowerCase())).slice(0, 5);
                         if (filteredParties.length === 0) return null;
                         return (
-                          <div className="relative">
-                            <div className="absolute left-0 right-0 top-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                              {filteredParties.map(party => (
-                                <div
-                                  key={party.id}
-                                  onMouseDown={() => {
-                                    setDcSelectedCustomer(party)
-                                    setDcCustomerSearch('')
-                                  }}
-                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                                >
-                                  <p className="font-medium">{getPartyName(party)}</p>
-                                  <p className="text-xs text-gray-500">{party.phone}</p>
-                                </div>
-                              ))}
-                            </div>
+                          <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                            {filteredParties.map(party => (
+                              <div
+                                key={party.id}
+                                onMouseDown={() => {
+                                  setDcSelectedCustomer(party)
+                                  setDcCustomerSearch('')
+                                }}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                              >
+                                <p className="font-medium">{getPartyName(party)}</p>
+                                <p className="text-xs text-gray-500">{party.phone}</p>
+                              </div>
+                            ))}
                           </div>
                         );
                       })()}
@@ -2418,7 +2414,7 @@ const More = () => {
                   </div>
 
                   {/* Add Item Search */}
-                  <div>
+                  <div className="relative">
                     <label className="text-sm font-medium text-muted-foreground">{t.more.addItems} *</label>
                     <input
                       type="text"
@@ -2428,37 +2424,33 @@ const More = () => {
                       className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                       placeholder={t.more.searchItems}
                     />
-                    {(() => {
-                      const filteredItems = dcItemSearch.trim().length > 0
-                        ? availableItems.filter(item => item.name.toLowerCase().includes(dcItemSearch.toLowerCase())).slice(0, 8)
-                        : [];
+                    {dcItemSearch.trim().length > 0 && (() => {
+                      const filteredItems = availableItems.filter(item => item.name.toLowerCase().includes(dcItemSearch.toLowerCase())).slice(0, 8);
                       if (filteredItems.length === 0) return null;
                       return (
-                        <div className="relative">
-                          <div className="absolute left-0 right-0 top-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                            {filteredItems.map(item => (
-                              <div
-                                key={item.id}
-                                onMouseDown={() => {
-                                  setDcItems([...dcItems, {
-                                    itemId: item.id,
-                                    name: item.name,
-                                    hsnCode: item.hsnCode,
-                                    qty: 1,
-                                    unit: item.unit || 'PCS',
-                                    rate: item.sellingPrice || 0
-                                  }])
-                                  setDcItemSearch('')
-                                }}
-                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
-                              >
-                                <div>
-                                  <p className="font-medium">{item.name}</p>
-                                  <p className="text-xs text-gray-500">Stock: {item.stock} {item.unit}</p>
-                                </div>
+                        <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                          {filteredItems.map(item => (
+                            <div
+                              key={item.id}
+                              onMouseDown={() => {
+                                setDcItems([...dcItems, {
+                                  itemId: item.id,
+                                  name: item.name,
+                                  hsnCode: item.hsnCode,
+                                  qty: 1,
+                                  unit: item.unit || 'PCS',
+                                  rate: item.sellingPrice || 0
+                                }])
+                                setDcItemSearch('')
+                              }}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
+                            >
+                              <div>
+                                <p className="font-medium">{item.name}</p>
+                                <p className="text-xs text-gray-500">Stock: {item.stock} {item.unit}</p>
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
                         </div>
                       );
                     })()}
@@ -2676,7 +2668,7 @@ const More = () => {
                 <div className="p-6 space-y-5 bg-white">
                   {/* Customer Selection */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    <div className="relative">
                       <label className="text-sm font-medium text-muted-foreground">{t.more.selectCustomer} *</label>
                       <input
                         type="text"
@@ -2689,28 +2681,24 @@ const More = () => {
                         className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                         placeholder={t.more.searchCustomer}
                       />
-                      {(() => {
-                        const filteredParties = piCustomerSearch && piCustomerSearch.trim().length > 0
-                          ? availableParties.filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase())).slice(0, 5)
-                          : [];
+                      {piCustomerSearch && piCustomerSearch.trim().length > 0 && (() => {
+                        const filteredParties = availableParties.filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase())).slice(0, 5);
                         if (filteredParties.length === 0) return null;
                         return (
-                          <div className="relative">
-                            <div className="absolute left-0 right-0 top-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                              {filteredParties.map(party => (
-                                <div
-                                  key={party.id}
-                                  onMouseDown={() => {
-                                    setPiSelectedCustomer(party)
-                                    setPiCustomerSearch('')
-                                  }}
-                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                                >
-                                  <p className="font-medium">{getPartyName(party)}</p>
-                                  <p className="text-xs text-gray-500">{party.phone} • {party.billingAddress?.state}</p>
-                                </div>
-                              ))}
-                            </div>
+                          <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                            {filteredParties.map(party => (
+                              <div
+                                key={party.id}
+                                onMouseDown={() => {
+                                  setPiSelectedCustomer(party)
+                                  setPiCustomerSearch('')
+                                }}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                              >
+                                <p className="font-medium">{getPartyName(party)}</p>
+                                <p className="text-xs text-gray-500">{party.phone} • {party.billingAddress?.state}</p>
+                              </div>
+                            ))}
                           </div>
                         );
                       })()}
@@ -2737,7 +2725,7 @@ const More = () => {
                   </div>
 
                   {/* Add Item Search */}
-                  <div>
+                  <div className="relative">
                     <label className="text-sm font-medium text-muted-foreground">{t.more.addItems} *</label>
                     <input
                       type="text"
@@ -2747,44 +2735,40 @@ const More = () => {
                       className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                       placeholder={t.more.searchItemsHsn}
                     />
-                    {(() => {
-                      const filteredItems = piItemSearch.trim().length > 0
-                        ? availableItems.filter(item =>
-                            item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
-                            (item.hsnCode && item.hsnCode.includes(piItemSearch))
-                          ).slice(0, 8)
-                        : [];
+                    {piItemSearch.trim().length > 0 && (() => {
+                      const filteredItems = availableItems.filter(item =>
+                        item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
+                        (item.hsnCode && item.hsnCode.includes(piItemSearch))
+                      ).slice(0, 8);
                       if (filteredItems.length === 0) return null;
                       return (
-                        <div className="relative">
-                          <div className="absolute left-0 right-0 top-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                            {filteredItems.map(item => (
-                              <div
-                                key={item.id}
-                                onMouseDown={() => {
-                                  const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0)
-                                  setPiItems([...piItems, {
-                                    itemId: item.id,
-                                    name: item.name,
-                                    hsnCode: item.hsnCode,
-                                    qty: 1,
-                                    rate: item.sellingPrice || item.mrp || 0,
-                                    discount: 0,
-                                    tax: taxRate || 18,
-                                    unit: item.unit || 'PCS'
-                                  }])
-                                  setPiItemSearch('')
-                                }}
-                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
-                              >
-                                <div>
-                                  <p className="font-medium">{item.name}</p>
-                                  <p className="text-xs text-gray-500">HSN: {item.hsnCode || 'N/A'} • {item.unit}</p>
-                                </div>
-                                <p className="text-blue-600 font-medium">₹{item.sellingPrice || item.mrp || 0}</p>
+                        <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                          {filteredItems.map(item => (
+                            <div
+                              key={item.id}
+                              onMouseDown={() => {
+                                const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0)
+                                setPiItems([...piItems, {
+                                  itemId: item.id,
+                                  name: item.name,
+                                  hsnCode: item.hsnCode,
+                                  qty: 1,
+                                  rate: item.sellingPrice || item.mrp || 0,
+                                  discount: 0,
+                                  tax: taxRate || 18,
+                                  unit: item.unit || 'PCS'
+                                }])
+                                setPiItemSearch('')
+                              }}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
+                            >
+                              <div>
+                                <p className="font-medium">{item.name}</p>
+                                <p className="text-xs text-gray-500">HSN: {item.hsnCode || 'N/A'} • {item.unit}</p>
                               </div>
-                            ))}
-                          </div>
+                              <p className="text-blue-600 font-medium">₹{item.sellingPrice || item.mrp || 0}</p>
+                            </div>
+                          ))}
                         </div>
                       );
                     })()}

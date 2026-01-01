@@ -68,7 +68,7 @@ export const getLeads = async (
   pageSize: number = 50
 ): Promise<CRMListResponse<CRMLead>> => {
   const result = await getAdapter().getLeads(filters, page, pageSize);
-  return {
+        return {
     data: result.data,
     total: result.total,
     page: result.page,
@@ -328,7 +328,7 @@ export const convertLeadToProject = async (leadId: string, userId: string = 'use
 
   await updateLead(leadId, { stage: 'confirmed' }, userId);
 
-  return {
+    return {
     id: leadId,
     name: lead.projectName,
     clientName: lead.name,
@@ -339,11 +339,11 @@ export const convertLeadToProject = async (leadId: string, userId: string = 'use
 export const seedCRMData = async (): Promise<void> => {
   // Create sample leads
   const sampleLeads = [
-    {
-      name: 'John Smith',
+      {
+        name: 'John Smith',
       phone: '9876543210',
       email: 'john@example.com',
-      projectName: 'Villa Construction',
+        projectName: 'Villa Construction',
       address: '123 Main Street',
       city: 'Mumbai',
       state: 'Maharashtra',
@@ -356,12 +356,12 @@ export const seedCRMData = async (): Promise<void> => {
       projectType: 'Residential',
       createdBy: 'system',
       updatedBy: 'system'
-    },
-    {
-      name: 'Sarah Johnson',
+      },
+      {
+        name: 'Sarah Johnson',
       phone: '9876543211',
       email: 'sarah@example.com',
-      projectName: 'Office Building',
+        projectName: 'Office Building',
       address: '456 Business Park',
       city: 'Bangalore',
       state: 'Karnataka',
@@ -370,7 +370,7 @@ export const seedCRMData = async (): Promise<void> => {
       stage: 'qualified' as const,
       priority: 'medium' as const,
       expectedValue: 15000000,
-      sqft: 10000,
+        sqft: 10000,
       projectType: 'Commercial',
       createdBy: 'system',
       updatedBy: 'system'
