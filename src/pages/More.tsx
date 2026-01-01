@@ -27,7 +27,8 @@ import {
   CheckCircle,
   Plus,
   X,
-  ArrowRight
+  ArrowRight,
+  Package
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -257,6 +258,7 @@ const More = () => {
     cessRate: number
   }[]>([])
   const [ewayItemSearch, setEwayItemSearch] = useState('')
+  const [ewayPartySearch, setEwayPartySearch] = useState('')
   const [ewayBillsList, setEwayBillsList] = useState<{
     ewbNo: string
     ewbDate: string
@@ -303,13 +305,15 @@ const More = () => {
   useEffect(() => {
     const loadInitialCounts = async () => {
       try {
-        const [challans, orders, proformas, paymentsInData, paymentsOutData, priceListsData] = await Promise.all([
+        const [challans, orders, proformas, paymentsInData, paymentsOutData, priceListsData, partiesData, itemsData] = await Promise.all([
           getDeliveryChallans(),
           getPurchaseOrders(),
           getProformaInvoices(),
           getPaymentsIn(),
           getPaymentsOut(),
-          getPriceLists()
+          getPriceLists(),
+          getParties(),
+          getItems()
         ])
         setDeliveryChallans(challans)
         setPurchaseOrders(orders)
@@ -317,6 +321,8 @@ const More = () => {
         setPaymentsIn(paymentsInData)
         setPaymentsOut(paymentsOutData)
         setPriceLists(priceListsData)
+        setAvailableParties(partiesData)
+        setAvailableItems(itemsData)
       } catch (error) {
         console.error('Error loading initial counts:', error)
       }
@@ -2747,10 +2753,10 @@ const More = () => {
                   </div>
                 </div>
 
-                <div className="p-6 space-y-5 bg-white">
+                <div className="p-6 space-y-5 bg-white" style={{ overflow: 'visible' }}>
                   {/* Customer Selection */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="relative">
+                    <div className="relative" style={{ overflow: 'visible' }}>
                       <label className="text-sm font-medium text-muted-foreground">{t.more.selectCustomer} *</label>
                       <input
                         type="text"
@@ -2760,6 +2766,8 @@ const More = () => {
                           setPiSelectedCustomer(null)
                         }}
                         autoComplete="off"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
                         className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                         placeholder={t.more.searchCustomer}
                       />
@@ -2767,7 +2775,7 @@ const More = () => {
                         const filteredParties = availableParties.filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase())).slice(0, 5);
                         if (filteredParties.length === 0) return null;
                         return (
-                          <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                          <div className="absolute left-0 right-0 mt-1 z-[9999] bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
                             {filteredParties.map(party => (
                               <div
                                 key={party.id}
@@ -2807,7 +2815,7 @@ const More = () => {
                   </div>
 
                   {/* Add Item Search */}
-                  <div className="relative">
+                  <div className="relative" style={{ overflow: 'visible' }}>
                     <label className="text-sm font-medium text-muted-foreground">{t.more.addItems} *</label>
                     <input
                       type="text"
@@ -2818,6 +2826,8 @@ const More = () => {
                       autoCapitalize="off"
                       spellCheck="false"
                       data-form-type="other"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
                       className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                       placeholder={t.more.searchItemsHsn}
                     />
@@ -2825,7 +2835,7 @@ const More = () => {
                       item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
                       (item.hsnCode && item.hsnCode.includes(piItemSearch))
                     ).slice(0, 8).length > 0 && (
-                      <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                      <div className="absolute left-0 right-0 mt-1 z-[9999] bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
                         {availableItems.filter(item =>
                           item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
                           (item.hsnCode && item.hsnCode.includes(piItemSearch))
@@ -3329,6 +3339,574 @@ const More = () => {
         type="OUT"
         onSuccess={() => loadPaymentsOutData()}
       />
+
+      {/* E-Way Bill Modal */}
+      <AnimatePresence>
+        {showEwayBillModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowEwayBillModal(false)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="sticky top-0 z-10 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-4 flex items-center justify-between rounded-t-xl">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <FileArrowUp size={24} weight="duotone" />
+                  Generate E-Way Bill
+                </h2>
+                <button onClick={() => setShowEwayBillModal(false)} className="p-2 hover:bg-white/20 rounded-lg">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Document Details */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-bold text-sm mb-3 text-gray-700">Document Details</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Document Type *</label>
+                      <select
+                        value={ewayDocType}
+                        onChange={e => setEwayDocType(e.target.value as typeof ewayDocType)}
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                      >
+                        <option value="INV">Tax Invoice</option>
+                        <option value="CHL">Delivery Challan</option>
+                        <option value="BIL">Bill of Supply</option>
+                        <option value="BOE">Bill of Entry</option>
+                        <option value="OTH">Others</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Document No *</label>
+                      <input
+                        type="text"
+                        value={ewayDocNo}
+                        onChange={e => setEwayDocNo(e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                        placeholder="INV-001"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Document Date *</label>
+                      <input
+                        type="date"
+                        value={ewayDocDate}
+                        onChange={e => setEwayDocDate(e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Supply Type *</label>
+                      <select
+                        value={ewaySupplyType}
+                        onChange={e => {
+                          const newType = e.target.value as 'O' | 'I'
+                          setEwaySupplyType(newType)
+                          // Auto-fill From with company details for Outward
+                          if (newType === 'O') {
+                            const settings = getCompanySettings()
+                            setEwayFromGstin(settings.gstin || '')
+                            setEwayFromName(settings.companyName || '')
+                            setEwayFromAddr(settings.address || '')
+                            setEwayFromPlace(settings.city || '')
+                            setEwayFromPincode(settings.pincode || '')
+                            setEwayFromState(settings.stateCode || '')
+                          }
+                        }}
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                      >
+                        <option value="O">Outward</option>
+                        <option value="I">Inward</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Select Customer/Supplier - Auto Fill */}
+                <div className="bg-indigo-50 rounded-lg p-4">
+                  <h3 className="font-bold text-sm mb-3 text-indigo-700">
+                    {ewaySupplyType === 'O' ? 'Select Customer (Bill To)' : 'Select Supplier (Bill From)'}
+                  </h3>
+                  <div>
+                    <input
+                      type="text"
+                      value={ewayPartySearch}
+                      onChange={e => setEwayPartySearch(e.target.value)}
+                      placeholder={ewaySupplyType === 'O' ? 'Type to search customer by name or GSTIN...' : 'Type to search supplier by name or GSTIN...'}
+                      className="w-full px-4 py-3 border-2 border-indigo-200 rounded-lg text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                      autoComplete="off"
+                    />
+                    {/* Party Search Results */}
+                    {(() => {
+                      const searchVal = ewayPartySearch.trim().toLowerCase()
+                      if (searchVal.length < 1) return null
+
+                      const filteredParties = availableParties.filter(p =>
+                        (ewaySupplyType === 'O' ? p.type === 'customer' : p.type === 'supplier') &&
+                        (getPartyName(p).toLowerCase().includes(searchVal) ||
+                         p.gstDetails?.gstin?.toLowerCase().includes(searchVal) ||
+                         p.phone?.includes(searchVal))
+                      ).slice(0, 6)
+
+                      if (filteredParties.length === 0) {
+                        return (
+                          <div className="mt-2 p-3 bg-yellow-50 rounded-lg text-sm text-yellow-700">
+                            No {ewaySupplyType === 'O' ? 'customers' : 'suppliers'} found matching "{ewayPartySearch}"
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {filteredParties.map(party => (
+                            <div
+                              key={party.id}
+                              onClick={() => {
+                                if (ewaySupplyType === 'O') {
+                                  setEwayToGstin(party.gstDetails?.gstin || 'URP')
+                                  setEwayToName(getPartyName(party))
+                                  setEwayToAddr(party.billingAddress?.addressLine1 || '')
+                                  setEwayToPlace(party.billingAddress?.city || '')
+                                  setEwayToPincode(party.billingAddress?.pincode || '')
+                                  const stateMap: Record<string, string> = {
+                                    'Tamil Nadu': '33', 'Karnataka': '29', 'Kerala': '32', 'Andhra Pradesh': '37',
+                                    'Telangana': '36', 'Maharashtra': '27', 'Gujarat': '24', 'Delhi': '07',
+                                    'Uttar Pradesh': '09', 'West Bengal': '19', 'Rajasthan': '08', 'Punjab': '03',
+                                    'Haryana': '06', 'Bihar': '10', 'Odisha': '21', 'Madhya Pradesh': '23',
+                                    'Goa': '30', 'Assam': '18', 'Jharkhand': '20', 'Chhattisgarh': '22'
+                                  }
+                                  setEwayToState(stateMap[party.billingAddress?.state || ''] || '')
+                                } else {
+                                  setEwayFromGstin(party.gstDetails?.gstin || 'URP')
+                                  setEwayFromName(getPartyName(party))
+                                  setEwayFromAddr(party.billingAddress?.addressLine1 || '')
+                                  setEwayFromPlace(party.billingAddress?.city || '')
+                                  setEwayFromPincode(party.billingAddress?.pincode || '')
+                                  const stateMap: Record<string, string> = {
+                                    'Tamil Nadu': '33', 'Karnataka': '29', 'Kerala': '32', 'Andhra Pradesh': '37',
+                                    'Telangana': '36', 'Maharashtra': '27', 'Gujarat': '24', 'Delhi': '07',
+                                    'Uttar Pradesh': '09', 'West Bengal': '19', 'Rajasthan': '08', 'Punjab': '03',
+                                    'Haryana': '06', 'Bihar': '10', 'Odisha': '21', 'Madhya Pradesh': '23',
+                                    'Goa': '30', 'Assam': '18', 'Jharkhand': '20', 'Chhattisgarh': '22'
+                                  }
+                                  setEwayFromState(stateMap[party.billingAddress?.state || ''] || '')
+                                }
+                                setEwayPartySearch('')
+                                toast.success(`${getPartyName(party)} selected`)
+                              }}
+                              className="p-3 bg-white border border-indigo-200 rounded-lg cursor-pointer hover:bg-indigo-100 hover:border-indigo-400 transition-all"
+                            >
+                              <p className="font-medium text-sm truncate">{getPartyName(party)}</p>
+                              <p className="text-xs text-gray-500">{party.gstDetails?.gstin || 'No GSTIN'}</p>
+                              <p className="text-xs text-gray-400 truncate">{party.billingAddress?.city}, {party.billingAddress?.state}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
+                  </div>
+                </div>
+
+                {/* From / To Details - Compact */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* From Details */}
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold text-sm text-blue-700">From (Consignor)</h3>
+                      {ewaySupplyType === 'O' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const settings = getCompanySettings()
+                            setEwayFromGstin(settings.gstin || '')
+                            setEwayFromName(settings.companyName || '')
+                            setEwayFromAddr(settings.address || '')
+                            setEwayFromPlace(settings.city || '')
+                            setEwayFromPincode(settings.pincode || '')
+                            setEwayFromState(settings.stateCode || '')
+                            toast.success('Company details loaded')
+                          }}
+                          className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
+                          Load My Company
+                        </button>
+                      )}
+                    </div>
+                    {ewayFromName ? (
+                      <div className="bg-white p-3 rounded-lg border border-blue-200">
+                        <p className="font-medium text-sm">{ewayFromName}</p>
+                        <p className="text-xs text-blue-600">{ewayFromGstin || 'No GSTIN'}</p>
+                        <p className="text-xs text-gray-500">{ewayFromAddr}</p>
+                        <p className="text-xs text-gray-500">{ewayFromPlace} - {ewayFromPincode}</p>
+                        <button
+                          onClick={() => {
+                            setEwayFromGstin('')
+                            setEwayFromName('')
+                            setEwayFromAddr('')
+                            setEwayFromPlace('')
+                            setEwayFromPincode('')
+                            setEwayFromState('')
+                          }}
+                          className="text-xs text-red-500 mt-1 hover:underline"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400 text-center py-4">
+                        {ewaySupplyType === 'O' ? 'Click "Load My Company" above' : 'Select supplier from list above'}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* To Details */}
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold text-sm text-green-700">To (Consignee)</h3>
+                      {ewaySupplyType === 'I' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const settings = getCompanySettings()
+                            setEwayToGstin(settings.gstin || '')
+                            setEwayToName(settings.companyName || '')
+                            setEwayToAddr(settings.address || '')
+                            setEwayToPlace(settings.city || '')
+                            setEwayToPincode(settings.pincode || '')
+                            setEwayToState(settings.stateCode || '')
+                            toast.success('Company details loaded')
+                          }}
+                          className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          Load My Company
+                        </button>
+                      )}
+                    </div>
+                    {ewayToName ? (
+                      <div className="bg-white p-3 rounded-lg border border-green-200">
+                        <p className="font-medium text-sm">{ewayToName}</p>
+                        <p className="text-xs text-green-600">{ewayToGstin || 'No GSTIN'}</p>
+                        <p className="text-xs text-gray-500">{ewayToAddr}</p>
+                        <p className="text-xs text-gray-500">{ewayToPlace} - {ewayToPincode}</p>
+                        <button
+                          onClick={() => {
+                            setEwayToGstin('')
+                            setEwayToName('')
+                            setEwayToAddr('')
+                            setEwayToPlace('')
+                            setEwayToPincode('')
+                            setEwayToState('')
+                          }}
+                          className="text-xs text-red-500 mt-1 hover:underline"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400 text-center py-4">
+                        {ewaySupplyType === 'O' ? 'Select customer from list above' : 'Click "Load My Company" above'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Transport Details */}
+                <div className="bg-orange-50 rounded-lg p-4">
+                  <h3 className="font-bold text-sm mb-3 text-orange-700">Transport Details</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Mode *</label>
+                      <select
+                        value={ewayTransMode}
+                        onChange={e => setEwayTransMode(e.target.value as typeof ewayTransMode)}
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                      >
+                        <option value="1">Road</option>
+                        <option value="2">Rail</option>
+                        <option value="3">Air</option>
+                        <option value="4">Ship</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Distance (KM) *</label>
+                      <input
+                        type="number"
+                        value={ewayDistance}
+                        onChange={e => setEwayDistance(e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                        placeholder="100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Vehicle No *</label>
+                      <input
+                        type="text"
+                        value={ewayVehicleNo}
+                        onChange={e => setEwayVehicleNo(e.target.value.toUpperCase())}
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                        placeholder="MH12AB1234"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Transporter Name</label>
+                      <input
+                        type="text"
+                        value={ewayTransName}
+                        onChange={e => setEwayTransName(e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                        placeholder="Transport Co."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items - With Search */}
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <h3 className="font-bold text-sm mb-3 text-purple-700">Item Details</h3>
+                  <div>
+                    <input
+                      type="text"
+                      value={ewayItemSearch}
+                      onChange={e => setEwayItemSearch(e.target.value)}
+                      autoComplete="off"
+                      className="w-full px-4 py-3 border-2 border-purple-200 rounded-lg text-sm focus:border-purple-500"
+                      placeholder="Search items by name or HSN code..."
+                    />
+                    {(() => {
+                      const filteredItems = ewayItemSearch.trim().length > 0
+                        ? availableItems.filter(item =>
+                            item.name.toLowerCase().includes(ewayItemSearch.toLowerCase()) ||
+                            (item.hsnCode && item.hsnCode.includes(ewayItemSearch))
+                          ).slice(0, 8)
+                        : [];
+                      if (filteredItems.length === 0 && ewayItemSearch.trim().length > 0) {
+                        return (
+                          <div className="mt-2 p-3 bg-yellow-50 rounded-lg text-sm text-yellow-700">
+                            No items found matching "{ewayItemSearch}"
+                          </div>
+                        );
+                      }
+                      if (filteredItems.length === 0) return null;
+                      return (
+                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                          {filteredItems.map(item => (
+                            <div
+                              key={item.id}
+                              onClick={() => {
+                                const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0) || 18
+                                const isInterState = ewayFromState && ewayToState && ewayFromState !== ewayToState
+                                setEwayItems([...ewayItems, {
+                                  productName: item.name,
+                                  productDesc: item.description || '',
+                                  hsnCode: item.hsnCode || '',
+                                  quantity: 1,
+                                  unit: item.unit || 'PCS',
+                                  taxableAmount: item.sellingPrice || 0,
+                                  cgstRate: isInterState ? 0 : (item.tax?.cgst || taxRate / 2),
+                                  sgstRate: isInterState ? 0 : (item.tax?.sgst || taxRate / 2),
+                                  igstRate: isInterState ? (item.tax?.igst || taxRate) : 0,
+                                  cessRate: item.tax?.cess || 0
+                                }])
+                                setEwayItemSearch('')
+                                toast.success(`${item.name} added`)
+                              }}
+                              className="p-3 bg-white border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 hover:border-purple-400 transition-all"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium text-sm">{item.name}</p>
+                                  <p className="text-xs text-gray-500">HSN: {item.hsnCode || 'N/A'} | {item.unit}</p>
+                                </div>
+                                <p className="text-purple-600 font-bold">₹{item.sellingPrice || 0}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {ewayItems.length > 0 ? (
+                    <div className="mt-4 border rounded-lg overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead className="bg-purple-100">
+                          <tr>
+                            <th className="text-left p-2">Product</th>
+                            <th className="text-left p-2">HSN</th>
+                            <th className="text-center p-2">Qty</th>
+                            <th className="text-right p-2">Rate</th>
+                            <th className="text-right p-2">Amount</th>
+                            <th className="w-8"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ewayItems.map((item, idx) => (
+                            <tr key={idx} className="border-t bg-white">
+                              <td className="p-2 font-medium">{item.productName}</td>
+                              <td className="p-2 text-gray-500">{item.hsnCode}</td>
+                              <td className="p-2">
+                                <input
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={e => {
+                                    const updated = [...ewayItems]
+                                    updated[idx].quantity = parseInt(e.target.value) || 1
+                                    setEwayItems(updated)
+                                  }}
+                                  className="w-16 px-2 py-1 border rounded text-xs text-center"
+                                  min="1"
+                                />
+                              </td>
+                              <td className="p-2 text-right">₹{item.taxableAmount}</td>
+                              <td className="p-2 text-right font-medium">₹{(item.quantity * item.taxableAmount).toLocaleString()}</td>
+                              <td className="p-2">
+                                <button
+                                  onClick={() => setEwayItems(ewayItems.filter((_, i) => i !== idx))}
+                                  className="p-1 text-red-500 hover:bg-red-50 rounded"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="mt-4 py-8 border-2 border-dashed border-purple-300 rounded-lg text-center">
+                      <Package size={32} className="mx-auto text-purple-300 mb-2" />
+                      <p className="text-sm text-purple-400">Search and click items above to add</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tax Summary */}
+                {ewayItems.length > 0 && (
+                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-4 text-white">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <p className="text-xs text-purple-200">Taxable Value</p>
+                        <p className="text-xl font-bold">₹{ewayItems.reduce((sum, item) => sum + (item.quantity * item.taxableAmount), 0).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-purple-200">CGST + SGST</p>
+                        <p className="text-xl font-bold">₹{ewayItems.reduce((sum, item) => sum + (item.quantity * item.taxableAmount * (item.cgstRate + item.sgstRate) / 100), 0).toFixed(0)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-purple-200">IGST</p>
+                        <p className="text-xl font-bold">₹{ewayItems.reduce((sum, item) => sum + (item.quantity * item.taxableAmount * item.igstRate / 100), 0).toFixed(0)}</p>
+                      </div>
+                      <div className="bg-white/20 rounded-lg p-2">
+                        <p className="text-xs text-purple-100">Total Value</p>
+                        <p className="text-2xl font-bold">₹{ewayItems.reduce((sum, item) => {
+                          const taxable = item.quantity * item.taxableAmount
+                          const tax = taxable * ((item.cgstRate + item.sgstRate + item.igstRate) / 100)
+                          return sum + taxable + tax
+                        }, 0).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex gap-3 rounded-b-xl">
+                <button
+                  onClick={() => setShowEwayBillModal(false)}
+                  className="flex-1 px-4 py-2.5 border rounded-lg text-sm font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    // Validation
+                    if (!ewayDocNo) {
+                      toast.error('Please enter Document Number')
+                      return
+                    }
+                    if (!ewayFromName || !ewayToName) {
+                      toast.error('Please select From and To parties')
+                      return
+                    }
+                    if (!ewayVehicleNo) {
+                      toast.error('Please enter Vehicle Number')
+                      return
+                    }
+                    if (ewayItems.length === 0) {
+                      toast.error('Please add at least one item')
+                      return
+                    }
+
+                    // Generate E-Way Bill number (simulated)
+                    const ewbNo = `EWB${Date.now().toString().slice(-10)}`
+                    const validDays = parseInt(ewayDistance) <= 100 ? 1 : Math.ceil(parseInt(ewayDistance || '100') / 100)
+                    const validUpto = new Date()
+                    validUpto.setDate(validUpto.getDate() + validDays)
+
+                    const totalValue = ewayItems.reduce((sum, item) => {
+                      const taxable = item.quantity * item.taxableAmount
+                      const tax = taxable * ((item.cgstRate + item.sgstRate + item.igstRate) / 100)
+                      return sum + taxable + tax
+                    }, 0)
+
+                    // Add to list
+                    setEwayBillsList([{
+                      ewbNo,
+                      ewbDate: new Date().toLocaleDateString('en-IN'),
+                      docNo: ewayDocNo,
+                      fromGstin: ewayFromGstin || 'URP',
+                      toGstin: ewayToGstin || 'URP',
+                      totalValue: Math.round(totalValue),
+                      validUpto: validUpto.toLocaleDateString('en-IN'),
+                      status: 'active'
+                    }, ...ewayBillsList])
+
+                    // Reset form
+                    setEwayDocNo('')
+                    setEwayFromGstin('')
+                    setEwayFromName('')
+                    setEwayFromAddr('')
+                    setEwayFromPlace('')
+                    setEwayFromPincode('')
+                    setEwayFromState('')
+                    setEwayToGstin('')
+                    setEwayToName('')
+                    setEwayToAddr('')
+                    setEwayToPlace('')
+                    setEwayToPincode('')
+                    setEwayToState('')
+                    setEwayTransName('')
+                    setEwayTransId('')
+                    setEwayVehicleNo('')
+                    setEwayDistance('')
+                    setEwayItems([])
+
+                    toast.success(`E-Way Bill ${ewbNo} generated successfully!`)
+                    setShowEwayBillModal(false)
+                  }}
+                  disabled={!ewayFromName || !ewayToName || ewayItems.length === 0 || !ewayDocNo}
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg text-sm font-medium hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FileArrowUp size={16} />
+                  Generate E-Way Bill
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Price List Modal */}
       <AnimatePresence>

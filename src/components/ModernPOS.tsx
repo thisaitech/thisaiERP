@@ -2404,8 +2404,8 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
         </div>
 
         {/* Items Grid - Original compact mobile layout */}
-        <div className="flex-1">
-          <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 md:gap-3">
+        <div>
+          <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 md:gap-3 auto-rows-min">
             <AnimatePresence>
               {(selectedCategory === 'Popular' 
                 ? items.filter(item => item.stock > 0).slice(0, 50)
