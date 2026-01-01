@@ -5,6 +5,7 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Capacitor } from '@capacitor/core'
 import { Filesystem, Directory } from '@capacitor/filesystem'
+import QRCode from 'qrcode'
 
 export interface InvoicePDFData {
   // Company details
@@ -799,12 +800,36 @@ export function downloadEInvoicePDF(einvoiceData: any) {
 
 /**
  * Download a human-readable E-Way Bill as PDF
+ * Compliance: NIC E-Way Bill format with QR Code
  */
-export function downloadEWayBillPDF(ewayData: any) {
+export async function downloadEWayBillPDF(ewayData: any) {
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
   const margin = 12
   let y = 12
+
+  // Generate QR Code data (EWB Number + GSTINs + Date - as per NIC standard)
+  const qrData = JSON.stringify({
+    ewbNo: ewayData.ewbNo || 'N/A',
+    fromGstin: ewayData.companyGSTIN || 'URP',
+    toGstin: ewayData.partyGSTIN || 'URP',
+    docNo: ewayData.invoiceNumber || 'N/A',
+    docDate: ewayData.invoiceDate || new Date().toISOString().split('T')[0],
+    totalValue: ewayData.grandTotal || 0,
+    validUpto: ewayData.validUpto || 'N/A'
+  })
+
+  // Generate QR Code as data URL
+  let qrCodeDataUrl = ''
+  try {
+    qrCodeDataUrl = await QRCode.toDataURL(qrData, {
+      width: 80,
+      margin: 1,
+      errorCorrectionLevel: 'M'
+    })
+  } catch (err) {
+    console.error('QR Code generation failed:', err)
+  }
 
   // Header with green background (GST Portal style)
   doc.setFillColor(0, 128, 0)
@@ -829,6 +854,11 @@ export function downloadEWayBillPDF(ewayData: any) {
   doc.setDrawColor(0, 128, 0)
   doc.setLineWidth(0.5)
   doc.rect(margin, y - 3, pageWidth - 2 * margin, 18, 'S')
+
+  // Add QR Code in the top-right corner of the EWB box (NIC compliance)
+  if (qrCodeDataUrl) {
+    doc.addImage(qrCodeDataUrl, 'PNG', pageWidth - margin - 18, y - 1, 16, 16)
+  }
 
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
@@ -904,8 +934,16 @@ export function downloadEWayBillPDF(ewayData: any) {
   y += 4
 
   doc.setFont('helvetica', 'normal')
-  doc.text(`GSTIN: ${ewayData.companyGSTIN || 'Unregistered'}`, col1, y)
-  doc.text(`GSTIN: ${ewayData.partyGSTIN || 'Unregistered'}`, col2, y)
+  // NIC Compliance: Use "URP" (Unregistered Person) instead of "Unregistered"
+  // Note: For Tax Invoice with Outward-Sale, supplier GSTIN should be registered
+  const fromGSTIN = ewayData.companyGSTIN && ewayData.companyGSTIN.length === 15
+    ? ewayData.companyGSTIN
+    : 'URP'
+  const toGSTIN = ewayData.partyGSTIN && ewayData.partyGSTIN.length === 15
+    ? ewayData.partyGSTIN
+    : 'URP'
+  doc.text(`GSTIN: ${fromGSTIN}`, col1, y)
+  doc.text(`GSTIN: ${toGSTIN}`, col2, y)
   y += 4
 
   if (ewayData.companyAddress) {
@@ -1013,15 +1051,21 @@ export function downloadEWayBillPDF(ewayData: any) {
   doc.text(ewayData.vehicleType || 'Regular', col2 + 30, y)
   y += 5
 
+  // NIC Compliance: Transporter clarity
+  // If no transporter ID, clearly indicate "Self Transport" (owner transport)
+  const isSelfTransport = !ewayData.transporterId || ewayData.transporterId === '-' || ewayData.transporterId === ''
+  const transporterId = isSelfTransport ? 'N/A (Self)' : ewayData.transporterId
+  const transporterName = isSelfTransport ? 'Self Transport (Own Vehicle)' : (ewayData.transporterName || 'N/A')
+
   doc.setFont('helvetica', 'bold')
   doc.text('Transporter ID:', col1, y)
   doc.setFont('helvetica', 'normal')
-  doc.text(ewayData.transporterId || '-', col1 + 35, y)
+  doc.text(transporterId, col1 + 35, y)
 
   doc.setFont('helvetica', 'bold')
   doc.text('Transporter Name:', col2, y)
   doc.setFont('helvetica', 'normal')
-  doc.text(ewayData.transporterName || 'Self Transport', col2 + 40, y)
+  doc.text(transporterName, col2 + 40, y)
   y += 10
 
   // Validity Note

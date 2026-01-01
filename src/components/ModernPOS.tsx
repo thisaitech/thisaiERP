@@ -2042,9 +2042,9 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
   }
 
   return (
-    <div className="h-full flex bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-50/30 overflow-hidden">
+    <div className="flex bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-50/30 overflow-hidden h-[calc(100vh-64px)]">
       {/* Left Side - Items Grid */}
-      <div className="flex-1 flex flex-col p-2 md:p-4 pb-20 md:pb-4 overflow-y-auto">
+      <div className="flex-1 flex flex-col p-2 md:p-4 pb-20 md:pb-4 overflow-y-auto min-h-0">
         {/* Header with Search - Premium Glass Effect */}
         <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
           {/* Search */}
@@ -2404,7 +2404,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
         </div>
 
         {/* Items Grid - Original compact mobile layout */}
-        <div className="flex-1">
+        <div className="">
           <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 md:gap-3">
             <AnimatePresence>
               {(selectedCategory === 'Popular' 

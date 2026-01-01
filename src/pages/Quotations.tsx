@@ -6913,7 +6913,7 @@ TOTAL:       ₹${invoice.total}
                           {showColumnMenu && (
                             <div
                               ref={columnMenuRef}
-                              className="absolute right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[100] min-w-[180px]"
+                              className="absolute right-0 bottom-full mb-1 bg-popover border border-border rounded-lg shadow-lg z-[100] min-w-[180px]"
                             >
                               <div className="p-2 text-xs">
                                 <div className="font-semibold mb-2 text-foreground">{language === 'ta' ? 'நெடுவரிசைகளைக் காட்டு' : 'Show Columns'}</div>
