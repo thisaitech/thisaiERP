@@ -213,6 +213,61 @@ const More = () => {
   const [plDiscount, setPlDiscount] = useState(0)
   const [plIsDefault, setPlIsDefault] = useState(false)
 
+  // Form states for E-Way Bill
+  const [showEwayBillModal, setShowEwayBillModal] = useState(false)
+  const [ewayDocType, setEwayDocType] = useState<'INV' | 'CHL' | 'BIL' | 'BOE' | 'OTH'>('INV')
+  const [ewayDocNo, setEwayDocNo] = useState('')
+  const [ewayDocDate, setEwayDocDate] = useState(new Date().toISOString().split('T')[0])
+  const [ewaySupplyType, setEwaySupplyType] = useState<'O' | 'I'>('O') // Outward/Inward
+  const [ewaySubType, setEwaySubType] = useState<'1' | '2' | '3' | '4'>('1') // Supply, Import, Export, Job Work
+  const [ewayFromGstin, setEwayFromGstin] = useState('')
+  const [ewayFromName, setEwayFromName] = useState('')
+  const [ewayFromAddr, setEwayFromAddr] = useState('')
+  const [ewayFromPlace, setEwayFromPlace] = useState('')
+  const [ewayFromPincode, setEwayFromPincode] = useState('')
+  const [ewayFromState, setEwayFromState] = useState('')
+  const [ewayToGstin, setEwayToGstin] = useState('')
+  const [ewayToName, setEwayToName] = useState('')
+  const [ewayToAddr, setEwayToAddr] = useState('')
+  const [ewayToPlace, setEwayToPlace] = useState('')
+  const [ewayToPincode, setEwayToPincode] = useState('')
+  const [ewayToState, setEwayToState] = useState('')
+  const [ewayTransMode, setEwayTransMode] = useState<'1' | '2' | '3' | '4'>('1') // Road, Rail, Air, Ship
+  const [ewayDistance, setEwayDistance] = useState('')
+  const [ewayTransName, setEwayTransName] = useState('')
+  const [ewayTransId, setEwayTransId] = useState('')
+  const [ewayVehicleNo, setEwayVehicleNo] = useState('')
+  const [ewayVehicleType, setEwayVehicleType] = useState<'R' | 'O'>('R') // Regular, Over Dimensional
+  const [ewayTotalValue, setEwayTotalValue] = useState(0)
+  const [ewayTaxableValue, setEwayTaxableValue] = useState(0)
+  const [ewayCgst, setEwayCgst] = useState(0)
+  const [ewaySgst, setEwaySgst] = useState(0)
+  const [ewayIgst, setEwayIgst] = useState(0)
+  const [ewayCess, setEwayCess] = useState(0)
+  const [ewayItems, setEwayItems] = useState<{
+    productName: string
+    productDesc: string
+    hsnCode: string
+    quantity: number
+    unit: string
+    taxableAmount: number
+    cgstRate: number
+    sgstRate: number
+    igstRate: number
+    cessRate: number
+  }[]>([])
+  const [ewayItemSearch, setEwayItemSearch] = useState('')
+  const [ewayBillsList, setEwayBillsList] = useState<{
+    ewbNo: string
+    ewbDate: string
+    docNo: string
+    fromGstin: string
+    toGstin: string
+    totalValue: number
+    validUpto: string
+    status: 'active' | 'cancelled' | 'expired'
+  }[]>([])
+
   // Form states for Proforma Invoice
   const [piCustomerSearch, setPiCustomerSearch] = useState('')
   const [piSelectedCustomer, setPiSelectedCustomer] = useState<Party | null>(null)
@@ -1589,7 +1644,7 @@ const More = () => {
                   </h2>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => toast.info('Generate E-Way bill...')}
+                      onClick={() => setShowEwayBillModal(true)}
                       className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90"
                     >
                       + Generate E-Way Bill
@@ -1602,23 +1657,50 @@ const More = () => {
                     </button>
                   </div>
                 </div>
-                <div className="p-6 bg-primary/5 rounded-lg border border-primary/20 text-center">
-                  <FileArrowUp size={48} weight="duotone" className="text-primary mx-auto mb-4" />
-                  <h3 className="font-bold mb-2">Generate E-Way Bills</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Generate E-Way bills for goods transportation as per GST rules
-                  </p>
-                  <div className="grid grid-cols-2 gap-3 text-left">
-                    <div className="p-3 bg-background rounded">
-                      <p className="text-xs text-muted-foreground">{t.more.totalGenerated}</p>
-                      <p className="text-xl font-bold">45</p>
-                    </div>
-                    <div className="p-3 bg-background rounded">
-                      <p className="text-xs text-muted-foreground">{t.more.active}</p>
-                      <p className="text-xl font-bold">12</p>
+
+                {/* E-Way Bills List */}
+                {ewayBillsList.length > 0 ? (
+                  <div className="space-y-3">
+                    {ewayBillsList.map((bill, idx) => (
+                      <div key={idx} className="p-4 bg-white border rounded-lg flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-primary">{bill.ewbNo}</p>
+                          <p className="text-sm text-muted-foreground">Doc: {bill.docNo} | {bill.ewbDate}</p>
+                          <p className="text-xs text-muted-foreground">From: {bill.fromGstin} → To: {bill.toGstin}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold">₹{bill.totalValue.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">Valid: {bill.validUpto}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded ${
+                            bill.status === 'active' ? 'bg-green-100 text-green-700' :
+                            bill.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {bill.status.toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-6 bg-primary/5 rounded-lg border border-primary/20 text-center">
+                    <FileArrowUp size={48} weight="duotone" className="text-primary mx-auto mb-4" />
+                    <h3 className="font-bold mb-2">Generate E-Way Bills</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Generate E-Way bills for goods transportation as per GST rules
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 text-left">
+                      <div className="p-3 bg-background rounded">
+                        <p className="text-xs text-muted-foreground">{t.more.totalGenerated}</p>
+                        <p className="text-xl font-bold">{ewayBillsList.length}</p>
+                      </div>
+                      <div className="p-3 bg-background rounded">
+                        <p className="text-xs text-muted-foreground">{t.more.active}</p>
+                        <p className="text-xl font-bold">{ewayBillsList.filter(b => b.status === 'active').length}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
@@ -2732,46 +2814,49 @@ const More = () => {
                       value={piItemSearch}
                       onChange={e => setPiItemSearch(e.target.value)}
                       autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                      data-form-type="other"
                       className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                       placeholder={t.more.searchItemsHsn}
                     />
-                    {piItemSearch.trim().length > 0 && (() => {
-                      const filteredItems = availableItems.filter(item =>
-                        item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
-                        (item.hsnCode && item.hsnCode.includes(piItemSearch))
-                      ).slice(0, 8);
-                      if (filteredItems.length === 0) return null;
-                      return (
-                        <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                          {filteredItems.map(item => (
-                            <div
-                              key={item.id}
-                              onMouseDown={() => {
-                                const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0)
-                                setPiItems([...piItems, {
-                                  itemId: item.id,
-                                  name: item.name,
-                                  hsnCode: item.hsnCode,
-                                  qty: 1,
-                                  rate: item.sellingPrice || item.mrp || 0,
-                                  discount: 0,
-                                  tax: taxRate || 18,
-                                  unit: item.unit || 'PCS'
-                                }])
-                                setPiItemSearch('')
-                              }}
-                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
-                            >
-                              <div>
-                                <p className="font-medium">{item.name}</p>
-                                <p className="text-xs text-gray-500">HSN: {item.hsnCode || 'N/A'} • {item.unit}</p>
-                              </div>
-                              <p className="text-blue-600 font-medium">₹{item.sellingPrice || item.mrp || 0}</p>
+                    {piItemSearch.trim().length > 0 && availableItems.filter(item =>
+                      item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
+                      (item.hsnCode && item.hsnCode.includes(piItemSearch))
+                    ).slice(0, 8).length > 0 && (
+                      <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                        {availableItems.filter(item =>
+                          item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
+                          (item.hsnCode && item.hsnCode.includes(piItemSearch))
+                        ).slice(0, 8).map(item => (
+                          <div
+                            key={item.id}
+                            onMouseDown={() => {
+                              const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0)
+                              setPiItems([...piItems, {
+                                itemId: item.id,
+                                name: item.name,
+                                hsnCode: item.hsnCode,
+                                qty: 1,
+                                rate: item.sellingPrice || item.mrp || 0,
+                                discount: 0,
+                                tax: taxRate || 18,
+                                unit: item.unit || 'PCS'
+                              }])
+                              setPiItemSearch('')
+                            }}
+                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
+                          >
+                            <div>
+                              <p className="font-medium">{item.name}</p>
+                              <p className="text-xs text-gray-500">HSN: {item.hsnCode || 'N/A'} • {item.unit}</p>
                             </div>
-                          ))}
-                        </div>
-                      );
-                    })()}
+                            <p className="text-blue-600 font-medium">₹{item.sellingPrice || item.mrp || 0}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Items Table */}

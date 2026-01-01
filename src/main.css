@@ -41,6 +41,24 @@
     @apply border-border;
   }
 
+  /* Disable browser autofill dropdown */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    box-shadow: 0 0 0 30px white inset !important;
+  }
+
+  /* Hide datalist/autocomplete suggestions */
+  input::-webkit-calendar-picker-indicator {
+    display: none !important;
+  }
+
+  input::-webkit-list-button {
+    display: none !important;
+  }
+
   html, body {
     overflow-x: hidden;
     max-width: 100vw;
