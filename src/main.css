@@ -1545,6 +1545,16 @@
     max-height: calc(100vh - 64px);
   }
 
+  /* Mobile: Account for bottom navigation bar (64px nav + padding) */
+  @media (max-width: 1023px) {
+    .invoice-layout-container,
+    .invoice-create-view {
+      max-height: none;
+      overflow-y: auto !important;
+      padding-bottom: 80px;
+    }
+  }
+
   /* Ensure all child containers don't create extra scrollbars */
   .invoice-layout-container > div,
   .invoice-create-view > div {

@@ -7710,7 +7710,7 @@ TOTAL:       ₹${invoice.total}
 
           </div>
           {/* Bottom Action Bar */}
-          <div className="px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white flex-shrink-0">
+          <div className="px-3 md:px-4 py-2 md:py-1.5 border-t border-slate-200 bg-white flex-shrink-0 fixed md:relative bottom-20 md:bottom-auto left-0 right-0 z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] md:shadow-none">
             
             {/* Mobile Search Bar - MOVED TO TOP (near customer search) */}
             <div className="hidden">

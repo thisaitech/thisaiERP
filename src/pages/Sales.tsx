@@ -7648,7 +7648,7 @@ TOTAL:       ₹${invoice.total}
               </div>
               </div>
             {/* FOOTER - Mobile Only */}
-            <div className="md:hidden flex flex-col gap-2">
+            <div className="md:hidden flex flex-col gap-2 pb-20">
               {/* Totals Summary - First */}
               <div className="p-2 bg-gradient-to-r from-slate-50 via-blue-50 to-blue-100 border border-blue-200 rounded-lg shadow-sm">
                 {invoiceItems.length > 0 ? (
@@ -7854,7 +7854,7 @@ TOTAL:       ₹${invoice.total}
 
           </div>
           {/* Bottom Action Bar - Mobile only, desktop buttons moved to top header */}
-          <div className="px-3 py-1 border-t border-slate-200 bg-white dark:bg-slate-900 flex-shrink-0 md:hidden">
+          <div className="px-3 py-2 border-t border-slate-200 bg-white dark:bg-slate-900 flex-shrink-0 md:hidden fixed bottom-20 left-0 right-0 z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.1)]">
             
             {/* Mobile Search Bar - MOVED TO TOP (near customer search) */}
             <div className="hidden">

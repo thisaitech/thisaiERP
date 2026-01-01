@@ -2325,11 +2325,11 @@ const More = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-card rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                 onClick={e => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className="p-4 border-b border-border bg-gradient-to-r from-blue-600 to-cyan-500">
+                <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-cyan-500">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -2347,7 +2347,7 @@ const More = () => {
                 <div className="p-6 space-y-5">
                   {/* Customer & Purpose */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="relative">
+                    <div>
                       <label className="text-sm font-medium text-muted-foreground">{t.more.partyCustomer} *</label>
                       <input
                         type="text"
@@ -2355,33 +2355,36 @@ const More = () => {
                         onChange={e => {
                           setDcCustomerSearch(e.target.value)
                           setDcSelectedCustomer(null)
-                          setShowDcCustomerDropdown(true)
                         }}
-                        onFocus={() => setShowDcCustomerDropdown(true)}
+                        autoComplete="off"
                         className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                         placeholder={t.more.searchOrTypeParty}
                       />
-                      {showDcCustomerDropdown && dcCustomerSearch && (
-                        <div className="absolute z-10 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                          {availableParties
-                            .filter(p => getPartyName(p).toLowerCase().includes(dcCustomerSearch.toLowerCase()))
-                            .slice(0, 5)
-                            .map(party => (
-                              <div
-                                key={party.id}
-                                onClick={() => {
-                                  setDcSelectedCustomer(party)
-                                  setDcCustomerSearch('')
-                                  setShowDcCustomerDropdown(false)
-                                }}
-                                className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
-                              >
-                                <p className="font-medium">{getPartyName(party)}</p>
-                                <p className="text-xs text-muted-foreground">{party.phone}</p>
-                              </div>
-                            ))}
-                        </div>
-                      )}
+                      {(() => {
+                        const filteredParties = dcCustomerSearch && dcCustomerSearch.trim().length > 0
+                          ? availableParties.filter(p => getPartyName(p).toLowerCase().includes(dcCustomerSearch.toLowerCase())).slice(0, 5)
+                          : [];
+                        if (filteredParties.length === 0) return null;
+                        return (
+                          <div className="relative">
+                            <div className="absolute left-0 right-0 top-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                              {filteredParties.map(party => (
+                                <div
+                                  key={party.id}
+                                  onMouseDown={() => {
+                                    setDcSelectedCustomer(party)
+                                    setDcCustomerSearch('')
+                                  }}
+                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                >
+                                  <p className="font-medium">{getPartyName(party)}</p>
+                                  <p className="text-xs text-gray-500">{party.phone}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {dcSelectedCustomer && (
                         <div className="mt-1 p-2 bg-blue-50 rounded text-xs text-blue-700">
                           ✓ {getPartyName(dcSelectedCustomer)}
@@ -2415,49 +2418,50 @@ const More = () => {
                   </div>
 
                   {/* Add Item Search */}
-                  <div className="relative">
+                  <div>
                     <label className="text-sm font-medium text-muted-foreground">{t.more.addItems} *</label>
                     <input
                       type="text"
                       value={dcItemSearch}
-                      onChange={e => {
-                        setDcItemSearch(e.target.value)
-                        setShowDcItemDropdown(true)
-                      }}
-                      onFocus={() => setShowDcItemDropdown(true)}
+                      onChange={e => setDcItemSearch(e.target.value)}
+                      autoComplete="off"
                       className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                       placeholder={t.more.searchItems}
                     />
-                    {showDcItemDropdown && dcItemSearch && (
-                      <div className="absolute z-10 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                        {availableItems
-                          .filter(item => item.name.toLowerCase().includes(dcItemSearch.toLowerCase()))
-                          .slice(0, 8)
-                          .map(item => (
-                            <div
-                              key={item.id}
-                              onClick={() => {
-                                setDcItems([...dcItems, {
-                                  itemId: item.id,
-                                  name: item.name,
-                                  hsnCode: item.hsnCode,
-                                  qty: 1,
-                                  unit: item.unit || 'PCS',
-                                  rate: item.sellingPrice || 0
-                                }])
-                                setDcItemSearch('')
-                                setShowDcItemDropdown(false)
-                              }}
-                              className="px-3 py-2 hover:bg-muted cursor-pointer text-sm flex justify-between"
-                            >
-                              <div>
-                                <p className="font-medium">{item.name}</p>
-                                <p className="text-xs text-muted-foreground">Stock: {item.stock} {item.unit}</p>
+                    {(() => {
+                      const filteredItems = dcItemSearch.trim().length > 0
+                        ? availableItems.filter(item => item.name.toLowerCase().includes(dcItemSearch.toLowerCase())).slice(0, 8)
+                        : [];
+                      if (filteredItems.length === 0) return null;
+                      return (
+                        <div className="relative">
+                          <div className="absolute left-0 right-0 top-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                            {filteredItems.map(item => (
+                              <div
+                                key={item.id}
+                                onMouseDown={() => {
+                                  setDcItems([...dcItems, {
+                                    itemId: item.id,
+                                    name: item.name,
+                                    hsnCode: item.hsnCode,
+                                    qty: 1,
+                                    unit: item.unit || 'PCS',
+                                    rate: item.sellingPrice || 0
+                                  }])
+                                  setDcItemSearch('')
+                                }}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
+                              >
+                                <div>
+                                  <p className="font-medium">{item.name}</p>
+                                  <p className="text-xs text-gray-500">Stock: {item.stock} {item.unit}</p>
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                      </div>
-                    )}
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Items Table */}
@@ -2549,9 +2553,8 @@ const More = () => {
                   )}
 
                   {dcItems.length === 0 && (
-                    <div className="p-6 border-2 border-dashed rounded-lg text-center">
-                      <Truck size={32} className="mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">Search and add items to deliver</p>
+                    <div className="py-8 border-2 border-dashed border-muted-foreground/30 rounded-lg text-center text-muted-foreground">
+                      <p className="text-sm">Search and add items to deliver</p>
                     </div>
                   )}
 
@@ -2651,11 +2654,11 @@ const More = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-card rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                 onClick={e => e.stopPropagation()}
               >
                 {/* Header with Proforma Badge */}
-                <div className="p-4 border-b border-border bg-gradient-to-r from-red-500 to-orange-500">
+                <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-red-500 to-orange-500">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -2670,10 +2673,10 @@ const More = () => {
                   </div>
                 </div>
 
-                <div className="p-6 space-y-5">
+                <div className="p-6 space-y-5 bg-white">
                   {/* Customer Selection */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="relative">
+                    <div>
                       <label className="text-sm font-medium text-muted-foreground">{t.more.selectCustomer} *</label>
                       <input
                         type="text"
@@ -2681,38 +2684,38 @@ const More = () => {
                         onChange={e => {
                           setPiCustomerSearch(e.target.value)
                           setPiSelectedCustomer(null)
-                          setShowPiCustomerDropdown(true)
                         }}
-                        onFocus={() => setShowPiCustomerDropdown(true)}
+                        autoComplete="off"
                         className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                         placeholder={t.more.searchCustomer}
                       />
-                      {showPiCustomerDropdown && piCustomerSearch && (
-                        <div className="absolute z-10 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                          {availableParties
-                            .filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase()))
-                            .slice(0, 5)
-                            .map(party => (
-                              <div
-                                key={party.id}
-                                onClick={() => {
-                                  setPiSelectedCustomer(party)
-                                  setPiCustomerSearch('')
-                                  setShowPiCustomerDropdown(false)
-                                }}
-                                className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
-                              >
-                                <p className="font-medium">{getPartyName(party)}</p>
-                                <p className="text-xs text-muted-foreground">{party.phone} • {party.billingAddress?.state}</p>
-                              </div>
-                            ))}
-                          {availableParties.filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase())).length === 0 && (
-                            <p className="px-3 py-2 text-sm text-muted-foreground">{t.more.noMatchNewCustomer}</p>
-                          )}
-                        </div>
-                      )}
+                      {(() => {
+                        const filteredParties = piCustomerSearch && piCustomerSearch.trim().length > 0
+                          ? availableParties.filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase())).slice(0, 5)
+                          : [];
+                        if (filteredParties.length === 0) return null;
+                        return (
+                          <div className="relative">
+                            <div className="absolute left-0 right-0 top-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                              {filteredParties.map(party => (
+                                <div
+                                  key={party.id}
+                                  onMouseDown={() => {
+                                    setPiSelectedCustomer(party)
+                                    setPiCustomerSearch('')
+                                  }}
+                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                >
+                                  <p className="font-medium">{getPartyName(party)}</p>
+                                  <p className="text-xs text-gray-500">{party.phone} • {party.billingAddress?.state}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {piSelectedCustomer && (
-                        <div className="mt-1 p-2 bg-success/10 rounded text-xs text-success">
+                        <div className="mt-1 p-2 bg-green-50 rounded text-xs text-green-700">
                           ✓ {getPartyName(piSelectedCustomer)} | {piSelectedCustomer.gstDetails?.gstin || t.more.noGstin} | {piSelectedCustomer.billingAddress?.state}
                         </div>
                       )}
@@ -2734,56 +2737,57 @@ const More = () => {
                   </div>
 
                   {/* Add Item Search */}
-                  <div className="relative">
+                  <div>
                     <label className="text-sm font-medium text-muted-foreground">{t.more.addItems} *</label>
                     <input
                       type="text"
                       value={piItemSearch}
-                      onChange={e => {
-                        setPiItemSearch(e.target.value)
-                        setShowPiItemDropdown(true)
-                      }}
-                      onFocus={() => setShowPiItemDropdown(true)}
+                      onChange={e => setPiItemSearch(e.target.value)}
+                      autoComplete="off"
                       className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
                       placeholder={t.more.searchItemsHsn}
                     />
-                    {showPiItemDropdown && piItemSearch && (
-                      <div className="absolute z-10 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                        {availableItems
-                          .filter(item => 
+                    {(() => {
+                      const filteredItems = piItemSearch.trim().length > 0
+                        ? availableItems.filter(item =>
                             item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
                             (item.hsnCode && item.hsnCode.includes(piItemSearch))
-                          )
-                          .slice(0, 8)
-                          .map(item => (
-                            <div
-                              key={item.id}
-                              onClick={() => {
-                                const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0)
-                                setPiItems([...piItems, {
-                                  itemId: item.id,
-                                  name: item.name,
-                                  hsnCode: item.hsnCode,
-                                  qty: 1,
-                                  rate: item.sellingPrice || item.mrp || 0,
-                                  discount: 0,
-                                  tax: taxRate || 18,
-                                  unit: item.unit || 'PCS'
-                                }])
-                                setPiItemSearch('')
-                                setShowPiItemDropdown(false)
-                              }}
-                              className="px-3 py-2 hover:bg-muted cursor-pointer text-sm flex justify-between"
-                            >
-                              <div>
-                                <p className="font-medium">{item.name}</p>
-                                <p className="text-xs text-muted-foreground">HSN: {item.hsnCode || 'N/A'} • {item.unit}</p>
+                          ).slice(0, 8)
+                        : [];
+                      if (filteredItems.length === 0) return null;
+                      return (
+                        <div className="relative">
+                          <div className="absolute left-0 right-0 top-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                            {filteredItems.map(item => (
+                              <div
+                                key={item.id}
+                                onMouseDown={() => {
+                                  const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0)
+                                  setPiItems([...piItems, {
+                                    itemId: item.id,
+                                    name: item.name,
+                                    hsnCode: item.hsnCode,
+                                    qty: 1,
+                                    rate: item.sellingPrice || item.mrp || 0,
+                                    discount: 0,
+                                    tax: taxRate || 18,
+                                    unit: item.unit || 'PCS'
+                                  }])
+                                  setPiItemSearch('')
+                                }}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
+                              >
+                                <div>
+                                  <p className="font-medium">{item.name}</p>
+                                  <p className="text-xs text-gray-500">HSN: {item.hsnCode || 'N/A'} • {item.unit}</p>
+                                </div>
+                                <p className="text-blue-600 font-medium">₹{item.sellingPrice || item.mrp || 0}</p>
                               </div>
-                              <p className="text-accent font-medium">₹{item.sellingPrice || item.mrp || 0}</p>
-                            </div>
-                          ))}
-                      </div>
-                    )}
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Items Table */}
@@ -2897,9 +2901,9 @@ const More = () => {
                   )}
 
                   {piItems.length === 0 && (
-                    <div className="p-6 border-2 border-dashed rounded-lg text-center">
-                      <Receipt size={32} className="mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">Search and add items above</p>
+                    <div className="py-4 border-2 border-dashed border-gray-300 rounded-lg text-center bg-gray-50">
+                      <Receipt size={24} className="mx-auto text-gray-400 mb-1" />
+                      <p className="text-sm text-gray-500">Search and add items above</p>
                     </div>
                   )}
 
@@ -3024,9 +3028,9 @@ const More = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+              className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             >
-              <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <ShoppingBag size={24} weight="duotone" className="text-warning" />
                   New Purchase Order
@@ -3273,9 +3277,9 @@ const More = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative bg-card rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+              className="relative bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
             >
-              <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <Tag size={24} weight="duotone" className="text-warning" />
                   {plName ? 'Edit Price List' : 'New Price List'}
