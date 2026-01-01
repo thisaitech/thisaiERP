@@ -1,4 +1,4 @@
-// QuickActionFAB.tsx - Billi 2025
+// QuickActionFAB.tsx - Anna 2025
 // Floating Action Button with vertical menu for quick actions
 
 import React, { useState } from 'react'

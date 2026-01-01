@@ -1,4 +1,4 @@
-// SmartFeed.tsx - Billi 2025
+// SmartFeed.tsx - Anna 2025
 // Smart alerts: Low stock, Payment reminders, Insights, Tips
 
 import React from 'react'

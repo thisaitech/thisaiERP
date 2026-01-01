@@ -1,4 +1,4 @@
-// Theme Service - Billi 2025
+// Theme Service - Anna 2025
 // Manages color themes and festival modes
 
 export type ThemeMode = 'default' | 'diwali' | 'pongal' | 'christmas'

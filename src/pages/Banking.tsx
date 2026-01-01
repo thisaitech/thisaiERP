@@ -798,48 +798,57 @@ const Banking = () => {
         </div>
 
         {/* Stats Cards - Second Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+        <div className="grid grid-cols-4 gap-1.5 md:gap-3 mb-3">
           {/* Available Balance Card - Blue Theme */}
-          <button className="bg-blue-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8d4f5,-15px_-15px_30px_#ffffff] transition-all duration-200">
-            <div className="flex items-center justify-between mb-3">
+          <button className="bg-blue-50 rounded-lg md:rounded-2xl p-1.5 md:p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8d4f5,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="hidden md:flex items-center justify-between mb-3">
               <span className="text-sm text-blue-600 font-medium">{t.banking.availableBalance}</span>
               <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]">
                 <Bank size={20} weight="duotone" className="text-blue-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-blue-700">₹{(availableBalance / 100000).toFixed(2)}L</div>
+            <div className="flex flex-col items-center md:items-start">
+              <span className="md:hidden text-[8px] text-blue-600 font-medium">Balance</span>
+              <div className="text-xs md:text-2xl font-bold text-blue-700">₹{(availableBalance / 100000).toFixed(2)}L</div>
+            </div>
           </button>
 
           {/* Cash in Hand Card - Green Theme */}
-          <button className="bg-green-50 rounded-2xl p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8e0c8,-15px_-15px_30px_#ffffff] transition-all duration-200">
-            <div className="flex items-center justify-between mb-3">
+          <button className="bg-green-50 rounded-lg md:rounded-2xl p-1.5 md:p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8e0c8,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="hidden md:flex items-center justify-between mb-3">
               <span className="text-sm text-green-600 font-medium">{t.banking.cashInHand}</span>
               <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]">
                 <Wallet size={20} weight="duotone" className="text-green-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-green-700">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</div>
+            <div className="flex flex-col items-center md:items-start">
+              <span className="md:hidden text-[8px] text-green-600 font-medium">Cash</span>
+              <div className="text-xs md:text-2xl font-bold text-green-700">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</div>
+            </div>
           </button>
 
           {/* Pending Cheques Card - Orange Theme */}
-          <button className="bg-orange-50 rounded-2xl p-4 shadow-[10px_10px_20px_#f5e0b8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5e0b8,-15px_-15px_30px_#ffffff] transition-all duration-200">
-            <div className="flex items-center justify-between mb-3">
+          <button className="bg-orange-50 rounded-lg md:rounded-2xl p-1.5 md:p-4 shadow-[10px_10px_20px_#f5e0b8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5e0b8,-15px_-15px_30px_#ffffff] transition-all duration-200">
+            <div className="hidden md:flex items-center justify-between mb-3">
               <span className="text-sm text-orange-600 font-medium">{t.banking.pendingCheques}</span>
               <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5e0b8,inset_-3px_-3px_6px_#ffffff]">
                 <Receipt size={20} weight="duotone" className="text-orange-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-orange-700">{accounts.cheques.filter(ch => ch.status === 'pending').length}</div>
+            <div className="flex flex-col items-center md:items-start">
+              <span className="md:hidden text-[8px] text-orange-600 font-medium">Cheques</span>
+              <div className="text-xs md:text-2xl font-bold text-orange-700">{accounts.cheques.filter(ch => ch.status === 'pending').length}</div>
+            </div>
           </button>
 
           {/* Net Worth Card - Dynamic Green/Red Theme */}
           <button className={cn(
-            "rounded-2xl p-4 transition-all duration-200",
+            "rounded-lg md:rounded-2xl p-1.5 md:p-4 transition-all duration-200",
             netWorth >= 0
               ? "bg-green-50 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8e0c8,-15px_-15px_30px_#ffffff]"
               : "bg-red-50 shadow-[10px_10px_20px_#f5c4c4,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5c4c4,-15px_-15px_30px_#ffffff]"
           )}>
-            <div className="flex items-center justify-between mb-3">
+            <div className="hidden md:flex items-center justify-between mb-3">
               <span className={cn("text-sm font-medium", netWorth >= 0 ? "text-green-600" : "text-red-600")}>{t.banking.netWorth}</span>
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center",
@@ -851,11 +860,14 @@ const Banking = () => {
                 }
               </div>
             </div>
-            <div className={cn(
-              "text-2xl font-bold",
-              netWorth >= 0 ? "text-green-700" : "text-red-600"
-            )}>
-              {netWorth >= 0 ? '+' : '-'}₹{(Math.abs(netWorth) / 100000).toFixed(1)}L
+            <div className="flex flex-col items-center md:items-start">
+              <span className={cn("md:hidden text-[8px] font-medium", netWorth >= 0 ? "text-green-600" : "text-red-600")}>Net Worth</span>
+              <div className={cn(
+                "text-xs md:text-2xl font-bold",
+                netWorth >= 0 ? "text-green-700" : "text-red-600"
+              )}>
+                {netWorth >= 0 ? '+' : '-'}₹{(Math.abs(netWorth) / 100000).toFixed(1)}L
+              </div>
             </div>
           </button>
         </div>

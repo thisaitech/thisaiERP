@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.thisai.crm',
-  appName: 'ThisAI CRM',
+  appId: 'com.anna.erp',
+  appName: 'Anna ERP',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

@@ -1,4 +1,4 @@
-// AIActionBar.tsx - Billi 2025
+// AIActionBar.tsx - Anna 2025
 // Fixed AI Action Bar for mobile with Voice, Scan, Chat
 
 import React from 'react'

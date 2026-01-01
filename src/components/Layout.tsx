@@ -169,27 +169,24 @@ const Layout = () => {
       </header>
 
       {/* Mobile Header - Neumorphic */}
-      <header className="sticky top-0 z-40 lg:hidden p-4 bg-[#e4ebf5] dark:bg-slate-900">
-        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
-          shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
-          dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
+      <header className="sticky top-0 z-40 lg:hidden px-3 py-2 bg-[#e4ebf5] dark:bg-slate-900">
+        <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#e4ebf5] dark:bg-slate-800
+          shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
+          dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2.5 rounded-xl bg-[#e4ebf5] dark:bg-slate-700
-              shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-              dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-              active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
+            className="p-2 rounded-lg bg-[#e4ebf5] dark:bg-slate-700
+              shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]
+              dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]
+              active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]
               transition-all duration-200"
           >
-            <List size={22} className="text-slate-600 dark:text-slate-300" />
+            <List size={20} className="text-slate-600 dark:text-slate-300" />
           </button>
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-600 rounded-lg shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]">
-              <Sparkle size={16} weight="fill" className="text-white" />
-            </div>
-            <h1 className="text-lg font-bold text-slate-800 dark:text-white">Billi</h1>
-          </div>
-          <div className="w-10"></div>
+          <h1 className="text-base font-bold text-slate-800 dark:text-white truncate max-w-[200px]">
+            {userData?.companyName || 'My Business'}
+          </h1>
+          <div className="w-9"></div>
         </div>
       </header>
 
@@ -211,32 +208,10 @@ const Layout = () => {
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="fixed left-0 top-0 h-full w-72 bg-[#e4ebf5] dark:bg-slate-900 z-50 lg:hidden flex flex-col"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between p-5">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-600 rounded-xl shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]">
-                    <Sparkle size={20} weight="fill" className="text-white" />
-                  </div>
-                  <span className="text-lg font-bold text-slate-800 dark:text-white">Billi</span>
-                </div>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2.5 rounded-xl bg-[#e4ebf5] dark:bg-slate-800
-                    shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                    active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-                    transition-all duration-200"
-                >
-                  <X size={22} className="text-slate-500" />
-                </button>
-              </div>
-
-              {/* User Info - Neumorphic Card */}
-              <div className="mx-4 mb-4 p-4 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
-                shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
-                dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]">
+              {/* Header with User Info */}
+              <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-purple-500 flex items-center justify-center font-bold text-white
+                  <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center font-bold text-white
                     shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]">
                     {userData?.displayName?.charAt(0).toUpperCase() || 'A'}
                   </div>
@@ -245,6 +220,16 @@ const Layout = () => {
                     <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{userData?.role || 'Guest'}</p>
                   </div>
                 </div>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 rounded-xl bg-[#e4ebf5] dark:bg-slate-800
+                    shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
+                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                    active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
+                    transition-all duration-200"
+                >
+                  <X size={20} className="text-slate-500" />
+                </button>
               </div>
 
               {/* Navigation Items */}
@@ -356,7 +341,7 @@ const Layout = () => {
         >
           <span className="text-[18px] font-black text-white tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">HOME</span>
           <span className="absolute left-full ml-4 px-3 py-2 rounded-xl bg-slate-800/95 backdrop-blur-sm text-white text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-xl border border-white/10">
-            Billi - Home
+            Anna - Home
           </span>
         </NavLink>
 

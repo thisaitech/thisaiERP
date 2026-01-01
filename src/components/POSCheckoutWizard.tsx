@@ -410,7 +410,7 @@ const POSCheckoutWizard: React.FC<POSCheckoutWizardProps> = ({
             <div class="thanks">Thank You for Your Business!</div>
             <p>Payment Method: ${paymentMethod.toUpperCase()}</p>
             ${paymentMethod === 'cash' && calculations.change > 0 ? '<p>Change Given: ₹' + calculations.change.toLocaleString('en-IN') + '</p>' : ''}
-            <div class="powered">Powered by ThisAI CRM</div>
+            <div class="powered">Powered by Anna ERP</div>
           </div>
         </div>
         <script>

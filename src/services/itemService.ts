@@ -30,6 +30,18 @@ import {
 
 const LOCAL_STORAGE_KEY = 'thisai_crm_items'
 
+// Helper: get current companyId from stored user (for multi-tenant scoping)
+const getCurrentCompanyId = (): string | null => {
+  try {
+    const userRaw = localStorage.getItem('user')
+    if (!userRaw) return null
+    const user = JSON.parse(userRaw)
+    return user.companyId || null
+  } catch {
+    return null
+  }
+}
+
 // Helper to generate offline-safe ID
 const generateOfflineId = () => `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
@@ -88,8 +100,18 @@ export async function getItems(): Promise<Item[]> {
   // STEP 3: If online, try to fetch from Firebase and merge
   try {
     const itemsRef = collection(db!, COLLECTIONS.ITEMS)
-    // Use simple query without orderBy to avoid index requirement
-    const snapshot = await getDocs(itemsRef)
+    const companyId = getCurrentCompanyId()
+
+    // Use query with companyId filter for data isolation
+    let q
+    if (companyId) {
+      q = query(itemsRef, where('companyId', '==', companyId))
+    } else {
+      // Fallback: no company filter (should not happen in normal use)
+      q = query(itemsRef)
+    }
+
+    const snapshot = await getDocs(q)
     let serverItems = snapshot.docs.map(docToItem)
     // Sort client-side instead
     serverItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -240,6 +262,7 @@ export async function createItem(itemData: Omit<Item, 'id' | 'createdAt' | 'upda
 
   const now = new Date().toISOString()
   const id = generateOfflineId()
+  const companyId = getCurrentCompanyId()
 
   // Deep clean undefined values (Firestore doesn't accept undefined)
   const cleanData = removeUndefinedDeep(itemData)
@@ -249,6 +272,8 @@ export async function createItem(itemData: Omit<Item, 'id' | 'createdAt' | 'upda
     id,
     createdAt: now,
     updatedAt: now,
+    // Multi-tenant: Add companyId for data isolation
+    ...(companyId ? { companyId } : {}),
     // Offline-first metadata
     _pendingSync: !isDeviceOnline(),
     _savedAt: now,
@@ -274,7 +299,9 @@ export async function createItem(itemData: Omit<Item, 'id' | 'createdAt' | 'upda
       const serverData = removeUndefinedDeep({
         ...itemData,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        // Multi-tenant: Add companyId for data isolation
+        ...(companyId ? { companyId } : {})
       })
 
       const docRef = await addDoc(collection(db!, COLLECTIONS.ITEMS), serverData)

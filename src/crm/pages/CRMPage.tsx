@@ -414,18 +414,18 @@ const CRMPageInner: React.FC = () => {
     <>
       <CRMLayout>
         {/* Top Row: KPI Cards (Left) + Actions (Right) */}
-        <div className="flex items-stretch justify-between gap-4 mb-4">
+        <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-4">
           {/* Left Side: KPI Cards - Rectangular filling space */}
-          <div className="flex-1 grid grid-cols-4 gap-3">
+          <div className="flex-1 grid grid-cols-4 gap-1.5 md:gap-3">
             {/* Total Leads Card - Blue Theme */}
-            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <div className="w-full h-full bg-[#e4ebf5] dark:bg-slate-800 rounded-[14px] px-4 py-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] dark:bg-slate-700 flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-none">
+            <div className="p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <div className="w-full h-full bg-[#e4ebf5] dark:bg-slate-800 rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 flex flex-col md:flex-row items-center md:gap-3">
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] dark:bg-slate-700 items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-none">
                   <Users size={20} weight="duotone" className="text-blue-500" />
                 </div>
-                <div className="flex flex-col items-start flex-1">
-                  <span className="text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">Total Leads</span>
-                  <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                <div className="flex flex-col items-center md:items-start flex-1">
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">Total Leads</span>
+                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                     {crmContext.dashboardMetrics?.totalLeads || 0}
                   </span>
                 </div>
@@ -433,14 +433,14 @@ const CRMPageInner: React.FC = () => {
             </div>
 
             {/* Active Leads Card - Green Theme */}
-            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <div className="w-full h-full bg-[#e4ebf5] dark:bg-slate-800 rounded-[14px] px-4 py-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] dark:bg-slate-700 flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-none">
+            <div className="p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <div className="w-full h-full bg-[#e4ebf5] dark:bg-slate-800 rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 flex flex-col md:flex-row items-center md:gap-3">
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] dark:bg-slate-700 items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-none">
                   <Target size={20} weight="duotone" className="text-green-500" />
                 </div>
-                <div className="flex flex-col items-start flex-1">
-                  <span className="text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">Active Leads</span>
-                  <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                <div className="flex flex-col items-center md:items-start flex-1">
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">Active Leads</span>
+                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                     {crmContext.dashboardMetrics?.activeLeads || (crmContext.dashboardMetrics?.totalLeads || 0) - (crmContext.dashboardMetrics?.wonDeals || 0) - (crmContext.dashboardMetrics?.lostDeals || 0)}
                   </span>
                 </div>
@@ -448,14 +448,14 @@ const CRMPageInner: React.FC = () => {
             </div>
 
             {/* Won Deals Card - Emerald Theme */}
-            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 shadow-[6px_6px_12px_rgba(16,185,129,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(16,185,129,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <div className="w-full h-full bg-[#e4ebf5] dark:bg-slate-800 rounded-[14px] px-4 py-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] dark:bg-slate-700 flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-none">
+            <div className="p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 shadow-[6px_6px_12px_rgba(16,185,129,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(16,185,129,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <div className="w-full h-full bg-[#e4ebf5] dark:bg-slate-800 rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 flex flex-col md:flex-row items-center md:gap-3">
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] dark:bg-slate-700 items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-none">
                   <CheckCircle size={20} weight="duotone" className="text-emerald-500" />
                 </div>
-                <div className="flex flex-col items-start flex-1">
-                  <span className="text-xs bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent font-semibold">Won Deals</span>
-                  <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                <div className="flex flex-col items-center md:items-start flex-1">
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent font-semibold">Won Deals</span>
+                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                     {crmContext.dashboardMetrics?.wonDeals || crmContext.dashboardMetrics?.statusCounts?.won || 0}
                   </span>
                 </div>
@@ -463,14 +463,14 @@ const CRMPageInner: React.FC = () => {
             </div>
 
             {/* Conversion Rate Card - Purple Theme */}
-            <div className="p-[2px] rounded-2xl bg-gradient-to-r from-purple-400 to-violet-500 shadow-[6px_6px_12px_rgba(139,92,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(139,92,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <div className="w-full h-full bg-[#e4ebf5] dark:bg-slate-800 rounded-[14px] px-4 py-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#e4ebf5] dark:bg-slate-700 flex items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-none">
+            <div className="p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-purple-400 to-violet-500 shadow-[6px_6px_12px_rgba(139,92,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(139,92,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <div className="w-full h-full bg-[#e4ebf5] dark:bg-slate-800 rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 flex flex-col md:flex-row items-center md:gap-3">
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] dark:bg-slate-700 items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-none">
                   <TrendUp size={20} weight="duotone" className="text-purple-500" />
                 </div>
-                <div className="flex flex-col items-start flex-1">
-                  <span className="text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">Conversion Rate</span>
-                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                <div className="flex flex-col items-center md:items-start flex-1">
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">Conversion</span>
+                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
                     {Math.round(crmContext.dashboardMetrics?.conversionRate || 0)}%
                   </span>
                 </div>

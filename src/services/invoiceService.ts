@@ -204,15 +204,14 @@ export async function getInvoices(type?: 'sale' | 'purchase' | 'quote', limit?: 
       console.log('[getInvoices] After type filter:', serverInvoices.length, 'invoices')
     }
 
-    // Client-side filtering for companyId
-    // IMPORTANT: Show data if companyId matches OR if data has no companyId (legacy data)
-    // This prevents data from "disappearing" due to companyId mismatch
+    // Client-side filtering for companyId - STRICT isolation
+    // Only show invoices that belong to the current company
     if (companyId) {
       const beforeFilter = serverInvoices.length
       serverInvoices = serverInvoices.filter(inv => {
         const invCompanyId = (inv as any).companyId
-        // Show if: no companyId on invoice (legacy) OR companyId matches
-        return !invCompanyId || invCompanyId === companyId
+        // STRICT: Only show invoices with matching companyId (no legacy fallback)
+        return invCompanyId === companyId
       })
       console.log('[getInvoices] After companyId filter:', serverInvoices.length, 'of', beforeFilter, 'invoices (companyId:', companyId, ')')
     }
@@ -343,11 +342,12 @@ export async function getInvoicesPaginated(
     const snapshot = await getDocs(invoicesRef)
     let serverInvoices = snapshot.docs.map(docToInvoice)
 
-    // Apply company filtering - show data with matching companyId OR no companyId (legacy)
+    // Apply company filtering - STRICT isolation
     if (companyId) {
       serverInvoices = serverInvoices.filter(inv => {
         const invCompanyId = (inv as any).companyId
-        return !invCompanyId || invCompanyId === companyId
+        // STRICT: Only show invoices with matching companyId (no legacy fallback)
+        return invCompanyId === companyId
       })
     }
 
@@ -891,7 +891,7 @@ export async function processScannedInvoice(
       partyAddress: party.billingAddress,
       partyPhone: party.phone,
       partyEmail: party.email,
-      businessName: 'ThisAI CRM', // Replace with actual business name
+      businessName: 'Anna ERP', // Replace with actual business name
       businessGSTIN,
       businessAddress: {
         street: '',

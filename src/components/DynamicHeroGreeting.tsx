@@ -1,4 +1,4 @@
-// DynamicHeroGreeting.tsx - Billi 2025
+// DynamicHeroGreeting.tsx - Anna 2025
 // Time-based & performance-based dynamic greetings for Indian SMBs
 
 import React, { useState, useEffect } from 'react'

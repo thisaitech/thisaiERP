@@ -472,7 +472,7 @@ export function saveGeneralSettings(settings: Partial<GeneralSettings>): void {
 
 function getDefaultGeneralSettings(): GeneralSettings {
   return {
-    businessName: 'Billing Pro',
+    businessName: 'Anna',
     financialYear: '2023-2024',
     currency: 'INR',
     currencySymbol: '₹',
@@ -643,7 +643,7 @@ function getDefaultSMSSettings(): SMSSettings {
     sendOnInvoiceCreation: true,
     sendPaymentReminders: true,
     sendDeliveryUpdates: false,
-    smsTemplate: 'Dear {customer}, Invoice {invoice_no} of Rs.{amount} has been generated. Pay via {link}. -Billing Pro'
+    smsTemplate: 'Dear {customer}, Invoice {invoice_no} of Rs.{amount} has been generated. Pay via {link}. -Anna'
   }
 }
 

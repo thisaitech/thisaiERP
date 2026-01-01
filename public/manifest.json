@@ -1,7 +1,7 @@
 {
-  "name": "ThisAI CRM - Billing Pro",
-  "short_name": "ThisAI CRM",
-  "description": "Complete CRM solution for managing sales, purchases, inventory, and business operations. Works offline!",
+  "name": "Anna ERP",
+  "short_name": "Anna ERP",
+  "description": "Complete ERP solution for managing sales, purchases, inventory, and business operations. Works offline!",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

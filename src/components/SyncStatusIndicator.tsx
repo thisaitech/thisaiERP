@@ -1,4 +1,4 @@
-// SyncStatusIndicator.tsx - Billi 2025
+// SyncStatusIndicator.tsx - Anna 2025
 // Shows sync status with visual indicators and manual sync button
 
 import React, { useState, useEffect } from 'react'

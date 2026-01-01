@@ -1,4 +1,4 @@
-// BarcodeScanner.tsx - Billi 2025
+// BarcodeScanner.tsx - Anna 2025
 // Barcode/QR code scanner component using html5-qrcode
 
 import React, { useEffect, useRef, useState } from 'react'

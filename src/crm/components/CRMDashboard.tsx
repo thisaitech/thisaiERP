@@ -72,21 +72,21 @@ const PipelineStageCard: React.FC<PipelineStageCardProps> = ({ stage, stageLabel
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700"
+      className="bg-white dark:bg-slate-800 rounded-lg p-1.5 md:p-4 shadow-sm border border-slate-200 dark:border-slate-700"
     >
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+      <div className="flex flex-col md:flex-row items-center md:items-center justify-between mb-1 md:mb-2">
+        <h3 className="text-[8px] md:text-sm font-medium text-slate-900 dark:text-slate-100 text-center md:text-left truncate w-full">
           {stageLabel}
         </h3>
-        <span className={`text-lg font-bold ${color}`}>{count}</span>
+        <span className={`text-xs md:text-lg font-bold ${color}`}>{count}</span>
       </div>
-      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1 md:h-2">
         <div
-          className={`h-2 rounded-full ${color.replace('text-', 'bg-').replace('-600', '-500')}`}
+          className={`h-1 md:h-2 rounded-full ${color.replace('text-', 'bg-').replace('-600', '-500')}`}
           style={{ width: `${percentage}%` }}
         ></div>
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{percentage}% of total</p>
+      <p className="hidden md:block text-xs text-slate-500 dark:text-slate-400 mt-2">{percentage}% of total</p>
     </motion.div>
   );
 };
@@ -207,7 +207,7 @@ const CRMDashboard: React.FC = () => {
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
           Pipeline Overview
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-5 gap-1.5 md:gap-4">
           {Object.entries(CRM_STAGES).map(([key, stage]) => (
             <PipelineStageCard
               key={key}

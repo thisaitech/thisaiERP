@@ -1,4 +1,4 @@
-// KPICards.tsx - Billi 2025
+// KPICards.tsx - Anna 2025
 // 6 KPI Cards in a single row
 
 import React, { useState, useRef, useEffect } from 'react'

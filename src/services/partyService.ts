@@ -33,6 +33,18 @@ import {
 // Local storage fallback key (for backward compatibility)
 const LOCAL_STORAGE_KEY = 'thisai_crm_parties'
 
+// Helper: get current companyId from stored user (for multi-tenant scoping)
+const getCurrentCompanyId = (): string | null => {
+  try {
+    const userRaw = localStorage.getItem('user')
+    if (!userRaw) return null
+    const user = JSON.parse(userRaw)
+    return user.companyId || null
+  } catch {
+    return null
+  }
+}
+
 // Local helper to get party name (avoid circular dependency with partyUtils)
 const getPartyName = (party: Party | null | undefined): string => {
   if (!party) return 'Unknown'
@@ -75,9 +87,16 @@ export async function getParties(type?: 'customer' | 'supplier' | 'both'): Promi
   // STEP 3: If online, try to fetch from Firebase and merge
   try {
     const partiesRef = collection(db!, COLLECTIONS.PARTIES)
-    // Fetch all parties and filter in memory to support OR logic
-    // (Firebase doesn't support OR queries on same field easily)
-    const q = query(partiesRef)
+    const companyId = getCurrentCompanyId()
+
+    // Use query with companyId filter for data isolation
+    let q
+    if (companyId) {
+      q = query(partiesRef, where('companyId', '==', companyId))
+    } else {
+      // Fallback: no company filter (should not happen in normal use)
+      q = query(partiesRef)
+    }
 
     const snapshot = await getDocs(q)
     let serverParties = snapshot.docs.map(docToParty)
@@ -265,6 +284,7 @@ export async function createParty(partyData: Omit<Party, 'id' | 'createdAt' | 'u
 
   const now = new Date().toISOString()
   const id = generateOfflineId()
+  const companyId = getCurrentCompanyId()
 
   // Deep clean undefined values (Firestore doesn't accept undefined)
   const cleanData = removeUndefinedDeep(partyData)
@@ -274,6 +294,8 @@ export async function createParty(partyData: Omit<Party, 'id' | 'createdAt' | 'u
     id,
     createdAt: now,
     updatedAt: now,
+    // Multi-tenant: Add companyId for data isolation
+    ...(companyId ? { companyId } : {}),
     // Offline-first metadata
     _pendingSync: !isDeviceOnline(),
     _savedAt: now,
@@ -299,7 +321,9 @@ export async function createParty(partyData: Omit<Party, 'id' | 'createdAt' | 'u
       const serverData = removeUndefinedDeep({
         ...partyData,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        // Multi-tenant: Add companyId for data isolation
+        ...(companyId ? { companyId } : {})
       })
 
       const docRef = await addDoc(collection(db!, COLLECTIONS.PARTIES), serverData)

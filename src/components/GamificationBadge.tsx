@@ -1,4 +1,4 @@
-// GamificationBadge.tsx - Compact reward display for Billi 2025
+// GamificationBadge.tsx - Compact reward display for Anna 2025
 // Shows level, streak, and coins in a pill format
 
 import React, { useState, useEffect } from 'react'

@@ -325,129 +325,8 @@ const getCategoryIcon = (category: string | undefined): React.ReactNode => {
   return categoryIcons['default']
 }
 
-// Sample demo items if no items exist
-const demoItems: Item[] = [
-  {
-    id: 'demo-1',
-    name: 'Espresso',
-    description: 'Strong Italian coffee',
-    itemCode: 'ESP001',
-    category: 'Hot Beverages',
-    sellingPrice: 120,
-    purchasePrice: 40,
-    unit: 'PCS' as any,
-    taxPreference: 'taxable' as any,
-    tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
-    stock: 100,
-    minStock: 10,
-    maxStock: 500,
-    reorderPoint: 20,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    imageUrl: ''
-  },
-  {
-    id: 'demo-2',
-    name: 'Cappuccino',
-    description: 'Creamy Italian coffee with milk foam',
-    itemCode: 'CAP001',
-    category: 'Hot Beverages',
-    sellingPrice: 150,
-    purchasePrice: 50,
-    unit: 'PCS' as any,
-    taxPreference: 'taxable' as any,
-    tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
-    stock: 100,
-    minStock: 10,
-    maxStock: 500,
-    reorderPoint: 20,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    imageUrl: ''
-  },
-  {
-    id: 'demo-3',
-    name: 'Cold Coffee',
-    description: 'Chilled coffee with ice cream',
-    itemCode: 'CC001',
-    category: 'Cold Beverages',
-    sellingPrice: 180,
-    purchasePrice: 60,
-    unit: 'PCS' as any,
-    taxPreference: 'taxable' as any,
-    tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
-    stock: 100,
-    minStock: 10,
-    maxStock: 500,
-    reorderPoint: 20,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    imageUrl: ''
-  },
-  {
-    id: 'demo-4',
-    name: 'Veg Burger',
-    description: 'Crispy patty with fresh veggies',
-    itemCode: 'BRG001',
-    category: 'Fast Food',
-    sellingPrice: 120,
-    purchasePrice: 45,
-    unit: 'PCS' as any,
-    taxPreference: 'taxable' as any,
-    tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
-    stock: 50,
-    minStock: 5,
-    maxStock: 100,
-    reorderPoint: 10,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    imageUrl: ''
-  },
-  {
-    id: 'demo-5',
-    name: 'French Fries',
-    description: 'Crispy golden fries',
-    itemCode: 'FRY001',
-    category: 'Snacks',
-    sellingPrice: 90,
-    purchasePrice: 30,
-    unit: 'PCS' as any,
-    taxPreference: 'taxable' as any,
-    tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
-    stock: 80,
-    minStock: 10,
-    maxStock: 200,
-    reorderPoint: 20,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    imageUrl: ''
-  },
-  {
-    id: 'demo-6',
-    name: 'Chocolate Brownie',
-    description: 'Rich chocolate brownie with nuts',
-    itemCode: 'BRW001',
-    category: 'Desserts',
-    sellingPrice: 80,
-    purchasePrice: 25,
-    unit: 'PCS' as any,
-    taxPreference: 'taxable' as any,
-    tax: { cgst: 2.5, sgst: 2.5, igst: 5 },
-    stock: 40,
-    minStock: 5,
-    maxStock: 100,
-    reorderPoint: 10,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    imageUrl: ''
-  }
-]
+// No demo items - each company should add their own inventory
+// Empty array shown when no items exist
 
 interface CartItem {
   id: string
@@ -887,17 +766,13 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           getCompanySettings(),
           getParties('customer')
         ])
-        if (inventoryItems.length > 0) {
-          setItems(inventoryItems.filter(item => item.isActive))
-        } else {
-          // Use demo items if no inventory exists
-          setItems(demoItems)
-        }
+        // Only show company's own items - no demo items
+        setItems(inventoryItems.filter(item => item.isActive))
         setCompanySettings(settings)
         setParties(partiesData)
       } catch (error) {
         console.error('Error loading data:', error)
-        setItems(demoItems)
+        setItems([]) // Empty array on error - no demo items
       } finally {
         setLoading(false)
       }
@@ -1249,7 +1124,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
             <div class="thanks">Thank You! Visit Again!</div>
             <div>--------------------------------</div>
             <div>Items: ${cart.length} | Qty: ${cart.reduce((s, i) => s + i.quantity, 0)}</div>
-            <div style="margin-top:4px;font-size:${paperSize === '58mm' ? '7px' : '8px'};">Powered by ThisAI CRM</div>
+            <div style="margin-top:4px;font-size:${paperSize === '58mm' ? '7px' : '8px'};">Powered by Anna ERP</div>
           </div>
         </div>
         <script>
@@ -1471,7 +1346,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
               <div class="thanks">Thank You! Visit Again!</div>
               <div>--------------------------------</div>
               <div>Items: ${capturedCart.length} | Qty: ${capturedCart.reduce((s, i) => s + i.quantity, 0)}</div>
-              <div style="margin-top:4px;font-size:${paperSize === '58mm' ? '7px' : '8px'};">Powered by ThisAI CRM</div>
+              <div style="margin-top:4px;font-size:${paperSize === '58mm' ? '7px' : '8px'};">Powered by Anna ERP</div>
             </div>
           </div>
           <script>
@@ -1876,7 +1751,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           <div class="footer">
             <div class="thanks">Thank You for Your Business!</div>
             <p>Items: ${cart.length} | Total Qty: ${cart.reduce((s, i) => s + i.quantity, 0)}</p>
-            <div style="font-size:10px;">Powered by ThisAI CRM</div>
+            <div style="font-size:10px;">Powered by Anna ERP</div>
           </div>
         </div>
         <script>
@@ -2098,7 +1973,7 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
             <div>--------------------------------</div>
             <div>Items: ${cart.length} | Qty: ${cart.reduce((s, i) => s + i.quantity, 0)}</div>
             <div style="margin-top:4px;font-size:${paperSize === '58mm' ? '7px' : '8px'};">
-              Powered by ThisAI CRM
+              Powered by Anna ERP
             </div>
           </div>
         </div>
@@ -2627,9 +2502,18 @@ const ModernPOS: React.FC<ModernPOSProps> = ({ onCheckout, onQuickCheckout, onCl
           </div>
 
           {filteredItems.length === 0 && selectedCategory !== 'Popular' && (
-            <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-              <Package size={32} className="mb-1" />
-              <p className="font-medium text-sm">No items found</p>
+            <div className="flex flex-col items-center justify-center h-48 text-gray-400 px-4">
+              <Package size={40} className="mb-2" />
+              {items.length === 0 ? (
+                <>
+                  <p className="font-medium text-sm text-gray-500">No inventory items yet</p>
+                  <p className="text-xs text-gray-400 mt-1 text-center">
+                    Go to Inventory to add your products and services
+                  </p>
+                </>
+              ) : (
+                <p className="font-medium text-sm">No items found for this search</p>
+              )}
             </div>
           )}
         </div>

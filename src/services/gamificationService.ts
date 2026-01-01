@@ -1,4 +1,4 @@
-// Gamification Service - Billi 2025
+// Gamification Service - Anna 2025
 // Tracks user achievements, streaks, and rewards
 
 export interface UserStats {

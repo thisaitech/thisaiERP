@@ -1,5 +1,5 @@
 {
-  "name": "business-pro",
+  "name": "anna-erp",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -20,8 +20,8 @@
     "electron:build:linux": "npm run build:electron && electron-builder --linux"
   },
   "build": {
-    "appId": "com.thisai.crm",
-    "productName": "ThisAI CRM",
+    "appId": "com.anna.erp",
+    "productName": "Anna ERP",
     "directories": {
       "output": "release"
     },

@@ -24,7 +24,7 @@ Amount: *₹${validAmount.toLocaleString('en-IN')}*
 
 Thank you for your business!
 
-_This message was sent via ThisAI CRM_`
+_This message was sent via Anna ERP_`
 
   // Encode message for URL
   const encodedMessage = encodeURIComponent(message)

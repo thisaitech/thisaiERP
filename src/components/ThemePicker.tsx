@@ -1,4 +1,4 @@
-// ThemePicker.tsx - Festival theme selector for Billi 2025
+// ThemePicker.tsx - Festival theme selector for Anna 2025
 // Allows users to switch between default and festival themes
 
 import React, { useState, useEffect } from 'react'

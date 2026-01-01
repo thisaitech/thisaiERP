@@ -237,7 +237,7 @@ export default function InvoicePreviewModal({ isOpen, onClose, documentType = 'i
       return (localStorage.getItem('invoice_paperSize') as any) || 'a4'
     } catch { return 'a4' }
   })
-  const [showSidebar, setShowSidebar] = useState(false) // Hidden by default to show invoice
+  const [showSidebar, setShowSidebar] = useState(true) // Always visible by default
 
   // Save preferences to localStorage when they change
   const handleTemplateChange = (templateId: string) => {
@@ -484,57 +484,68 @@ export default function InvoicePreviewModal({ isOpen, onClose, documentType = 'i
         return
       }
 
-      // PDF Download
-      const { generateInvoicePDF } = await import('../services/pdfService')
-      const { getCompanySettings } = await import('../services/settingsService')
-
-      const companySettings = getCompanySettings()
-
-      // Build PDF data
-      const pdfData = {
-        type: 'sale' as const,
-        invoiceNumber: invoiceData.invoiceNumber,
-        invoiceDate: invoiceData.invoiceDate,
-        dueDate: invoiceData.invoiceDate,
-        partyName: invoiceData.customerName,
-        partyPhone: invoiceData.customerPhone || '',
-        partyAddress: '',
-        partyGSTIN: '',
-        items: invoiceData.items.map((item: any) => ({
-          name: item.name,
-          hsnCode: item.hsn || '',
-          quantity: item.quantity,
-          unit: 'NONE',
-          rate: item.price,
-          discount: 0,
-          taxRate: item.gst || 0,
-          cgst: ((item.price * item.quantity * (item.gst || 0)) / 100) / 2,
-          sgst: ((item.price * item.quantity * (item.gst || 0)) / 100) / 2,
-          amount: item.total
-        })),
-        subtotal: invoiceData.subtotal,
-        discount: invoiceData.discount,
-        cgstAmount: invoiceData.tax / 2,
-        sgstAmount: invoiceData.tax / 2,
-        totalTax: invoiceData.tax,
-        grandTotal: invoiceData.total,
-        roundOff: 0,
-        paidAmount: invoiceData.received,
-        balanceDue: invoiceData.balance,
-        notes: '',
-        termsAndConditions: '',
-        companyName: companySettings.companyName || 'Your Company',
-        companyAddress: companySettings.address || '',
-        companyPhone: companySettings.phone || '',
-        companyEmail: companySettings.email || '',
-        companyGSTIN: companySettings.gstin || ''
+      // PDF Download - Use dom-to-image-more to capture the preview (supports oklch colors)
+      const previewElement = document.getElementById('invoice-preview-content')
+      if (!previewElement) {
+        toast.error('Invoice preview not found')
+        return
       }
 
-      // Generate and download PDF
-      const doc = generateInvoicePDF(pdfData)
-      doc.save(`Invoice-${invoiceData.invoiceNumber}.pdf`)
+      // Save current styles and reset for capture
+      const originalTransform = previewElement.style.transform
+      const originalZoom = previewElement.style.zoom
+      previewElement.style.setProperty('transform', 'none', 'important')
+      previewElement.style.setProperty('zoom', '1', 'important')
 
-      toast.success('PDF downloaded successfully!')
+      // Wait for changes to apply
+      await new Promise(resolve => setTimeout(resolve, 200))
+
+      try {
+        const domtoimage = await import('dom-to-image-more')
+        const jsPDF = (await import('jspdf')).default
+
+        // Capture at natural size without any scaling
+        const imgData = await domtoimage.toPng(previewElement, {
+          quality: 1,
+          bgcolor: '#ffffff'
+        })
+
+        // Restore original styles
+        previewElement.style.transform = originalTransform
+        previewElement.style.zoom = originalZoom
+
+        // Create PDF from image
+        const img = new Image()
+        img.src = imgData
+        await new Promise((resolve) => { img.onload = resolve })
+
+        const imgWidth = 210 // A4 width in mm
+        const pageHeight = 297 // A4 height in mm
+        const imgHeight = (img.height * imgWidth) / img.width
+
+        const doc = new jsPDF('p', 'mm', 'a4')
+        let heightLeft = imgHeight
+        let position = 0
+
+        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+
+        // Add more pages if content is longer than one page
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight
+          doc.addPage()
+          doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+          heightLeft -= pageHeight
+        }
+
+        doc.save(`Invoice-${invoiceData.invoiceNumber}.pdf`)
+        toast.success('PDF downloaded successfully!')
+      } catch (error) {
+        // Restore styles on error
+        previewElement.style.transform = originalTransform
+        previewElement.style.zoom = originalZoom
+        throw error
+      }
     } catch (error) {
       console.error('Error downloading:', error)
       toast.error(`Failed to download: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -545,59 +556,87 @@ export default function InvoicePreviewModal({ isOpen, onClose, documentType = 'i
     try {
       toast.success(`Preparing ${type} print...`)
 
-      // Import PDF service
-      const { printInvoicePDF } = await import('../services/pdfService')
-      const { getCompanySettings } = await import('../services/settingsService')
-
-      const companySettings = getCompanySettings()
-
-      // Build PDF data
-      const pdfData = {
-        type: 'sale' as const,
-        invoiceNumber: invoiceData.invoiceNumber,
-        invoiceDate: invoiceData.invoiceDate,
-        dueDate: invoiceData.invoiceDate,
-        partyName: invoiceData.customerName,
-        partyPhone: invoiceData.customerPhone || '',
-        partyAddress: '',
-        partyGSTIN: '',
-        items: invoiceData.items.map((item: any) => ({
-          name: item.name,
-          hsnCode: item.hsn || '',
-          quantity: item.quantity,
-          unit: 'NONE',
-          rate: item.price,
-          discount: 0,
-          taxRate: item.gst || 0,
-          cgst: ((item.price * item.quantity * (item.gst || 0)) / 100) / 2,
-          sgst: ((item.price * item.quantity * (item.gst || 0)) / 100) / 2,
-          amount: item.total
-        })),
-        subtotal: invoiceData.subtotal,
-        discount: invoiceData.discount,
-        cgstAmount: invoiceData.tax / 2,
-        sgstAmount: invoiceData.tax / 2,
-        totalTax: invoiceData.tax,
-        grandTotal: invoiceData.total,
-        roundOff: 0,
-        paidAmount: invoiceData.received,
-        balanceDue: invoiceData.balance,
-        notes: '',
-        termsAndConditions: '',
-        companyName: companySettings.companyName || 'Your Company',
-        companyAddress: companySettings.address || '',
-        companyPhone: companySettings.phone || '',
-        companyEmail: companySettings.email || '',
-        companyGSTIN: companySettings.gstin || ''
+      // Get the preview element
+      const previewElement = document.getElementById('invoice-preview-content')
+      if (!previewElement) {
+        toast.error('Invoice preview not found')
+        return
       }
 
-      // Print PDF
-      printInvoicePDF(pdfData)
+      // Create print window
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) {
+        toast.error('Please allow popups to print')
+        return
+      }
+
+      // Copy all stylesheets from the current page
+      const styleSheets: string[] = []
+
+      // Get all <link> stylesheet references
+      document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+        styleSheets.push(link.outerHTML)
+      })
+
+      // Get all <style> tags
+      document.querySelectorAll('style').forEach(style => {
+        styleSheets.push(style.outerHTML)
+      })
+
+      // Additional print-specific styles
+      const printStyles = `
+        <style>
+          @media print {
+            @page { margin: 8mm; size: A4 portrait; }
+          }
+          body {
+            margin: 0 !important;
+            padding: 10px !important;
+            background: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .invoice-print-wrapper {
+            width: 100% !important;
+            max-width: 210mm !important;
+            margin: 0 auto !important;
+            background: white !important;
+            transform: none !important;
+            zoom: 1 !important;
+          }
+        </style>
+      `
+
+      // Get the HTML content
+      const content = previewElement.innerHTML
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Invoice - ${invoiceData.invoiceNumber}</title>
+          ${styleSheets.join('\n')}
+          ${printStyles}
+        </head>
+        <body>
+          <div class="invoice-print-wrapper">
+            ${content}
+          </div>
+          <script>
+            // Wait for styles to load then print
+            setTimeout(function() {
+              window.print();
+            }, 800);
+          </script>
+        </body>
+        </html>
+      `)
+      printWindow.document.close()
 
       toast.success('Opening print dialog...')
     } catch (error) {
-      console.error('Error printing PDF:', error)
-      toast.error('Failed to print PDF')
+      console.error('Error printing:', error)
+      toast.error('Failed to print')
     }
   }
 
@@ -676,23 +715,15 @@ export default function InvoicePreviewModal({ isOpen, onClose, documentType = 'i
 
           {/* Main Content */}
           <div className="flex-1 flex overflow-hidden relative">
-            {/* Floating Options Panel - Small overlay */}
-            {showSidebar && (
-              <>
-                {/* Backdrop - click to close */}
-                <div 
-                  className="absolute inset-0 bg-black/20 z-20" 
-                  onClick={() => setShowSidebar(false)}
-                />
-                {/* Floating Panel */}
-                <div className="absolute left-2 top-2 z-30 w-64 max-h-[80%] bg-white rounded-xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
-                  {/* Panel Header */}
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-slate-50">
-                    <span className="text-xs font-semibold text-slate-700">Options</span>
-                    <button onClick={() => setShowSidebar(false)} className="p-1 hover:bg-slate-200 rounded">
-                      <X size={14} />
-                    </button>
-                  </div>
+            {/* Fixed Options Panel - Always visible */}
+            <div className="w-64 bg-white border-r border-slate-200 flex flex-col overflow-hidden flex-shrink-0">
+              {/* Panel Header */}
+              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-slate-50">
+                <span className="text-xs font-semibold text-slate-700">Options</span>
+                <button onClick={() => setShowSidebar(false)} className="p-1 hover:bg-slate-200 rounded hidden">
+                  <X size={14} />
+                </button>
+              </div>
                   {/* Tab Navigation - Compact */}
                   <div className="flex border-b border-slate-200">
                     {[
@@ -1026,20 +1057,9 @@ export default function InvoicePreviewModal({ isOpen, onClose, documentType = 'i
                 )}
               </div>
             </div>
-              </>
-            )}
 
             {/* Invoice Preview - Full Width */}
-            <div id="invoice-preview-container" className="flex-1 bg-gradient-to-br from-slate-100 to-slate-200 p-1 sm:p-4 pb-24 sm:pb-20 overflow-x-hidden overflow-y-auto">
-              {/* Toggle Options Button - Compact */}
-              <button
-                onClick={() => setShowSidebar(!showSidebar)}
-                className="fixed bottom-20 sm:bottom-4 left-4 z-10 px-3 py-2 bg-white rounded-lg shadow-lg hover:bg-slate-50 transition-colors flex items-center gap-1.5 text-xs font-medium text-slate-700 border border-slate-200"
-              >
-                <Palette size={14} />
-                <span>Options</span>
-              </button>
-
+            <div id="invoice-preview-container" className="flex-1 bg-gradient-to-br from-slate-100 to-slate-200 p-1 sm:p-4 pb-24 sm:pb-20 overflow-hidden">
               {/* Wrapper to handle scaled content size for proper scrolling */}
               <div
                 className="flex justify-center w-full"
@@ -3414,8 +3434,8 @@ function GSTCompliantTemplate({ data, color, documentType = 'invoice', paperSize
         </div>
 
         {/* Items Table - GST Format */}
-        <div className="overflow-x-auto mb-3">
-          <table className="w-full border border-slate-300" style={{ tableLayout: 'fixed', minWidth: isA5 ? '100%' : '580px' }}>
+        <div className="mb-3">
+          <table className="w-full border border-slate-300" style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr className={`text-white ${isA5 ? 'text-[8px]' : 'text-[9px]'}`} style={{ backgroundColor: color.primary }}>
                 <th className="border border-slate-400 p-0.5" style={{ width: '5%' }}>#</th>
@@ -3499,7 +3519,7 @@ function GSTCompliantTemplate({ data, color, documentType = 'invoice', paperSize
               <div className="px-2 py-0.5 bg-slate-100 border-b border-slate-300">
                 <p className={`${isA5 ? 'text-[8px]' : 'text-[9px]'} font-bold text-slate-700`}>Tax Details</p>
               </div>
-              <div className="overflow-x-auto">
+              <div>
               <table className={`w-full ${isA5 ? 'text-[7px]' : 'text-[8px]'}`} style={{ tableLayout: 'fixed', minWidth: '100%' }}>
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">

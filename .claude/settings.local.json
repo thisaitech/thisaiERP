@@ -207,7 +207,10 @@
       "Bash(git -C d:/Project/Anna stash list)",
       "Bash(git -C d:/Project/Anna stash show:*)",
       "Bash(git -C d:/Project/Anna commit -m \"fix: Add missing resetCustomerForm and state variables in Sales.tsx\")",
-      "Bash(git -C d:/Project/Anna commit -m \"fix: Customer/Supplier filtering - Sales shows customers, Purchases shows suppliers\")"
+      "Bash(git -C d:/Project/Anna commit -m \"fix: Customer/Supplier filtering - Sales shows customers, Purchases shows suppliers\")",
+      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nfeat: User management improvements and UI fixes\n\n- Secondary Firebase auth for user creation \\(admin stays logged in\\)\n- Role-based invoice filtering \\(Cashiers see only their own sales\\)\n- Back to List button visible on desktop \\(moved to right corner\\)\n- Removed duplicate EXIT button \\(logout only in profile popup\\)\n- Fixed admin re-auth prompt after creating staff users\n- Profile popup shows company info, user info, and logout option\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C d:/Project/Anna diff .claude/settings.local.json)",
+      "Bash(git -C d:/Project/Anna commit -m \"$\\(cat <<''EOF''\nfeat: Mobile-responsive dashboard KPI cards across all pages\n\n- Updated Sales, Purchases, Quotations, Parties, Expenses, Reports, Banking, Inventory pages\n- Updated CRM Page and CRM Dashboard with compact mobile layout\n- All 4 KPI cards display in single row on mobile \\(grid-cols-4\\)\n- Icons hidden on mobile, smaller text \\(8px labels, xs values\\)\n- Vertical card layout on mobile, horizontal on desktop\n- Consistent responsive design pattern across entire app\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []

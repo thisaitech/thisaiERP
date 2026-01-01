@@ -235,13 +235,13 @@ const Login = () => {
 
     try {
       const userData = await createAdminAccount(email, password, companyName, fullName)
-      toast.success(`Welcome to ThisAI CRM, ${fullName}!`)
+      toast.success(`Welcome to Anna ERP, ${fullName}! Your account is ready.`)
 
       // Store user data
       localStorage.setItem('user', JSON.stringify(userData))
 
-      // Navigate to setup or dashboard
-      navigate('/setup')
+      // Navigate directly to dashboard - new company is ready to use
+      navigate('/')
     } catch (error: any) {
       toast.error(error.message || 'Registration failed')
     } finally {
@@ -349,10 +349,10 @@ const Login = () => {
             <Sparkle size={32} weight="duotone" className="text-primary" />
           </motion.div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
-            ThisAI CRM
+            Anna ERP
           </h1>
           <p className="text-slate-600">
-            {mode === 'login' && 'Billing Pro - Sign in to continue'}
+            {mode === 'login' && 'Anna - Sign in to continue'}
             {mode === 'register' && 'Create your business account'}
             {mode === 'forgot' && 'Reset your password'}
           </p>
@@ -655,7 +655,7 @@ const Login = () => {
                 <div className="mt-4 p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl border border-primary/10">
                   <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                     <Lightning size={16} weight="fill" className="text-amber-500" />
-                    What you get with ThisAI CRM
+                    What you get with Anna ERP
                   </h4>
                   <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
                     <div className="flex items-center gap-1">
@@ -735,7 +735,7 @@ const Login = () => {
 
         {/* Footer */}
         <p className="text-center text-sm text-slate-500 mt-6">
-          © 2025 ThisAI CRM. All rights reserved.
+          © 2025 Anna ERP. All rights reserved.
         </p>
       </motion.div>
     </div>

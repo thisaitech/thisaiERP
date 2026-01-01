@@ -79,7 +79,7 @@ export function POS58mmTemplate({ data, color }: { data: any; color: any }) {
       {/* Footer */}
       <div className="text-center text-[9px] mt-2">
         <div>Thank You! Visit Again!</div>
-        <div className="mt-1">🧾 Powered by ThisAI CRM</div>
+        <div className="mt-1">🧾 Powered by Anna ERP</div>
       </div>
     </div>
   )
@@ -175,7 +175,7 @@ export function POS80mmTemplate({ data, color }: { data: any; color: any }) {
       <div className="text-center text-[10px] mt-2">
         <div className="font-semibold">Thank You for Your Business!</div>
         <div className="mt-1">Please Visit Again 😊</div>
-        <div className="mt-2 text-[9px]">🧾 Powered by ThisAI CRM Silver</div>
+        <div className="mt-2 text-[9px]">🧾 Powered by Anna ERP Silver</div>
       </div>
     </div>
   )

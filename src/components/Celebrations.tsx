@@ -1,4 +1,4 @@
-// Celebrations.tsx - Billi 2025
+// Celebrations.tsx - Anna 2025
 // Confetti, coin animations, level-up celebrations
 
 import React, { useEffect, useState, useCallback } from 'react'

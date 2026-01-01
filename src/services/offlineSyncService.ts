@@ -1,4 +1,4 @@
-// offlineSyncService.ts - Billi 2025
+// offlineSyncService.ts - Anna 2025
 // Handles offline data storage with IndexedDB and sync queue
 // Offline-first architecture: Save locally first, sync silently when online
 
