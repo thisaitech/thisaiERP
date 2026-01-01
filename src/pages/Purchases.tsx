@@ -5305,9 +5305,9 @@ TOTAL:       ₹${invoice.total}
             className="text-center py-10 bg-white rounded-lg border border-slate-200"
           >
             <Receipt size={40} weight="duotone" className="mx-auto text-slate-400 mb-3" />
-            <h3 className="text-base font-semibold mb-1.5 text-slate-700">{language === 'ta' ? 'விற்பனை பில்கள் இல்லை' : 'No Sales Invoices Yet'}</h3>
+            <h3 className="text-base font-semibold mb-1.5 text-slate-700">{language === 'ta' ? 'கொள்முதல் பில்கள் இல்லை' : 'No Purchase Invoices Yet'}</h3>
             <p className="text-sm text-slate-500 mb-3">
-              {language === 'ta' ? 'பில் ஸ்கேன் செய்யவும் அல்லது புதிய விற்பனை உருவாக்கவும்' : 'Start by scanning an invoice or creating a new sale'}
+              {language === 'ta' ? 'பில் ஸ்கேன் செய்யவும் அல்லது புதிய கொள்முதல் உருவாக்கவும்' : 'Start by scanning an invoice or creating a new purchase'}
             </p>
             <div className="flex gap-2 justify-center">
               <button
@@ -5322,7 +5322,7 @@ TOTAL:       ₹${invoice.total}
                 className="px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm font-medium text-slate-700"
               >
                 <Plus size={16} weight="bold" />
-                {t.sales.newSale}
+                {t.purchases.newPurchase}
               </button>
             </div>
           </motion.div>

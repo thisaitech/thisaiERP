@@ -118,6 +118,7 @@ export const en = {
     salesOverview: 'Sales Overview',
     quickInsight: 'Quick Insight',
     aiScan: 'AI Scan',
+    aiSale: 'AI Sale',
     aiBill: 'AI Bill',
     scanBill: 'Scan Bill',
     startChat: 'Start Chat',

@@ -5530,7 +5530,7 @@ TOTAL:       ₹${invoice.total}
                 className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-2 text-sm font-medium"
               >
                 <Camera size={16} weight="bold" />
-                {t.dashboard.aiScan}
+                {t.dashboard.aiSale}
               </button>
               <button
                 onClick={() => setViewMode('create')}

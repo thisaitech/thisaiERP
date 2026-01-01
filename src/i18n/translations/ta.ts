@@ -118,6 +118,7 @@ export const ta = {
     salesOverview: 'விற்பனை கண்ணோட்டம்',
     quickInsight: 'விரைவு நுண்ணறிவு',
     aiScan: 'AI ஸ்கேன்',
+    aiSale: 'AI விற்பனை',
     aiBill: 'AI பில்',
     scanBill: 'பில் ஸ்கேன்',
     startChat: 'அரட்டை தொடங்கு',
