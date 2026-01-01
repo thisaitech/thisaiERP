@@ -2450,8 +2450,10 @@ const More = () => {
                           setDcCustomerSearch(e.target.value)
                           setDcSelectedCustomer(null)
                         }}
-                        autoComplete="off"
-                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        aria-autocomplete="none"
+                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
                         placeholder={t.more.searchOrTypeParty}
                       />
                       {dcCustomerSearch && dcCustomerSearch.trim().length > 0 && (() => {
@@ -2514,8 +2516,10 @@ const More = () => {
                       type="text"
                       value={dcItemSearch}
                       onChange={e => setDcItemSearch(e.target.value)}
-                      autoComplete="off"
-                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      aria-autocomplete="none"
+                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
                       placeholder={t.more.searchItems}
                     />
                     {dcItemSearch.trim().length > 0 && (() => {
@@ -2771,8 +2775,10 @@ const More = () => {
                           setPiCustomerSearch(e.target.value)
                           setPiSelectedCustomer(null)
                         }}
-                        autoComplete="off"
-                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        aria-autocomplete="none"
+                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
                         placeholder={t.more.searchCustomer}
                       />
                       {piCustomerSearch && piCustomerSearch.trim().length > 0 && (() => {
@@ -2825,12 +2831,14 @@ const More = () => {
                       type="text"
                       value={piItemSearch}
                       onChange={e => setPiItemSearch(e.target.value)}
-                      autoComplete="off"
+                      autoComplete="new-password"
                       autoCorrect="off"
                       autoCapitalize="off"
-                      spellCheck="false"
+                      spellCheck={false}
                       data-form-type="other"
-                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                      data-lpignore="true"
+                      aria-autocomplete="none"
+                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
                       placeholder={t.more.searchItemsHsn}
                     />
                     {piItemSearch.trim().length > 0 && availableItems.filter(item =>
