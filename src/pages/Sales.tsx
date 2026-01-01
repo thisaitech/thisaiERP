@@ -492,8 +492,6 @@ const Sales = () => {
   })
   const [showColumnMenu, setShowColumnMenu] = useState(false)
   const columnMenuRef = useRef<HTMLDivElement>(null)
-  const columnMenuBtnRef = useRef<HTMLButtonElement>(null)
-  const [columnMenuPosition, setColumnMenuPosition] = useState({ top: 0, right: 0 })
 
   // Invoice table column labels from settings
   const [columnLabels, setColumnLabels] = useState(getInvoiceTableColumnSettings())
@@ -6859,17 +6857,7 @@ TOTAL:       ₹${invoice.total}
                         <th className="px-1 py-0.5 text-right pr-4 text-sm font-bold text-emerald-600 uppercase tracking-wide" style={{ width: '75px', minWidth: '75px' }}>TOTAL</th>
                         <th className="px-1 py-0.5 relative" style={{ width: '28px', minWidth: '28px' }}>
                           <button
-                            ref={columnMenuBtnRef}
-                            onClick={() => {
-                              if (!showColumnMenu && columnMenuBtnRef.current) {
-                                const rect = columnMenuBtnRef.current.getBoundingClientRect();
-                                setColumnMenuPosition({
-                                  top: rect.bottom + 4,
-                                  right: window.innerWidth - rect.right,
-                                });
-                              }
-                              setShowColumnMenu(!showColumnMenu);
-                            }}
+                            onClick={() => setShowColumnMenu(!showColumnMenu)}
                             className="p-1.5 bg-[#f0f2f5] text-slate-500 hover:text-slate-700 rounded-full transition-all shadow-[3px_3px_6px_#d1d5db,-3px_-3px_6px_#ffffff] hover:shadow-[5px_5px_10px_#d1d5db,-5px_-5px_10px_#ffffff] active:shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]"
                             title={language === 'ta' ? 'நெடுவரிசைகளைக் காட்டு/மறை' : 'Show/Hide Columns'}
                           >
@@ -6878,11 +6866,7 @@ TOTAL:       ₹${invoice.total}
                           {showColumnMenu && (
                             <div
                               ref={columnMenuRef}
-                              className="fixed bg-popover border border-border rounded-lg shadow-lg z-[9999] min-w-[180px]"
-                              style={{
-                                top: columnMenuPosition.top,
-                                right: columnMenuPosition.right,
-                              }}
+                              className="absolute right-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[100] min-w-[180px]"
                             >
                               <div className="p-2 text-xs">
                                 <div className="font-semibold mb-2 text-foreground">{language === 'ta' ? 'நெடுவரிசைகளைக் காட்டு' : 'Show Columns'}</div>
