@@ -25,6 +25,9 @@ import {
   PlanTypeEnum,
   InvoiceTabType,
   InvoiceTabMode,
+  SubscriptionStatus,
+  BillingCycle,
+  PaymentProvider,
 } from './enums';
 
 // ============================================
@@ -743,4 +746,101 @@ export interface CRMEngineer {
   companyId: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// ============================================
+// SUBSCRIPTION TYPES
+// ============================================
+
+export interface CompanySubscription {
+  id: string
+  companyId: string
+  planType: PlanType
+  status: SubscriptionStatus
+
+  // Trial Info
+  trialStartDate: string
+  trialEndDate: string
+  trialDays: number // Total trial days (default 7)
+
+  // Subscription Period
+  subscriptionStartDate?: string
+  subscriptionEndDate?: string
+  nextBillingDate?: string
+  billingCycle?: BillingCycle
+
+  // Payment
+  paymentProvider: PaymentProvider
+  lastPaymentDate?: string
+  lastPaymentAmount?: number
+  razorpaySubscriptionId?: string
+  razorpayCustomerId?: string
+
+  // Pricing (in INR)
+  monthlyPrice: number  // ₹499
+  yearlyPrice: number   // ₹4,999
+
+  // Auto-renewal
+  autoRenew: boolean
+
+  // Grace period (days after expiry where user can still pay)
+  gracePeriodDays: number // default 3
+
+  // Metadata
+  createdAt: string
+  updatedAt: string
+  cancelledAt?: string
+  cancelReason?: string
+}
+
+export interface BillingRecord {
+  id: string
+  companyId: string
+  subscriptionId: string
+
+  // Amount
+  amount: number
+  currency: string // INR
+
+  // Dates
+  billingDate: string
+  dueDate: string
+  paidDate?: string
+
+  // Status
+  status: 'pending' | 'paid' | 'failed' | 'refunded'
+
+  // Payment details
+  razorpayPaymentId?: string
+  razorpayOrderId?: string
+  paymentMethod?: string // upi, card, netbanking
+
+  // Invoice
+  invoiceNumber?: string
+  invoiceUrl?: string
+
+  // Metadata
+  createdAt: string
+  updatedAt: string
+  notes?: string
+}
+
+// Subscription pricing configuration
+export const SUBSCRIPTION_PRICING = {
+  monthly: 499,   // ₹499/month
+  yearly: 4999,   // ₹4,999/year (save ₹989)
+  trialDays: 7,
+  gracePeriodDays: 3,
+} as const
+
+// Helper type for subscription state in UI
+export interface SubscriptionState {
+  isActive: boolean
+  isTrialing: boolean
+  isExpired: boolean
+  isGracePeriod: boolean
+  daysRemaining: number
+  canEdit: boolean // false when expired (view-only mode)
+  showExpiryWarning: boolean // true when < 5 days remaining
+  subscription: CompanySubscription | null
 }

@@ -1172,40 +1172,24 @@ const Sales = () => {
   const location = useLocation()
 
   // Detect route and set appropriate mode
-  // /pos → Check if coming from Back button (show list) or fresh navigation (show ModernPOS)
-  // /sales → Direct to invoice creation view
+  // Sidebar click (action=new) → create mode
+  // Top bar click (no action) → list mode
   useEffect(() => {
     const params = new URLSearchParams(location.search)
-    const forceOpen = params.get('open')
+    const actionParam = params.get('action')
 
-    if (location.pathname === '/pos') {
-      setSalesMode('pos')
-      // Check if user clicked Back to see POS list
-      const savedViewMode = localStorage.getItem('pos_viewMode')
-      if (savedViewMode === 'list') {
-        // User clicked Back - show POS list
-        setShowCafePOS(false)
-        setViewMode('list')
-      } else {
-        // Fresh navigation - show ModernPOS grid
-        setShowCafePOS(true)
-        setViewMode('create')
-      }
-    } else if (location.pathname === '/sales') {
-      // Go directly to invoice creation view
-      setSalesMode('invoice')
-      setShowCafePOS(false)
-      // If caller explicitly requested create via query param, respect it.
-      if (forceOpen === 'create') {
+    if (location.pathname === '/purchases') {
+      // Sidebar click (action=new) → create mode
+      // Top bar click (no action) → list mode
+      if (actionParam === 'new') {
         setViewMode('create')
         try { localStorage.setItem('purchases_viewMode', 'create') } catch {}
       } else {
-        setViewMode('create')
+        setViewMode('list')
+        try { localStorage.setItem('purchases_viewMode', 'list') } catch {}
       }
-      // Clear POS viewMode when navigating to sales
-      localStorage.removeItem('pos_viewMode')
     }
-  }, [location.pathname])
+  }, [location.pathname, location.search])
 
   // Handle converted invoice from Quotations page
   useEffect(() => {

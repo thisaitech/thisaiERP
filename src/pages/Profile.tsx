@@ -29,7 +29,9 @@ import {
   Palette,
   Info,
   PencilSimple,
-  Camera
+  Camera,
+  Sparkle,
+  CreditCard
 } from '@phosphor-icons/react'
 import { motion as m } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
@@ -38,6 +40,8 @@ import { signOut } from '../services/authService'
 import { getCompanySettings, CompanySettings } from '../services/settingsService'
 import { toast } from 'sonner'
 import { cn } from '../lib/utils'
+import { SubscriptionBanner } from '../components/SubscriptionBanner'
+import { SubscriptionStatus } from '../types/enums'
 
 // Quick stat card component
 interface StatCardProps {
@@ -101,7 +105,7 @@ const QuickAction = ({ icon, label, description, to, color }: QuickActionProps) 
 
 const Profile = () => {
   const navigate = useNavigate()
-  const { userData, isAuthenticated } = useAuth()
+  const { userData, isAuthenticated, subscriptionState, subscription } = useAuth()
   const { t } = useLanguage()
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -548,30 +552,154 @@ const Profile = () => {
       </AnimatePresence>
 
       {/* Subscription Card */}
-      <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200">
+      <div className={cn(
+        "rounded-xl p-6 border",
+        subscriptionState.isExpired
+          ? "bg-gradient-to-r from-red-50 to-orange-50 border-red-200"
+          : subscriptionState.isTrialing
+          ? subscriptionState.daysRemaining <= 3
+            ? "bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200"
+            : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200"
+          : subscriptionState.isActive
+          ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200"
+          : "bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200"
+      )}>
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-          <div className="p-3 bg-amber-100 rounded-xl">
-            <Crown size={28} weight="duotone" className="text-amber-600" />
+          <div className={cn(
+            "p-3 rounded-xl",
+            subscriptionState.isExpired
+              ? "bg-red-100"
+              : subscriptionState.isTrialing
+              ? subscriptionState.daysRemaining <= 3 ? "bg-orange-100" : "bg-blue-100"
+              : subscriptionState.isActive
+              ? "bg-green-100"
+              : "bg-amber-100"
+          )}>
+            {subscriptionState.isExpired ? (
+              <Warning size={28} weight="duotone" className="text-red-600" />
+            ) : subscriptionState.isTrialing ? (
+              <Clock size={28} weight="duotone" className={subscriptionState.daysRemaining <= 3 ? "text-orange-600" : "text-blue-600"} />
+            ) : subscriptionState.isActive ? (
+              <Crown size={28} weight="duotone" className="text-green-600" />
+            ) : (
+              <Crown size={28} weight="duotone" className="text-amber-600" />
+            )}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-amber-800">Free Plan</h3>
-              <span className="px-2 py-0.5 bg-amber-200 text-amber-800 text-xs font-medium rounded-full">
-                Current
+              <h3 className={cn(
+                "font-semibold",
+                subscriptionState.isExpired
+                  ? "text-red-800"
+                  : subscriptionState.isTrialing
+                  ? subscriptionState.daysRemaining <= 3 ? "text-orange-800" : "text-blue-800"
+                  : subscriptionState.isActive
+                  ? "text-green-800"
+                  : "text-amber-800"
+              )}>
+                {subscriptionState.isExpired
+                  ? "Subscription Expired"
+                  : subscriptionState.isTrialing
+                  ? `Free Trial - ${subscriptionState.daysRemaining} days left`
+                  : subscriptionState.isActive
+                  ? `Pro Plan - ${subscriptionState.daysRemaining} days left`
+                  : "Free Plan"
+                }
+              </h3>
+              <span className={cn(
+                "px-2 py-0.5 text-xs font-medium rounded-full",
+                subscriptionState.isExpired
+                  ? "bg-red-200 text-red-800"
+                  : subscriptionState.isTrialing
+                  ? subscriptionState.daysRemaining <= 3 ? "bg-orange-200 text-orange-800" : "bg-blue-200 text-blue-800"
+                  : subscriptionState.isActive
+                  ? "bg-green-200 text-green-800"
+                  : "bg-amber-200 text-amber-800"
+              )}>
+                {subscriptionState.isExpired
+                  ? "Expired"
+                  : subscriptionState.isTrialing
+                  ? "Trial"
+                  : subscriptionState.isActive
+                  ? "Active"
+                  : "Current"
+                }
               </span>
             </div>
-            <p className="text-sm text-amber-700">
-              Upgrade to Pro for unlimited invoices, advanced reports, and priority support.
+            <p className={cn(
+              "text-sm",
+              subscriptionState.isExpired
+                ? "text-red-700"
+                : subscriptionState.isTrialing
+                ? subscriptionState.daysRemaining <= 3 ? "text-orange-700" : "text-blue-700"
+                : subscriptionState.isActive
+                ? "text-green-700"
+                : "text-amber-700"
+            )}>
+              {subscriptionState.isExpired
+                ? "Your access is view-only. Upgrade to continue creating invoices and editing data."
+                : subscriptionState.isTrialing
+                ? subscriptionState.daysRemaining <= 3
+                  ? "Your trial is ending soon! Upgrade now to avoid losing access."
+                  : "Enjoy all features during your trial. Upgrade anytime to continue."
+                : subscriptionState.isActive
+                ? "You have full access to all Pro features."
+                : "Upgrade to Pro for unlimited invoices, advanced reports, and priority support."
+              }
             </p>
+
+            {/* Progress bar for trial/subscription */}
+            {(subscriptionState.isTrialing || (subscriptionState.isActive && subscriptionState.daysRemaining <= 30)) && (
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <span>Days remaining</span>
+                  <span>{subscriptionState.daysRemaining} / {subscriptionState.isTrialing ? 7 : 30}</span>
+                </div>
+                <div className="h-2 bg-white/50 rounded-full overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500",
+                      subscriptionState.daysRemaining <= 3
+                        ? "bg-gradient-to-r from-red-500 to-orange-500"
+                        : subscriptionState.isTrialing
+                        ? "bg-gradient-to-r from-blue-500 to-indigo-500"
+                        : "bg-gradient-to-r from-green-500 to-emerald-500"
+                    )}
+                    style={{
+                      width: `${Math.max(5, (subscriptionState.daysRemaining / (subscriptionState.isTrialing ? 7 : 30)) * 100)}%`
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transition-all"
-          >
-            <Lightning size={18} weight="fill" />
-            Upgrade to Pro
-          </motion.button>
+
+          {/* Action buttons */}
+          <div className="flex flex-col gap-2">
+            {!subscriptionState.isActive && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/settings?tab=subscription')}
+                className={cn(
+                  "flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transition-all text-white",
+                  subscriptionState.isExpired || subscriptionState.daysRemaining <= 3
+                    ? "bg-gradient-to-r from-red-500 to-orange-500"
+                    : "bg-gradient-to-r from-blue-500 to-indigo-500"
+                )}
+              >
+                <Lightning size={18} weight="fill" />
+                {subscriptionState.isExpired ? "Activate Now" : "Upgrade to Pro"}
+              </motion.button>
+            )}
+            <button
+              onClick={() => navigate('/settings?tab=subscription')}
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm text-slate-600 hover:text-slate-800 hover:bg-white/50 rounded-lg transition-colors"
+            >
+              <CreditCard size={16} />
+              Billing Details
+            </button>
+          </div>
         </div>
       </div>
     </div>

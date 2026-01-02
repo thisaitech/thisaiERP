@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import {
   Plus,
@@ -28,8 +29,18 @@ const Expenses = () => {
   // Language support
   const { t, language } = useLanguage()
   const { handleError } = useErrorHandler()
+  const location = useLocation()
 
   const [showNewExpense, setShowNewExpense] = useState(false)
+
+  // Handle action=new from sidebar navigation
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const actionParam = params.get('action')
+    if (actionParam === 'new') {
+      setShowNewExpense(true)
+    }
+  }, [location.search])
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedPeriod, setSelectedPeriod] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')

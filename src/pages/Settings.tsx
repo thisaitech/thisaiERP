@@ -1,5 +1,6 @@
 
-import React, { useState, useMemo, lazy, Suspense } from 'react';
+import React, { useState, useMemo, lazy, Suspense, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
   Gear,
@@ -19,6 +20,7 @@ import {
   Toolbox,
   ShareNetwork,
   Icon,
+  Crown,
 } from '@phosphor-icons/react';
 import { cn } from '../lib/utils';
 import Loading from '../components/Loading';
@@ -38,6 +40,7 @@ const ReminderSettingsSection = lazy(() => import('../components/settings/Remind
 const PartySettingsSection = lazy(() => import('../components/settings/PartySettingsSection').then(module => ({ default: module.PartySettingsSection })));
 const ItemSettingsSection = lazy(() => import('../components/settings/ItemSettingsSection').then(module => ({ default: module.ItemSettingsSection })));
 const UtilitiesSettingsSection = lazy(() => import('../components/settings/UtilitiesSettingsSection').then(module => ({ default: module.UtilitiesSettingsSection })));
+const SubscriptionSettingsSection = lazy(() => import('../components/SubscriptionSettings'));
 
 interface SettingsSection {
   id: string;
@@ -48,10 +51,20 @@ interface SettingsSection {
 
 const Settings = () => {
   const { t } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [selectedSection, setSelectedSection] = useState('general');
+
+  // Handle URL param for direct navigation (e.g., /settings?tab=subscription)
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setSelectedSection(tab);
+    }
+  }, [searchParams]);
 
   const settingsSections: SettingsSection[] = useMemo(
     () => [
+      { id: 'subscription', label: 'Subscription', icon: Crown, component: SubscriptionSettingsSection },
       { id: 'general', label: t.settings.general, icon: Gear, component: GeneralSettingsSection },
       { id: 'language', label: t.settings.languageLabel, icon: Globe, component: LanguageSettingsSection },
       { id: 'company', label: t.settings.companyInfo, icon: Building, component: CompanySettingsSection },

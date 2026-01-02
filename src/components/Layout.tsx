@@ -13,6 +13,7 @@ import { canAccessPage, PagePermissions } from '../services/permissionsService'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTheme } from '../contexts/ThemeContext'
+import { ViewOnlyBanner, SubscriptionNotification } from './SubscriptionBanner'
 
 const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -21,7 +22,7 @@ const Layout = () => {
   const [isSidebarProfileOpen, setIsSidebarProfileOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const { userData } = useAuth()
+  const { userData, subscriptionState, showSubscriptionNotification, dismissSubscriptionNotification } = useAuth()
   const userDropdownRef = useRef<HTMLDivElement>(null)
   const sidebarProfileRef = useRef<HTMLDivElement>(null)
 
@@ -347,7 +348,7 @@ const Layout = () => {
 
         {/* 1. POS Billing */}
         <button
-          onClick={() => navigate('/pos')}
+          onClick={() => navigate('/pos?action=new')}
           className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-violet-400 via-purple-500 to-fuchsia-600 flex flex-col items-center justify-center
             shadow-[0_8px_32px_rgba(139,92,246,0.4),0_4px_12px_rgba(0,0,0,0.1)]
             hover:shadow-[0_12px_40px_rgba(139,92,246,0.5)] hover:scale-105 hover:-translate-y-1
@@ -395,7 +396,7 @@ const Layout = () => {
 
         {/* 4. Add Party (Customer/Supplier) */}
         <button
-          onClick={() => navigate('/parties?action=new')}
+          onClick={() => navigate('/parties?action=add')}
           className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-pink-400 via-rose-500 to-red-600 flex flex-col items-center justify-center
             shadow-[0_8px_32px_rgba(244,63,94,0.4),0_4px_12px_rgba(0,0,0,0.1)]
             hover:shadow-[0_12px_40px_rgba(244,63,94,0.5)] hover:scale-105 hover:-translate-y-1
@@ -411,7 +412,7 @@ const Layout = () => {
 
         {/* 5. Add Product / Stock Update */}
         <button
-          onClick={() => navigate('/inventory?action=new')}
+          onClick={() => navigate('/inventory?action=add')}
           className="group relative w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-yellow-600 flex flex-col items-center justify-center
             shadow-[0_8px_32px_rgba(245,158,11,0.4),0_4px_12px_rgba(0,0,0,0.1)]
             hover:shadow-[0_12px_40px_rgba(245,158,11,0.5)] hover:scale-105 hover:-translate-y-1
@@ -578,9 +579,22 @@ const Layout = () => {
         </div>
       </div>
 
+      {/* View-only banner when subscription expired */}
+      <ViewOnlyBanner className="lg:pl-[82px]" />
+
       <main className="max-w-[1800px] mx-auto px-3 py-2 lg:pl-[82px]">
         <Outlet />
       </main>
+
+      {/* Subscription expiry notification modal */}
+      <SubscriptionNotification
+        isOpen={showSubscriptionNotification}
+        onClose={dismissSubscriptionNotification}
+        onUpgrade={() => {
+          dismissSubscriptionNotification()
+          navigate('/settings?tab=subscription')
+        }}
+      />
 
       {/* Mobile Bottom Navigation - Neumorphic */}
       <nav className="fixed bottom-0 left-0 right-0 lg:hidden z-40 p-3 bg-[#e4ebf5] dark:bg-slate-900">

@@ -158,3 +158,25 @@ export enum InvoiceTabMode {
     INVOICE = 'invoice',
     POS = 'pos'
 }
+
+// ============================================
+// SUBSCRIPTION ENUMS
+// ============================================
+
+export enum SubscriptionStatus {
+    TRIALING = 'trialing',
+    ACTIVE = 'active',
+    EXPIRED = 'expired',
+    CANCELLED = 'cancelled',
+    GRACE_PERIOD = 'grace_period'
+}
+
+export enum BillingCycle {
+    MONTHLY = 'monthly',
+    YEARLY = 'yearly'
+}
+
+export enum PaymentProvider {
+    RAZORPAY = 'razorpay',
+    MANUAL = 'manual'
+}
