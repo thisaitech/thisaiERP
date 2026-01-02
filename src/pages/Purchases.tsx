@@ -6013,7 +6013,7 @@ TOTAL:       ₹${invoice.total}
                 <User size={12} className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-400 z-10 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder={customerName || "Search customer..."}
+                  placeholder={customerName || "Search supplier..."}
                   value={customerSearch}
                   onChange={(e) => {
                     setCustomerSearch(e.target.value)
@@ -6111,7 +6111,7 @@ TOTAL:       ₹${invoice.total}
                           </div>
                         ))
                       )}
-                      {/* Add New Customer Button - At Bottom */}
+                      {/* Add New Supplier Button - At Bottom */}
                       <div
                         onMouseDown={(e) => {
                           e.preventDefault()
@@ -6122,7 +6122,7 @@ TOTAL:       ₹${invoice.total}
                         className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium cursor-pointer sticky bottom-0 bg-card"
                       >
                         <Plus size={14} weight="bold" />
-                        Add New Customer
+                        Add New Supplier
                       </div>
                     </motion.div>
                   </>
@@ -6351,7 +6351,7 @@ TOTAL:       ₹${invoice.total}
                 <div className={cn("relative", customerName ? "w-40" : "flex-1")} ref={customerDropdownRef}>
                   <input
                     type="text"
-                    placeholder="Search customer..."
+                    placeholder="Search supplier..."
                     value={customerSearch}
                     onChange={(e) => {
                       setCustomerSearch(e.target.value)
@@ -6436,7 +6436,7 @@ TOTAL:       ₹${invoice.total}
                             </div>
                           ))
                         )}
-                        {/* Add New Customer Button - At Bottom */}
+                        {/* Add New Supplier Button - At Bottom */}
                         <div
                           onMouseDown={(e) => {
                             e.preventDefault()
@@ -6447,7 +6447,7 @@ TOTAL:       ₹${invoice.total}
                           className="w-full px-4 py-2.5 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium cursor-pointer sticky bottom-0 bg-card"
                         >
                           <Plus size={14} weight="bold" />
-                          Add New Customer
+                          Add New Supplier
                         </div>
                       </motion.div>
                     </>
@@ -8717,7 +8717,7 @@ TOTAL:       ₹${invoice.total}
                     <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" />
                     <input
                       type="text"
-                      placeholder="Search customer by name, phone, or email..."
+                      placeholder="Search supplier by name, phone, or email..."
                       value={customerSearch}
                       onChange={(e) => {
                         setCustomerSearch(e.target.value)
@@ -8776,7 +8776,7 @@ TOTAL:       ₹${invoice.total}
                             </button>
                           ))
                         )}
-                        {/* Add New Customer - At Bottom */}
+                        {/* Add New Supplier - At Bottom */}
                         <button
                           type="button"
                           onClick={() => {
@@ -8786,7 +8786,7 @@ TOTAL:       ₹${invoice.total}
                           className="w-full px-4 py-3 text-left hover:bg-primary/10 border-t border-border flex items-center gap-2 text-primary font-medium sticky bottom-0 bg-card"
                         >
                           <Plus size={16} weight="bold" />
-                          Add New Customer
+                          Add New Supplier
                         </button>
                       </motion.div>
                       </>
@@ -9826,19 +9826,19 @@ TOTAL:       ₹${invoice.total}
               className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-xl shadow-2xl p-4 sm:p-6"
             >
               <div className="space-y-4">
-                <h2 className="text-xl font-bold">Add New Customer</h2>
+                <h2 className="text-xl font-bold">Add New Supplier</h2>
 
                 {/* Mandatory Fields */}
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">
-                      Customer Name <span className="text-destructive">*</span>
+                      Supplier Name <span className="text-destructive">*</span>
                     </label>
                     <input
                       type="text"
                       value={newCustomerName}
                       onChange={(e) => setNewCustomerName(validateCustomerName(e.target.value))}
-                      placeholder="Enter customer name (letters only)"
+                      placeholder="Enter supplier name (letters only)"
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                       autoFocus
                     />
@@ -9852,8 +9852,8 @@ TOTAL:       ₹${invoice.total}
                       type="tel"
                       value={newCustomerPhone}
                       onChange={(e) => setNewCustomerPhone(validatePhoneNumber(e.target.value))}
-                      placeholder="Enter phone number (e.g., +919876543210)"
-                      maxLength={16}
+                      placeholder="Enter 10-digit phone number"
+                      maxLength={10}
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                     />
                   </div>
