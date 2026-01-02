@@ -9981,7 +9981,7 @@ TOTAL:       ₹${invoice.total}
                     )}
                   </div>
 
-                  {/* Customer Type */}
+                  {/* Supplier Type */}
                   <div>
                     {!showCustomerTypeField ? (
                       <button
@@ -9989,7 +9989,7 @@ TOTAL:       ₹${invoice.total}
                         className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                       >
                         <Plus size={14} weight="bold" />
-                        Customer Type
+                        Supplier Type
                       </button>
                     ) : (
                       <motion.div
@@ -9997,7 +9997,7 @@ TOTAL:       ₹${invoice.total}
                         animate={{ opacity: 1, height: 'auto' }}
                         className="space-y-2"
                       >
-                        <label className="text-sm font-medium mb-1.5 block">Customer Type</label>
+                        <label className="text-sm font-medium mb-1.5 block">Supplier Type</label>
                         <select
                           value={newCustomerType}
                           onChange={(e) => setNewCustomerType(e.target.value)}
@@ -10005,7 +10005,7 @@ TOTAL:       ₹${invoice.total}
                         >
                           <option>Regular</option>
                           <option>Wholesale</option>
-                          <option>Retail</option>
+                          <option>Manufacturer</option>
                           <option>Distributor</option>
                         </select>
                       </motion.div>
