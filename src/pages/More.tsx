@@ -2441,42 +2441,44 @@ const More = () => {
                 <div className="p-6 space-y-5 bg-white">
                   {/* Customer & Purpose */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="relative">
+                    <div>
                       <label className="text-sm font-medium text-muted-foreground">{t.more.partyCustomer} *</label>
-                      <input
-                        type="text"
-                        value={dcSelectedCustomer ? getPartyName(dcSelectedCustomer) : dcCustomerSearch}
-                        onChange={e => {
-                          setDcCustomerSearch(e.target.value)
-                          setDcSelectedCustomer(null)
-                        }}
-                        autoComplete="new-password"
-                        data-lpignore="true"
-                        aria-autocomplete="none"
-                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
-                        placeholder={t.more.searchOrTypeParty}
-                      />
-                      {dcCustomerSearch && dcCustomerSearch.trim().length > 0 && (() => {
-                        const filteredParties = availableParties.filter(p => getPartyName(p).toLowerCase().includes(dcCustomerSearch.toLowerCase())).slice(0, 5);
-                        if (filteredParties.length === 0) return null;
-                        return (
-                          <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                            {filteredParties.map(party => (
-                              <div
-                                key={party.id}
-                                onMouseDown={() => {
-                                  setDcSelectedCustomer(party)
-                                  setDcCustomerSearch('')
-                                }}
-                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                              >
-                                <p className="font-medium">{getPartyName(party)}</p>
-                                <p className="text-xs text-gray-500">{party.phone}</p>
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      })()}
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={dcSelectedCustomer ? getPartyName(dcSelectedCustomer) : dcCustomerSearch}
+                          onChange={e => {
+                            setDcCustomerSearch(e.target.value)
+                            setDcSelectedCustomer(null)
+                          }}
+                          autoComplete="new-password"
+                          data-lpignore="true"
+                          aria-autocomplete="none"
+                          className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
+                          placeholder={t.more.searchOrTypeParty}
+                        />
+                        {dcCustomerSearch && dcCustomerSearch.trim().length > 0 && (() => {
+                          const filteredParties = availableParties.filter(p => getPartyName(p).toLowerCase().includes(dcCustomerSearch.toLowerCase())).slice(0, 5);
+                          if (filteredParties.length === 0) return null;
+                          return (
+                            <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                              {filteredParties.map(party => (
+                                <div
+                                  key={party.id}
+                                  onMouseDown={() => {
+                                    setDcSelectedCustomer(party)
+                                    setDcCustomerSearch('')
+                                  }}
+                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                >
+                                  <p className="font-medium">{getPartyName(party)}</p>
+                                  <p className="text-xs text-gray-500">{party.phone}</p>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
                       {dcSelectedCustomer && (
                         <div className="mt-1 p-2 bg-blue-50 rounded text-xs text-blue-700">
                           ✓ {getPartyName(dcSelectedCustomer)}
@@ -2510,48 +2512,50 @@ const More = () => {
                   </div>
 
                   {/* Add Item Search */}
-                  <div className="relative">
+                  <div>
                     <label className="text-sm font-medium text-muted-foreground">{t.more.addItems} *</label>
-                    <input
-                      type="text"
-                      value={dcItemSearch}
-                      onChange={e => setDcItemSearch(e.target.value)}
-                      autoComplete="new-password"
-                      data-lpignore="true"
-                      aria-autocomplete="none"
-                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
-                      placeholder={t.more.searchItems}
-                    />
-                    {dcItemSearch.trim().length > 0 && (() => {
-                      const filteredItems = availableItems.filter(item => item.name.toLowerCase().includes(dcItemSearch.toLowerCase())).slice(0, 8);
-                      if (filteredItems.length === 0) return null;
-                      return (
-                        <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                          {filteredItems.map(item => (
-                            <div
-                              key={item.id}
-                              onMouseDown={() => {
-                                setDcItems([...dcItems, {
-                                  itemId: item.id,
-                                  name: item.name,
-                                  hsnCode: item.hsnCode,
-                                  qty: 1,
-                                  unit: item.unit || 'PCS',
-                                  rate: item.sellingPrice || 0
-                                }])
-                                setDcItemSearch('')
-                              }}
-                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
-                            >
-                              <div>
-                                <p className="font-medium">{item.name}</p>
-                                <p className="text-xs text-gray-500">Stock: {item.stock} {item.unit}</p>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={dcItemSearch}
+                        onChange={e => setDcItemSearch(e.target.value)}
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        aria-autocomplete="none"
+                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
+                        placeholder={t.more.searchItems}
+                      />
+                      {dcItemSearch.trim().length > 0 && (() => {
+                        const filteredItems = availableItems.filter(item => item.name.toLowerCase().includes(dcItemSearch.toLowerCase())).slice(0, 8);
+                        if (filteredItems.length === 0) return null;
+                        return (
+                          <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                            {filteredItems.map(item => (
+                              <div
+                                key={item.id}
+                                onMouseDown={() => {
+                                  setDcItems([...dcItems, {
+                                    itemId: item.id,
+                                    name: item.name,
+                                    hsnCode: item.hsnCode,
+                                    qty: 1,
+                                    unit: item.unit || 'PCS',
+                                    rate: item.sellingPrice || 0
+                                  }])
+                                  setDcItemSearch('')
+                                }}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
+                              >
+                                <div>
+                                  <p className="font-medium">{item.name}</p>
+                                  <p className="text-xs text-gray-500">Stock: {item.stock} {item.unit}</p>
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })()}
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
 
                   {/* Items Table */}
@@ -2766,42 +2770,44 @@ const More = () => {
                 <div className="p-6 space-y-5 bg-white">
                   {/* Customer Selection */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="relative">
+                    <div>
                       <label className="text-sm font-medium text-muted-foreground">{t.more.selectCustomer} *</label>
-                      <input
-                        type="text"
-                        value={piSelectedCustomer ? getPartyName(piSelectedCustomer) : piCustomerSearch}
-                        onChange={e => {
-                          setPiCustomerSearch(e.target.value)
-                          setPiSelectedCustomer(null)
-                        }}
-                        autoComplete="new-password"
-                        data-lpignore="true"
-                        aria-autocomplete="none"
-                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
-                        placeholder={t.more.searchCustomer}
-                      />
-                      {piCustomerSearch && piCustomerSearch.trim().length > 0 && (() => {
-                        const filteredParties = availableParties.filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase())).slice(0, 5);
-                        if (filteredParties.length === 0) return null;
-                        return (
-                          <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                            {filteredParties.map(party => (
-                              <div
-                                key={party.id}
-                                onMouseDown={() => {
-                                  setPiSelectedCustomer(party)
-                                  setPiCustomerSearch('')
-                                }}
-                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                              >
-                                <p className="font-medium">{getPartyName(party)}</p>
-                                <p className="text-xs text-gray-500">{party.phone} • {party.billingAddress?.state}</p>
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      })()}
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={piSelectedCustomer ? getPartyName(piSelectedCustomer) : piCustomerSearch}
+                          onChange={e => {
+                            setPiCustomerSearch(e.target.value)
+                            setPiSelectedCustomer(null)
+                          }}
+                          autoComplete="new-password"
+                          data-lpignore="true"
+                          aria-autocomplete="none"
+                          className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
+                          placeholder={t.more.searchCustomer}
+                        />
+                        {piCustomerSearch && piCustomerSearch.trim().length > 0 && (() => {
+                          const filteredParties = availableParties.filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase())).slice(0, 5);
+                          if (filteredParties.length === 0) return null;
+                          return (
+                            <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                              {filteredParties.map(party => (
+                                <div
+                                  key={party.id}
+                                  onMouseDown={() => {
+                                    setPiSelectedCustomer(party)
+                                    setPiCustomerSearch('')
+                                  }}
+                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                >
+                                  <p className="font-medium">{getPartyName(party)}</p>
+                                  <p className="text-xs text-gray-500">{party.phone} • {party.billingAddress?.state}</p>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
                       {piSelectedCustomer && (
                         <div className="mt-1 p-2 bg-green-50 rounded text-xs text-green-700">
                           ✓ {getPartyName(piSelectedCustomer)} | {piSelectedCustomer.gstDetails?.gstin || t.more.noGstin} | {piSelectedCustomer.billingAddress?.state}
@@ -2825,58 +2831,61 @@ const More = () => {
                   </div>
 
                   {/* Add Item Search */}
-                  <div className="relative">
+                  <div>
                     <label className="text-sm font-medium text-muted-foreground">{t.more.addItems} *</label>
-                    <input
-                      type="text"
-                      value={piItemSearch}
-                      onChange={e => setPiItemSearch(e.target.value)}
-                      autoComplete="new-password"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck={false}
-                      data-form-type="other"
-                      data-lpignore="true"
-                      aria-autocomplete="none"
-                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
-                      placeholder={t.more.searchItemsHsn}
-                    />
-                    {piItemSearch.trim().length > 0 && availableItems.filter(item =>
-                      item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
-                      (item.hsnCode && item.hsnCode.includes(piItemSearch))
-                    ).slice(0, 8).length > 0 && (
-                      <div className="absolute left-0 right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                        {availableItems.filter(item =>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={piItemSearch}
+                        onChange={e => setPiItemSearch(e.target.value)}
+                        autoComplete="new-password"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck={false}
+                        data-form-type="other"
+                        data-lpignore="true"
+                        aria-autocomplete="none"
+                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
+                        placeholder={t.more.searchItemsHsn}
+                      />
+                      {piItemSearch.trim().length > 0 && (() => {
+                        const filtered = availableItems.filter(item =>
                           item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
                           (item.hsnCode && item.hsnCode.includes(piItemSearch))
-                        ).slice(0, 8).map(item => (
-                          <div
-                            key={item.id}
-                            onMouseDown={() => {
-                              const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0)
-                              setPiItems([...piItems, {
-                                itemId: item.id,
-                                name: item.name,
-                                hsnCode: item.hsnCode,
-                                qty: 1,
-                                rate: item.sellingPrice || item.mrp || 0,
-                                discount: 0,
-                                tax: taxRate || 18,
-                                unit: item.unit || 'PCS'
-                              }])
-                              setPiItemSearch('')
-                            }}
-                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
-                          >
-                            <div>
-                              <p className="font-medium">{item.name}</p>
-                              <p className="text-xs text-gray-500">HSN: {item.hsnCode || 'N/A'} • {item.unit}</p>
-                            </div>
-                            <p className="text-blue-600 font-medium">₹{item.sellingPrice || item.mrp || 0}</p>
+                        ).slice(0, 8);
+                        if (filtered.length === 0) return null;
+                        return (
+                          <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                            {filtered.map(item => (
+                              <div
+                                key={item.id}
+                                onMouseDown={() => {
+                                  const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0)
+                                  setPiItems([...piItems, {
+                                    itemId: item.id,
+                                    name: item.name,
+                                    hsnCode: item.hsnCode,
+                                    qty: 1,
+                                    rate: item.sellingPrice || item.mrp || 0,
+                                    discount: 0,
+                                    tax: taxRate || 18,
+                                    unit: item.unit || 'PCS'
+                                  }])
+                                  setPiItemSearch('')
+                                }}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
+                              >
+                                <div>
+                                  <p className="font-medium">{item.name}</p>
+                                  <p className="text-xs text-gray-500">HSN: {item.hsnCode || 'N/A'} • {item.unit}</p>
+                                </div>
+                                <p className="text-blue-600 font-medium">₹{item.sellingPrice || item.mrp || 0}</p>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        );
+                      })()}
+                    </div>
                   </div>
 
                   {/* Items Table */}

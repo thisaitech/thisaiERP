@@ -9805,7 +9805,7 @@ TOTAL:       ₹${invoice.total}
         )}
       </AnimatePresence>
 
-      {/* Add Customer Modal - Matching Parties page design */}
+      {/* Add Supplier Modal - Matching Parties page design */}
       <AnimatePresence>
         {showAddCustomerModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -10124,7 +10124,7 @@ TOTAL:       ₹${invoice.total}
                         Saving...
                       </>
                     ) : (
-                      'Add Customer'
+                      'Add Supplier'
                     )}
                   </button>
                 </div>
