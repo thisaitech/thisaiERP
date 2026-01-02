@@ -78,7 +78,8 @@ export const validateCustomerName = (value: string): string => {
   // SECURITY: First sanitize against XSS
   const sanitized = sanitizeXSS(value)
   // Allow only letters, spaces, and . ' -
-  return sanitized.replace(/[^a-zA-Z\s.'\-]/g, '').trim()
+  // Note: Don't trim() here as it prevents typing spaces between words
+  return sanitized.replace(/[^a-zA-Z\s.'\-]/g, '')
 }
 
 /**
