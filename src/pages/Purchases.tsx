@@ -1815,7 +1815,7 @@ const Sales = () => {
       const openingBal = parseFloat(newCustomerOpeningBalance) || 0
       const newParty = await createParty({
         name: newCustomerName.trim(),
-        type: 'customer',
+        type: 'supplier',
         phone: newCustomerPhone.trim() || undefined,
         email: newCustomerEmail.trim() || undefined,
         gstin: newCustomerGST.trim() || undefined,
