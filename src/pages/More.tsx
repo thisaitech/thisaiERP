@@ -2405,7 +2405,7 @@ const More = () => {
           ))}
         </div>
 
-        {/* Create Delivery Challan Modal */}
+        {/* Create Delivery Challan Modal - Rebuilt with Select dropdowns */}
         <AnimatePresence>
           {showCreateModal && selectedModule === 'delivery-challan' && (
             <motion.div
@@ -2437,51 +2437,27 @@ const More = () => {
                     </button>
                   </div>
                 </div>
-                
-                <div className="p-6 space-y-5 bg-white">
-                  {/* Customer & Purpose */}
+
+                <div className="p-6 space-y-5">
+                  {/* Customer & Purpose - Using Select Dropdowns */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">{t.more.partyCustomer} *</label>
-                      <input
-                        type="text"
-                        name="dc-customer-search-field"
-                        value={dcSelectedCustomer ? getPartyName(dcSelectedCustomer) : dcCustomerSearch}
+                      <label className="text-sm font-medium text-gray-700">{t.more.partyCustomer} *</label>
+                      <select
+                        value={dcSelectedCustomer?.id || ''}
                         onChange={e => {
-                          setDcCustomerSearch(e.target.value)
-                          setDcSelectedCustomer(null)
+                          const party = availableParties.find(p => p.id === e.target.value)
+                          setDcSelectedCustomer(party || null)
                         }}
-                        autoComplete="off"
-                        data-lpignore="true"
-                        data-1p-ignore="true"
-                        aria-autocomplete="none"
-                        list=""
-                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
-                        placeholder={t.more.searchOrTypeParty}
-                      />
-                      {dcCustomerSearch && dcCustomerSearch.trim().length > 0 && (() => {
-                        const filteredParties = availableParties.filter(p => getPartyName(p).toLowerCase().includes(dcCustomerSearch.toLowerCase())).slice(0, 5);
-                        if (filteredParties.length === 0) return null;
-                        return (
-                          <div className="relative">
-                            <div className="absolute left-0 right-0 top-0 z-[9999] bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                              {filteredParties.map(party => (
-                                <div
-                                  key={party.id}
-                                  onMouseDown={() => {
-                                    setDcSelectedCustomer(party)
-                                    setDcCustomerSearch('')
-                                  }}
-                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                                >
-                                  <p className="font-medium">{getPartyName(party)}</p>
-                                  <p className="text-xs text-gray-500">{party.phone}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">{t.more.searchOrTypeParty}</option>
+                        {availableParties.map(party => (
+                          <option key={party.id} value={party.id}>
+                            {getPartyName(party)} {party.phone ? `(${party.phone})` : ''}
+                          </option>
+                        ))}
+                      </select>
                       {dcSelectedCustomer && (
                         <div className="mt-1 p-2 bg-blue-50 rounded text-xs text-blue-700">
                           ✓ {getPartyName(dcSelectedCustomer)}
@@ -2489,11 +2465,11 @@ const More = () => {
                       )}
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">{t.more.purpose} *</label>
+                      <label className="text-sm font-medium text-gray-700">{t.more.purpose} *</label>
                       <select
                         value={dcPurpose}
                         onChange={e => setDcPurpose(e.target.value as ChallanPurpose)}
-                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         {Object.entries(CHALLAN_PURPOSE_LABELS).map(([key, label]) => (
                           <option key={key} value={key}>{label}</option>
@@ -2504,82 +2480,61 @@ const More = () => {
 
                   {/* Reference */}
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">{t.more.reference}</label>
+                    <label className="text-sm font-medium text-gray-700">{t.more.reference}</label>
                     <input
                       type="text"
                       value={dcReference}
                       onChange={e => setDcReference(e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="e.g., PO-2025-001 or Order Ref"
                     />
                   </div>
 
-                  {/* Add Item Search */}
+                  {/* Add Item - Using Select Dropdown */}
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">{t.more.addItems} *</label>
-                    <input
-                      type="text"
-                      name="dc-item-search-field"
-                      value={dcItemSearch}
-                      onChange={e => setDcItemSearch(e.target.value)}
-                      autoComplete="off"
-                      data-lpignore="true"
-                      data-1p-ignore="true"
-                      aria-autocomplete="none"
-                      list=""
-                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
-                      placeholder={t.more.searchItems}
-                    />
-                    {dcItemSearch.trim().length > 0 && (() => {
-                      const filteredItems = availableItems.filter(item => item.name.toLowerCase().includes(dcItemSearch.toLowerCase())).slice(0, 8);
-                      if (filteredItems.length === 0) return null;
-                      return (
-                        <div className="relative">
-                          <div className="absolute left-0 right-0 top-0 z-[9999] bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                            {filteredItems.map(item => (
-                              <div
-                                key={item.id}
-                                onMouseDown={() => {
-                                  setDcItems([...dcItems, {
-                                    itemId: item.id,
-                                    name: item.name,
-                                    hsnCode: item.hsnCode,
-                                    qty: 1,
-                                    unit: item.unit || 'PCS',
-                                    rate: item.sellingPrice || 0
-                                  }])
-                                  setDcItemSearch('')
-                                }}
-                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
-                              >
-                                <div>
-                                  <p className="font-medium">{item.name}</p>
-                                  <p className="text-xs text-gray-500">Stock: {item.stock} {item.unit}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    <label className="text-sm font-medium text-gray-700">{t.more.addItems} *</label>
+                    <select
+                      value=""
+                      onChange={e => {
+                        const item = availableItems.find(i => i.id === e.target.value)
+                        if (item) {
+                          setDcItems([...dcItems, {
+                            itemId: item.id,
+                            name: item.name,
+                            hsnCode: item.hsnCode,
+                            qty: 1,
+                            unit: item.unit || 'PCS',
+                            rate: item.sellingPrice || 0
+                          }])
+                        }
+                      }}
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">{t.more.searchItems}</option>
+                      {availableItems.map(item => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} (Stock: {item.stock} {item.unit || 'PCS'})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Items Table */}
-                  {dcItems.length > 0 && (
-                    <div className="border rounded-lg overflow-hidden">
+                  {dcItems.length > 0 ? (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
                       <table className="w-full text-sm">
                         <thead className="bg-blue-50">
                           <tr>
-                            <th className="text-left p-2 font-medium">Item</th>
-                            <th className="text-center p-2 font-medium w-20">Qty</th>
-                            <th className="text-center p-2 font-medium w-20">Unit</th>
-                            <th className="text-right p-2 font-medium w-24">Rate (Optional)</th>
+                            <th className="text-left p-2 font-medium text-gray-700">Item</th>
+                            <th className="text-center p-2 font-medium text-gray-700 w-20">Qty</th>
+                            <th className="text-center p-2 font-medium text-gray-700 w-20">Unit</th>
+                            <th className="text-right p-2 font-medium text-gray-700 w-24">Rate</th>
                             <th className="w-8"></th>
                           </tr>
                         </thead>
                         <tbody>
                           {dcItems.map((item, i) => (
-                            <tr key={i} className="border-t">
+                            <tr key={i} className="border-t border-gray-200">
                               <td className="p-2">
                                 <input
                                   type="text"
@@ -2589,9 +2544,9 @@ const More = () => {
                                     updated[i].name = e.target.value
                                     setDcItems(updated)
                                   }}
-                                  className="w-full px-2 py-1 border rounded text-sm"
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                 />
-                                {item.hsnCode && <span className="text-xs text-muted-foreground">HSN: {item.hsnCode}</span>}
+                                {item.hsnCode && <span className="text-xs text-gray-500">HSN: {item.hsnCode}</span>}
                               </td>
                               <td className="p-2">
                                 <input
@@ -2602,7 +2557,7 @@ const More = () => {
                                     updated[i].qty = parseInt(e.target.value) || 1
                                     setDcItems(updated)
                                   }}
-                                  className="w-full px-2 py-1 border rounded text-sm text-center"
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-center"
                                   min="1"
                                 />
                               </td>
@@ -2614,7 +2569,7 @@ const More = () => {
                                     updated[i].unit = e.target.value
                                     setDcItems(updated)
                                   }}
-                                  className="w-full px-1 py-1 border rounded text-sm"
+                                  className="w-full px-1 py-1 border border-gray-300 rounded text-sm"
                                 >
                                   <option value="PCS">PCS</option>
                                   <option value="KGS">KGS</option>
@@ -2633,7 +2588,7 @@ const More = () => {
                                     updated[i].rate = parseFloat(e.target.value) || 0
                                     setDcItems(updated)
                                   }}
-                                  className="w-full px-2 py-1 border rounded text-sm text-right"
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-right"
                                   placeholder="₹"
                                 />
                               </td>
@@ -2650,18 +2605,17 @@ const More = () => {
                         </tbody>
                       </table>
                     </div>
-                  )}
-
-                  {dcItems.length === 0 && (
-                    <div className="py-8 border-2 border-dashed border-muted-foreground/30 rounded-lg text-center text-muted-foreground">
-                      <p className="text-sm">Search and add items to deliver</p>
+                  ) : (
+                    <div className="py-6 border-2 border-dashed border-gray-300 rounded-lg text-center bg-gray-50">
+                      <Truck size={28} className="mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">Select items from the dropdown above</p>
                     </div>
                   )}
 
                   {/* Summary */}
                   {dcItems.length > 0 && (
                     <div className="bg-blue-50 rounded-lg p-3 flex justify-between items-center">
-                      <span className="font-medium">Total Quantity:</span>
+                      <span className="font-medium text-gray-700">Total Quantity:</span>
                       <span className="text-xl font-bold text-blue-600">
                         {dcItems.reduce((sum, item) => sum + item.qty, 0)} items
                       </span>
@@ -2669,38 +2623,38 @@ const More = () => {
                   )}
 
                   {/* Transport Details */}
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                  <div className="border-t border-gray-200 pt-4">
+                    <h4 className="font-medium text-sm mb-3 flex items-center gap-2 text-gray-700">
                       <Truck size={16} /> {t.more.transporterName} ({t.common.optional})
                     </h4>
                     <div className="grid grid-cols-3 gap-3">
                       <div>
-                        <label className="text-xs text-muted-foreground">{t.more.vehicleNumber}</label>
+                        <label className="text-xs text-gray-500">{t.more.vehicleNumber}</label>
                         <input
                           type="text"
                           value={dcVehicleNo}
                           onChange={e => setDcVehicleNo(e.target.value.toUpperCase())}
-                          className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
+                          className="w-full mt-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="MH04 AB 1234"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-muted-foreground">{t.more.transporterName}</label>
+                        <label className="text-xs text-gray-500">{t.more.transporterName}</label>
                         <input
                           type="text"
                           value={dcTransporterName}
                           onChange={e => setDcTransporterName(e.target.value)}
-                          className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
+                          className="w-full mt-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="ABC Logistics"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-muted-foreground">{t.more.driverName}</label>
+                        <label className="text-xs text-gray-500">{t.more.driverName}</label>
                         <input
                           type="text"
                           value={dcDriverName}
                           onChange={e => setDcDriverName(e.target.value)}
-                          className="w-full mt-1 px-2 py-1.5 border rounded text-sm"
+                          className="w-full mt-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder={t.more.driverName}
                         />
                       </div>
@@ -2709,21 +2663,22 @@ const More = () => {
 
                   {/* Remarks */}
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">{t.more.remarks}</label>
+                    <label className="text-sm font-medium text-gray-700">{t.more.remarks}</label>
                     <textarea
                       value={dcRemarks}
                       onChange={e => setDcRemarks(e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       rows={2}
                       placeholder={t.more.additionalNotes}
                     />
                   </div>
                 </div>
 
-                <div className="p-4 border-t border-border flex gap-3 bg-muted/30">
+                {/* Footer */}
+                <div className="p-4 border-t border-gray-200 flex gap-3 bg-gray-50">
                   <button
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 px-4 py-2.5 border rounded-lg text-sm font-medium hover:bg-muted"
+                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100"
                   >
                     {t.common.cancel}
                   </button>
@@ -2740,7 +2695,7 @@ const More = () => {
           )}
         </AnimatePresence>
 
-        {/* Create Proforma Invoice Modal */}
+        {/* Create Proforma Invoice Modal - Rebuilt with Select dropdowns */}
         <AnimatePresence>
           {showCreateModal && selectedModule === 'proforma' && (
             <motion.div
@@ -2757,7 +2712,7 @@ const More = () => {
                 className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                 onClick={e => e.stopPropagation()}
               >
-                {/* Header with Proforma Badge */}
+                {/* Header */}
                 <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-red-500 to-orange-500">
                   <div className="flex items-center justify-between">
                     <div>
@@ -2773,145 +2728,92 @@ const More = () => {
                   </div>
                 </div>
 
-                <div className="p-6 space-y-5 bg-white">
-                  {/* Customer Selection */}
+                <div className="p-6 space-y-5">
+                  {/* Customer Selection - Using Select Dropdown */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">{t.more.selectCustomer} *</label>
-                      <input
-                        type="text"
-                        name="pi-customer-search-field"
-                        value={piSelectedCustomer ? getPartyName(piSelectedCustomer) : piCustomerSearch}
+                      <label className="text-sm font-medium text-gray-700">{t.more.selectCustomer} *</label>
+                      <select
+                        value={piSelectedCustomer?.id || ''}
                         onChange={e => {
-                          setPiCustomerSearch(e.target.value)
-                          setPiSelectedCustomer(null)
+                          const party = availableParties.find(p => p.id === e.target.value)
+                          setPiSelectedCustomer(party || null)
                         }}
-                        autoComplete="off"
-                        data-lpignore="true"
-                        data-1p-ignore="true"
-                        aria-autocomplete="none"
-                        list=""
-                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
-                        placeholder={t.more.searchCustomer}
-                      />
-                      {piCustomerSearch && piCustomerSearch.trim().length > 0 && (() => {
-                        const filteredParties = availableParties.filter(p => getPartyName(p).toLowerCase().includes(piCustomerSearch.toLowerCase())).slice(0, 5);
-                        if (filteredParties.length === 0) return null;
-                        return (
-                          <div className="relative">
-                            <div className="absolute left-0 right-0 top-0 z-[9999] bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                              {filteredParties.map(party => (
-                                <div
-                                  key={party.id}
-                                  onMouseDown={() => {
-                                    setPiSelectedCustomer(party)
-                                    setPiCustomerSearch('')
-                                  }}
-                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                                >
-                                  <p className="font-medium">{getPartyName(party)}</p>
-                                  <p className="text-xs text-gray-500">{party.phone} • {party.billingAddress?.state}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="">{t.more.searchCustomer}</option>
+                        {availableParties.map(party => (
+                          <option key={party.id} value={party.id}>
+                            {getPartyName(party)} {party.phone ? `(${party.phone})` : ''}
+                          </option>
+                        ))}
+                      </select>
                       {piSelectedCustomer && (
                         <div className="mt-1 p-2 bg-green-50 rounded text-xs text-green-700">
-                          ✓ {getPartyName(piSelectedCustomer)} | {piSelectedCustomer.gstDetails?.gstin || t.more.noGstin} | {piSelectedCustomer.billingAddress?.state}
+                          ✓ {getPartyName(piSelectedCustomer)} | {piSelectedCustomer.gstDetails?.gstin || t.more.noGstin} | {piSelectedCustomer.billingAddress?.state || 'N/A'}
                         </div>
                       )}
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">{t.more.validFor}</label>
+                      <label className="text-sm font-medium text-gray-700">{t.more.validFor}</label>
                       <div className="flex items-center gap-2 mt-1">
                         <input
                           type="number"
                           value={piValidDays}
                           onChange={e => setPiValidDays(parseInt(e.target.value) || 15)}
-                          className="w-20 px-3 py-2 border rounded-lg text-sm text-center"
+                          className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm text-center focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                           min="1"
                           max="90"
                         />
-                        <span className="text-sm text-muted-foreground">{t.more.days}</span>
+                        <span className="text-sm text-gray-500">{t.more.days}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Add Item Search */}
+                  {/* Add Item - Using Select Dropdown */}
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">{t.more.addItems} *</label>
-                    <input
-                      type="text"
-                      name="pi-item-search-field"
-                      value={piItemSearch}
-                      onChange={e => setPiItemSearch(e.target.value)}
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck={false}
-                      data-form-type="other"
-                      data-lpignore="true"
-                      data-1p-ignore="true"
-                      aria-autocomplete="none"
-                      list=""
-                      className="w-full mt-1 px-3 py-2 border rounded-lg text-sm bg-white"
-                      placeholder={t.more.searchItemsHsn}
-                    />
-                    {piItemSearch.trim().length > 0 && (() => {
-                      const filtered = availableItems.filter(item =>
-                        item.name.toLowerCase().includes(piItemSearch.toLowerCase()) ||
-                        (item.hsnCode && item.hsnCode.includes(piItemSearch))
-                      ).slice(0, 8);
-                      if (filtered.length === 0) return null;
-                      return (
-                        <div className="relative">
-                          <div className="absolute left-0 right-0 top-0 z-[9999] bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                            {filtered.map(item => (
-                              <div
-                                key={item.id}
-                                onMouseDown={() => {
-                                  const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0)
-                                  setPiItems([...piItems, {
-                                    itemId: item.id,
-                                    name: item.name,
-                                    hsnCode: item.hsnCode,
-                                    qty: 1,
-                                    rate: item.sellingPrice || item.mrp || 0,
-                                    discount: 0,
-                                    tax: taxRate || 18,
-                                    unit: item.unit || 'PCS'
-                                  }])
-                                  setPiItemSearch('')
-                                }}
-                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm flex justify-between"
-                              >
-                                <div>
-                                  <p className="font-medium">{item.name}</p>
-                                  <p className="text-xs text-gray-500">HSN: {item.hsnCode || 'N/A'} • {item.unit}</p>
-                                </div>
-                                <p className="text-blue-600 font-medium">₹{item.sellingPrice || item.mrp || 0}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    <label className="text-sm font-medium text-gray-700">{t.more.addItems} *</label>
+                    <select
+                      value=""
+                      onChange={e => {
+                        const item = availableItems.find(i => i.id === e.target.value)
+                        if (item) {
+                          const taxRate = (item.tax?.cgst || 0) + (item.tax?.sgst || 0) + (item.tax?.igst || 0)
+                          setPiItems([...piItems, {
+                            itemId: item.id,
+                            name: item.name,
+                            hsnCode: item.hsnCode,
+                            qty: 1,
+                            rate: item.sellingPrice || item.mrp || 0,
+                            discount: 0,
+                            tax: taxRate || 18,
+                            unit: item.unit || 'PCS'
+                          }])
+                        }
+                      }}
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="">{t.more.searchItemsHsn}</option>
+                      {availableItems.map(item => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} - ₹{item.sellingPrice || item.mrp || 0} (HSN: {item.hsnCode || 'N/A'})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Items Table */}
-                  {piItems.length > 0 && (
-                    <div className="border rounded-lg overflow-hidden">
+                  {piItems.length > 0 ? (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
                       <table className="w-full text-sm">
-                        <thead className="bg-muted/50">
+                        <thead className="bg-gray-50">
                           <tr>
-                            <th className="text-left p-2 font-medium">Item</th>
-                            <th className="text-center p-2 font-medium w-16">Qty</th>
-                            <th className="text-right p-2 font-medium w-20">Rate</th>
-                            <th className="text-center p-2 font-medium w-16">Disc%</th>
-                            <th className="text-center p-2 font-medium w-16">GST%</th>
-                            <th className="text-right p-2 font-medium w-24">Amount</th>
+                            <th className="text-left p-2 font-medium text-gray-700">Item</th>
+                            <th className="text-center p-2 font-medium text-gray-700 w-16">Qty</th>
+                            <th className="text-right p-2 font-medium text-gray-700 w-20">Rate</th>
+                            <th className="text-center p-2 font-medium text-gray-700 w-16">Disc%</th>
+                            <th className="text-center p-2 font-medium text-gray-700 w-16">GST%</th>
+                            <th className="text-right p-2 font-medium text-gray-700 w-24">Amount</th>
                             <th className="w-8"></th>
                           </tr>
                         </thead>
@@ -2923,7 +2825,7 @@ const More = () => {
                             const taxAmt = taxable * (item.tax / 100)
                             const amount = taxable + taxAmt
                             return (
-                              <tr key={i} className="border-t">
+                              <tr key={i} className="border-t border-gray-200">
                                 <td className="p-2">
                                   <input
                                     type="text"
@@ -2933,9 +2835,9 @@ const More = () => {
                                       updated[i].name = e.target.value
                                       setPiItems(updated)
                                     }}
-                                    className="w-full px-2 py-1 border rounded text-sm"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                   />
-                                  {item.hsnCode && <span className="text-xs text-muted-foreground">HSN: {item.hsnCode}</span>}
+                                  {item.hsnCode && <span className="text-xs text-gray-500">HSN: {item.hsnCode}</span>}
                                 </td>
                                 <td className="p-2">
                                   <input
@@ -2946,7 +2848,7 @@ const More = () => {
                                       updated[i].qty = parseInt(e.target.value) || 1
                                       setPiItems(updated)
                                     }}
-                                    className="w-full px-2 py-1 border rounded text-sm text-center"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-center"
                                     min="1"
                                   />
                                 </td>
@@ -2959,7 +2861,7 @@ const More = () => {
                                       updated[i].rate = parseFloat(e.target.value) || 0
                                       setPiItems(updated)
                                     }}
-                                    className="w-full px-2 py-1 border rounded text-sm text-right"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-right"
                                   />
                                 </td>
                                 <td className="p-2">
@@ -2971,7 +2873,7 @@ const More = () => {
                                       updated[i].discount = parseFloat(e.target.value) || 0
                                       setPiItems(updated)
                                     }}
-                                    className="w-full px-2 py-1 border rounded text-sm text-center"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-center"
                                     min="0"
                                     max="100"
                                   />
@@ -2984,7 +2886,7 @@ const More = () => {
                                       updated[i].tax = parseFloat(e.target.value)
                                       setPiItems(updated)
                                     }}
-                                    className="w-full px-1 py-1 border rounded text-sm"
+                                    className="w-full px-1 py-1 border border-gray-300 rounded text-sm"
                                   >
                                     <option value={0}>0%</option>
                                     <option value={5}>5%</option>
@@ -3008,12 +2910,10 @@ const More = () => {
                         </tbody>
                       </table>
                     </div>
-                  )}
-
-                  {piItems.length === 0 && (
-                    <div className="py-4 border-2 border-dashed border-gray-300 rounded-lg text-center bg-gray-50">
-                      <Receipt size={24} className="mx-auto text-gray-400 mb-1" />
-                      <p className="text-sm text-gray-500">Search and add items above</p>
+                  ) : (
+                    <div className="py-6 border-2 border-dashed border-gray-300 rounded-lg text-center bg-gray-50">
+                      <Receipt size={28} className="mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">Select items from the dropdown above</p>
                     </div>
                   )}
 
@@ -3029,7 +2929,7 @@ const More = () => {
                     }, 0)
                     const grandTotal = Math.round(taxable + tax)
                     const balance = grandTotal - piAdvance
-                    
+
                     return (
                       <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 space-y-2">
                         <div className="flex justify-between text-sm">
@@ -3052,7 +2952,7 @@ const More = () => {
                         </div>
                         <div className="flex justify-between font-bold text-lg border-t pt-2">
                           <span>{t.more.grandTotal}:</span>
-                          <span className="text-accent">₹{grandTotal.toLocaleString()}</span>
+                          <span className="text-orange-600">₹{grandTotal.toLocaleString()}</span>
                         </div>
                         <div className="pt-2 border-t">
                           <div className="flex items-center gap-2">
@@ -3061,7 +2961,7 @@ const More = () => {
                               type="number"
                               value={piAdvance}
                               onChange={e => setPiAdvance(parseFloat(e.target.value) || 0)}
-                              className="w-28 px-2 py-1 border rounded text-sm text-right"
+                              className="w-28 px-2 py-1 border border-gray-300 rounded text-sm text-right"
                             />
                           </div>
                           {piAdvance > 0 && (
@@ -3071,7 +2971,7 @@ const More = () => {
                             </div>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground italic pt-1">
+                        <p className="text-xs text-gray-500 italic pt-1">
                           {numberToWords(grandTotal)}
                         </p>
                       </div>
@@ -3081,31 +2981,32 @@ const More = () => {
                   {/* Terms & Notes */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">{t.more.notes}</label>
+                      <label className="text-sm font-medium text-gray-700">{t.more.notes}</label>
                       <textarea
                         value={piNotes}
                         onChange={e => setPiNotes(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                         rows={3}
                         placeholder={t.more.additionalNotes}
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">{t.more.termsConditions}</label>
+                      <label className="text-sm font-medium text-gray-700">{t.more.termsConditions}</label>
                       <textarea
                         value={piTerms}
                         onChange={e => setPiTerms(e.target.value)}
-                        className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                         rows={3}
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 border-t border-border flex gap-3 bg-muted/30">
+                {/* Footer */}
+                <div className="p-4 border-t border-gray-200 flex gap-3 bg-gray-50">
                   <button
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 px-4 py-2.5 border rounded-lg text-sm font-medium hover:bg-muted"
+                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100"
                   >
                     {t.common.cancel}
                   </button>
