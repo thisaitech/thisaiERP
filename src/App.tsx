@@ -49,116 +49,130 @@ function App() {
         // Initialize IndexedDB
         await initOfflineDB()
         console.log('✅ Offline database ready')
-        
+
         // Initialize sync service
         initSyncService()
         console.log('✅ Sync service initialized')
-        
+
       } catch (error) {
         console.error('Failed to initialize offline services:', error)
       }
     }
-    
+
     initOfflineServices()
+  }, [])
+
+  // Prevent mouse wheel from changing number input values globally
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'number') {
+        // Blur the input to prevent value change, or just prevent default
+        target.blur()
+      }
+    }
+
+    document.addEventListener('wheel', handleWheel, { passive: false })
+    return () => document.removeEventListener('wheel', handleWheel)
   }, [])
   return (
     <Router>
       <ThemeProvider>
-      <LanguageProvider>
-      <POSSessionProvider>
-      <AuthProvider>
-        <AIAssistantProvider>
-          <CelebrationProvider>
-          <div className="min-h-screen bg-background text-foreground overflow-x-hidden max-w-[100vw]">
-          <PWAUpdateReady />
-          <ToastCleaner />
-          <OfflineIndicator position="bottom-left" />
-          <Toaster
-            position="top-center"
-            richColors
-            closeButton
-            duration={3000}
-            visibleToasts={1}
-            toastOptions={{
-              className: 'font-medium',
-              style: {
-                background: 'white',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)',
-              }
-            }}
-          />
-          <HotToaster
-            position="top-center"
-            toastOptions={{
-              className: 'font-medium',
-              style: {
-                background: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: '0.5rem',
-                padding: '16px',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#10b981',
-                  secondary: 'white',
-                },
-              },
-            }}
-          />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/setup" element={<Setup />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              {/* All routes use pageKey for permission checking (configured in Settings > Page Permissions) */}
-              <Route index element={<ProtectedRoute pageKey="dashboard"><Dashboard /></ProtectedRoute>} />
-              <Route path="sales" element={<ProtectedRoute pageKey="sales"><Sales /></ProtectedRoute>} />
-              <Route path="pos" element={<ProtectedRoute pageKey="pos"><Sales /></ProtectedRoute>} />
-              <Route path="quotations" element={<ProtectedRoute pageKey="quotations"><Quotations /></ProtectedRoute>} />
+        <LanguageProvider>
+          <POSSessionProvider>
+            <AuthProvider>
+              <AIAssistantProvider>
+                <CelebrationProvider>
+                  <div className="min-h-screen bg-background text-foreground overflow-x-hidden max-w-[100vw]">
+                    <PWAUpdateReady />
+                    <ToastCleaner />
+                    <OfflineIndicator position="bottom-left" />
+                    <Toaster
+                      position="top-center"
+                      richColors
+                      closeButton
+                      duration={3000}
+                      visibleToasts={1}
+                      toastOptions={{
+                        className: 'font-medium',
+                        style: {
+                          background: 'white',
+                          border: '1px solid var(--border)',
+                          borderRadius: 'var(--radius)',
+                        }
+                      }}
+                    />
+                    <HotToaster
+                      position="top-center"
+                      toastOptions={{
+                        className: 'font-medium',
+                        style: {
+                          background: 'white',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '0.5rem',
+                          padding: '16px',
+                        },
+                        success: {
+                          iconTheme: {
+                            primary: '#10b981',
+                            secondary: 'white',
+                          },
+                        },
+                      }}
+                    />
+                    <Routes>
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/setup" element={<Setup />} />
+                      <Route path="/payment-success" element={<PaymentSuccess />} />
+                      <Route
+                        path="/"
+                        element={
+                          <ProtectedRoute>
+                            <Layout />
+                          </ProtectedRoute>
+                        }
+                      >
+                        {/* All routes use pageKey for permission checking (configured in Settings > Page Permissions) */}
+                        <Route index element={<ProtectedRoute pageKey="dashboard"><Dashboard /></ProtectedRoute>} />
+                        <Route path="sales" element={<ProtectedRoute pageKey="sales"><Sales /></ProtectedRoute>} />
+                        <Route path="pos" element={<ProtectedRoute pageKey="pos"><Sales /></ProtectedRoute>} />
+                        <Route path="quotations" element={<ProtectedRoute pageKey="quotations"><Quotations /></ProtectedRoute>} />
 
-              {/* These pages check page permissions (admin can grant access to any role) */}
-              <Route path="purchases" element={<ProtectedRoute pageKey="purchases"><Purchases /></ProtectedRoute>} />
-              <Route path="expenses" element={<ProtectedRoute pageKey="expenses"><Expenses /></ProtectedRoute>} />
-              <Route path="parties" element={<ProtectedRoute pageKey="parties"><Parties /></ProtectedRoute>} />
-              <Route path="party-statement" element={<ProtectedRoute pageKey="parties"><PartyStatement /></ProtectedRoute>} />
-              <Route path="credit-notes" element={<ProtectedRoute pageKey="sales"><CreditNotes /></ProtectedRoute>} />
-              <Route path="returns" element={<ProtectedRoute pageKey="sales"><Returns /></ProtectedRoute>} />
-              <Route path="inventory" element={<ProtectedRoute pageKey="inventory"><Inventory /></ProtectedRoute>} />
-              <Route path="reports" element={<ProtectedRoute pageKey="reports"><ReportsNew /></ProtectedRoute>} />
-              <Route path="banking" element={<ProtectedRoute pageKey="banking"><Banking /></ProtectedRoute>} />
+                        {/* These pages check page permissions (admin can grant access to any role) */}
+                        <Route path="purchases" element={<ProtectedRoute pageKey="purchases"><Purchases /></ProtectedRoute>} />
+                        <Route path="expenses" element={<ProtectedRoute pageKey="expenses"><Expenses /></ProtectedRoute>} />
+                        <Route path="parties" element={<ProtectedRoute pageKey="parties"><Parties /></ProtectedRoute>} />
+                        <Route path="party-statement" element={<ProtectedRoute pageKey="parties"><PartyStatement /></ProtectedRoute>} />
+                        <Route path="credit-notes" element={<ProtectedRoute pageKey="sales"><CreditNotes /></ProtectedRoute>} />
+                        <Route path="returns" element={<ProtectedRoute pageKey="sales"><Returns /></ProtectedRoute>} />
+                        <Route path="inventory" element={<ProtectedRoute pageKey="inventory"><Inventory /></ProtectedRoute>} />
+                        <Route path="reports" element={<ProtectedRoute pageKey="reports"><ReportsNew /></ProtectedRoute>} />
+                        <Route path="banking" element={<ProtectedRoute pageKey="banking"><Banking /></ProtectedRoute>} />
 
-              {/* Utilities moved to Settings page */}
+                        {/* Utilities moved to Settings page */}
 
-              {/* Admin only - Settings */}
-              <Route path="settings" element={<ProtectedRoute pageKey="settings"><Settings /></ProtectedRoute>} />
-              <Route path="company-info" element={<ProtectedRoute pageKey="settings"><CompanyInfo /></ProtectedRoute>} />
+                        {/* Admin only - Settings */}
+                        <Route path="settings" element={<ProtectedRoute pageKey="settings"><Settings /></ProtectedRoute>} />
+                        <Route path="company-info" element={<ProtectedRoute pageKey="settings"><CompanyInfo /></ProtectedRoute>} />
 
-              {/* Other pages */}
-              <Route path="profile" element={<Profile />} />
-              <Route path="online-store" element={<OnlineStore />} />
-              <Route path="more" element={<ProtectedRoute pageKey="others"><More /></ProtectedRoute>} />
+                        {/* Other pages */}
+                        <Route path="profile" element={<Profile />} />
+                        <Route path="online-store" element={<OnlineStore />} />
+                        <Route path="more" element={<ProtectedRoute pageKey="others"><More /></ProtectedRoute>} />
 
-              {/* CRM Module */}
-              <Route path="crm" element={<CRMPage />} />
+                        {/* CRM Module */}
+                        <Route path="crm" element={<CRMPage />} />
 
-              {/* Super Admin - Hidden route for managing subscriptions */}
-              <Route path="super-admin" element={<SuperAdmin />} />
-            </Route>
-          </Routes>
-        </div>
-          </CelebrationProvider>
-        </AIAssistantProvider>
-      </AuthProvider>
-      </POSSessionProvider>
-      </LanguageProvider>
+                        {/* Super Admin - Hidden route for managing subscriptions */}
+                        <Route path="super-admin" element={<SuperAdmin />} />
+                      </Route>
+                    </Routes>
+                  </div>
+                </CelebrationProvider>
+              </AIAssistantProvider>
+            </AuthProvider>
+          </POSSessionProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </Router>
   )

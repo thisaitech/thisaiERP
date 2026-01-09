@@ -107,7 +107,7 @@ const Inventory = () => {
   // Auto-calculate box prices when piece prices or pcs per box changes
   useEffect(() => {
     if (!hasMultiUnit || lastEditedBox === 'selling') return
-    
+
     if (retailPrice && piecesPerPurchaseUnit && parseInt(piecesPerPurchaseUnit) > 0) {
       const calculated = (parseFloat(retailPrice) * parseInt(piecesPerPurchaseUnit)).toFixed(2)
       setBoxSellingPrice(calculated)
@@ -118,7 +118,7 @@ const Inventory = () => {
 
   useEffect(() => {
     if (!hasMultiUnit || lastEditedBox === 'purchase') return
-    
+
     if (purchasePrice && piecesPerPurchaseUnit && parseInt(piecesPerPurchaseUnit) > 0) {
       const calculated = (parseFloat(purchasePrice) * parseInt(piecesPerPurchaseUnit)).toFixed(2)
       setBoxPurchasePrice(calculated)
@@ -131,7 +131,7 @@ const Inventory = () => {
   const handleBoxSellingPriceChange = (value: string) => {
     setBoxSellingPrice(value)
     setLastEditedBox('selling')
-    
+
     if (value && piecesPerPurchaseUnit && parseInt(piecesPerPurchaseUnit) > 0) {
       const piecePriceCalc = (parseFloat(value) / parseInt(piecesPerPurchaseUnit)).toFixed(2)
       setRetailPrice(piecePriceCalc)
@@ -141,7 +141,7 @@ const Inventory = () => {
   const handleBoxPurchasePriceChange = (value: string) => {
     setBoxPurchasePrice(value)
     setLastEditedBox('purchase')
-    
+
     if (value && piecesPerPurchaseUnit && parseInt(piecesPerPurchaseUnit) > 0) {
       const piecePriceCalc = (parseFloat(value) / parseInt(piecesPerPurchaseUnit)).toFixed(2)
       setPurchasePrice(piecePriceCalc)
@@ -189,6 +189,7 @@ const Inventory = () => {
   const [itemSuggestions, setItemSuggestions] = useState<MasterItem[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
+  const [showNoSuggestionsMessage, setShowNoSuggestionsMessage] = useState(false)
   const [lowStockAlert, setLowStockAlert] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
   const [itemType, setItemType] = useState('sales') // sales, purchase, both
@@ -395,10 +396,17 @@ const Inventory = () => {
     // Reset autocomplete
     setItemSuggestions([])
     setShowSuggestions(false)
+    setShowNoSuggestionsMessage(false)
     setSelectedSuggestionIndex(-1)
   }
 
   // ✨ MAGIC AUTO-FILL HANDLERS ✨
+
+  // Helper to dismiss suggestion dropdowns
+  const dismissSuggestionDropdowns = () => {
+    setShowSuggestions(false)
+    setShowNoSuggestionsMessage(false)
+  }
 
   // Handle item name input - trigger autocomplete search
   const handleItemNameChange = (value: string) => {
@@ -408,10 +416,11 @@ const Inventory = () => {
       const suggestions = searchItems(value)
       setItemSuggestions(suggestions)
       setShowSuggestions(suggestions.length > 0)
+      setShowNoSuggestionsMessage(suggestions.length === 0)
       setSelectedSuggestionIndex(-1)
     } else {
       setItemSuggestions([])
-      setShowSuggestions(false)
+      dismissSuggestionDropdowns()
     }
   }
 
@@ -489,30 +498,33 @@ const Inventory = () => {
 
   // Keyboard navigation for suggestions
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showSuggestions || itemSuggestions.length === 0) return
+    // Dismiss dropdowns on Enter or Escape
+    if (e.key === 'Enter' || e.key === 'Escape') {
+      dismissSuggestionDropdowns()
+    }
 
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault()
-        setSelectedSuggestionIndex((prev) =>
-          prev < itemSuggestions.length - 1 ? prev + 1 : 0
-        )
-        break
-      case 'ArrowUp':
-        e.preventDefault()
-        setSelectedSuggestionIndex((prev) =>
-          prev > 0 ? prev - 1 : itemSuggestions.length - 1
-        )
-        break
-      case 'Enter':
-        e.preventDefault()
-        if (selectedSuggestionIndex >= 0) {
-          handleSelectSuggestion(itemSuggestions[selectedSuggestionIndex])
-        }
-        break
-      case 'Escape':
-        setShowSuggestions(false)
-        break
+    // Handle suggestion dropdown navigation only when visible
+    if (showSuggestions && itemSuggestions.length > 0) {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault()
+          setSelectedSuggestionIndex((prev) =>
+            prev < itemSuggestions.length - 1 ? prev + 1 : 0
+          )
+          break
+        case 'ArrowUp':
+          e.preventDefault()
+          setSelectedSuggestionIndex((prev) =>
+            prev > 0 ? prev - 1 : itemSuggestions.length - 1
+          )
+          break
+        case 'Enter':
+          e.preventDefault()
+          if (selectedSuggestionIndex >= 0) {
+            handleSelectSuggestion(itemSuggestions[selectedSuggestionIndex])
+          }
+          break
+      }
     }
   }
 
@@ -998,13 +1010,13 @@ const Inventory = () => {
 
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.itemCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.barcode?.toLowerCase().includes(searchQuery.toLowerCase())
+      item.itemCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.barcode?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || item.category?.toLowerCase() === selectedCategory.toLowerCase()
     const matchesTab = activeTab === 'all' ||
-                      (activeTab === 'low' && item.stock <= item.reorderPoint && item.stock > 0) ||
-                      (activeTab === 'out' && item.stock === 0) ||
-                      (activeTab === 'normal' && item.stock > item.reorderPoint)
+      (activeTab === 'low' && item.stock <= item.reorderPoint && item.stock > 0) ||
+      (activeTab === 'out' && item.stock === 0) ||
+      (activeTab === 'normal' && item.stock > item.reorderPoint)
     return matchesSearch && matchesCategory && matchesTab
   })
 
@@ -1230,16 +1242,20 @@ const Inventory = () => {
       <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 flex-shrink-0">
         {[
           { id: 'all', label: t.inventory.allItems, count: items.length },
-          { id: 'normal', label: t.inventory.inStock, count: items.filter(item => {
-            const stock = item.stock || 0
-            const reorderPoint = item.reorderPoint || 0
-            return stock > reorderPoint
-          }).length },
-          { id: 'low', label: t.inventory.lowStock, count: items.filter(item => {
-            const stock = item.stock || 0
-            const reorderPoint = item.reorderPoint || 0
-            return stock > 0 && stock <= reorderPoint
-          }).length },
+          {
+            id: 'normal', label: t.inventory.inStock, count: items.filter(item => {
+              const stock = item.stock || 0
+              const reorderPoint = item.reorderPoint || 0
+              return stock > reorderPoint
+            }).length
+          },
+          {
+            id: 'low', label: t.inventory.lowStock, count: items.filter(item => {
+              const stock = item.stock || 0
+              const reorderPoint = item.reorderPoint || 0
+              return stock > 0 && stock <= reorderPoint
+            }).length
+          },
           { id: 'out', label: t.inventory.outOfStock, count: items.filter(item => (item.stock || 0) === 0).length }
         ].map(tab => (
           <button
@@ -1315,11 +1331,11 @@ const Inventory = () => {
                   <div style={{ width: '10%' }} className="text-right text-xs text-slate-800 font-medium">
                     {item.hasMultiUnit
                       ? getStockDisplay(
-                          item.stock || 0,
-                          item.piecesPerPurchaseUnit || 12,
-                          item.purchaseUnit || 'Box',
-                          item.baseUnit || 'Pcs'
-                        ).displayText
+                        item.stock || 0,
+                        item.piecesPerPurchaseUnit || 12,
+                        item.purchaseUnit || 'Box',
+                        item.baseUnit || 'Pcs'
+                      ).displayText
                       : `${item.stock || 0}`
                     }
                   </div>
@@ -1418,11 +1434,11 @@ const Inventory = () => {
                       <div className="font-semibold text-slate-800">
                         {item.hasMultiUnit
                           ? getStockDisplay(
-                              item.stock || 0,
-                              item.piecesPerPurchaseUnit || 12,
-                              item.purchaseUnit || 'Box',
-                              item.baseUnit || 'Pcs'
-                            ).displayText
+                            item.stock || 0,
+                            item.piecesPerPurchaseUnit || 12,
+                            item.purchaseUnit || 'Box',
+                            item.baseUnit || 'Pcs'
+                          ).displayText
                           : `${item.stock || 0} ${item.unit || 'PCS'}`
                         }
                       </div>
@@ -1542,7 +1558,8 @@ const Inventory = () => {
                             value={itemName}
                             onChange={(e) => handleItemNameChange(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                            onFocus={dismissSuggestionDropdowns}
+                            onBlur={() => setTimeout(dismissSuggestionDropdowns, 200)}
                             placeholder={t.inventory.startTyping}
                             className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                           />
@@ -1583,7 +1600,7 @@ const Inventory = () => {
                             </motion.div>
                           )}
 
-                          {itemName.length >= 2 && !showSuggestions && itemSuggestions.length === 0 && (
+                          {showNoSuggestionsMessage && (
                             <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg p-3">
                               <p className="text-xs text-muted-foreground">
                                 {t.inventory.noSuggestions}
@@ -2383,12 +2400,25 @@ const Inventory = () => {
                           Expiry Date
                           <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span>
                         </label>
-                        <input
-                          type="date"
-                          value={expiryDate}
-                          onChange={(e) => setExpiryDate(e.target.value)}
-                          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                        />
+                        <div className="relative">
+                          <input
+                            type="date"
+                            value={expiryDate}
+                            onChange={(e) => setExpiryDate(e.target.value)}
+                            onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                            className="w-full px-3 py-2.5 pr-10 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none cursor-pointer"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement
+                              dateInput?.showPicker?.()
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors"
+                          >
+                            <Calendar size={16} weight="duotone" />
+                          </button>
+                        </div>
                         <p className="text-[10px] text-muted-foreground mt-1">
                           For perishable items only
                         </p>
@@ -2534,28 +2564,24 @@ const Inventory = () => {
 
                             {/* Profit per Box */}
                             {profitPerBox && (
-                              <div className={`flex items-center justify-between p-3 rounded-lg border-2 ${
-                                parseFloat(profitPerBox) > 0
-                                  ? 'bg-green-100 border-green-400'
-                                  : parseFloat(profitPerBox) < 0
-                                    ? 'bg-red-100 border-red-400'
-                                    : 'bg-gray-100 border-gray-300'
-                              }`}>
+                              <div className={`flex items-center justify-between p-3 rounded-lg border-2 ${parseFloat(profitPerBox) > 0
+                                ? 'bg-green-100 border-green-400'
+                                : parseFloat(profitPerBox) < 0
+                                  ? 'bg-red-100 border-red-400'
+                                  : 'bg-gray-100 border-gray-300'
+                                }`}>
                                 <div>
-                                  <p className={`text-xs font-medium ${
-                                    parseFloat(profitPerBox) > 0 ? 'text-green-900' : 'text-red-900'
-                                  }`}>
+                                  <p className={`text-xs font-medium ${parseFloat(profitPerBox) > 0 ? 'text-green-900' : 'text-red-900'
+                                    }`}>
                                     💰 Profit per {purchaseUnit}
                                   </p>
-                                  <p className={`text-[10px] mt-0.5 ${
-                                    parseFloat(profitPerBox) > 0 ? 'text-green-700' : 'text-red-700'
-                                  }`}>
+                                  <p className={`text-[10px] mt-0.5 ${parseFloat(profitPerBox) > 0 ? 'text-green-700' : 'text-red-700'
+                                    }`}>
                                     ₹{boxSellingPrice || '0'} - ₹{boxPurchasePrice || '0'}
                                   </p>
                                 </div>
-                                <span className={`text-lg font-bold ${
-                                  parseFloat(profitPerBox) > 0 ? 'text-green-700' : 'text-red-700'
-                                }`}>
+                                <span className={`text-lg font-bold ${parseFloat(profitPerBox) > 0 ? 'text-green-700' : 'text-red-700'
+                                  }`}>
                                   {parseFloat(profitPerBox) > 0 ? '+' : ''}₹{profitPerBox}
                                 </span>
                               </div>
@@ -2563,26 +2589,22 @@ const Inventory = () => {
 
                             {/* Margin % */}
                             {profitMarginPercent && (
-                              <div className={`flex items-center justify-between p-3 rounded-lg border-2 ${
-                                parseFloat(profitMarginPercent) > 0
-                                  ? 'bg-purple-100 border-purple-400'
-                                  : 'bg-gray-100 border-gray-300'
-                              }`}>
+                              <div className={`flex items-center justify-between p-3 rounded-lg border-2 ${parseFloat(profitMarginPercent) > 0
+                                ? 'bg-purple-100 border-purple-400'
+                                : 'bg-gray-100 border-gray-300'
+                                }`}>
                                 <div>
-                                  <p className={`text-xs font-medium ${
-                                    parseFloat(profitMarginPercent) > 0 ? 'text-purple-900' : 'text-gray-700'
-                                  }`}>
+                                  <p className={`text-xs font-medium ${parseFloat(profitMarginPercent) > 0 ? 'text-purple-900' : 'text-gray-700'
+                                    }`}>
                                     📊 Profit Margin %
                                   </p>
-                                  <p className={`text-[10px] mt-0.5 ${
-                                    parseFloat(profitMarginPercent) > 0 ? 'text-purple-700' : 'text-gray-600'
-                                  }`}>
+                                  <p className={`text-[10px] mt-0.5 ${parseFloat(profitMarginPercent) > 0 ? 'text-purple-700' : 'text-gray-600'
+                                    }`}>
                                     (Profit / Purchase) × 100
                                   </p>
                                 </div>
-                                <span className={`text-lg font-bold ${
-                                  parseFloat(profitMarginPercent) > 0 ? 'text-purple-700' : 'text-gray-600'
-                                }`}>
+                                <span className={`text-lg font-bold ${parseFloat(profitMarginPercent) > 0 ? 'text-purple-700' : 'text-gray-600'
+                                  }`}>
                                   {parseFloat(profitMarginPercent) > 0 ? '+' : ''}{profitMarginPercent}%
                                 </span>
                               </div>
@@ -3423,28 +3445,24 @@ const Inventory = () => {
 
                             {/* Profit per Box */}
                             {profitPerBox && (
-                              <div className={`flex items-center justify-between p-3 rounded-lg border-2 ${
-                                parseFloat(profitPerBox) > 0
-                                  ? 'bg-green-100 border-green-400'
-                                  : parseFloat(profitPerBox) < 0
-                                    ? 'bg-red-100 border-red-400'
-                                    : 'bg-gray-100 border-gray-300'
-                              }`}>
+                              <div className={`flex items-center justify-between p-3 rounded-lg border-2 ${parseFloat(profitPerBox) > 0
+                                ? 'bg-green-100 border-green-400'
+                                : parseFloat(profitPerBox) < 0
+                                  ? 'bg-red-100 border-red-400'
+                                  : 'bg-gray-100 border-gray-300'
+                                }`}>
                                 <div>
-                                  <p className={`text-xs font-medium ${
-                                    parseFloat(profitPerBox) > 0 ? 'text-green-900' : 'text-red-900'
-                                  }`}>
+                                  <p className={`text-xs font-medium ${parseFloat(profitPerBox) > 0 ? 'text-green-900' : 'text-red-900'
+                                    }`}>
                                     💰 Profit per {purchaseUnit}
                                   </p>
-                                  <p className={`text-[10px] mt-0.5 ${
-                                    parseFloat(profitPerBox) > 0 ? 'text-green-700' : 'text-red-700'
-                                  }`}>
+                                  <p className={`text-[10px] mt-0.5 ${parseFloat(profitPerBox) > 0 ? 'text-green-700' : 'text-red-700'
+                                    }`}>
                                     ₹{boxSellingPrice || '0'} - ₹{boxPurchasePrice || '0'}
                                   </p>
                                 </div>
-                                <span className={`text-lg font-bold ${
-                                  parseFloat(profitPerBox) > 0 ? 'text-green-700' : 'text-red-700'
-                                }`}>
+                                <span className={`text-lg font-bold ${parseFloat(profitPerBox) > 0 ? 'text-green-700' : 'text-red-700'
+                                  }`}>
                                   {parseFloat(profitPerBox) > 0 ? '+' : ''}₹{profitPerBox}
                                 </span>
                               </div>
@@ -3452,26 +3470,22 @@ const Inventory = () => {
 
                             {/* Margin % */}
                             {profitMarginPercent && (
-                              <div className={`flex items-center justify-between p-3 rounded-lg border-2 ${
-                                parseFloat(profitMarginPercent) > 0
-                                  ? 'bg-purple-100 border-purple-400'
-                                  : 'bg-gray-100 border-gray-300'
-                              }`}>
+                              <div className={`flex items-center justify-between p-3 rounded-lg border-2 ${parseFloat(profitMarginPercent) > 0
+                                ? 'bg-purple-100 border-purple-400'
+                                : 'bg-gray-100 border-gray-300'
+                                }`}>
                                 <div>
-                                  <p className={`text-xs font-medium ${
-                                    parseFloat(profitMarginPercent) > 0 ? 'text-purple-900' : 'text-gray-700'
-                                  }`}>
+                                  <p className={`text-xs font-medium ${parseFloat(profitMarginPercent) > 0 ? 'text-purple-900' : 'text-gray-700'
+                                    }`}>
                                     📊 Profit Margin %
                                   </p>
-                                  <p className={`text-[10px] mt-0.5 ${
-                                    parseFloat(profitMarginPercent) > 0 ? 'text-purple-700' : 'text-gray-600'
-                                  }`}>
+                                  <p className={`text-[10px] mt-0.5 ${parseFloat(profitMarginPercent) > 0 ? 'text-purple-700' : 'text-gray-600'
+                                    }`}>
                                     (Profit / Purchase) × 100
                                   </p>
                                 </div>
-                                <span className={`text-lg font-bold ${
-                                  parseFloat(profitMarginPercent) > 0 ? 'text-purple-700' : 'text-gray-600'
-                                }`}>
+                                <span className={`text-lg font-bold ${parseFloat(profitMarginPercent) > 0 ? 'text-purple-700' : 'text-gray-600'
+                                  }`}>
                                   {parseFloat(profitMarginPercent) > 0 ? '+' : ''}{profitMarginPercent}%
                                 </span>
                               </div>

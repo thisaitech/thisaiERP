@@ -232,7 +232,8 @@
       "Bash(git -C d:/Project/Anna show --stat HEAD)",
       "Bash(git -C d:/Project/Anna commit -m \"fix: Disable browser autofill in Proforma Invoice and Delivery Challan modals\n\n- Added autoComplete=''new-password'' to prevent browser autocomplete dropdowns\n- Added data-lpignore, aria-autocomplete=''none'' for password managers\n- Added bg-white to ensure consistent background styling\n- Fixed white box popup issue in modal input fields\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\")",
       "Bash(git -C d:/Project/Anna commit -m \"fix: Restructure dropdown positioning in Proforma Invoice and Delivery Challan modals\n\n- Move relative positioning to inner wrapper div around input+dropdown\n- Add top-full positioning to dropdowns for correct placement\n- This prevents ghost white boxes from appearing below inputs\n- Consistent structure for customer and item search dropdowns\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\")",
-      "Bash(git -C d:/Project/Anna commit:*)"
+      "Bash(git -C d:/Project/Anna commit:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []
