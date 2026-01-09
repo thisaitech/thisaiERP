@@ -38,6 +38,8 @@ import { initOfflineDB } from './services/offlineDB'
 import { PWAUpdateReady } from './components/PWAUpdateReady'
 // CRM Module
 import CRMPage from './crm/pages/CRMPage'
+// Super Admin
+import SuperAdmin from './pages/SuperAdmin'
 
 function App() {
   // Initialize offline services on app mount
@@ -146,6 +148,9 @@ function App() {
 
               {/* CRM Module */}
               <Route path="crm" element={<CRMPage />} />
+
+              {/* Super Admin - Hidden route for managing subscriptions */}
+              <Route path="super-admin" element={<SuperAdmin />} />
             </Route>
           </Routes>
         </div>
