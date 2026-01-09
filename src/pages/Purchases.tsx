@@ -91,6 +91,8 @@ import { searchItems, type MasterItem } from '../services/itemMasterService'
 import { getItemSettings } from '../services/settingsService'
 import { doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../services/firebase'
+import { getStaff, formatStaffDisplay } from '../services/staffService'
+import type { Staff } from '../types'
 
 // Indian States list with priority states first
 const INDIAN_STATES = [
@@ -343,6 +345,10 @@ const Sales = () => {
   const [bankAccounts, setBankAccounts] = useState<any[]>([])
   const { accounts: bankingAccountsObj, refresh: refreshBanking } = useBanking()
 
+  // Staff Master (for Staff Code dropdown)
+  const [staffList, setStaffList] = useState<Staff[]>([])
+  const [selectedStaffCode, setSelectedStaffCode] = useState<string>('')
+
   useEffect(() => {
     try {
       if (bankingAccountsObj && bankingAccountsObj.bankAccounts) {
@@ -369,6 +375,19 @@ const Sales = () => {
   useEffect(() => {
     const itemSettings = getItemSettings()
     setCustomUnits(itemSettings.itemUnits || [])
+  }, [])
+
+  // Load Staff Master for Staff Code dropdown
+  useEffect(() => {
+    const loadStaff = async () => {
+      try {
+        const staff = await getStaff()
+        setStaffList(staff)
+      } catch (error) {
+        console.error('Error loading staff list:', error)
+      }
+    }
+    loadStaff()
   }, [])
 
   // Split Payment State
@@ -975,6 +994,7 @@ const Sales = () => {
       setCustomerSearch('')
       setInvoiceNumber(newInvoiceNumber)
       setInvoiceDate(newDate)
+      setSelectedStaffCode('')
 
       // Save to localStorage
       localStorage.setItem('purchases_invoiceTabs', JSON.stringify([resetTab]))
@@ -1306,6 +1326,7 @@ const Sales = () => {
     purchaseUnit?: string;
     piecesPerPurchaseUnit?: number;
     sellingPricePerPiece?: number;
+    purchasePricePerPiece?: number;
     purchasePricePerBox?: number;
     stockBase?: number;
   }>>([])
@@ -1394,7 +1415,7 @@ const Sales = () => {
           items.map(i => ({
             id: i.id,
             name: i.name || 'Unnamed Item',
-            price: (i.sellingPrice as any) || (i.purchasePrice as any) || 0,
+            price: (i.purchasePrice as any) || (i.sellingPrice as any) || 0,
             tax: i.tax?.gstRate || 0,
             unit: i.unit,
             // Multi-unit fields
@@ -1402,7 +1423,7 @@ const Sales = () => {
             baseUnit: i.baseUnit || 'Pcs',
             purchaseUnit: i.purchaseUnit || 'Box',
             piecesPerPurchaseUnit: i.piecesPerPurchaseUnit || 12,
-            sellingPricePerPiece: i.sellingPricePerPiece,
+            purchasePricePerPiece: i.purchasePricePerBox ? (i.purchasePricePerBox / (i.piecesPerPurchaseUnit || 12)) : undefined,
             purchasePricePerBox: i.purchasePricePerBox,
             stockBase: i.stockBase || i.stock || 0
           }))
@@ -1645,7 +1666,8 @@ const Sales = () => {
 
   // Handle item selection from search
   const handleItemSelect = (item: any) => {
-    const originalPrice = item.sellingPrice || item.purchasePrice || 0
+    // For Purchases, use purchasePrice first (not sellingPrice/MRP)
+    const originalPrice = item.purchasePrice || item.sellingPrice || 0
     const qty = 1
     const discountPercent = 0
     // Get tax rate from inventory - check multiple possible locations
@@ -1656,14 +1678,15 @@ const Sales = () => {
     const baseUnit = item.baseUnit || 'Pcs'
     const purchaseUnit = item.purchaseUnit || 'Box'
     const piecesPerPurchaseUnit = item.piecesPerPurchaseUnit || 12
-    const sellingPricePerPiece = item.sellingPricePerPiece || originalPrice
+    // For Purchases, calculate purchase price per piece from purchasePricePerBox
+    const purchasePricePerPiece = item.purchasePricePerBox ? (item.purchasePricePerBox / piecesPerPurchaseUnit) : originalPrice
 
     // For sales, default to base unit (Pcs) so customers can buy individual items
     const selectedUnit = hasMultiUnitEnabled ? baseUnit : (item.unit || 'NONE')
 
     // Calculate the actual unit price - KEY FIX for multi-unit pricing!
     const unitPrice = hasMultiUnitEnabled
-      ? getUnitPrice(selectedUnit, sellingPricePerPiece, piecesPerPurchaseUnit)
+      ? getUnitPrice(selectedUnit, purchasePricePerPiece, piecesPerPurchaseUnit)
       : originalPrice
 
     // NOTE: No stock warning for purchases - we're ADDING stock, not consuming it
@@ -1745,7 +1768,7 @@ const Sales = () => {
       baseUnit,
       purchaseUnit,
       piecesPerPurchaseUnit,
-      sellingPricePerPiece,
+      purchasePricePerPiece,
       selectedUnit,
       qtyInBaseUnits: hasMultiUnitEnabled ? getBaseQtyForSale(selectedUnit, qty, piecesPerPurchaseUnit) : undefined
     })
@@ -2076,7 +2099,7 @@ const Sales = () => {
           {
             id: savedItem.id,
             name: savedItem.name || savedItem.description || 'Unnamed Item',
-            price: savedItem.sellingPrice || savedItem.retailPrice || savedItem.purchasePrice || 0,
+            price: savedItem.purchasePrice || savedItem.sellingPrice || savedItem.retailPrice || 0,
             tax: savedItem.tax?.gstRate ?? (
               savedItem.tax
                 ? (savedItem.tax.cgst || 0) + (savedItem.tax.sgst || 0) + (savedItem.tax.igst || 0)
@@ -2370,14 +2393,15 @@ const Sales = () => {
       const baseUnit = itemWithMultiUnit.baseUnit || 'Pcs'
       const purchaseUnit = itemWithMultiUnit.purchaseUnit || 'Box'
       const piecesPerPurchaseUnit = itemWithMultiUnit.piecesPerPurchaseUnit || 12
-      const sellingPricePerPiece = itemWithMultiUnit.sellingPricePerPiece || originalPrice
+      // For Purchases, calculate purchase price per piece
+      const purchasePricePerPiece = itemWithMultiUnit.purchasePricePerBox ? (itemWithMultiUnit.purchasePricePerBox / piecesPerPurchaseUnit) : originalPrice
 
       // For sales, default to base unit (Pcs) so customers can buy individual items
       const selectedUnit = hasMultiUnitEnabled ? baseUnit : (oldItem.unit || 'NONE')
 
       // Calculate the actual unit price BEFORE other calculations
       const unitPrice = hasMultiUnitEnabled
-        ? getUnitPrice(selectedUnit, sellingPricePerPiece, piecesPerPurchaseUnit)
+        ? getUnitPrice(selectedUnit, purchasePricePerPiece, piecesPerPurchaseUnit)
         : originalPrice
 
       // Check for existing item with same properties (use unitPrice for comparison)
@@ -2447,7 +2471,7 @@ const Sales = () => {
         baseUnit,
         purchaseUnit,
         piecesPerPurchaseUnit,
-        sellingPricePerPiece,
+        purchasePricePerPiece,
         selectedUnit,
         qtyInBaseUnits: hasMultiUnitEnabled ? getBaseQtyForSale(selectedUnit, qty, piecesPerPurchaseUnit) : undefined
       }
@@ -2470,7 +2494,8 @@ const Sales = () => {
         // Check for both 'unit' and 'selectedUnit' field changes
         if ((field === 'selectedUnit' || field === 'unit') && item.hasMultiUnit) {
           const newUnit = value as string
-          const pricePerPiece = item.sellingPricePerPiece || item.price
+          // For Purchases, use purchasePricePerPiece
+          const pricePerPiece = item.purchasePricePerPiece || item.price
           const conversionFactor = item.piecesPerPurchaseUnit || 12
           updated.price = getUnitPrice(newUnit, pricePerPiece, conversionFactor)
           updated.unit = newUnit
@@ -3039,7 +3064,10 @@ const Sales = () => {
 
         // Additional
         notes: notes || null,
-        createdBy: 'user'
+        createdBy: 'user',
+
+        // Staff Code (nullable)
+        staff_code: selectedStaffCode || null
       }
 
       // Save purchase invoice
@@ -3191,7 +3219,10 @@ const Sales = () => {
 
         // Additional
         notes: notes || null,
-        createdBy: 'user'
+        createdBy: 'user',
+
+        // Staff Code (nullable)
+        staff_code: selectedStaffCode || null
       }
 
       // If payment mode is UPI, show UPI QR modal
@@ -4329,7 +4360,8 @@ const Sales = () => {
 
   // Handle item selection from dropdown in Quick Edit modal
   const handleQuickEditItemSelect = (itemId: string, inventoryItem: any) => {
-    const price = inventoryItem.sellingPrice || inventoryItem.purchasePrice || 0
+    // For Purchases, use purchasePrice first
+    const price = inventoryItem.purchasePrice || inventoryItem.sellingPrice || 0
     const taxPercent = inventoryItem.tax?.gstRate || inventoryItem.tax?.igst ||
       ((inventoryItem.tax?.cgst || 0) + (inventoryItem.tax?.sgst || 0)) || 0
 
@@ -4422,7 +4454,7 @@ const Sales = () => {
         baseUnit: item.baseUnit || '',
         purchaseUnit: item.purchaseUnit || '',
         piecesPerPurchaseUnit: item.piecesPerPurchaseUnit || 0,
-        sellingPricePerPiece: item.sellingPricePerPiece || 0,
+        purchasePricePerPiece: item.purchasePricePerPiece || item.sellingPricePerPiece || 0,
         selectedUnit: item.selectedUnit || item.unit || 'Pcs',
       }))
 
@@ -9287,6 +9319,23 @@ TOTAL:       ₹${invoice.total}
                     </select>
                   </div>
                 )}
+
+                {/* Staff Code Dropdown */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Staff Code (Optional)</label>
+                  <select
+                    value={selectedStaffCode}
+                    onChange={(e) => setSelectedStaffCode(e.target.value)}
+                    className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                  >
+                    <option value="">-- Select Staff --</option>
+                    {staffList.map((staff) => (
+                      <option key={staff.id} value={staff.staff_code}>
+                        {formatStaffDisplay(staff)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 {/* Notes */}
                 <div>

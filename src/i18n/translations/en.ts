@@ -736,6 +736,8 @@ export const en = {
     priceListsDesc: 'Manage multiple price lists',
     staffAttendance: 'Staff Attendance',
     staffAttendanceDesc: 'Track employee attendance',
+    staffMaster: 'Staff Master',
+    staffMasterDesc: 'Manage staff members & codes',
     salaryManagement: 'Salary Management',
     salaryManagementDesc: 'Manage staff salaries & payroll',
     proformaInvoice: 'Proforma Invoice',

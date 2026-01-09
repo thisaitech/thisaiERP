@@ -477,6 +477,9 @@ export interface Invoice {
   vehicleNo?: string // Vehicle number for transport
   isReversed?: boolean // If invoice was reversed
 
+  // Staff who handled the invoice
+  staff_code?: string // Staff code from Staff Master (e.g., "ST001"), nullable
+
   // Return tracking
   hasReturns?: boolean // If invoice has any returns
   returnedAmount?: number // Total returned amount
@@ -746,6 +749,24 @@ export interface CRMEngineer {
   companyId: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// ============================================
+// STAFF MASTER TYPES
+// ============================================
+
+export interface Staff {
+  id: string;
+  staff_code: string;      // e.g., "ST001"
+  staff_name: string;      // e.g., "Ganesh"
+  phone?: string;
+  email?: string;
+  designation?: string;
+  department?: string;
+  isActive: boolean;
+  companyId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============================================

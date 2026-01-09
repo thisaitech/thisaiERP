@@ -30,7 +30,8 @@ import {
   CheckCircle,
   Plus,
   X,
-  ArrowRight
+  ArrowRight,
+  UserList
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -86,6 +87,15 @@ import {
   deletePriceList,
   type PriceList
 } from '../services/priceListService'
+import {
+  getStaff,
+  createStaff,
+  updateStaff,
+  deleteStaff,
+  generateStaffCode,
+  formatStaffDisplay
+} from '../services/staffService'
+import type { Staff } from '../types'
 
 const More = () => {
   const { t, language } = useLanguage()
@@ -151,6 +161,17 @@ const More = () => {
   const [salaryBasic, setSalaryBasic] = useState('')
   const [salaryAllowances, setSalaryAllowances] = useState('')
   const [salaryDeductions, setSalaryDeductions] = useState('')
+
+  // Staff Master states
+  const [staffList, setStaffList] = useState<Staff[]>([])
+  const [showStaffModal, setShowStaffModal] = useState(false)
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null)
+  const [staffCode, setStaffCode] = useState('')
+  const [staffName, setStaffName] = useState('')
+  const [staffPhone, setStaffPhone] = useState('')
+  const [staffEmail, setStaffEmail] = useState('')
+  const [staffDesignation, setStaffDesignation] = useState('')
+  const [staffDepartment, setStaffDepartment] = useState('')
 
   // Serial Number Tracking states
   const [serialNumbers, setSerialNumbers] = useState<{id: string; itemName: string; serialNumber: string; purchaseDate: string; warrantyExpiry?: string; status: 'in-stock' | 'sold' | 'defective'; soldTo?: string}[]>([])
@@ -371,6 +392,8 @@ const More = () => {
       loadPriceListsData()
     } else if (selectedModule === 'eway-bill') {
       loadPartiesAndItems()
+    } else if (selectedModule === 'staff-master') {
+      loadStaffList()
     }
   }, [selectedModule])
 
@@ -407,6 +430,106 @@ const More = () => {
       setPriceLists(data)
     } catch (error) {
       console.error('Error loading price lists:', error)
+    }
+  }
+
+  // Staff Master functions
+  const loadStaffList = async () => {
+    try {
+      const data = await getStaff(true) // Include inactive
+      setStaffList(data)
+    } catch (error) {
+      console.error('Error loading staff:', error)
+    }
+  }
+
+  const resetStaffForm = () => {
+    setStaffCode('')
+    setStaffName('')
+    setStaffPhone('')
+    setStaffEmail('')
+    setStaffDesignation('')
+    setStaffDepartment('')
+    setEditingStaff(null)
+  }
+
+  const openStaffModal = async (staff?: Staff) => {
+    if (staff) {
+      // Edit mode
+      setEditingStaff(staff)
+      setStaffCode(staff.staff_code)
+      setStaffName(staff.staff_name)
+      setStaffPhone(staff.phone || '')
+      setStaffEmail(staff.email || '')
+      setStaffDesignation(staff.designation || '')
+      setStaffDepartment(staff.department || '')
+    } else {
+      // Create mode - generate next code
+      resetStaffForm()
+      const nextCode = await generateStaffCode()
+      setStaffCode(nextCode)
+    }
+    setShowStaffModal(true)
+  }
+
+  const handleSaveStaff = async () => {
+    if (!staffCode.trim() || !staffName.trim()) {
+      toast.error('Staff code and name are required')
+      return
+    }
+
+    try {
+      if (editingStaff) {
+        // Update
+        const result = await updateStaff(editingStaff.id, {
+          staff_code: staffCode,
+          staff_name: staffName,
+          phone: staffPhone || undefined,
+          email: staffEmail || undefined,
+          designation: staffDesignation || undefined,
+          department: staffDepartment || undefined
+        })
+        if (result) {
+          toast.success('Staff updated successfully')
+        } else {
+          toast.error('Failed to update staff')
+          return
+        }
+      } else {
+        // Create
+        const result = await createStaff({
+          staff_code: staffCode,
+          staff_name: staffName,
+          phone: staffPhone || undefined,
+          email: staffEmail || undefined,
+          designation: staffDesignation || undefined,
+          department: staffDepartment || undefined,
+          isActive: true
+        })
+        if (result) {
+          toast.success(`Staff ${result.staff_code} created successfully`)
+        } else {
+          toast.error('Failed to create staff')
+          return
+        }
+      }
+      setShowStaffModal(false)
+      resetStaffForm()
+      await loadStaffList()
+    } catch (error) {
+      console.error('Error saving staff:', error)
+      toast.error('Failed to save staff')
+    }
+  }
+
+  const handleToggleStaffActive = async (staff: Staff) => {
+    try {
+      await updateStaff(staff.id, { isActive: !staff.isActive })
+      toast.success(staff.isActive ? 'Staff deactivated' : 'Staff activated')
+      loadStaffList()
+    } catch (error) {
+      console.error('Error toggling staff status:', error)
+      toast.error('Failed to update staff status')
     }
   }
 
@@ -587,7 +710,7 @@ const More = () => {
     // Features with dedicated sections (payment-in, payment-out, etc.) don't need the modal
     const modalFeatures = [
       'notes', 'schemes', 'discounts', 'whatsapp', 'upi', 'ledger', 'location',
-      'attendance', 'salary', 'item-serial', 'online-store'
+      'attendance', 'salary', 'item-serial', 'online-store', 'staff-master'
     ]
     if (modalFeatures.includes(moduleId)) {
       setShowCreateModal(true)
@@ -823,6 +946,14 @@ const More = () => {
       description: t.more.staffAttendanceDesc,
       icon: CalendarCheck,
       color: 'primary'
+    },
+    {
+      id: 'staff-master',
+      title: t.more.staffMaster || 'Staff Master',
+      description: t.more.staffMasterDesc || 'Manage staff members & codes',
+      icon: UserList,
+      color: 'accent',
+      badge: 'New'
     },
     {
       id: 'salary',
@@ -2438,7 +2569,7 @@ const More = () => {
                   </div>
                 </div>
 
-                <div className="p-6 space-y-5">
+                <div className="p-6 space-y-4">
                   {/* Customer & Purpose - Using Select Dropdowns */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -2450,6 +2581,7 @@ const More = () => {
                           setDcSelectedCustomer(party || null)
                         }}
                         className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        autoComplete="off"
                       >
                         <option value="">{t.more.searchOrTypeParty}</option>
                         {availableParties.map(party => (
@@ -2470,6 +2602,7 @@ const More = () => {
                         value={dcPurpose}
                         onChange={e => setDcPurpose(e.target.value as ChallanPurpose)}
                         className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        autoComplete="off"
                       >
                         {Object.entries(CHALLAN_PURPOSE_LABELS).map(([key, label]) => (
                           <option key={key} value={key}>{label}</option>
@@ -2509,6 +2642,7 @@ const More = () => {
                         }
                       }}
                       className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      autoComplete="off"
                     >
                       <option value="">{t.more.searchItems}</option>
                       {availableItems.map(item => (
@@ -2728,7 +2862,7 @@ const More = () => {
                   </div>
                 </div>
 
-                <div className="p-6 space-y-5">
+                <div className="p-6 space-y-4">
                   {/* Customer Selection - Using Select Dropdown */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -2740,6 +2874,7 @@ const More = () => {
                           setPiSelectedCustomer(party || null)
                         }}
                         className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        autoComplete="off"
                       >
                         <option value="">{t.more.searchCustomer}</option>
                         {availableParties.map(party => (
@@ -2792,6 +2927,7 @@ const More = () => {
                         }
                       }}
                       className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      autoComplete="off"
                     >
                       <option value="">{t.more.searchItemsHsn}</option>
                       {availableItems.map(item => (
@@ -4014,6 +4150,195 @@ const More = () => {
                       ))}
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Staff Master Panel */}
+              {selectedModule === 'staff-master' && (
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h2 className="text-2xl font-bold">Staff Master</h2>
+                      <p className="text-muted-foreground">Manage staff members and codes</p>
+                    </div>
+                    <button
+                      onClick={() => openStaffModal()}
+                      className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90"
+                    >
+                      <Plus size={18} />
+                      Add Staff
+                    </button>
+                  </div>
+
+                  {/* Staff List */}
+                  <div className="bg-white rounded-lg border">
+                    {staffList.length === 0 ? (
+                      <div className="p-8 text-center text-muted-foreground">
+                        <UserList size={48} className="mx-auto mb-2 opacity-50" />
+                        <p>No staff members yet</p>
+                        <p className="text-sm">Click "Add Staff" to create your first staff member</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {staffList.map((staff) => (
+                          <div
+                            key={staff.id}
+                            className={`p-4 flex justify-between items-center hover:bg-slate-50 ${!staff.isActive ? 'opacity-50 bg-slate-100' : ''}`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-primary font-semibold text-sm">{staff.staff_code}</span>
+                              </div>
+                              <div>
+                                <p className="font-semibold">{staff.staff_name}</p>
+                                <div className="flex gap-2 text-sm text-muted-foreground">
+                                  {staff.designation && <span>{staff.designation}</span>}
+                                  {staff.designation && staff.department && <span>•</span>}
+                                  {staff.department && <span>{staff.department}</span>}
+                                </div>
+                                {staff.phone && <p className="text-xs text-muted-foreground">{staff.phone}</p>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {!staff.isActive && (
+                                <span className="px-2 py-1 text-xs rounded bg-red-100 text-red-700">Inactive</span>
+                              )}
+                              <button
+                                onClick={() => openStaffModal(staff)}
+                                className="px-3 py-1.5 text-sm border rounded hover:bg-slate-100"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleToggleStaffActive(staff)}
+                                className={`px-3 py-1.5 text-sm rounded ${
+                                  staff.isActive
+                                    ? 'border border-red-300 text-red-600 hover:bg-red-50'
+                                    : 'border border-green-300 text-green-600 hover:bg-green-50'
+                                }`}
+                              >
+                                {staff.isActive ? 'Deactivate' : 'Activate'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Staff Modal */}
+                  <AnimatePresence>
+                    {showStaffModal && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                        onClick={() => setShowStaffModal(false)}
+                      >
+                        <motion.div
+                          initial={{ scale: 0.95 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0.95 }}
+                          className="bg-white rounded-xl w-full max-w-md p-6"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold">
+                              {editingStaff ? 'Edit Staff' : 'Add Staff'}
+                            </h3>
+                            <button
+                              onClick={() => setShowStaffModal(false)}
+                              className="p-1 hover:bg-slate-100 rounded"
+                            >
+                              <X size={20} />
+                            </button>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Staff Code *</label>
+                              <input
+                                type="text"
+                                value={staffCode}
+                                onChange={(e) => setStaffCode(e.target.value.toUpperCase())}
+                                className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                placeholder="ST001"
+                                readOnly={!!editingStaff}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Staff Name *</label>
+                              <input
+                                type="text"
+                                value={staffName}
+                                onChange={(e) => setStaffName(e.target.value)}
+                                className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                placeholder="Enter staff name"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium mb-1">Designation</label>
+                                <input
+                                  type="text"
+                                  value={staffDesignation}
+                                  onChange={(e) => setStaffDesignation(e.target.value)}
+                                  className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                  placeholder="e.g., Manager"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-1">Department</label>
+                                <input
+                                  type="text"
+                                  value={staffDepartment}
+                                  onChange={(e) => setStaffDepartment(e.target.value)}
+                                  className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                  placeholder="e.g., Sales"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Phone</label>
+                              <input
+                                type="tel"
+                                value={staffPhone}
+                                onChange={(e) => setStaffPhone(e.target.value)}
+                                className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                placeholder="Phone number"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Email</label>
+                              <input
+                                type="email"
+                                value={staffEmail}
+                                onChange={(e) => setStaffEmail(e.target.value)}
+                                className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                placeholder="Email address"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex gap-3 mt-6">
+                            <button
+                              onClick={() => setShowStaffModal(false)}
+                              className="flex-1 px-4 py-2.5 border rounded-lg hover:bg-slate-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleSaveStaff}
+                              className="flex-1 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90"
+                            >
+                              {editingStaff ? 'Update' : 'Save'}
+                            </button>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 

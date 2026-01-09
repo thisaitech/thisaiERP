@@ -110,7 +110,9 @@ export const COLLECTIONS = {
   CRM_SETTINGS: 'crm_settings',
   // Subscription Collections
   SUBSCRIPTIONS: 'subscriptions',
-  BILLING_RECORDS: 'billing_records'
+  BILLING_RECORDS: 'billing_records',
+  // Staff Master
+  STAFF_MASTER: 'staff_master'
 } as const
 
 export type CollectionName = typeof COLLECTIONS[keyof typeof COLLECTIONS]

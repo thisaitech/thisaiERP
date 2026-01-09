@@ -736,6 +736,8 @@ export const ta = {
     priceListsDesc: 'பல விலைப் பட்டியல்களை நிர்வகி',
     staffAttendance: 'பணியாளர் வருகை',
     staffAttendanceDesc: 'பணியாளர் வருகையைக் கண்காணி',
+    staffMaster: 'பணியாளர் மாஸ்டர்',
+    staffMasterDesc: 'பணியாளர்கள் மற்றும் குறியீடுகளை நிர்வகி',
     salaryManagement: 'சம்பள மேலாண்மை',
     salaryManagementDesc: 'பணியாளர் சம்பளங்கள் & ஊதிய பட்டியலை நிர்வகி',
     proformaInvoice: 'புரோஃபார்மா இன்வாய்ஸ்',
