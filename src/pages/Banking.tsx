@@ -35,7 +35,7 @@ import {
   isRazorpayConfigured,
   type RazorpayTransaction
 } from '../services/razorpayService'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   saveBankingPageData,
   saveBankingPageTransactions,
@@ -54,18 +54,7 @@ const Banking = () => {
   const { t, language } = useLanguage()
 
   const navigate = useNavigate()
-  const location = useLocation()
   const [selectedTab, setSelectedTab] = useState('overview')
-
-  // Handle action=payment from sidebar navigation
-  useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    const actionParam = params.get('action')
-    if (actionParam === 'payment') {
-      setShowCashModal(true)
-      setCashModalType('in')
-    }
-  }, [location.search])
   const [selectedPeriod, setSelectedPeriod] = useState('all')
   const [showAddAccount, setShowAddAccount] = useState(false)
   

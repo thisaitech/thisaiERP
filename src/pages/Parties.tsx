@@ -124,6 +124,13 @@ const Parties = () => {
   const [showNotes, setShowNotes] = useState(false)
   const [showState, setShowState] = useState(false)
   const [showVehicleNo, setShowVehicleNo] = useState(false)
+  const [showDob, setShowDob] = useState(false)
+  const [showGender, setShowGender] = useState(false)
+  const [showIdProof, setShowIdProof] = useState(false)
+  const [showEmergencyContact, setShowEmergencyContact] = useState(false)
+  const [showAdmissionDate, setShowAdmissionDate] = useState(false)
+  const [showFocus, setShowFocus] = useState(false)
+  const [showLeadSource, setShowLeadSource] = useState(false)
 
   // Form state for new party
   const [partyType, setPartyType] = useState<'customer' | 'supplier'>('customer')
@@ -141,6 +148,16 @@ const Parties = () => {
   const [showCreditLimit, setShowCreditLimit] = useState(false)
   const [partyOpeningBalance, setPartyOpeningBalance] = useState('')
   const [showOpeningBalance, setShowOpeningBalance] = useState(false)
+  const [studentDob, setStudentDob] = useState('')
+  const [studentGender, setStudentGender] = useState('')
+  const [studentIdProofType, setStudentIdProofType] = useState('')
+  const [studentIdProofNumber, setStudentIdProofNumber] = useState('')
+  const [studentAdmissionDate, setStudentAdmissionDate] = useState('')
+  const [studentEmergencyName, setStudentEmergencyName] = useState('')
+  const [studentEmergencyPhone, setStudentEmergencyPhone] = useState('')
+  const [studentFocus, setStudentFocus] = useState('')
+  const [studentSource, setStudentSource] = useState('')
+  const [studentSourceOther, setStudentSourceOther] = useState('')
 
   // Dropdown menu state
   const [openActionMenu, setOpenActionMenu] = useState<string | null>(null)
@@ -177,11 +194,11 @@ const Parties = () => {
       const result = await autoCleanupDuplicates()
 
       if (result.partiesRemoved > 0) {
-        toast.success(`Removed ${result.partiesRemoved} duplicate parties from ${result.groupsCleaned} groups`)
+        toast.success(`Removed ${result.partiesRemoved} duplicate records from ${result.groupsCleaned} groups`)
         // Reload parties list
         await loadPartiesFromDatabase()
       } else {
-        toast.info('No duplicate parties found')
+        toast.info('No duplicate records found')
       }
 
       if (result.errors.length > 0) {
@@ -269,9 +286,26 @@ const Parties = () => {
     setShowNotes(false)
     setShowState(false)
     setShowVehicleNo(false)
+    setShowDob(false)
+    setShowGender(false)
+    setShowIdProof(false)
+    setShowEmergencyContact(false)
+    setShowAdmissionDate(false)
+    setShowFocus(false)
+    setShowLeadSource(false)
     setShowCreditLimit(false)
     setPartyOpeningBalance('')
     setShowOpeningBalance(false)
+    setStudentDob('')
+    setStudentGender('')
+    setStudentIdProofType('')
+    setStudentIdProofNumber('')
+    setStudentAdmissionDate('')
+    setStudentEmergencyName('')
+    setStudentEmergencyPhone('')
+    setStudentFocus('')
+    setStudentSource('')
+    setStudentSourceOther('')
     setIsEditMode(false)
     setEditingPartyId(null)
   }
@@ -279,7 +313,7 @@ const Parties = () => {
   // Handle save party (create or update)
   const handleSaveParty = async () => {
     if (!partyName?.trim() || !partyPhone?.trim()) {
-      toast.error('Please fill Customer Name and Phone Number')
+      toast.error('Please fill Name and Phone Number')
       return
     }
 
@@ -290,8 +324,8 @@ const Parties = () => {
       return
     }
 
-    // Validate GSTIN if required by settings
-    if (partySettings.requireGSTIN && !partyGst?.trim()) {
+    // Validate GSTIN if required by settings (clients only)
+    if (partyType === 'supplier' && partySettings.requireGSTIN && !partyGst?.trim()) {
       toast.error('GSTIN is required. Please enter a valid GSTIN number.')
       // Auto-expand GSTIN field
       setShowGstNumber(true)
@@ -319,6 +353,34 @@ const Parties = () => {
 
       // Build party data object, omitting undefined fields for Firebase
       const openingBal = parseFloat(partyOpeningBalance) || 0
+      const admissionDetails = {
+        dateOfBirth: studentDob?.trim() || '',
+        gender: studentGender?.trim() || '',
+        idProof: {
+          type: studentIdProofType?.trim() || '',
+          number: studentIdProofNumber?.trim() || ''
+        },
+        admissionDate: studentAdmissionDate?.trim() || '',
+        emergencyContact: {
+          name: studentEmergencyName?.trim() || '',
+          phone: studentEmergencyPhone?.trim() || ''
+        },
+        focus: studentFocus?.trim() || '',
+        leadSource: {
+          channel: studentSource?.trim() || '',
+          other: studentSourceOther?.trim() || ''
+        },
+        courseOrBatch: partyVehicleNo?.trim() || ''
+      }
+
+      const hasAdmissionDetails = Object.values(admissionDetails).some((value) => {
+        if (typeof value === 'string') return value.length > 0
+        if (value && typeof value === 'object') {
+          return Object.values(value).some((nested) => (nested || '').toString().trim().length > 0)
+        }
+        return false
+      })
+
       const partyData: any = {
         type: partyType,
         companyName: partyName.trim(),
@@ -367,6 +429,11 @@ const Parties = () => {
         partyData.vehicleNo = partyVehicleNo.trim()
       }
 
+      // Add admission details for students
+      if (partyType === 'customer' && hasAdmissionDetails) {
+        partyData.admissionDetails = admissionDetails
+      }
+
       if (isEditMode && editingPartyId) {
         // Check for TRUE duplicate (excluding current party being edited)
         // Same name with different phone/GSTIN is allowed
@@ -384,7 +451,7 @@ const Parties = () => {
           const sameGstin = newGstin && existingGstin && newGstin === existingGstin
 
           if (bothHaveNoIdentifiers || samePhone || sameGstin) {
-            toast.error(`A ${partyType} with the name "${existingByName.displayName || existingByName.companyName}" and same contact details already exists.`)
+            toast.error(`A ${partyType === 'customer' ? 'student' : 'client'} with the name "${existingByName.displayName || existingByName.companyName}" and same contact details already exists.`)
             setIsLoadingParties(false)
             return
           }
@@ -396,18 +463,18 @@ const Parties = () => {
         if (success) {
           // Update party in local state
           setParties(parties.map(p => p.id === editingPartyId ? { ...p, ...partyData } : p))
-          toast.success(`${partyType === 'customer' ? 'Customer' : 'Supplier'} updated successfully!`)
+          toast.success(`${partyType === 'customer' ? 'Student' : 'Client'} updated successfully!`)
           setShowAddModal(false)
           resetPartyForm()
         } else {
-          toast.error('Failed to update party. Please try again.')
+          toast.error('Failed to update record. Please try again.')
         }
       } else {
         // Check for duplicate by GSTIN first (if provided) - GSTIN must be unique
         if (partyGst?.trim()) {
           const existingByGstin = await findPartyByGSTIN(partyGst.trim().toUpperCase())
           if (existingByGstin) {
-            toast.error(`A party with GSTIN "${partyGst.trim().toUpperCase()}" already exists: "${existingByGstin.displayName || existingByGstin.companyName}". Please use a different GSTIN.`)
+            toast.error(`A record with GSTIN "${partyGst.trim().toUpperCase()}" already exists: "${existingByGstin.displayName || existingByGstin.companyName}". Please use a different GSTIN.`)
             setIsLoadingParties(false)
             return
           }
@@ -430,7 +497,7 @@ const Parties = () => {
 
           if (bothHaveNoIdentifiers || samePhone || sameGstin) {
             // TRUE duplicate - block creation
-            toast.error(`A ${partyType} with the name "${existingByName.displayName || existingByName.companyName}" and same contact details already exists. Please edit the existing ${partyType}.`)
+            toast.error(`A ${partyType === 'customer' ? 'student' : 'client'} with the name "${existingByName.displayName || existingByName.companyName}" and same contact details already exists. Please edit the existing ${partyType === 'customer' ? 'student' : 'client'}.`)
             setIsLoadingParties(false)
             return
           }
@@ -444,17 +511,17 @@ const Parties = () => {
 
         if (newParty) {
           setParties([...parties, newParty])
-          toast.success(`${partyType === 'customer' ? 'Customer' : 'Supplier'} added successfully!`)
+          toast.success(`${partyType === 'customer' ? 'Student' : 'Client'} added successfully!`)
           setShowAddModal(false)
           resetPartyForm()
         } else {
           console.error('createParty returned null')
-          toast.error('Failed to add party. Please try again.')
+          toast.error('Failed to add record. Please try again.')
         }
       }
     } catch (error) {
       console.error('Error saving party:', error)
-      toast.error(`Failed to ${isEditMode ? 'update' : 'add'} party: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      toast.error(`Failed to ${isEditMode ? 'update' : 'add'} record: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsLoadingParties(false)
     }
@@ -488,6 +555,16 @@ const Parties = () => {
     setPartyVehicleNo(party.vehicleNo || '')
     setPartyCreditLimit(party.creditLimit || 0)
     setPartyCreditDays(party.creditDays || settings.defaultCreditPeriod || 30)
+    setStudentDob(party.admissionDetails?.dateOfBirth || '')
+    setStudentGender(party.admissionDetails?.gender || '')
+    setStudentIdProofType(party.admissionDetails?.idProof?.type || '')
+    setStudentIdProofNumber(party.admissionDetails?.idProof?.number || '')
+    setStudentAdmissionDate(party.admissionDetails?.admissionDate || '')
+    setStudentEmergencyName(party.admissionDetails?.emergencyContact?.name || '')
+    setStudentEmergencyPhone(party.admissionDetails?.emergencyContact?.phone || '')
+    setStudentFocus(party.admissionDetails?.focus || '')
+    setStudentSource(party.admissionDetails?.leadSource?.channel || '')
+    setStudentSourceOther(party.admissionDetails?.leadSource?.other || '')
 
     // Show expandable sections if they have data
     if (party.billingAddress?.street) setShowBillingAddress(true)
@@ -498,6 +575,13 @@ const Parties = () => {
     if (party.billingAddress?.state) setShowState(true)
     if (party.vehicleNo) setShowVehicleNo(true)
     if (party.creditLimit > 0 && settings.enableCreditLimit) setShowCreditLimit(true)
+    if (party.admissionDetails?.dateOfBirth) setShowDob(true)
+    if (party.admissionDetails?.gender) setShowGender(true)
+    if (party.admissionDetails?.idProof?.type || party.admissionDetails?.idProof?.number) setShowIdProof(true)
+    if (party.admissionDetails?.emergencyContact?.name || party.admissionDetails?.emergencyContact?.phone) setShowEmergencyContact(true)
+    if (party.admissionDetails?.admissionDate) setShowAdmissionDate(true)
+    if (party.admissionDetails?.focus) setShowFocus(true)
+    if (party.admissionDetails?.leadSource?.channel || party.admissionDetails?.leadSource?.other) setShowLeadSource(true)
 
     setShowAddModal(true)
   }
@@ -518,15 +602,15 @@ const Parties = () => {
 
       if (success) {
         setParties(parties.filter(p => p.id !== partyToDelete.id))
-        toast.success('Party deleted successfully!')
+        toast.success('Record deleted successfully!')
         setShowDeleteModal(false)
         setPartyToDelete(null)
       } else {
-        toast.error('Failed to delete party. Please try again.')
+        toast.error('Failed to delete record. Please try again.')
       }
     } catch (error) {
       console.error('Error deleting party:', error)
-      toast.error(`Failed to delete party: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      toast.error(`Failed to delete record: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsLoadingParties(false)
     }
@@ -584,36 +668,18 @@ const Parties = () => {
     return true
   }
 
-  // Parties Summary - calculated based on party outstanding balances (includes opening balance + invoices)
-  // This shows the TRUE receivable/payable amounts from each party
+  // Summary based on outstanding balances (due vs advance)
   const partiesSummary = useMemo(() => {
-    // Calculate To Receive and To Pay from party outstanding balances
-    // Outstanding logic:
-    // - Customer with positive outstanding = They owe us = To Receive
-    // - Customer with negative outstanding = We owe them (advance) = To Pay
-    // - Supplier with positive outstanding = We owe them = To Pay
-    // - Supplier with negative outstanding = They owe us (advance) = To Receive
-
     let totalReceivables = 0
     let totalPayables = 0
 
     filteredParties.forEach(party => {
       const outstanding = party.outstanding ?? party.currentBalance ?? 0
 
-      if (party.type === 'customer') {
-        // Customer: positive = they owe us (receivable), negative = we owe them (payable)
-        if (outstanding > 0) {
-          totalReceivables += outstanding
-        } else if (outstanding < 0) {
-          totalPayables += Math.abs(outstanding)
-        }
-      } else {
-        // Supplier: positive = we owe them (payable), negative = they owe us (receivable)
-        if (outstanding > 0) {
-          totalPayables += outstanding
-        } else if (outstanding < 0) {
-          totalReceivables += Math.abs(outstanding)
-        }
+      if (outstanding > 0) {
+        totalReceivables += outstanding
+      } else if (outstanding < 0) {
+        totalPayables += Math.abs(outstanding)
       }
     })
 
@@ -644,14 +710,14 @@ const Parties = () => {
 
     const partyName = getPartyName(party)
     const outstanding = party.outstanding ?? party.currentBalance ?? 0
-    // Positive = they owe us (To Receive), Negative = we owe them (To Pay)
-    const balanceLabel = outstanding > 0 ? 'To Receive' : outstanding < 0 ? 'To Pay' : 'Settled'
+    // Positive = they owe us (Total Due), Negative = we owe them (Advance/Credit)
+    const balanceLabel = outstanding > 0 ? 'Due' : outstanding < 0 ? 'Advance/Credit' : 'Settled'
 
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>${partyName} - Party Details</title>
+        <title>${partyName} - Student/Client Details</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
           .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
@@ -673,7 +739,7 @@ const Parties = () => {
       <body>
         <div class="header">
           <h1>${partyName}</h1>
-          <p>${party.type === 'customer' ? 'Customer' : 'Supplier'}</p>
+          <p>${party.type === 'customer' ? 'Student' : 'Client'}</p>
         </div>
         <div class="details">
           <div class="details-row">
@@ -684,10 +750,10 @@ const Parties = () => {
           ${party.gstDetails?.gstin ? `<div class="details-row"><span class="details-label">GSTIN:</span><span class="details-value">${party.gstDetails.gstin}</span></div>` : ''}
           ${party.billingAddress?.street ? `<div class="details-row"><span class="details-label">Address:</span><span class="details-value">${party.billingAddress.street}</span></div>` : ''}
           ${party.billingAddress?.state ? `<div class="details-row"><span class="details-label">State:</span><span class="details-value">${party.billingAddress.state}</span></div>` : ''}
-          ${party.vehicleNo ? `<div class="details-row"><span class="details-label">Vehicle No:</span><span class="details-value">${party.vehicleNo}</span></div>` : ''}
+          ${party.vehicleNo ? `<div class="details-row"><span class="details-label">Course / Batch:</span><span class="details-value">${party.vehicleNo}</span></div>` : ''}
         </div>
         <div class="balance ${outstanding > 0 ? 'positive' : outstanding < 0 ? 'negative' : 'zero'}">
-          <h2>Outstanding Balance</h2>
+          <h2>Balance Summary</h2>
           <p style="font-size: 28px; font-weight: bold; margin: 10px 0;">₹${Math.abs(outstanding).toLocaleString('en-IN')}</p>
           <p>(${balanceLabel})</p>
         </div>
@@ -723,8 +789,8 @@ const Parties = () => {
 
     const partyName = getPartyName(selectedParty)
     const outstanding = selectedParty.currentBalance || 0
-    // Positive = they owe us (To Receive), Negative = we owe them (To Pay)
-    const balanceLabel = outstanding > 0 ? 'To Receive' : outstanding < 0 ? 'To Pay' : 'Settled'
+    // Positive = they owe us (Total Due), Negative = we owe them (Advance/Credit)
+    const balanceLabel = outstanding > 0 ? 'Due' : outstanding < 0 ? 'Advance/Credit' : 'Settled'
 
     const ledgerRows = ledgerEntries.map(entry => `
       <tr>
@@ -766,8 +832,8 @@ const Parties = () => {
       </head>
       <body>
         <div class="header">
-          <h1>${partyName} - Ledger Statement</h1>
-          <p>${selectedParty.type === 'customer' ? 'Customer' : 'Supplier'} | ${selectedParty.phone || ''}</p>
+          <h1>${partyName} - Account Statement</h1>
+          <p>${selectedParty.type === 'customer' ? 'Student' : 'Client'} | ${selectedParty.phone || ''}</p>
         </div>
         <div class="summary">
           <div class="summary-item">
@@ -779,7 +845,7 @@ const Parties = () => {
             <value>₹${totalCredit.toLocaleString('en-IN')}</value>
           </div>
           <div class="summary-item">
-            <label>Outstanding (${balanceLabel})</label>
+            <label>Balance (${balanceLabel})</label>
             <value style="color: ${outstanding > 0 ? '#16a34a' : outstanding < 0 ? '#dc2626' : '#374151'}">₹${Math.abs(outstanding).toLocaleString('en-IN')}</value>
           </div>
         </div>
@@ -876,13 +942,13 @@ const Parties = () => {
                   <Users size={20} weight="duotone" className="text-blue-500" />
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'தரப்பினர்' : 'Parties'}</span>
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'தரப்பினர்' : 'Students & Clients'}</span>
                   <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{partiesSummary.totalParties}</span>
                 </div>
               </button>
             </div>
 
-            {/* To Receive Card - Green Theme */}
+            {/* Total Due Card - Green Theme */}
             <div className="p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
                 onClick={() => setActiveTab('customers')}
@@ -894,7 +960,7 @@ const Parties = () => {
                   </svg>
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'பெற வேண்டியது' : 'To Receive'}</span>
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'பெற வேண்டியது' : 'Total Due'}</span>
                   <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                     ₹{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
                   </span>
@@ -902,7 +968,7 @@ const Parties = () => {
               </button>
             </div>
 
-            {/* To Pay Card - Red Theme */}
+            {/* Advance/Credit Card - Red Theme */}
             <div className="p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
                 onClick={() => setActiveTab('suppliers')}
@@ -914,7 +980,7 @@ const Parties = () => {
                   </svg>
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'To Pay'}</span>
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'Advance/Credit'}</span>
                   <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
                     ₹{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
                   </span>
@@ -957,7 +1023,7 @@ const Parties = () => {
                   active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
                   disabled:opacity-50 disabled:cursor-not-allowed
                   transition-all duration-200"
-                title="Remove duplicate parties (case-insensitive)"
+                title="Remove duplicate records (case-insensitive)"
               >
                 {isCleaningDuplicates ? (
                   <ArrowsClockwise size={14} weight="bold" className="animate-spin" />
@@ -967,7 +1033,7 @@ const Parties = () => {
                 <span className="hidden sm:inline">{isCleaningDuplicates ? 'Cleaning...' : 'Cleanup'}</span>
               </button>
 
-              {/* Add Party Button */}
+              {/* Add Student/Client Button */}
               <button
                 onClick={() => setShowAddModal(true)}
                 className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
@@ -978,7 +1044,7 @@ const Parties = () => {
                   transition-all duration-200"
               >
                 <Plus size={14} weight="bold" />
-                <span className="hidden sm:inline">{language === 'ta' ? 'தரப்பினர் சேர்' : 'Add Party'}</span>
+                <span className="hidden sm:inline">{language === 'ta' ? 'தரப்பினர் சேர்' : 'Add Student/Client'}</span>
               </button>
             </div>
 
@@ -1039,9 +1105,9 @@ const Parties = () => {
       {/* Tab Filters */}
       <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
         {[
-          { id: 'all', label: language === 'ta' ? 'அனைத்து தரப்பினர்' : 'All Parties', count: parties.length },
-          { id: 'customers', label: language === 'ta' ? 'வாடிக்கையாளர்கள்' : 'Customers', count: parties.filter(p => p.type === 'customer').length },
-          { id: 'suppliers', label: language === 'ta' ? 'சப்ளையர்கள்' : 'Suppliers', count: parties.filter(p => p.type === 'supplier').length }
+          { id: 'all', label: language === 'ta' ? 'அனைத்து தரப்பினர்' : 'All Students & Clients', count: parties.length },
+          { id: 'customers', label: language === 'ta' ? 'வாடிக்கையாளர்கள்' : 'Students', count: parties.filter(p => p.type === 'customer').length },
+          { id: 'suppliers', label: language === 'ta' ? 'சப்ளையர்கள்' : 'Clients', count: parties.filter(p => p.type === 'supplier').length }
         ].map(tab => (
           <button
             key={tab.id}
@@ -1060,11 +1126,11 @@ const Parties = () => {
 
       {/* Desktop Table Header (Hidden on Mobile) */}
       <div className="hidden md:flex items-center px-3 py-2 mb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-        <div style={{ width: '18%' }}>Party Name</div>
+        <div style={{ width: '18%' }}>Name</div>
         <div style={{ width: '12%' }}>Phone</div>
-        <div style={{ width: '12%' }}>Type</div>
-        <div style={{ width: '12%' }} className="text-right">Outstanding</div>
-        <div style={{ width: '12%' }} className="text-right">Total</div>
+        <div style={{ width: '12%' }}>Record Type</div>
+        <div style={{ width: '12%' }} className="text-right">Balance Due</div>
+        <div style={{ width: '12%' }} className="text-right">Total Billed</div>
         <div style={{ width: '10%' }} className="text-center">Status</div>
         <div style={{ width: '24%' }} className="text-center">Actions</div>
       </div>
@@ -1078,7 +1144,7 @@ const Parties = () => {
         ) : filteredParties.length === 0 ? (
           <div className="text-center py-20">
             <Users size={48} weight="duotone" className="text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm">{language === 'ta' ? 'தரப்பினர் எதுவும் இல்லை' : 'No parties found'}</p>
+            <p className="text-slate-500 text-sm">{language === 'ta' ? 'தரப்பினர் எதுவும் இல்லை' : 'No students or clients found'}</p>
           </div>
         ) : (
           filteredParties.map((party, index) => {
@@ -1105,7 +1171,7 @@ const Parties = () => {
               >
                 {/* Desktop Row */}
                 <div className="hidden md:flex items-center px-3 py-2 bg-white rounded-lg border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all">
-                  {/* Party Name with icon */}
+                  {/* Name with icon */}
                   <div style={{ width: '18%' }} className="flex items-center gap-2 min-w-0">
                     <div className={cn(
                       "p-1.5 rounded-lg flex-shrink-0",
@@ -1133,7 +1199,7 @@ const Parties = () => {
                       "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium",
                       party.type === 'customer' ? "bg-blue-50 text-blue-700" : "bg-orange-50 text-orange-700"
                     )}>
-                      {party.type === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Customer') : (language === 'ta' ? 'சப்ளையர்' : 'Supplier')}
+                      {party.type === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Student') : (language === 'ta' ? 'சப்ளையர்' : 'Client')}
                     </span>
                   </div>
 
@@ -1254,9 +1320,11 @@ const Parties = () => {
                     outstandingColor === 'grey' && "bg-slate-50"
                   )}>
                     <span className="text-xs text-slate-600">
-                      {outstanding > 0 ? (party.type === 'customer' ? (language === 'ta' ? 'பெற வேண்டியது' : 'To Receive') : (language === 'ta' ? 'செலுத்த வேண்டியது' : 'To Pay')) :
-                       outstanding < 0 ? (party.type === 'customer' ? (language === 'ta' ? 'முன்பணம்' : 'Advance') : (language === 'ta' ? 'கடன்' : 'Credit')) :
-                       (language === 'ta' ? 'இருப்பு' : 'Balance')}
+                      {outstanding > 0
+                        ? (language === 'ta' ? 'பெற வேண்டியது' : 'Due')
+                        : outstanding < 0
+                          ? (language === 'ta' ? 'முன்பணம்' : 'Advance/Credit')
+                          : (language === 'ta' ? 'இருப்பு' : 'Balance')}
                     </span>
                     <span className={cn(
                       "font-bold text-sm",
@@ -1329,13 +1397,13 @@ const Parties = () => {
             className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-xs text-red-600"
           >
             <Trash size={14} weight="duotone" />
-            <span>Delete Party</span>
+            <span>Delete Record</span>
           </button>
         </div>,
         document.body
       )}
 
-      {/* Add Party Modal */}
+      {/* Add Student/Client Modal */}
       <AnimatePresence>
         {showAddModal && (
           <>
@@ -1365,12 +1433,12 @@ const Parties = () => {
               >
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">
-                  {isEditMode ? (language === 'ta' ? 'திருத்து' : 'Edit') : (language === 'ta' ? 'புதிதாக சேர்' : 'Add New')} {partyType === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Customer') : (language === 'ta' ? 'சப்ளையர்' : 'Supplier')}
+                  {isEditMode ? (language === 'ta' ? 'திருத்து' : 'Edit') : (language === 'ta' ? 'புதிதாக சேர்' : 'Add New')} {partyType === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Student') : (language === 'ta' ? 'சப்ளையர்' : 'Client')}
                 </h2>
 
-                {/* Party Type */}
+                {/* Record Type */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">{language === 'ta' ? 'தரப்பினர் வகை' : 'Party Type'}</label>
+                  <label className="text-sm font-medium mb-2 block">{language === 'ta' ? 'தரப்பினர் வகை' : 'Record Type'}</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -1383,7 +1451,7 @@ const Parties = () => {
                       )}
                     >
                       <UserCircle size={20} weight="duotone" className={partyType === 'customer' ? "text-success" : ""} />
-                      <span className="font-medium text-sm">{language === 'ta' ? 'வாடிக்கையாளர்' : 'Customer'}</span>
+                      <span className="font-medium text-sm">{language === 'ta' ? 'வாடிக்கையாளர்' : 'Student'}</span>
                     </button>
                     <button
                       type="button"
@@ -1396,7 +1464,7 @@ const Parties = () => {
                       )}
                     >
                       <Storefront size={20} weight="duotone" className={partyType === 'supplier' ? "text-warning" : ""} />
-                      <span className="font-medium text-sm">{language === 'ta' ? 'சப்ளையர்' : 'Supplier'}</span>
+                      <span className="font-medium text-sm">{language === 'ta' ? 'சப்ளையர்' : 'Client'}</span>
                     </button>
                   </div>
                 </div>
@@ -1405,13 +1473,13 @@ const Parties = () => {
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">
-                      {partyType === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Customer') : (language === 'ta' ? 'சப்ளையர்' : 'Supplier')} {language === 'ta' ? 'பெயர்' : 'Name'} <span className="text-destructive">*</span>
+                      {partyType === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Student') : (language === 'ta' ? 'சப்ளையர்' : 'Client')} {language === 'ta' ? 'பெயர்' : 'Name'} <span className="text-destructive">*</span>
                     </label>
                     <input
                       type="text"
                       value={partyName}
                       onChange={(e) => setPartyName(validateCustomerName(e.target.value))}
-                      placeholder={language === 'ta' ? `${partyType === 'customer' ? 'வாடிக்கையாளர்' : 'சப்ளையர்'} பெயர் உள்ளிடவும்` : `Enter ${partyType} name (letters only)`}
+                      placeholder={language === 'ta' ? `${partyType === 'customer' ? 'வாடிக்கையாளர்' : 'சப்ளையர்'} பெயர் உள்ளிடவும்` : `Enter ${partyType === 'customer' ? 'student' : 'client'} name (letters only)`}
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                     />
                   </div>
@@ -1448,7 +1516,7 @@ const Parties = () => {
                 <div className="space-y-2 pt-2 border-t border-border">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{language === 'ta' ? 'விருப்ப தகவல்' : 'Optional Information'}</p>
 
-                  {/* Billing Address */}
+                  {/* Address */}
                   <div>
                     {!showBillingAddress ? (
                       <button
@@ -1456,7 +1524,7 @@ const Parties = () => {
                         className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                       >
                         <Plus size={14} weight="bold" />
-                        {language === 'ta' ? 'பில்லிங் முகவரி' : 'Billing Address'}
+                        {language === 'ta' ? 'பில்லிங் முகவரி' : 'Address'}
                       </button>
                     ) : (
                       <motion.div
@@ -1464,88 +1532,96 @@ const Parties = () => {
                         animate={{ opacity: 1, height: 'auto' }}
                         className="space-y-2"
                       >
-                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'பில்லிங் முகவரி' : 'Billing Address'}</label>
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'பில்லிங் முகவரி' : 'Address'}</label>
                         <textarea
                           rows={2}
                           value={partyAddress}
                           onChange={(e) => setPartyAddress(e.target.value)}
-                          placeholder={language === 'ta' ? 'பில்லிங் முகவரி உள்ளிடவும்' : 'Enter billing address'}
+                          placeholder={language === 'ta' ? 'பில்லிங் முகவரி உள்ளிடவும்' : 'Enter address'}
                           className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
                         ></textarea>
                       </motion.div>
                     )}
                   </div>
 
-                  {/* State */}
-                  <div>
-                    {!showState ? (
-                      <button
-                        onClick={() => setShowState(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        {language === 'ta' ? 'மாநிலம்' : 'State'}
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'மாநிலம்' : 'State'}</label>
-                        <select
-                          value={partyState}
-                          onChange={(e) => setPartyState(e.target.value)}
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                        >
-                          <option value="">{language === 'ta' ? 'மாநிலம் தேர்ந்தெடு' : 'Select State'}</option>
-                          {INDIAN_STATES.map((state) => (
-                            <option key={state} value={state}>
-                              {state}
-                            </option>
-                          ))}
-                        </select>
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* GST Number - Required if settings.requireGSTIN is true */}
-                  <div>
-                    {!showGstNumber && !partySettings.requireGSTIN ? (
-                      <button
-                        onClick={() => setShowGstNumber(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        {language === 'ta' ? 'GST எண்' : 'GST Number'}
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">
-                          {language === 'ta' ? 'GST எண்' : 'GST Number'}
-                          {partySettings.requireGSTIN && <span className="text-destructive ml-1">*</span>}
-                        </label>
-                        <input
-                          type="text"
-                          value={partyGst}
-                          onChange={(e) => setPartyGst(e.target.value.toUpperCase())}
-                          placeholder={language === 'ta' ? 'GST எண் உள்ளிடவும் (எ.கா: 33AAAAA0000A1Z5)' : 'Enter GST number (e.g., 33AAAAA0000A1Z5)'}
-                          maxLength={15}
-                          className={cn(
-                            "w-full px-3 py-2 bg-background border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all",
-                            partySettings.requireGSTIN && !partyGst?.trim() ? "border-destructive" : "border-border"
-                          )}
-                        />
-                        {partySettings.requireGSTIN && !partyGst?.trim() && (
-                          <p className="text-xs text-destructive">{language === 'ta' ? 'GSTIN கட்டாயமாகும்' : 'GSTIN is required'}</p>
+                  {partyType !== 'customer' && (
+                    <>
+                      {/* State */}
+                      <div>
+                        {!showState ? (
+                          <button
+                            onClick={() => setShowState(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'மாநிலம்' : 'State'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'மாநிலம்' : 'State'}</label>
+                            <select
+                              value={partyState}
+                              onChange={(e) => setPartyState(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              <option value="">{language === 'ta' ? 'மாநிலம் தேர்ந்தெடு' : 'Select State'}</option>
+                              {INDIAN_STATES.map((state) => (
+                                <option key={state} value={state}>
+                                  {state}
+                                </option>
+                              ))}
+                            </select>
+                          </motion.div>
                         )}
-                      </motion.div>
-                    )}
-                  </div>
+                      </div>
+                    </>
+                  )}
+
+                  {partyType !== 'customer' && (
+                    <>
+                      {/* Tax ID / GST - Required if settings.requireGSTIN is true */}
+                      <div>
+                        {!showGstNumber && !partySettings.requireGSTIN ? (
+                          <button
+                            onClick={() => setShowGstNumber(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'GST எண்' : 'Tax ID / GST'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">
+                              {language === 'ta' ? 'GST எண்' : 'Tax ID / GST'}
+                              {partySettings.requireGSTIN && <span className="text-destructive ml-1">*</span>}
+                            </label>
+                            <input
+                              type="text"
+                              value={partyGst}
+                              onChange={(e) => setPartyGst(e.target.value.toUpperCase())}
+                              placeholder={language === 'ta' ? 'GST எண் உள்ளிடவும் (எ.கா: 33AAAAA0000A1Z5)' : 'Enter GST / Tax ID (e.g., 33AAAAA0000A1Z5)'}
+                              maxLength={15}
+                              className={cn(
+                                "w-full px-3 py-2 bg-background border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all",
+                                partySettings.requireGSTIN && !partyGst?.trim() ? "border-destructive" : "border-border"
+                              )}
+                            />
+                            {partySettings.requireGSTIN && !partyGst?.trim() && (
+                              <p className="text-xs text-destructive">{language === 'ta' ? 'GSTIN கட்டாயமாகும்' : 'GSTIN is required'}</p>
+                            )}
+                          </motion.div>
+                        )}
+                      </div>
+                    </>
+                  )}
 
                   {/* Email Address */}
                   <div>
@@ -1575,38 +1651,283 @@ const Parties = () => {
                     )}
                   </div>
 
-                  {/* Customer Type - Dynamic from Party Settings */}
-                  <div>
-                    {!showCustomerType ? (
-                      <button
-                        onClick={() => setShowCustomerType(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        {language === 'ta' ? 'வாடிக்கையாளர் வகை' : 'Party Category'}
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'வாடிக்கையாளர் வகை' : 'Party Category'}</label>
-                        <select
-                          value={partyCustomerType}
-                          onChange={(e) => setPartyCustomerType(e.target.value)}
-                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                        >
-                          {partySettings.partyCategories.map((category) => (
-                            <option key={category} value={category}>{category}</option>
-                          ))}
-                        </select>
-                      </motion.div>
-                    )}
-                  </div>
+                  {partyType === 'customer' && (
+                    <>
+                      {/* Date of Birth */}
+                      <div>
+                        {!showDob ? (
+                          <button
+                            onClick={() => setShowDob(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'பிறந்ததின் தேதி' : 'Date of Birth'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'பிறந்ததின் தேதி' : 'Date of Birth'}</label>
+                            <input
+                              type="date"
+                              value={studentDob}
+                              onChange={(e) => setStudentDob(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                          </motion.div>
+                        )}
+                      </div>
 
-                  {/* Credit Limit - Only show if enabled in settings */}
-                  {partySettings.enableCreditLimit && (
+                      {/* Gender */}
+                      <div>
+                        {!showGender ? (
+                          <button
+                            onClick={() => setShowGender(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'பால்' : 'Gender'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'பால்' : 'Gender'}</label>
+                            <select
+                              value={studentGender}
+                              onChange={(e) => setStudentGender(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              <option value="">{language === 'ta' ? 'தேர்ந்தெடு' : 'Select Gender'}</option>
+                              <option value="male">{language === 'ta' ? 'ஆண்' : 'Male'}</option>
+                              <option value="female">{language === 'ta' ? 'பெண்' : 'Female'}</option>
+                              <option value="other">{language === 'ta' ? 'மற்றவர்' : 'Other'}</option>
+                            </select>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* ID Proof */}
+                      <div>
+                        {!showIdProof ? (
+                          <button
+                            onClick={() => setShowIdProof(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'அடையாள ஆவணங்கள்' : 'ID Proof'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'அடையாள ஆவணங்கள்' : 'ID Proof'}</label>
+                            <select
+                              value={studentIdProofType}
+                              onChange={(e) => setStudentIdProofType(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              <option value="">{language === 'ta' ? 'தேர்ந்தெடு' : 'Select ID Proof'}</option>
+                              <option value="Aadhaar">Aadhaar</option>
+                              <option value="PAN">PAN</option>
+                              <option value="Driving License">Driving License</option>
+                              <option value="Passport">Passport</option>
+                              <option value="College ID">College ID</option>
+                              <option value="Other">Other</option>
+                            </select>
+                            <input
+                              type="text"
+                              value={studentIdProofNumber}
+                              onChange={(e) => setStudentIdProofNumber(e.target.value)}
+                              placeholder={language === 'ta' ? 'அடையாள எண்' : 'Enter ID number'}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Emergency Contact */}
+                      <div>
+                        {!showEmergencyContact ? (
+                          <button
+                            onClick={() => setShowEmergencyContact(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'ஆபத்து தொடர்பு' : 'Emergency Contact'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'ஆபத்து தொடர்பு' : 'Emergency Contact'}</label>
+                            <input
+                              type="text"
+                              value={studentEmergencyName}
+                              onChange={(e) => setStudentEmergencyName(e.target.value)}
+                              placeholder={language === 'ta' ? 'பெயர்' : 'Contact name'}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                            <input
+                              type="tel"
+                              value={studentEmergencyPhone}
+                              onChange={(e) => {
+                                const digits = e.target.value.replace(/\\D/g, '').slice(0, 10)
+                                setStudentEmergencyPhone(digits)
+                              }}
+                              placeholder={language === 'ta' ? 'தொலைபேசி எண்' : 'Phone number'}
+                              maxLength={10}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Admission Date */}
+                      <div>
+                        {!showAdmissionDate ? (
+                          <button
+                            onClick={() => setShowAdmissionDate(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'சேர்க்கை தேதி' : 'Admission Date'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'சேர்க்கை தேதி' : 'Admission Date'}</label>
+                            <input
+                              type="date"
+                              value={studentAdmissionDate}
+                              onChange={(e) => setStudentAdmissionDate(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Focus */}
+                      <div>
+                        {!showFocus ? (
+                          <button
+                            onClick={() => setShowFocus(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'கவன்' : 'Focus'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'கவன்' : 'Focus'}</label>
+                            <select
+                              value={studentFocus}
+                              onChange={(e) => setStudentFocus(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              <option value="">{language === 'ta' ? 'தேர்ந்தெடு' : 'Select focus'}</option>
+                              <option value="Career">{language === 'ta' ? 'கரியர்' : 'Career'}</option>
+                              <option value="Education">{language === 'ta' ? 'கல்வி' : 'Education'}</option>
+                              <option value="Other">{language === 'ta' ? 'மற்றவர்' : 'Other'}</option>
+                            </select>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* How did you hear about us */}
+                      <div>
+                        {!showLeadSource ? (
+                          <button
+                            onClick={() => setShowLeadSource(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'எங்களை குறித்து எப்படி தெரிந்தது?' : 'How did you hear about us?'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'எங்களை குறித்து எப்படி தெரிந்தது?' : 'How did you hear about us?'}</label>
+                            <select
+                              value={studentSource}
+                              onChange={(e) => setStudentSource(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              <option value="">{language === 'ta' ? 'தேர்ந்தெடு' : 'Select source'}</option>
+                              <option value="Google">Google</option>
+                              <option value="Instagram">Instagram</option>
+                              <option value="Friend">Friend</option>
+                              <option value="Walk-in">Walk-in</option>
+                              <option value="Other">Other</option>
+                            </select>
+                            {studentSource === 'Other' && (
+                              <input
+                                type="text"
+                                value={studentSourceOther}
+                                onChange={(e) => setStudentSourceOther(e.target.value)}
+                                placeholder={language === 'ta' ? 'பெர் உள்ளிடவும்' : 'Enter source'}
+                                className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                              />
+                            )}
+                          </motion.div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {partyType !== 'customer' && (
+                    <>
+                      {/* Customer Type - Dynamic from Party Settings */}
+                      <div>
+                        {!showCustomerType ? (
+                          <button
+                            onClick={() => setShowCustomerType(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'வாடிக்கையாளர் வகை' : 'Category'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'வாடிக்கையாளர் வகை' : 'Category'}</label>
+                            <select
+                              value={partyCustomerType}
+                              onChange={(e) => setPartyCustomerType(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              {partySettings.partyCategories.map((category) => (
+                                <option key={category} value={category}>{category}</option>
+                              ))}
+                            </select>
+                          </motion.div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {partyType !== 'customer' && partySettings.enableCreditLimit && (
                     <div>
                       {!showCreditLimit ? (
                         <button
@@ -1645,62 +1966,70 @@ const Parties = () => {
                     </div>
                   )}
 
-                  {/* Credit Period (Days) - Always show with default from settings */}
-                  <div>
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="space-y-2"
-                    >
-                      <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'கடன் காலம் (நாட்கள்)' : 'Credit Period (Days)'}</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="365"
-                        value={partyCreditDays}
-                        onChange={(e) => setPartyCreditDays(Number(e.target.value) || 0)}
-                        placeholder={language === 'ta' ? 'கடன் காலம் நாட்கள்' : 'Credit period in days'}
-                        className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        {language === 'ta' ? `அடிப்படை: ${partySettings.defaultCreditPeriod} நாட்கள்` : `Default: ${partySettings.defaultCreditPeriod} days`}
-                      </p>
-                    </motion.div>
-                  </div>
+                  {partyType !== 'customer' && (
+                    <>
+                      {/* Credit Period (Days) - Always show with default from settings */}
+                      <div>
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-2"
+                        >
+                          <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'கடன் காலம் (நாட்கள்)' : 'Payment Due (Days)'}</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="365"
+                            value={partyCreditDays}
+                            onChange={(e) => setPartyCreditDays(Number(e.target.value) || 0)}
+                            placeholder={language === 'ta' ? 'கடன் காலம் நாட்கள்' : 'Payment due in days'}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {language === 'ta' ? `அடிப்படை: ${partySettings.defaultCreditPeriod} நாட்கள்` : `Default: ${partySettings.defaultCreditPeriod} days`}
+                          </p>
+                        </motion.div>
+                      </div>
+                    </>
+                  )}
 
-                  {/* Opening Balance */}
-                  <div>
-                    {!showOpeningBalance ? (
-                      <button
-                        onClick={() => setShowOpeningBalance(true)}
-                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                      >
-                        <Plus size={14} weight="bold" />
-                        {language === 'ta' ? 'ஆரம்ப இருப்பு' : 'Opening Balance'}
-                      </button>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-2"
-                      >
-                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'ஆரம்ப இருப்பு (₹)' : 'Opening Balance (₹)'}</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={partyOpeningBalance}
-                          onChange={(e) => setPartyOpeningBalance(e.target.value)}
-                          placeholder={language === 'ta' ? 'ஆரம்ப இருப்பு உள்ளிடவும் (எ.கா., 5000)' : 'Enter opening balance (e.g., 5000)'}
-                          className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          {language === 'ta' ? 'நேர் = அவர்கள் கடன்பட்டுள்ளனர், எதிர் = நீங்கள் கடன்பட்டுள்ளீர்கள்' : 'Positive = They owe you, Negative = You owe them'}
-                        </p>
-                      </motion.div>
-                    )}
-                  </div>
+                  {partyType !== 'customer' && (
+                    <>
+                      {/* Opening Balance */}
+                      <div>
+                        {!showOpeningBalance ? (
+                          <button
+                            onClick={() => setShowOpeningBalance(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'ஆரம்ப இருப்பு' : 'Opening Balance'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'ஆரம்ப இருப்பு (₹)' : 'Opening Balance (₹)'}</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={partyOpeningBalance}
+                              onChange={(e) => setPartyOpeningBalance(e.target.value)}
+                              placeholder={language === 'ta' ? 'ஆரம்ப இருப்பு உள்ளிடவும் (எ.கா., 5000)' : 'Enter opening balance (e.g., 5000)'}
+                              className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              {language === 'ta' ? 'நேர் = அவர்கள் கடன்பட்டுள்ளனர், எதிர் = நீங்கள் கடன்பட்டுள்ளீர்கள்' : 'Positive = They owe you, Negative = You owe them'}
+                            </p>
+                          </motion.div>
+                        )}
+                      </div>
+                    </>
+                  )}
 
-                  {/* Vehicle No */}
+                  {/* Course / Batch */}
                   <div>
                     {!showVehicleNo ? (
                       <button
@@ -1708,7 +2037,7 @@ const Parties = () => {
                         className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                       >
                         <Plus size={14} weight="bold" />
-                        {language === 'ta' ? 'வாகன எண்' : 'Vehicle No'}
+                        {language === 'ta' ? 'வாகன எண்' : partyType === 'customer' ? 'Course / Batch' : 'Project / Engagement'}
                       </button>
                     ) : (
                       <motion.div
@@ -1716,12 +2045,12 @@ const Parties = () => {
                         animate={{ opacity: 1, height: 'auto' }}
                         className="space-y-2"
                       >
-                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'வாகன எண்' : 'Vehicle No'}</label>
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'வாகன எண்' : partyType === 'customer' ? 'Course / Batch' : 'Project / Engagement'}</label>
                         <input
                           type="text"
                           value={partyVehicleNo}
-                          onChange={(e) => setPartyVehicleNo(e.target.value.toUpperCase())}
-                          placeholder={language === 'ta' ? 'வாகன எண் உள்ளிடவும் (எ.கா., TN01AB1234)' : 'Enter vehicle number (e.g., TN01AB1234)'}
+                          onChange={(e) => setPartyVehicleNo(e.target.value)}
+                          placeholder={language === 'ta' ? 'வாகன எண் உள்ளிடவும் (எ.கா., TN01AB1234)' : partyType === 'customer' ? 'Enter course or batch' : 'Enter project or engagement'}
                           className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                         />
                       </motion.div>
@@ -1779,7 +2108,7 @@ const Parties = () => {
                         {language === 'ta' ? 'சேமிக்கிறது...' : 'Saving...'}
                       </>
                     ) : (
-                      `${isEditMode ? (language === 'ta' ? 'புதுப்பி' : 'Update') : (language === 'ta' ? 'சேர்' : 'Add')} ${partyType === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Customer') : (language === 'ta' ? 'சப்ளையர்' : 'Supplier')}`
+                      `${isEditMode ? (language === 'ta' ? 'புதுப்பி' : 'Update') : (language === 'ta' ? 'சேர்' : 'Add')} ${partyType === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Student') : (language === 'ta' ? 'சப்ளையர்' : 'Client')}`
                     )}
                   </button>
                 </div>
@@ -1804,18 +2133,14 @@ const Parties = () => {
                   <h2 className="text-lg sm:text-xl font-bold">{selectedParty.name} - {language === 'ta' ? 'லெட்ஜர்' : 'Ledger'}</h2>
                   <p className={cn(
                     "text-xs sm:text-sm mt-1 font-medium",
-                    selectedParty.type === 'customer'
-                      ? (selectedParty.currentBalance > 0 ? "text-emerald-600" : selectedParty.currentBalance < 0 ? "text-red-600" : "text-gray-500")
-                      : (selectedParty.currentBalance > 0 ? "text-red-600" : selectedParty.currentBalance < 0 ? "text-emerald-600" : "text-gray-500")
+                    selectedParty.currentBalance > 0 ? "text-emerald-600" : selectedParty.currentBalance < 0 ? "text-red-600" : "text-gray-500"
                   )}>
-                    Outstanding: {selectedParty.type === 'customer'
-                      ? (selectedParty.currentBalance > 0 ? '+' : selectedParty.currentBalance < 0 ? '-' : '')
-                      : (selectedParty.currentBalance > 0 ? '-' : selectedParty.currentBalance < 0 ? '+' : '')}
-                    ₹{Math.abs(selectedParty.currentBalance || 0).toLocaleString()}
+                    Balance: {selectedParty.currentBalance > 0 ? '+' : selectedParty.currentBalance < 0 ? '-' : ''}
+                    Rs. {Math.abs(selectedParty.currentBalance || 0).toLocaleString()}
                     {selectedParty.currentBalance > 0
-                      ? (selectedParty.type === 'customer' ? ' (To Receive)' : ' (To Pay)')
+                      ? ' (Due)'
                       : selectedParty.currentBalance < 0
-                        ? (selectedParty.type === 'customer' ? ' (Advance)' : ' (Credit)')
+                        ? ' (Advance/Credit)'
                         : ' (Settled)'}
                   </p>
                 </div>
@@ -1948,7 +2273,7 @@ const Parties = () => {
                     <Trash size={24} weight="duotone" className="text-destructive" />
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-xl font-bold text-destructive">{language === 'ta' ? 'தரப்பினர் நீக்கு' : 'Delete Party'}</h2>
+                    <h2 className="text-xl font-bold text-destructive">{language === 'ta' ? 'தரப்பினர் நீக்கு' : 'Delete Record'}</h2>
                     <p className="text-sm text-muted-foreground mt-1">
                       {language === 'ta' ? 'இந்த செயலை செயல்தவிர்க்க முடியாது' : 'This action cannot be undone'}
                     </p>
@@ -1959,7 +2284,7 @@ const Parties = () => {
               {/* Body */}
               <div className="p-6">
                 <p className="text-sm text-muted-foreground mb-4">
-                  {language === 'ta' ? 'இந்த தரப்பினரை நிச்சயமாக நீக்க விரும்புகிறீர்களா?' : 'Are you sure you want to delete this party?'}
+                  {language === 'ta' ? 'இந்த தரப்பினரை நிச்சயமாக நீக்க விரும்புகிறீர்களா?' : 'Are you sure you want to delete this record?'}
                 </p>
                 <div className="bg-muted/50 rounded-lg p-4 border border-border">
                   <p className="font-semibold text-foreground">
@@ -1975,20 +2300,18 @@ const Parties = () => {
                     if (!balance || isNaN(balance) || balance === 0) return null
                     return (
                       <div className="mt-3 pt-3 border-t border-border">
-                        <p className="text-xs text-muted-foreground">Outstanding Balance:</p>
+                        <p className="text-xs text-muted-foreground">Balance Summary:</p>
                         <p className={cn(
                           "text-sm font-semibold mt-1",
-                          partyToDelete.type === 'customer'
-                            ? (balance > 0 ? "text-emerald-600" : "text-red-600")
-                            : (balance > 0 ? "text-red-600" : "text-emerald-600")
+                          balance > 0 ? "text-emerald-600" : balance < 0 ? "text-red-600" : "text-slate-500"
                         )}>
-                          {partyToDelete.type === 'customer'
-                            ? (balance > 0 ? '+' : '-')
-                            : (balance > 0 ? '-' : '+')}
-                          ₹{Math.abs(balance).toLocaleString()}
+                          {balance > 0 ? '+' : balance < 0 ? '-' : ''}
+                          Rs. {Math.abs(balance).toLocaleString()}
                           {balance > 0
-                            ? (partyToDelete.type === 'customer' ? ' (To Receive)' : ' (To Pay)')
-                            : (partyToDelete.type === 'customer' ? ' (Advance)' : ' (Credit)')}
+                            ? ' (Due)'
+                            : balance < 0
+                              ? ' (Advance/Credit)'
+                              : ' (Settled)'}
                         </p>
                       </div>
                     )
@@ -2000,7 +2323,7 @@ const Parties = () => {
                   return (
                     <div className="mt-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
                       <p className="text-xs text-destructive">
-                        {language === 'ta' ? '⚠️ எச்சரிக்கை: இந்த தரப்பினருக்கு நிலுவை இருப்பு உள்ளது. நீக்குவது அனைத்து பரிவர்த்தனை வரலாற்றையும் அகற்றும்.' : '⚠️ Warning: This party has an outstanding balance. Deleting will remove all transaction history.'}
+                        {language === 'ta' ? '⚠️ எச்சரிக்கை: இந்த தரப்பினருக்கு நிலுவை இருப்பு உள்ளது. நீக்குவது அனைத்து பரிவர்த்தனை வரலாற்றையும் அகற்றும்.' : '⚠️ Warning: This record has a balance. Deleting will remove all transaction history.'}
                       </p>
                     </div>
                   )
@@ -2032,7 +2355,7 @@ const Parties = () => {
                   ) : (
                     <>
                       <Trash size={18} weight="duotone" />
-                      {language === 'ta' ? 'தரப்பினர் நீக்கு' : 'Delete Party'}
+                      {language === 'ta' ? 'தரப்பினர் நீக்கு' : 'Delete Record'}
                     </>
                   )}
                 </button>

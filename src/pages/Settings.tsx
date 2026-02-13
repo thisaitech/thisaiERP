@@ -4,23 +4,10 @@ import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
   Gear,
-  Receipt,
-  Printer,
-  Percent,
-  Bell,
-  ChatCircle,
   Users,
   Package,
   Globe,
   Building,
-  Table,
-  CloudArrowUp,
-  HardDrive,
-  CreditCard,
-  Toolbox,
-  ShareNetwork,
-  Icon,
-  Crown,
 } from '@phosphor-icons/react';
 import { cn } from '../lib/utils';
 import Loading from '../components/Loading';
@@ -28,24 +15,13 @@ import Loading from '../components/Loading';
 const LanguageSettingsSection = lazy(() => import('../components/settings/LanguageSettingsSection').then(module => ({ default: module.LanguageSettingsSection })));
 const GeneralSettingsSection = lazy(() => import('../components/settings/GeneralSettings').then(module => ({ default: module.GeneralSettingsSection })));
 const CompanySettingsSection = lazy(() => import('../components/settings/CompanySettings').then(module => ({ default: module.CompanySettingsSection })));
-const RazorpaySettingsSection = lazy(() => import('../components/settings/RazorpaySettings').then(module => ({ default: module.RazorpaySettingsSection })));
-const OfflineSyncSettingsSection = lazy(() => import('../components/settings/OfflineSyncSettings').then(module => ({ default: module.OfflineSyncSettingsSection })));
-const BackupExportSettingsSection = lazy(() => import('../components/settings/BackupExportSettings').then(module => ({ default: module.BackupExportSettingsSection })));
-const TransactionSettingsSection = lazy(() => import('../components/settings/TransactionSettings').then(module => ({ default: module.TransactionSettingsSection })));
-const InvoiceTableSettingsSection = lazy(() => import('../components/settings/InvoiceTableSettings').then(module => ({ default: module.InvoiceTableSettingsSection })));
-const TaxSettingsSection = lazy(() => import('../components/settings/TaxSettings').then(module => ({ default: module.TaxSettingsSection })));
-const UserManagementSettingsSection = lazy(() => import('../components/settings/UserManagementSettingsSection').then(module => ({ default: module.UserManagementSettingsSection })));
-const SMSSettingsSection = lazy(() => import('../components/settings/SMSSettingsSection').then(module => ({ default: module.SMSSettingsSection })));
-const ReminderSettingsSection = lazy(() => import('../components/settings/ReminderSettingsSection').then(module => ({ default: module.ReminderSettingsSection })));
 const PartySettingsSection = lazy(() => import('../components/settings/PartySettingsSection').then(module => ({ default: module.PartySettingsSection })));
 const ItemSettingsSection = lazy(() => import('../components/settings/ItemSettingsSection').then(module => ({ default: module.ItemSettingsSection })));
-const UtilitiesSettingsSection = lazy(() => import('../components/settings/UtilitiesSettingsSection').then(module => ({ default: module.UtilitiesSettingsSection })));
-const SubscriptionSettingsSection = lazy(() => import('../components/SubscriptionSettings'));
 
 interface SettingsSection {
   id: string;
   label: string;
-  icon: Icon;
+  icon: React.ElementType;
   component: React.ComponentType;
 }
 
@@ -64,23 +40,11 @@ const Settings = () => {
 
   const settingsSections: SettingsSection[] = useMemo(
     () => [
-      { id: 'subscription', label: 'Subscription', icon: Crown, component: SubscriptionSettingsSection },
       { id: 'general', label: t.settings.general, icon: Gear, component: GeneralSettingsSection },
       { id: 'language', label: t.settings.languageLabel, icon: Globe, component: LanguageSettingsSection },
       { id: 'company', label: t.settings.companyInfo, icon: Building, component: CompanySettingsSection },
-      { id: 'razorpay', label: t.settings.razorpayPayments, icon: CreditCard, component: RazorpaySettingsSection },
-      { id: 'offlineSync', label: t.settings.offlineAndSync, icon: CloudArrowUp, component: OfflineSyncSettingsSection },
-      { id: 'backup', label: t.settings.backupAndExport, icon: HardDrive, component: BackupExportSettingsSection },
-      { id: 'transaction', label: t.settings.transaction, icon: Receipt, component: TransactionSettingsSection },
-      { id: 'invoice', label: t.settings.invoicePrint, icon: Printer, component: TransactionSettingsSection },
-      { id: 'invoiceTable', label: t.settings.invoiceTable, icon: Table, component: InvoiceTableSettingsSection },
-      { id: 'taxes', label: t.settings.taxesAndGst, icon: Percent, component: TaxSettingsSection },
-      { id: 'users', label: t.settings.userManagement, icon: Users, component: UserManagementSettingsSection },
-      { id: 'sms', label: t.settings.transactionalSms, icon: ChatCircle, component: SMSSettingsSection },
-      { id: 'reminders', label: t.settings.reminders, icon: Bell, component: ReminderSettingsSection },
-      { id: 'party', label: t.settings.partySettings, icon: ShareNetwork, component: PartySettingsSection },
+      { id: 'party', label: t.settings.partySettings, icon: Users, component: PartySettingsSection },
       { id: 'items', label: t.settings.itemSettings, icon: Package, component: ItemSettingsSection },
-      { id: 'utilities', label: t.settings.utilities, icon: Toolbox, component: UtilitiesSettingsSection },
     ],
     [t]
   );

@@ -24,7 +24,6 @@ import {
   Tag,
   Percent,
   CurrencyInr,
-  Scales,
   Cube,
   Bell,
   Star,
@@ -45,7 +44,6 @@ import { getStockDisplay } from '../utils/multiUnitUtils'
 import { getLowStockItems } from '../utils/stockUtils'
 import { getCategoryDefault, getAllCategories, CATEGORY_DEFAULTS } from '../utils/categoryDefaults'
 import BarcodeScanner from '../components/BarcodeScanner'
-import { getItemSettings } from '../services/settingsService'
 
 const Inventory = () => {
   // Language support
@@ -74,9 +72,6 @@ const Inventory = () => {
   const [isLoadingItems, setIsLoadingItems] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Custom units from Item Settings
-  const [customUnits, setCustomUnits] = useState<string[]>([])
-
   // New Item Form States
   const [itemName, setItemName] = useState('')
   const [itemDescription, setItemDescription] = useState('')
@@ -90,7 +85,7 @@ const Inventory = () => {
   const [cgstRate, setCgstRate] = useState('9') // CGST% (half of total GST for intrastate)
   const [sgstRate, setSgstRate] = useState('9') // SGST% (half of total GST for intrastate)
   const [igstRate, setIgstRate] = useState('0') // IGST% (for interstate transactions)
-  const [itemCategory, setItemCategory] = useState('stationery')
+  const [itemCategory, setItemCategory] = useState('Programming')
   const [hsnCode, setHsnCode] = useState('')
   const [stockQuantity, setStockQuantity] = useState('')
   const [stockEntryUnit, setStockEntryUnit] = useState('Pcs') // Unit for stock entry (Box/Pcs)
@@ -248,12 +243,9 @@ const Inventory = () => {
     }
   }
 
-  // Load items and custom units on mount
+  // Load items on mount
   useEffect(() => {
     loadItemsFromDatabase()
-    // Load custom units from item settings
-    const itemSettings = getItemSettings()
-    setCustomUnits(itemSettings.itemUnits || [])
   }, [])
 
   // Store returnTo URL in state so it persists after URL clears
@@ -272,22 +264,16 @@ const Inventory = () => {
     }
   }, [actionParam, returnToParam])
 
-  // Reload items and units when page becomes visible (e.g., when navigating back from Settings)
+  // Reload items when page becomes visible (e.g., when navigating back from Settings)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         loadItemsFromDatabase()
-        // Reload custom units in case they were updated in Settings
-        const itemSettings = getItemSettings()
-        setCustomUnits(itemSettings.itemUnits || [])
       }
     }
 
     const handleFocus = () => {
       loadItemsFromDatabase()
-      // Reload custom units in case they were updated in Settings
-      const itemSettings = getItemSettings()
-      setCustomUnits(itemSettings.itemUnits || [])
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -319,37 +305,49 @@ const Inventory = () => {
   const getDescriptionSuggestions = (itemName: string): string[] => {
     const name = itemName.toLowerCase()
 
-    // Smart suggestions based on common items
-    if (name.includes('pen')) {
+    // Smart suggestions based on common courses
+    if (name.includes('full stack') || name.includes('fullstack')) {
       return [
-        'Ball pen, blue ink, smooth writing',
-        'Office writing pen with comfortable grip',
-        'Fine tip ball pen for daily use'
+        'Full stack web development with HTML, CSS, JavaScript, React, and Node.js',
+        'Hands-on full stack projects with databases and deployment',
+        'Job-ready full stack program with portfolio support'
       ]
-    } else if (name.includes('chair')) {
+    } else if (name.includes('data science') || name.includes('analytics') || name.includes('data')) {
       return [
-        'Comfortable office chair with armrest',
-        'Ergonomic seating with lumbar support',
-        'Leather cushion chair with metal base'
+        'Data science fundamentals with Python, statistics, and machine learning',
+        'Applied analytics using real-world datasets and dashboards',
+        'End-to-end data science with projects and capstone'
       ]
-    } else if (name.includes('notebook') || name.includes('copy')) {
+    } else if (name.includes('python')) {
       return [
-        'Ruled notebook, 200 pages, premium quality',
-        'Student notebook with soft cover',
-        'Professional notebook for office use'
+        'Python programming from basics to advanced with projects',
+        'Python for automation, data handling, and scripting',
+        'Project-based Python course with certificate'
       ]
-    } else if (name.includes('pencil')) {
+    } else if (name.includes('java')) {
       return [
-        'HB grade pencil for writing and drawing',
-        'Dark graphite pencil with eraser',
-        'Premium wooden pencil, pack of 10'
+        'Core Java with OOP, collections, and exception handling',
+        'Java applications with JDBC and basic frameworks',
+        'Job-oriented Java training with assignments'
+      ]
+    } else if (name.includes('tally') || name.includes('account')) {
+      return [
+        'Tally prime with GST, payroll, and practical accounting',
+        'Accounting fundamentals with hands-on voucher entry',
+        'Industry-ready accounting and finance training'
+      ]
+    } else if (name.includes('english') || name.includes('spoken')) {
+      return [
+        'Spoken English with grammar, vocabulary, and confidence building',
+        'Practical communication skills for interviews and workplace',
+        'Fluency-focused English training with daily practice'
       ]
     }
 
     return [
-      `Premium ${name} for daily use`,
-      `High-quality ${name} at best price`,
-      `Durable ${name} with warranty`
+      `Comprehensive ${name} course with hands-on practice`,
+      `Beginner to advanced ${name} training with projects`,
+      `Job-ready ${name} course with certification support`
     ]
   }
 
@@ -367,7 +365,7 @@ const Inventory = () => {
     setCgstRate('9')
     setSgstRate('9')
     setIgstRate('0')
-    setItemCategory('stationery')
+    setItemCategory('Programming')
     setHsnCode('')
     setStockQuantity('')
     setStockEntryUnit('Pcs') // Reset stock entry unit
@@ -451,7 +449,7 @@ const Inventory = () => {
       'Electronics': 'electronics',
       'Stationery': 'stationery'
     }
-    setItemCategory(categoryMap[masterItem.category] || 'other')
+    setItemCategory(categoryMap[masterItem.category] || 'Programming')
 
     // Auto-fill Unit Type
     const unitMap: { [key: string]: string } = {
@@ -531,7 +529,7 @@ const Inventory = () => {
   // Handle add item
   const handleAddItem = async () => {
     if (!itemName?.trim() || !retailPrice?.trim()) {
-      toast.error('Please fill Item Name and Retail Price')
+      toast.error(`${t.inventory.enterItemName} and ${t.inventory.enterRetailPrice}`)
       return
     }
 
@@ -600,7 +598,7 @@ const Inventory = () => {
       })
 
       setItems([newItem, ...items])
-      toast.success('Item added successfully!')
+      toast.success(t.inventory.itemAdded)
       setShowAddModal(false)
       resetForm()
 
@@ -611,7 +609,7 @@ const Inventory = () => {
       }
     } catch (error) {
       console.error('Error adding item:', error)
-      toast.error('Failed to add item. Please try again.')
+      toast.error('Failed to add course. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -641,7 +639,7 @@ const Inventory = () => {
     setCgstRate((item.tax?.cgst || 9).toString())
     setSgstRate((item.tax?.sgst || 9).toString())
     setIgstRate((item.tax?.igst || 0).toString())
-    setItemCategory(item.category || 'stationery')
+    setItemCategory(item.category || 'Programming')
     setHsnCode(item.hsnCode || '')
     setStockQuantity(item.stock?.toString() || '')
     setLowStockAlert(item.reorderPoint?.toString() || '')
@@ -672,7 +670,7 @@ const Inventory = () => {
 
     // Validation
     if (!itemName.trim()) {
-      toast.error('Please enter item name')
+      toast.error(t.inventory.enterItemName)
       return
     }
 
@@ -757,17 +755,17 @@ const Inventory = () => {
       console.log('✅ Update result:', success)
 
       if (success) {
-        toast.success('Item updated successfully!')
+        toast.success(t.inventory.itemUpdated)
         await loadItemsFromDatabase()
         setShowEditModal(false)
         setSelectedItem(null)
         resetForm()
       } else {
-        toast.error('Failed to update item')
+        toast.error('Failed to update course')
       }
     } catch (error) {
       console.error('❌ Error updating item:', error)
-      toast.error('Failed to update item. Please try again.')
+      toast.error('Failed to update course. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -779,13 +777,13 @@ const Inventory = () => {
 
     try {
       await deleteItem(selectedItem.id)
-      toast.success('Item deleted successfully!')
+      toast.success(t.inventory.itemDeleted)
       await loadItemsFromDatabase()
       setShowDeleteConfirm(false)
       setSelectedItem(null)
     } catch (error) {
       console.error('Error deleting item:', error)
-      toast.error('Failed to delete item')
+      toast.error('Failed to delete course')
     }
   }
 
@@ -843,12 +841,12 @@ const Inventory = () => {
   const categories = (() => {
     const categoryCounts: Record<string, number> = {}
     items.forEach(item => {
-      const cat = item.category || 'other'
+      const cat = item.category || 'Other'
       categoryCounts[cat] = (categoryCounts[cat] || 0) + 1
     })
 
     const categoryList = [
-      { id: 'all', name: 'All Items', count: items.length }
+      { id: 'all', name: t.inventory.allItems, count: items.length }
     ]
 
     Object.entries(categoryCounts).forEach(([id, count]) => {
@@ -998,9 +996,9 @@ const Inventory = () => {
   const getStockStatus = (item: any) => {
     const stock = item.stock || 0
     const reorderPoint = item.reorderPoint || 0
-    if (stock === 0) return { label: 'Out of Stock', color: 'destructive', icon: WarningCircle }
-    if (stock <= reorderPoint) return { label: 'Low Stock', color: 'warning', icon: WarningCircle }
-    return { label: 'In Stock', color: 'success', icon: CheckCircle }
+    if (stock === 0) return { label: t.inventory.outOfStock, color: 'destructive', icon: WarningCircle }
+    if (stock <= reorderPoint) return { label: t.inventory.lowStock, color: 'warning', icon: WarningCircle }
+    return { label: t.inventory.inStock, color: 'success', icon: CheckCircle }
   }
 
   const getStockPercentage = (current: number, max: number) => {
@@ -1042,7 +1040,7 @@ const Inventory = () => {
                   <Package size={20} weight="duotone" className="text-blue-500" />
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">Total Items</span>
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{t.inventory.totalItems}</span>
                   <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{inventorySummary.totalItems}</span>
                 </div>
               </button>
@@ -1058,7 +1056,7 @@ const Inventory = () => {
                   <WarningCircle size={20} weight="duotone" className="text-amber-500" />
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent font-semibold">Low Stock</span>
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent font-semibold">{t.inventory.lowStock}</span>
                   <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{inventorySummary.lowStockItems}</span>
                 </div>
               </button>
@@ -1074,7 +1072,7 @@ const Inventory = () => {
                   <X size={20} weight="bold" className="text-red-500" />
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">Out of Stock</span>
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{t.inventory.outOfStock}</span>
                   <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">{inventorySummary.outOfStockItems}</span>
                 </div>
               </button>
@@ -1089,7 +1087,7 @@ const Inventory = () => {
                   <CurrencyInr size={20} weight="duotone" className="text-green-500" />
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">Stock Value</span>
+                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{t.inventory.stockValue}</span>
                   <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                     ₹{inventorySummary.totalValue >= 10000000 ? (inventorySummary.totalValue / 10000000).toFixed(1) + ' Cr' : inventorySummary.totalValue >= 100000 ? (inventorySummary.totalValue / 100000).toFixed(1) + ' L' : inventorySummary.totalValue >= 1000 ? (inventorySummary.totalValue / 1000).toFixed(1) + ' K' : inventorySummary.totalValue.toLocaleString('en-IN')}
                   </span>
@@ -1275,12 +1273,12 @@ const Inventory = () => {
 
       {/* Desktop Table Header (Hidden on Mobile) */}
       <div className="hidden md:flex items-center px-3 py-2 mb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex-shrink-0">
-        <div style={{ width: '20%' }}>Item Name</div>
-        <div style={{ width: '12%' }}>Category</div>
-        <div style={{ width: '10%' }} className="text-right">Stock</div>
-        <div style={{ width: '10%' }} className="text-right">Unit</div>
-        <div style={{ width: '12%' }} className="text-right">Price</div>
-        <div style={{ width: '12%' }} className="text-right">Value</div>
+        <div style={{ width: '20%' }}>{t.inventory.itemName}</div>
+        <div style={{ width: '12%' }}>{t.inventory.category}</div>
+        <div style={{ width: '10%' }} className="text-right">{t.inventory.stock}</div>
+        <div style={{ width: '10%' }} className="text-right">{t.inventory.unitLabel}</div>
+        <div style={{ width: '12%' }} className="text-right">{t.inventory.sellingPrice}</div>
+        <div style={{ width: '12%' }} className="text-right">{t.inventory.value}</div>
         <div style={{ width: '10%' }} className="text-center">Status</div>
         <div style={{ width: '14%' }} className="text-center">Actions</div>
       </div>
@@ -1430,7 +1428,7 @@ const Inventory = () => {
 
                   <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
                     <div>
-                      <div className="text-slate-400 mb-0.5">Stock</div>
+                      <div className="text-slate-400 mb-0.5">{t.inventory.stock}</div>
                       <div className="font-semibold text-slate-800">
                         {item.hasMultiUnit
                           ? getStockDisplay(
@@ -1444,7 +1442,7 @@ const Inventory = () => {
                       </div>
                     </div>
                     <div>
-                      <div className="text-slate-400 mb-0.5">Price</div>
+                      <div className="text-slate-400 mb-0.5">{t.inventory.sellingPrice}</div>
                       <div className="font-semibold text-slate-800">₹{(item.sellingPrice || 0).toLocaleString('en-IN')}</div>
                     </div>
                     <div>
@@ -1609,50 +1607,6 @@ const Inventory = () => {
                           )}
                         </div>
 
-                        {/* Unit Type */}
-                        <div>
-                          <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
-                            <Scales size={14} weight="duotone" />
-                            {t.inventory.unitType} <span className="text-destructive">*</span>
-                          </label>
-                          <select
-                            value={unitType}
-                            onChange={(e) => setUnitType(e.target.value)}
-                            className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                          >
-                            <option value="NONE">{t.inventory.none}</option>
-                            <option value="PCS">{t.inventory.pieces}</option>
-                            <option value="KGS">{t.inventory.kilogram}</option>
-                            <option value="LTRS">{t.inventory.liter}</option>
-                            <option value="MTR">{t.inventory.meter}</option>
-                            <option value="BOX">{t.inventory.box}</option>
-                            <option value="PACK">{t.inventory.pack}</option>
-                            <option value="SET">{t.inventory.set}</option>
-                            {/* Custom units from Item Settings - filter out duplicates */}
-                            {(() => {
-                              // Default unit values/names to filter out
-                              const defaultUnits = ['NONE', 'PCS', 'KGS', 'LTRS', 'MTR', 'BOX', 'PACK', 'SET', 'pieces', 'kilogram', 'liter', 'meter', 'box', 'pack', 'set', 'kg', 'ltr']
-                              const filteredUnits = customUnits.filter(unit => {
-                                const unitLower = unit.toLowerCase()
-                                const unitAbbr = unit.match(/\(([^)]+)\)/)?.[1]?.toLowerCase() || ''
-                                // Check if this custom unit matches any default unit
-                                return !defaultUnits.some(def =>
-                                  unitLower.includes(def.toLowerCase()) ||
-                                  unitAbbr === def.toLowerCase() ||
-                                  def.toLowerCase() === unitLower
-                                )
-                              })
-                              return filteredUnits.length > 0 ? (
-                                <optgroup label="Custom Units">
-                                  {filteredUnits.map((unit) => (
-                                    <option key={unit} value={unit}>{unit}</option>
-                                  ))}
-                                </optgroup>
-                              ) : null
-                            })()}
-                          </select>
-                        </div>
-
                         {/* Category - Auto-fills Unit Conversion */}
                         <div>
                           <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
@@ -1668,44 +1622,36 @@ const Inventory = () => {
 
                               // {t.inventory.hsnCode} mapping based on category
                               const hsnMapping: Record<string, string> = {
-                                stationery: '4820',
-                                Stationery: '4820',
-                                electronics: '8518',
-                                Electronics: '8518',
-                                furniture: '9403',
-                                Furniture: '9403',
-                                hardware: '7326',
-                                Hardware: '7326',
-                                grocery: '1101',
-                                Grocery: '1101',
-                                Biscuits: '1905',
-                                Chips: '1905',
-                                Chocolate: '1806',
-                                'Soft Drinks': '2202',
-                                Juice: '2009',
-                                Noodles: '1902',
-                                Pasta: '1902',
-                                Oil: '1512',
-                                Soap: '3401',
-                                Shampoo: '3305',
-                                Toothpaste: '3306',
-                                Detergent: '3402',
-                                clothing: '6109',
-                                Clothing: '6109',
-                                home: '3402',
-                                cosmetics: '3304',
-                                Cosmetics: '3304',
-                                toys: '9503',
-                                Toys: '9503',
-                                Tablets: '3004',
-                                Syrup: '3004',
-                                other: '9999',
-                                Other: '9999',
-                                General: '9999'
+                                Programming: 'PRG',
+                                'Web Development': 'WEB',
+                                'Data Science': 'DATA',
+                                Design: 'DES',
+                                Marketing: 'MKT',
+                                Accounting: 'ACC',
+                                'Office Tools': 'OFF',
+                                'Hardware & Networking': 'NET',
+                                Language: 'LANG',
+                                'Soft Skills': 'SOFT',
+                                'Test Prep': 'TEST',
+                                General: 'GEN',
+                                Other: 'OTHER',
+                                programming: 'PRG',
+                                'web development': 'WEB',
+                                'data science': 'DATA',
+                                design: 'DES',
+                                marketing: 'MKT',
+                                accounting: 'ACC',
+                                'office tools': 'OFF',
+                                'hardware & networking': 'NET',
+                                language: 'LANG',
+                                'soft skills': 'SOFT',
+                                'test prep': 'TEST',
+                                general: 'GEN',
+                                other: 'OTHER'
                               }
 
-                              // Auto-fill HSN code based on category
-                              const hsnCodeValue = hsnMapping[category] || '9999'
+                              // Auto-fill course code based on category
+                              const hsnCodeValue = hsnMapping[category] || 'GEN'
                               setHsnCode(hsnCodeValue)
                               setShowHSN(true)
 
@@ -1716,7 +1662,7 @@ const Inventory = () => {
                                 setBaseUnit('Pcs')
                                 setPurchaseUnit(categoryDefault.alternateUnit)
                                 setPiecesPerPurchaseUnit(categoryDefault.piecesPerUnit.toString())
-                                toast.success(`Auto-filled: 1 ${categoryDefault.alternateUnit} = ${categoryDefault.piecesPerUnit} Pcs`, {
+                                toast.success(`Auto-filled: 1 ${categoryDefault.alternateUnit} = ${categoryDefault.piecesPerUnit} ${t.inventory.units}`, {
                                   duration: 2000,
                                   icon: '📦'
                                 })
@@ -1724,67 +1670,33 @@ const Inventory = () => {
                             }}
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           >
-                            {/* Custom Categories from Settings */}
+                            {/* Hide "Your Categories" list. If this item already has a custom category, keep it selectable. */}
                             {(() => {
-                              const customCategories = getItemSettings().productCategories || []
-                              const builtInCategories = ['Biscuits', 'Chips', 'Chocolate', 'Soap', 'Soft Drinks', 'Noodles', 'Juice', 'Water Bottles', 'Pasta', 'Rice', 'Oil', 'Milk', 'Tea', 'Coffee', 'Shampoo', 'Toothpaste', 'Cream', 'Detergent', 'Sanitizer', 'Stationery', 'Pens', 'Notebooks', 'Pencils', 'Batteries', 'Bulbs', 'Electronics', 'Furniture', 'Tablets', 'Syrup', 'General', 'Other']
-                              const newCategories = customCategories.filter(c => !builtInCategories.includes(c))
-                              if (newCategories.length > 0) {
-                                return (
-                                  <optgroup label="⭐ Your Categories">
-                                    {newCategories.map(cat => (
-                                      <option key={cat} value={cat}>📁 {cat}</option>
-                                    ))}
-                                  </optgroup>
-                                )
-                              }
-                              return null
+                              const builtInCategories = ['Programming', 'Web Development', 'Data Science', 'Accounting', 'Office Tools', 'Design', 'Marketing', 'Hardware & Networking', 'Language', 'Soft Skills', 'Test Prep', 'General', 'Other']
+                              return itemCategory && !builtInCategories.includes(itemCategory) ? (
+                                <option value={itemCategory}>{itemCategory}</option>
+                              ) : null
                             })()}
-                            <optgroup label="Common Categories">
-                              <option value="Biscuits">🍪 Biscuits (1 Box = 12 Pcs)</option>
-                              <option value="Chips">🥔 Chips (1 Box = 24 Pcs)</option>
-                              <option value="Chocolate">🍫 Chocolate (1 Box = 24 Pcs)</option>
-                              <option value="Soap">🧼 Soap (1 Pack = 4 Pcs)</option>
-                              <option value="Soft Drinks">🥤 Soft Drinks (1 Crate = 24 Pcs)</option>
-                              <option value="Noodles">🍜 Noodles (1 Box = 30 Pcs)</option>
+                            <optgroup label="Course Categories">
+                              <option value="Programming">💻 Programming</option>
+                              <option value="Web Development">🌐 Web Development</option>
+                              <option value="Data Science">📊 Data Science</option>
+                              <option value="Design">🎨 Design</option>
+                              <option value="Marketing">📣 Marketing</option>
+                              <option value="Accounting">🧾 Accounting</option>
+                              <option value="Office Tools">🧩 Office Tools</option>
+                              <option value="Hardware & Networking">🛠️ Hardware & Networking</option>
+                              <option value="Language">🗣️ Language</option>
+                              <option value="Soft Skills">🤝 Soft Skills</option>
+                              <option value="Test Prep">📝 Test Prep</option>
                             </optgroup>
-                            <optgroup label="Food & Beverages">
-                              <option value="Juice">🧃 Juice (1 Box = 12 Pcs)</option>
-                              <option value="Water Bottles">💧 Water Bottles (1 Case = 24 Pcs)</option>
-                              <option value="Pasta">🍝 Pasta (1 Box = 10 Pcs)</option>
-                              <option value="Rice">🍚 Rice (1 Bag = 10 Pcs)</option>
-                              <option value="Oil">🛢️ Oil (1 Box = 12 Pcs)</option>
-                              <option value="Milk">🥛 Milk (1 Crate = 20 Pcs)</option>
-                              <option value="Tea">🍵 Tea (1 Box = 24 Pcs)</option>
-                              <option value="Coffee">☕ Coffee (1 Box = 12 Pcs)</option>
-                            </optgroup>
-                            <optgroup label="Personal Care">
-                              <option value="Shampoo">🧴 Shampoo (1 Box = 12 Pcs)</option>
-                              <option value="Toothpaste">🪥 Toothpaste (1 Box = 12 Pcs)</option>
-                              <option value="Cream">🧴 Cream (1 Box = 12 Pcs)</option>
-                              <option value="Detergent">🧺 Detergent (1 Box = 6 Pcs)</option>
-                              <option value="Sanitizer">🧴 Sanitizer (1 Box = 24 Pcs)</option>
-                            </optgroup>
-                            <optgroup label="Stationery & Office">
-                              <option value="Stationery">📝 Stationery (1 Box = 10 Pcs)</option>
-                              <option value="Pens">🖊️ Pens (1 Box = 10 Pcs)</option>
-                              <option value="Notebooks">📓 Notebooks (1 Pack = 6 Pcs)</option>
-                              <option value="Pencils">✏️ Pencils (1 Box = 12 Pcs)</option>
-                            </optgroup>
-                            <optgroup label="Electronics & Others">
-                              <option value="Batteries">🔋 Batteries (1 Pack = 4 Pcs)</option>
-                              <option value="Bulbs">💡 Bulbs (1 Box = 10 Pcs)</option>
-                              <option value="Electronics">🔌 Electronics</option>
-                              <option value="Furniture">🪑 Furniture</option>
-                            </optgroup>
-                            <optgroup label="Health">
-                              <option value="Tablets">💊 Tablets (1 Strip = 10 Pcs)</option>
-                              <option value="Syrup">🧪 Syrup (1 Box = 12 Pcs)</option>
-                            </optgroup>
-                            <optgroup label="General">
-                              <option value="General">📦 General (1 Box = 12 Pcs)</option>
-                              <option value="Other">📋 Other</option>
-                            </optgroup>
+                            {/* Legacy categories: keep selectable only when already set */}
+                            {itemCategory === 'General' ? (
+                              <option value="General" hidden>General</option>
+                            ) : null}
+                            {itemCategory === 'Other' ? (
+                              <option value="Other" hidden>Other</option>
+                            ) : null}
                           </select>
                         </div>
 
@@ -2536,7 +2448,7 @@ const Inventory = () => {
                                   />
                                 </div>
                                 <p className="text-[10px] text-blue-600 mt-1">
-                                  ₹{retailPrice || '0'} × {piecesPerPurchaseUnit} pcs
+                                  ₹{retailPrice || '0'} × {piecesPerPurchaseUnit} seats
                                 </p>
                               </div>
 
@@ -2557,7 +2469,7 @@ const Inventory = () => {
                                   />
                                 </div>
                                 <p className="text-[10px] text-orange-600 mt-1">
-                                  ₹{purchasePrice || '0'} × {piecesPerPurchaseUnit} pcs
+                                  ₹{purchasePrice || '0'} × {piecesPerPurchaseUnit} seats
                                 </p>
                               </div>
                             </div>
@@ -2612,7 +2524,7 @@ const Inventory = () => {
 
                             {/* Note */}
                             <p className="text-[10px] text-gray-500 italic mt-3 text-center">
-                              💡 Edit either piece prices or box prices - both sync automatically!
+                              💡 Edit either unit fee or package fee - both sync automatically!
                             </p>
                           </div>
                         </motion.div>
@@ -2644,7 +2556,7 @@ const Inventory = () => {
                             type="text"
                             value={brandName}
                             onChange={(e) => setBrandName(e.target.value)}
-                            placeholder="e.g., Cello, Parker, HP"
+                            placeholder={t.inventory.brandPlaceholder}
                             className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           />
                         </motion.div>
@@ -2668,9 +2580,9 @@ const Inventory = () => {
                         >
                           <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
                             <Barcode size={12} weight="duotone" />
-                            {t.inventory.barcodeSku} Number
+                            {t.inventory.barcodeSkuNumber}
                             <span className="text-muted-foreground text-[10px] ml-auto">
-                              {isMobileDevice ? 'Tap camera to scan' : 'Type or use scanner'}
+                              {isMobileDevice ? t.inventory.tapCameraToScan : t.inventory.typeOrUseScanner}
                             </span>
                           </label>
                           <div className="relative flex gap-2">
@@ -2685,13 +2597,13 @@ const Inventory = () => {
                                   // If Enter pressed within 100ms of last input, it's likely a scanner
                                   if (now - lastScanTime < 100 && barcodeNumber.trim()) {
                                     e.preventDefault()
-                                    toast.success(`✅ Barcode scanned: ${barcodeNumber}`)
+                                    toast.success(`✅ Course code scanned: ${barcodeNumber}`)
                                   }
                                   setLastScanTime(now)
                                 }
                               }}
                               onInput={() => setLastScanTime(Date.now())}
-                              placeholder={isMobileDevice ? "Tap camera or type barcode" : "Enter or scan barcode"}
+                              placeholder={isMobileDevice ? t.inventory.tapOrTypeBarcode : t.inventory.enterOrScanBarcode}
                               className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none font-mono"
                             />
                             {/* Camera button for mobile scanning */}
@@ -2813,66 +2725,22 @@ const Inventory = () => {
                         {/* Item Name */}
                         <div className="sm:col-span-2">
                           <label className="text-xs font-medium mb-1.5 block">
-                            Item Name <span className="text-destructive">*</span>
+                            {t.inventory.itemName} <span className="text-destructive">*</span>
                           </label>
                           <input
                             type="text"
                             value={itemName}
                             onChange={(e) => setItemName(e.target.value)}
-                            placeholder="Enter item name"
+                            placeholder="Enter course name"
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                           />
-                        </div>
-
-                        {/* Unit Type */}
-                        <div>
-                          <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
-                            <Scales size={14} weight="duotone" />
-                            {t.inventory.unitType} <span className="text-destructive">*</span>
-                          </label>
-                          <select
-                            value={unitType}
-                            onChange={(e) => setUnitType(e.target.value)}
-                            className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                          >
-                            <option value="NONE">{t.inventory.none}</option>
-                            <option value="PCS">{t.inventory.pieces}</option>
-                            <option value="KGS">{t.inventory.kilogram}</option>
-                            <option value="LTRS">{t.inventory.liter}</option>
-                            <option value="MTR">{t.inventory.meter}</option>
-                            <option value="BOX">{t.inventory.box}</option>
-                            <option value="PACK">{t.inventory.pack}</option>
-                            <option value="SET">{t.inventory.set}</option>
-                            {/* Custom units from Item Settings - filter out duplicates */}
-                            {(() => {
-                              // Default unit values/names to filter out
-                              const defaultUnits = ['NONE', 'PCS', 'KGS', 'LTRS', 'MTR', 'BOX', 'PACK', 'SET', 'pieces', 'kilogram', 'liter', 'meter', 'box', 'pack', 'set', 'kg', 'ltr']
-                              const filteredUnits = customUnits.filter(unit => {
-                                const unitLower = unit.toLowerCase()
-                                const unitAbbr = unit.match(/\(([^)]+)\)/)?.[1]?.toLowerCase() || ''
-                                // Check if this custom unit matches any default unit
-                                return !defaultUnits.some(def =>
-                                  unitLower.includes(def.toLowerCase()) ||
-                                  unitAbbr === def.toLowerCase() ||
-                                  def.toLowerCase() === unitLower
-                                )
-                              })
-                              return filteredUnits.length > 0 ? (
-                                <optgroup label="Custom Units">
-                                  {filteredUnits.map((unit) => (
-                                    <option key={unit} value={unit}>{unit}</option>
-                                  ))}
-                                </optgroup>
-                              ) : null
-                            })()}
-                          </select>
                         </div>
 
                         {/* Category - Auto-fills Unit Conversion */}
                         <div>
                           <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
                             <Tag size={14} weight="duotone" />
-                            Category
+                            {t.inventory.category}
                           </label>
                           <select
                             value={itemCategory}
@@ -2890,69 +2758,44 @@ const Inventory = () => {
                             }}
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           >
-                            {/* Custom Categories from Settings */}
+                            {/* Hide "Your Categories" list. If this item already has a custom category, keep it selectable. */}
                             {(() => {
-                              const customCategories = getItemSettings().productCategories || []
-                              const builtInCategories = ['Biscuits', 'Chips', 'Chocolate', 'Soap', 'Soft Drinks', 'Noodles', 'Juice', 'Water Bottles', 'Pasta', 'Oil', 'Milk', 'Tea', 'Coffee', 'Shampoo', 'Toothpaste', 'Detergent', 'Stationery', 'Pens', 'Notebooks', 'Batteries', 'Electronics', 'Furniture', 'General', 'Other']
-                              const newCategories = customCategories.filter(c => !builtInCategories.includes(c))
-                              if (newCategories.length > 0) {
-                                return (
-                                  <optgroup label="⭐ Your Categories">
-                                    {newCategories.map(cat => (
-                                      <option key={cat} value={cat}>📁 {cat}</option>
-                                    ))}
-                                  </optgroup>
-                                )
-                              }
-                              return null
+                              const builtInCategories = ['Programming', 'Web Development', 'Data Science', 'Accounting', 'Office Tools', 'Design', 'Marketing', 'Hardware & Networking', 'Language', 'Soft Skills', 'Test Prep', 'General', 'Other']
+                              return itemCategory && !builtInCategories.includes(itemCategory) ? (
+                                <option value={itemCategory}>{itemCategory}</option>
+                              ) : null
                             })()}
-                            <optgroup label="Common Categories">
-                              <option value="Biscuits">🍪 Biscuits</option>
-                              <option value="Chips">🥔 Chips</option>
-                              <option value="Chocolate">🍫 Chocolate</option>
-                              <option value="Soap">🧼 Soap</option>
-                              <option value="Soft Drinks">🥤 Soft Drinks</option>
-                              <option value="Noodles">🍜 Noodles</option>
+                            <optgroup label="Course Categories">
+                              <option value="Programming">💻 Programming</option>
+                              <option value="Web Development">🌐 Web Development</option>
+                              <option value="Data Science">📊 Data Science</option>
+                              <option value="Design">🎨 Design</option>
+                              <option value="Marketing">📣 Marketing</option>
+                              <option value="Accounting">🧾 Accounting</option>
+                              <option value="Office Tools">🧩 Office Tools</option>
+                              <option value="Hardware & Networking">🛠️ Hardware & Networking</option>
+                              <option value="Language">🗣️ Language</option>
+                              <option value="Soft Skills">🤝 Soft Skills</option>
+                              <option value="Test Prep">📝 Test Prep</option>
                             </optgroup>
-                            <optgroup label="Food & Beverages">
-                              <option value="Juice">🧃 Juice</option>
-                              <option value="Water Bottles">💧 Water Bottles</option>
-                              <option value="Pasta">🍝 Pasta</option>
-                              <option value="Oil">🛢️ Oil</option>
-                              <option value="Milk">🥛 Milk</option>
-                              <option value="Tea">🍵 Tea</option>
-                              <option value="Coffee">☕ Coffee</option>
-                            </optgroup>
-                            <optgroup label="Personal Care">
-                              <option value="Shampoo">🧴 Shampoo</option>
-                              <option value="Toothpaste">🪥 Toothpaste</option>
-                              <option value="Detergent">🧺 Detergent</option>
-                            </optgroup>
-                            <optgroup label="Stationery & Office">
-                              <option value="Stationery">📝 Stationery</option>
-                              <option value="Pens">🖊️ Pens</option>
-                              <option value="Notebooks">📓 Notebooks</option>
-                            </optgroup>
-                            <optgroup label="Electronics & Others">
-                              <option value="Batteries">🔋 Batteries</option>
-                              <option value="Electronics">🔌 Electronics</option>
-                              <option value="Furniture">🪑 Furniture</option>
-                            </optgroup>
-                            <optgroup label="General">
-                              <option value="General">📦 General</option>
-                              <option value="Other">📋 Other</option>
-                            </optgroup>
+                            {/* Legacy categories: keep selectable only when already set */}
+                            {itemCategory === 'General' ? (
+                              <option value="General" hidden>General</option>
+                            ) : null}
+                            {itemCategory === 'Other' ? (
+                              <option value="Other" hidden>Other</option>
+                            ) : null}
                           </select>
                         </div>
 
                         {/* Description */}
                         <div className="sm:col-span-2">
-                          <label className="text-xs font-medium mb-1.5 block">Description</label>
+                          <label className="text-xs font-medium mb-1.5 block">{t.inventory.description}</label>
                           <textarea
                             value={itemDescription}
                             onChange={(e) => setItemDescription(e.target.value)}
                             rows={2}
-                            placeholder="Brief description of the item..."
+                            placeholder={t.inventory.briefDescription}
                             className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none resize-none"
                           />
                         </div>
@@ -3257,12 +3100,12 @@ const Inventory = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* {t.inventory.hsnCode} */}
                         <div>
-                          <label className="text-xs font-medium mb-1.5 block">HSN/SAC Code</label>
+                          <label className="text-xs font-medium mb-1.5 block">{t.inventory.itemCode}</label>
                           <input
                             type="text"
                             value={hsnCode}
                             onChange={(e) => setHsnCode(e.target.value)}
-                            placeholder="e.g., 3926"
+                            placeholder={t.inventory.enterHsnCode}
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           />
                         </div>
@@ -3273,13 +3116,13 @@ const Inventory = () => {
                     <div className="space-y-3">
                       <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
                         <Stack size={16} weight="duotone" />
-                        Stock Management
+                        {t.inventory.stockManagement}
                       </h3>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* Stock Quantity */}
                         <div>
-                          <label className="text-xs font-medium mb-1.5 block">Current Stock Quantity</label>
+                          <label className="text-xs font-medium mb-1.5 block">Available {t.inventory.stock}</label>
                           <input
                             type="number"
                             value={stockQuantity}
@@ -3417,7 +3260,7 @@ const Inventory = () => {
                                   />
                                 </div>
                                 <p className="text-[10px] text-blue-600 mt-1">
-                                  ₹{retailPrice || '0'} × {piecesPerPurchaseUnit} pcs
+                                  ₹{retailPrice || '0'} × {piecesPerPurchaseUnit} seats
                                 </p>
                               </div>
 
@@ -3438,7 +3281,7 @@ const Inventory = () => {
                                   />
                                 </div>
                                 <p className="text-[10px] text-orange-600 mt-1">
-                                  ₹{purchasePrice || '0'} × {piecesPerPurchaseUnit} pcs
+                                  ₹{purchasePrice || '0'} × {piecesPerPurchaseUnit} seats
                                 </p>
                               </div>
                             </div>
@@ -3493,7 +3336,7 @@ const Inventory = () => {
 
                             {/* Note */}
                             <p className="text-[10px] text-gray-500 italic mt-3 text-center">
-                              💡 Edit either piece prices or box prices - both sync automatically!
+                              💡 Edit either unit fee or package fee - both sync automatically!
                             </p>
                           </div>
 
@@ -3513,7 +3356,7 @@ const Inventory = () => {
                             type="text"
                             value={brandName}
                             onChange={(e) => setBrandName(e.target.value)}
-                            placeholder="e.g., Cello, Parker"
+                            placeholder={t.inventory.brandPlaceholder}
                             className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           />
                         </div>
@@ -3522,9 +3365,9 @@ const Inventory = () => {
                         <div>
                           <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
                             <Barcode size={12} weight="duotone" />
-                            {t.inventory.barcodeSku} Number
+                            {t.inventory.barcodeSkuNumber}
                             <span className="text-muted-foreground text-[10px] ml-auto">
-                              {isMobileDevice ? 'Tap camera to scan' : 'Type or use scanner'}
+                              {isMobileDevice ? t.inventory.tapCameraToScan : t.inventory.typeOrUseScanner}
                             </span>
                           </label>
                           <div className="flex gap-2">
@@ -3538,13 +3381,13 @@ const Inventory = () => {
                                   const now = Date.now()
                                   if (now - lastScanTime < 100 && barcodeNumber.trim()) {
                                     e.preventDefault()
-                                    toast.success(`✅ Barcode scanned: ${barcodeNumber}`)
+                                    toast.success(`✅ Course code scanned: ${barcodeNumber}`)
                                   }
                                   setLastScanTime(now)
                                 }
                               }}
                               onInput={() => setLastScanTime(Date.now())}
-                              placeholder={isMobileDevice ? "Tap camera or type barcode" : "Enter or scan barcode"}
+                              placeholder={isMobileDevice ? t.inventory.tapOrTypeBarcode : t.inventory.enterOrScanBarcode}
                               className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none font-mono"
                             />
                             <button
@@ -3593,7 +3436,7 @@ const Inventory = () => {
                     ) : (
                       <>
                         <FloppyDisk size={18} weight="duotone" />
-                        Update Item
+                        Update Course
                       </>
                     )}
                   </button>
@@ -3613,25 +3456,25 @@ const Inventory = () => {
             className="bg-card rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Item Details</h2>
+              <h2 className="text-xl font-bold">{t.inventory.itemDetails}</h2>
               <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-muted rounded-lg">
                 <X size={20} />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-muted-foreground">Item Name</label>
+                <label className="text-sm text-muted-foreground">{t.inventory.itemName}</label>
                 <p className="font-medium">{selectedItem.name}</p>
               </div>
               {selectedItem.description && (
                 <div>
-                  <label className="text-sm text-muted-foreground">Description</label>
+                  <label className="text-sm text-muted-foreground">{t.inventory.description}</label>
                   <p>{selectedItem.description}</p>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-muted-foreground">Selling Price</label>
+                  <label className="text-sm text-muted-foreground">{t.inventory.sellingPrice}</label>
                   <p className="font-medium">₹{selectedItem.sellingPrice}</p>
                 </div>
                 {selectedItem.purchasePrice && (
@@ -3641,11 +3484,11 @@ const Inventory = () => {
                   </div>
                 )}
                 <div>
-                  <label className="text-sm text-muted-foreground">Stock</label>
+                  <label className="text-sm text-muted-foreground">{t.inventory.stock}</label>
                   <p className="font-medium">{selectedItem.stock || 0} {selectedItem.unit}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground">Category</label>
+                  <label className="text-sm text-muted-foreground">{t.inventory.category}</label>
                   <p className="font-medium capitalize">{selectedItem.category}</p>
                 </div>
                 {selectedItem.hsnCode && (
@@ -3656,7 +3499,7 @@ const Inventory = () => {
                 )}
                 {selectedItem.barcode && (
                   <div>
-                    <label className="text-sm text-muted-foreground">Barcode</label>
+                  <label className="text-sm text-muted-foreground">{t.inventory.barcodeSkuNumber}</label>
                     <p className="font-medium">{selectedItem.barcode}</p>
                   </div>
                 )}
@@ -3674,9 +3517,9 @@ const Inventory = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-card rounded-xl p-6 max-w-md w-full"
           >
-            <h3 className="text-lg font-bold mb-2">Delete Item?</h3>
+            <h3 className="text-lg font-bold mb-2">{t.inventory.deleteItem}?</h3>
             <p className="text-muted-foreground mb-6">
-              Are you sure you want to delete <strong>{selectedItem.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete "{selectedItem.name}"? {t.inventory.thisActionCannot}
             </p>
             <div className="flex gap-3">
               <button
@@ -3689,7 +3532,7 @@ const Inventory = () => {
                 onClick={confirmDelete}
                 className="flex-1 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg transition-colors"
               >
-                Delete
+                {t.inventory.deleteItem}
               </button>
             </div>
           </motion.div>
@@ -3722,7 +3565,7 @@ const Inventory = () => {
               if (item) {
                 // Copy item name to clipboard
                 navigator.clipboard.writeText(item.name)
-                toast.success('Item name copied!')
+                toast.success('Course name copied!')
               }
               setOpenActionMenu(null)
             }}
@@ -3741,9 +3584,9 @@ const Inventory = () => {
         onClose={() => setShowBarcodeScanner(false)}
         onScan={(barcode) => {
           setBarcodeNumber(barcode)
-          toast.success(`✅ Barcode set: ${barcode}`)
+          toast.success(`✅ Course code set: ${barcode}`)
         }}
-        title="Scan Item Barcode"
+        title="Scan Course Code"
       />
     </div>
   )

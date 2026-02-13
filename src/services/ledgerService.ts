@@ -1,20 +1,11 @@
-// Ledger Service
-// Manages party ledger entries - tracks all financial transactions with customers/suppliers
+// Ledger Service (Lightweight, Firebase-free)
+// Computes party/student ledger from invoices (and their payment info).
+// This keeps the UI working for self-hosted backends without maintaining a separate ledger collection.
 
-import {
-  collection,
-  doc,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  Timestamp
-} from 'firebase/firestore'
-import { db, COLLECTIONS, isFirebaseReady } from './firebase'
+import { getInvoices } from './invoiceService'
 import { getPartySettings } from './settingsService'
 
-const LOCAL_STORAGE_KEY = 'thisai_crm_ledger_entries'
+const LOCAL_STORAGE_KEY = 'thisai_erp_ledger_manual_entries'
 
 export interface LedgerEntry {
   id: string
@@ -25,9 +16,9 @@ export interface LedgerEntry {
   referenceType: 'sale' | 'purchase' | 'payment' | 'opening' | 'adjustment'
   referenceNumber: string
   description: string
-  debit: number  // Money customer owes us (sales) or we pay supplier
-  credit: number // Money we receive from customer or owe supplier (purchases)
-  balance: number // Running balance
+  debit: number
+  credit: number
+  balance: number
   createdAt: string
 }
 
@@ -43,270 +34,182 @@ export interface LedgerEntryInput {
   credit: number
 }
 
-/**
- * Create ledger entry for invoice
- * Only creates entry if trackLedgerAutomatically is enabled in Party Settings
- */
+// Legacy exports kept for compatibility. Ledger is computed from invoices now.
 export async function createInvoiceLedgerEntry(
-  partyId: string,
-  partyName: string,
-  invoiceNumber: string,
-  invoiceDate: string,
-  amount: number,
-  type: 'sale' | 'purchase'
+  _partyId: string,
+  _partyName: string,
+  _invoiceNumber: string,
+  _invoiceDate: string,
+  _amount: number,
+  _type: 'sale' | 'purchase'
 ): Promise<void> {
-  // Check if automatic ledger tracking is enabled
-  const partySettings = getPartySettings()
-  if (!partySettings.trackLedgerAutomatically) {
-    console.log(`Ledger tracking disabled - skipping entry for invoice ${invoiceNumber}`)
-    return
-  }
-
-  try {
-    const entry: LedgerEntryInput = {
-      partyId,
-      partyName,
-      date: invoiceDate,
-      type: 'invoice',
-      referenceType: type,
-      referenceNumber: invoiceNumber,
-      description: type === 'sale'
-        ? `Sales Invoice ${invoiceNumber}`
-        : `Purchase Invoice ${invoiceNumber}`,
-      debit: type === 'sale' ? amount : 0,  // Customer owes us
-      credit: type === 'purchase' ? amount : 0  // We owe supplier
-    }
-
-    await createLedgerEntry(entry)
-    console.log(`Ledger entry created: ${type} invoice ${invoiceNumber} for ${partyName}`)
-  } catch (error) {
-    console.error('Error creating invoice ledger entry:', error)
-  }
+  // no-op
 }
 
-/**
- * Create ledger entry for payment
- * Only creates entry if trackLedgerAutomatically is enabled in Party Settings
- */
 export async function createPaymentLedgerEntry(
-  partyId: string,
-  partyName: string,
-  paymentDate: string,
-  amount: number,
-  paymentReference: string,
-  type: 'sale' | 'purchase'
+  _partyId: string,
+  _partyName: string,
+  _paymentDate: string,
+  _amount: number,
+  _paymentReference: string,
+  _type: 'sale' | 'purchase'
 ): Promise<void> {
-  // Check if automatic ledger tracking is enabled
-  const partySettings = getPartySettings()
-  if (!partySettings.trackLedgerAutomatically) {
-    console.log(`Ledger tracking disabled - skipping entry for payment ${paymentReference}`)
-    return
-  }
-
-  try {
-    const entry: LedgerEntryInput = {
-      partyId,
-      partyName,
-      date: paymentDate,
-      type: 'payment',
-      referenceType: 'payment',
-      referenceNumber: paymentReference,
-      description: type === 'sale'
-        ? `Payment Received - ${paymentReference}`
-        : `Payment Made - ${paymentReference}`,
-      debit: type === 'purchase' ? amount : 0,  // We pay supplier (reduces liability)
-      credit: type === 'sale' ? amount : 0  // We receive from customer (reduces receivable)
-    }
-
-    await createLedgerEntry(entry)
-    console.log(`Ledger entry created: Payment ${paymentReference} for ${partyName}`)
-  } catch (error) {
-    console.error('Error creating payment ledger entry:', error)
-  }
+  // no-op
 }
 
-/**
- * Create a ledger entry and calculate running balance
- */
-async function createLedgerEntry(entryInput: LedgerEntryInput): Promise<void> {
-  // Get current balance for this party
-  const existingEntries = await getPartyLedger(entryInput.partyId)
-  const lastBalance = existingEntries.length > 0
-    ? existingEntries[existingEntries.length - 1].balance
-    : 0
-
-  // Calculate new balance
-  // Debit increases balance (customer owes more or we pay supplier)
-  // Credit decreases balance (we receive payment or purchase from supplier)
-  const newBalance = lastBalance + entryInput.debit - entryInput.credit
-
-  const entry: Omit<LedgerEntry, 'id'> = {
-    ...entryInput,
-    balance: newBalance,
-    createdAt: new Date().toISOString()
-  }
-
-  if (!isFirebaseReady()) {
-    saveLedgerEntryToLocalStorage(entry)
-    return
-  }
-
-  try {
-    await addDoc(collection(db!, COLLECTIONS.PARTIES + '_ledger'), entry)
-  } catch (error) {
-    console.error('Error creating ledger entry:', error)
-    // Fallback to local storage
-    saveLedgerEntryToLocalStorage(entry)
-  }
+function safeNumber(v: unknown): number {
+  return typeof v === 'number' && Number.isFinite(v) ? v : 0
 }
 
-/**
- * Get all ledger entries for a party
- */
-export async function getPartyLedger(partyId: string): Promise<LedgerEntry[]> {
-  if (!isFirebaseReady()) {
-    return getPartyLedgerFromLocalStorage(partyId)
-  }
-
-  try {
-    const q = query(
-      collection(db!, COLLECTIONS.PARTIES + '_ledger'),
-      where('partyId', '==', partyId),
-      orderBy('date', 'asc'),
-      orderBy('createdAt', 'asc')
-    )
-
-    const snapshot = await getDocs(q)
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as LedgerEntry))
-  } catch (error) {
-    console.error('Error fetching party ledger:', error)
-    return getPartyLedgerFromLocalStorage(partyId)
-  }
+function normalizeDate(dateInput: unknown): string {
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) return dateInput
+  const d = new Date(typeof dateInput === 'string' ? dateInput : Date.now())
+  if (Number.isNaN(d.getTime())) return new Date().toISOString().slice(0, 10)
+  return d.toISOString().slice(0, 10)
 }
 
-/**
- * Get current balance for a party
- */
-export async function getPartyBalance(partyId: string): Promise<number> {
-  const ledger = await getPartyLedger(partyId)
-  if (ledger.length === 0) return 0
-
-  return ledger[ledger.length - 1].balance
-}
-
-/**
- * Get ledger summary for all parties
- */
-export async function getLedgerSummary(): Promise<{
-  totalReceivables: number  // Customers owe us
-  totalPayables: number     // We owe suppliers
-  netBalance: number
-}> {
-  if (!isFirebaseReady()) {
-    return getLedgerSummaryFromLocalStorage()
-  }
-
+function readManualEntries(): LedgerEntry[] {
   try {
-    const snapshot = await getDocs(collection(db!, COLLECTIONS.PARTIES + '_ledger'))
-    const allEntries = snapshot.docs.map(doc => doc.data() as LedgerEntry)
-
-    // Group by party and get latest balance
-    const partyBalances = new Map<string, number>()
-
-    allEntries.forEach(entry => {
-      partyBalances.set(entry.partyId, entry.balance)
-    })
-
-    let totalReceivables = 0
-    let totalPayables = 0
-
-    partyBalances.forEach(balance => {
-      if (balance > 0) {
-        totalReceivables += balance  // Customers owe us
-      } else {
-        totalPayables += Math.abs(balance)  // We owe suppliers
-      }
-    })
-
-    return {
-      totalReceivables,
-      totalPayables,
-      netBalance: totalReceivables - totalPayables
-    }
-  } catch (error) {
-    console.error('Error getting ledger summary:', error)
-    return getLedgerSummaryFromLocalStorage()
-  }
-}
-
-// ============================================
-// LOCAL STORAGE FALLBACK
-// ============================================
-
-function saveLedgerEntryToLocalStorage(entry: Omit<LedgerEntry, 'id'>): void {
-  try {
-    const entries = getLedgerEntriesFromLocalStorage()
-    const newEntry: LedgerEntry = {
-      ...entry,
-      id: `ledger_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    }
-    entries.push(newEntry)
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(entries))
-  } catch (error) {
-    console.error('Error saving ledger entry to local storage:', error)
-  }
-}
-
-function getLedgerEntriesFromLocalStorage(): LedgerEntry[] {
-  try {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch (error) {
-    console.error('Error reading ledger entries from local storage:', error)
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? (parsed as LedgerEntry[]) : []
+  } catch {
     return []
   }
 }
 
-function getPartyLedgerFromLocalStorage(partyId: string): LedgerEntry[] {
-  const allEntries = getLedgerEntriesFromLocalStorage()
-  return allEntries
-    .filter(entry => entry.partyId === partyId)
-    .sort((a, b) => {
-      const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime()
-      if (dateCompare !== 0) return dateCompare
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    })
+export async function getPartyLedger(partyId: string): Promise<LedgerEntry[]> {
+  // Optional feature flag from existing settings UI.
+  const partySettings = getPartySettings()
+  if (partySettings && (partySettings as any).trackLedgerAutomatically === false) return []
+
+  const [allInvoices, manualEntries] = await Promise.all([
+    getInvoices(),
+    Promise.resolve(readManualEntries()),
+  ])
+
+  const rows: LedgerEntry[] = []
+
+  // Manual entries (opening balance/adjustments).
+  for (const e of manualEntries) {
+    if (e && e.partyId === partyId) rows.push(e)
+  }
+
+  // Computed entries from invoices + payment info.
+  for (const inv of allInvoices as any[]) {
+    if (!inv || inv.partyId !== partyId) continue
+
+    const invType = String(inv.type || '')
+    const isSale = invType === 'sale'
+    const isPurchase = invType === 'purchase'
+    if (!isSale && !isPurchase) continue
+
+    const invoiceDate = normalizeDate(inv.invoiceDate || inv.date || inv.createdAt)
+    const createdAt = String(inv.createdAt || inv.updatedAt || new Date().toISOString())
+    const invoiceNumber = String(inv.invoiceNumber || inv.referenceNumber || inv.id || '')
+    const partyName = String(inv.partyName || inv.partyDisplayName || inv.partyCompanyName || 'Party')
+
+    const grandTotal = safeNumber(inv.grandTotal)
+    const paidAmount = safeNumber(inv.payment?.paidAmount)
+
+    const invoiceEntry: LedgerEntry = {
+      id: `inv_${inv.id || invoiceNumber}`,
+      partyId,
+      partyName,
+      date: invoiceDate,
+      type: 'invoice',
+      referenceType: isSale ? 'sale' : 'purchase',
+      referenceNumber: invoiceNumber,
+      description: isSale ? `Admission ${invoiceNumber}` : `Purchase Invoice ${invoiceNumber}`,
+      debit: isSale ? grandTotal : 0,
+      credit: isPurchase ? grandTotal : 0,
+      balance: 0,
+      createdAt,
+    }
+    rows.push(invoiceEntry)
+
+    if (paidAmount > 0) {
+      rows.push({
+        id: `pay_${inv.id || invoiceNumber}`,
+        partyId,
+        partyName,
+        date: invoiceDate, // Payment date not tracked in PaymentInfo; fallback to invoice date.
+        type: 'payment',
+        referenceType: 'payment',
+        referenceNumber: invoiceNumber,
+        description: isSale ? `Payment Received - ${invoiceNumber}` : `Payment Made - ${invoiceNumber}`,
+        debit: isPurchase ? paidAmount : 0,
+        credit: isSale ? paidAmount : 0,
+        balance: 0,
+        createdAt,
+      })
+    }
+  }
+
+  rows.sort((a, b) => {
+    const ad = a.date.localeCompare(b.date)
+    if (ad !== 0) return ad
+    const ac = a.createdAt.localeCompare(b.createdAt)
+    if (ac !== 0) return ac
+    return a.id.localeCompare(b.id)
+  })
+
+  // Running balance: debit increases, credit decreases.
+  let balance = 0
+  for (const r of rows) {
+    balance += safeNumber(r.debit) - safeNumber(r.credit)
+    r.balance = balance
+  }
+
+  return rows
 }
 
-function getLedgerSummaryFromLocalStorage(): {
+export async function getPartyBalance(partyId: string): Promise<number> {
+  const ledger = await getPartyLedger(partyId)
+  if (ledger.length === 0) return 0
+  return safeNumber(ledger[ledger.length - 1].balance)
+}
+
+export async function getLedgerSummary(): Promise<{
   totalReceivables: number
   totalPayables: number
   netBalance: number
-} {
-  const allEntries = getLedgerEntriesFromLocalStorage()
+}> {
+  const partySettings = getPartySettings()
+  if (partySettings && (partySettings as any).trackLedgerAutomatically === false) {
+    return { totalReceivables: 0, totalPayables: 0, netBalance: 0 }
+  }
 
-  const partyBalances = new Map<string, number>()
-  allEntries.forEach(entry => {
-    partyBalances.set(entry.partyId, entry.balance)
-  })
+  const invoices = await getInvoices()
+  const balances = new Map<string, number>()
+
+  for (const inv of invoices as any[]) {
+    if (!inv || !inv.partyId) continue
+    const invType = String(inv.type || '')
+    const isSale = invType === 'sale'
+    const isPurchase = invType === 'purchase'
+    if (!isSale && !isPurchase) continue
+
+    const grandTotal = safeNumber(inv.grandTotal)
+    const paidAmount = safeNumber(inv.payment?.paidAmount)
+
+    // Balance delta matches getPartyLedger(): debit - credit.
+    const delta = isSale ? (grandTotal - paidAmount) : (-grandTotal + paidAmount)
+    balances.set(inv.partyId, (balances.get(inv.partyId) || 0) + delta)
+  }
 
   let totalReceivables = 0
   let totalPayables = 0
-
-  partyBalances.forEach(balance => {
-    if (balance > 0) {
-      totalReceivables += balance
-    } else {
-      totalPayables += Math.abs(balance)
-    }
-  })
+  for (const bal of balances.values()) {
+    if (bal > 0) totalReceivables += bal
+    else if (bal < 0) totalPayables += Math.abs(bal)
+  }
 
   return {
     totalReceivables,
     totalPayables,
-    netBalance: totalReceivables - totalPayables
+    netBalance: totalReceivables - totalPayables,
   }
 }
+

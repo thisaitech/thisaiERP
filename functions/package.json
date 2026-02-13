@@ -1,7 +1,7 @@
 {
-  "name": "anna-erp-functions",
+  "name": "thisai-erp-functions",
   "version": "1.0.0",
-  "description": "Firebase Cloud Functions for Anna ERP - Razorpay webhook and subscription management",
+  "description": "Firebase Cloud Functions for ThisAI ERP - Razorpay webhook and subscription management",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",

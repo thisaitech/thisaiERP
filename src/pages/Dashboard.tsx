@@ -243,10 +243,11 @@ const Dashboard = () => {
         return acc
       }, {})
 
-      const purchaseByDate = purchaseInvoices.reduce<Record<string, number>>((acc, inv) => {
-        const dateKey = getDateKeyFromRecord(inv)
-        if (!dateKey) return acc
-        acc[dateKey] = (acc[dateKey] || 0) + (inv.total || inv.grandTotal || 0)
+      // For training centers, the weekly comparison is more useful as Admissions vs Spending (Expenses)
+      const spendingByDate = expenses.reduce<Record<string, number>>((acc, exp: any) => {
+        const expDate = (exp.date || exp.createdAt || '').split('T')[0]
+        if (!expDate) return acc
+        acc[expDate] = (acc[expDate] || 0) + (exp.amount || 0)
         return acc
       }, {})
 
@@ -255,7 +256,7 @@ const Dashboard = () => {
         return {
           day: date.toLocaleDateString('en-US', { weekday: 'short' }),
           sales: salesByDate[dateKey] || 0,
-          purchases: purchaseByDate[dateKey] || 0
+          purchases: spendingByDate[dateKey] || 0
         }
       }))
 
@@ -374,7 +375,7 @@ const Dashboard = () => {
         allTransactions.push({
           id: inv.id || inv.invoiceNumber,
           type: 'sale',
-          party: inv.partyName || inv.customerName || 'Unknown Customer',
+          party: inv.partyName || inv.customerName || 'Unknown Student',
           amount: inv.total || inv.grandTotal || 0,
           status: (inv.paidAmount || 0) >= (inv.total || inv.grandTotal || 0) ? 'paid' :
                   (inv.paidAmount || 0) > 0 ? 'partial' : 'pending',
@@ -730,9 +731,8 @@ const Dashboard = () => {
           }}
         >
           {[
-            { label: 'Sales', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, gradient: 'from-emerald-600 to-emerald-800', bgGradient: 'from-emerald-700/90 to-emerald-900/90' },
-            { label: 'Purchases', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, gradient: 'from-rose-600 to-rose-900', bgGradient: 'from-rose-700/90 to-rose-900/90' },
-            { label: 'Expenses', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, gradient: 'from-blue-600 to-blue-800', bgGradient: 'from-blue-700/90 to-blue-900/90' },
+            { label: 'Admissions', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, gradient: 'from-emerald-600 to-emerald-800', bgGradient: 'from-emerald-700/90 to-emerald-900/90' },
+            { label: 'Spending', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, gradient: 'from-blue-600 to-blue-800', bgGradient: 'from-blue-700/90 to-blue-900/90' },
             { label: 'Profit', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, gradient: 'from-amber-500 to-yellow-700', bgGradient: 'from-amber-600/90 to-yellow-700/90' },
           ].map((stat, i) => (
             <motion.div
@@ -786,11 +786,11 @@ const Dashboard = () => {
             <div className="flex items-center gap-3 text-xs">
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
-                <span className="text-slate-500 dark:text-slate-400">Sales</span>
+                <span className="text-slate-500 dark:text-slate-400">Admissions</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-amber-300 to-amber-500"></div>
-                <span className="text-slate-500 dark:text-slate-400">Purchases</span>
+                <span className="text-slate-500 dark:text-slate-400">Spending</span>
               </div>
             </div>
           </div>
@@ -812,7 +812,7 @@ const Dashboard = () => {
                     }}
                     transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                     className="w-3.5 bg-gradient-to-t from-blue-400 to-blue-600 rounded-t-md"
-                    title={`Sales: ₹${day.sales.toLocaleString()}`}
+                    title={`Admissions: ₹${day.sales.toLocaleString()}`}
                   />
                   <motion.div
                     variants={{
@@ -821,7 +821,7 @@ const Dashboard = () => {
                     }}
                     transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.1 }}
                     className="w-3.5 bg-gradient-to-t from-amber-300 to-amber-500 rounded-t-md"
-                    title={`Purchases: ₹${day.purchases.toLocaleString()}`}
+                    title={`Spending: ₹${day.purchases.toLocaleString()}`}
                   />
                 </div>
                 <span className="text-xs font-medium text-slate-400">{day.day}</span>
@@ -926,7 +926,7 @@ const Dashboard = () => {
                     transition-all duration-200"
                 >
                   <Plus size={20} weight="bold" />
-                  <span>Create Invoice</span>
+                  <span>New Admission</span>
                 </button>
             </div>
           </div>
@@ -941,12 +941,11 @@ const Dashboard = () => {
             }}
           >
             {[
-              { label: 'Sales', sublabel: 'vs yesterday', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, accentColor: 'green' },
-              { label: 'Purchases', sublabel: 'Total spend', value: getValueByPeriod(metrics.purchases), growth: metrics.purchases.growth, route: '/purchases', icon: ShoppingCart, accentColor: 'red' },
-              { label: 'Expenses', sublabel: 'This period', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, accentColor: 'amber' },
+              { label: 'Admissions', sublabel: 'vs yesterday', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, accentColor: 'green' },
+              { label: 'Spending', sublabel: 'This period', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, accentColor: 'amber' },
               { label: 'Profit', sublabel: 'Net earnings', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, accentColor: 'green' },
               { label: 'Bank Balance', sublabel: 'Available', value: metrics.cash.inHand, growth: null, route: '/banking', icon: Bank, accentColor: 'blue', isBalance: true },
-              { label: 'Inventory Value', sublabel: 'Stock worth', value: metrics.inventory.value, growth: null, route: '/inventory', icon: Package, accentColor: 'slate' },
+              { label: 'Course Value', sublabel: 'Course worth', value: metrics.inventory.value, growth: null, route: '/inventory', icon: Package, accentColor: 'slate' },
             ].map((stat, i) => {
               const isNegative = stat.value < 0
               const displayValue = Math.abs(stat.value)
@@ -1047,22 +1046,7 @@ const Dashboard = () => {
                   transition-all duration-200"
               >
                 <Receipt size={18} weight="bold" />
-                Create Invoice
-              </button>
-              {/* Create Purchase */}
-              <button
-                onClick={() => { localStorage.setItem('purchases_viewMode', 'create'); navigate('/purchases') }}
-                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-white
-                  bg-emerald-600
-                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
-                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
-                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
-                  hover:bg-emerald-700
-                  active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)]
-                  transition-all duration-200"
-              >
-                <ShoppingCart size={18} weight="bold" />
-                Create Purchase
+                New Admission
               </button>
               {/* Scan QR Code */}
               <button
@@ -1093,7 +1077,7 @@ const Dashboard = () => {
                 <Wallet size={18} className="text-amber-500" />
                 Add Expense
               </button>
-              {/* Add Party */}
+              {/* Add Student */}
               <button
                 onClick={() => navigate('/parties')}
                 className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-200
@@ -1105,7 +1089,7 @@ const Dashboard = () => {
                   transition-all duration-200"
               >
                 <UserPlus size={18} className="text-slate-500" />
-                Add Party
+                Add Student
               </button>
             </div>
           </motion.div>
@@ -1123,11 +1107,11 @@ const Dashboard = () => {
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
-                    <span className="text-slate-500 dark:text-slate-400">Sales</span>
+                    <span className="text-slate-500 dark:text-slate-400">Admissions</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gradient-to-br from-amber-300 to-amber-500"></div>
-                    <span className="text-slate-500 dark:text-slate-400">Purchases</span>
+                    <span className="text-slate-500 dark:text-slate-400">Spending</span>
                   </div>
                 </div>
               </div>
@@ -1149,7 +1133,7 @@ const Dashboard = () => {
                         }}
                         transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                         className="w-8 bg-gradient-to-t from-blue-400 to-blue-600 rounded-t-lg transition-all duration-300 group-hover:from-blue-500 group-hover:to-blue-700"
-                        title={`Sales: ₹${day.sales.toLocaleString()}`}
+                        title={`Admissions: ₹${day.sales.toLocaleString()}`}
                       />
                       <motion.div
                         variants={{
@@ -1158,7 +1142,7 @@ const Dashboard = () => {
                         }}
                         transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.1 }}
                         className="w-8 bg-gradient-to-t from-amber-300 to-amber-500 rounded-t-lg transition-all duration-300 group-hover:from-amber-400 group-hover:to-amber-600"
-                        title={`Purchases: ₹${day.purchases.toLocaleString()}`}
+                        title={`Spending: ₹${day.purchases.toLocaleString()}`}
                       />
                     </div>
                     <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{day.day}</span>

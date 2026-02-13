@@ -4,6 +4,7 @@ import { getItems } from './itemService'
 import { getParties } from './partyService'
 import { getLedgerSummary } from './ledgerService'
 import { getExpenses, calculateProratedAmount, type Expense } from './expenseService'
+import { getBankingPageData } from './bankingService'
 
 // TODO: Replace this with a proper service that fetches settings from Firestore
 async function getFinancialSettings() {
@@ -1604,20 +1605,15 @@ export async function getCashAndBankBalance(asOfDate: string) {
   const openingBanks: Record<string, number> = {}
 
   try {
-    const bankingAccountsStr = localStorage.getItem('bankingAccounts')
-    if (bankingAccountsStr) {
-      const bankingData = JSON.parse(bankingAccountsStr)
-      // Get cash in hand balance
-      if (bankingData.cashInHand && typeof bankingData.cashInHand.balance === 'number') {
-        openingCashTotal = bankingData.cashInHand.balance
-      }
-      // Get bank accounts
-      if (bankingData.bankAccounts && Array.isArray(bankingData.bankAccounts)) {
-        bankingData.bankAccounts.forEach((acc: any) => {
-          const accountName = acc.name || `${acc.bankName || 'Bank'} A/c`
-          openingBanks[accountName] = acc.balance || acc.openingBalance || 0
-        })
-      }
+    const bankingData = await getBankingPageData()
+    if (bankingData?.cashInHand && typeof bankingData.cashInHand.balance === 'number') {
+      openingCashTotal = bankingData.cashInHand.balance
+    }
+    if (bankingData?.bankAccounts && Array.isArray(bankingData.bankAccounts)) {
+      bankingData.bankAccounts.forEach((acc: any) => {
+        const accountName = acc?.name || `${acc?.bankName || 'Bank'} A/c`
+        openingBanks[accountName] = acc?.balance || acc?.openingBalance || 0
+      })
     }
   } catch (error) {
     console.warn('Could not load banking accounts from localStorage:', error)

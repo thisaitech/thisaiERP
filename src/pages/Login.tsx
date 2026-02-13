@@ -8,20 +8,17 @@ import {
   ArrowRight,
   Eye,
   EyeSlash,
-  DownloadSimple,
   User,
   Buildings,
   MapPin,
   Phone,
   CheckCircle,
-  GoogleLogo,
-  AppleLogo,
   Warning,
   CaretLeft,
   ShieldCheck,
   Lightning
 } from '@phosphor-icons/react'
-import { signIn, createAdminAccount, signInWithGoogle, signInWithFacebook, signInWithApple } from '../services/authService'
+import { signIn, createAdminAccount } from '../services/authService'
 import { toast } from 'sonner'
 
 type AuthMode = 'login' | 'register' | 'forgot'
@@ -102,40 +99,10 @@ const Login = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   // Validation states
   const [errors, setErrors] = useState<Record<string, string>>({})
-
-  // PWA Install Handler
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    }
-  }, [])
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      toast.info('To install: Click the install icon in your browser address bar, or use browser menu > Install App')
-      return
-    }
-
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-
-    if (outcome === 'accepted') {
-      toast.success('App installed successfully!')
-    }
-    setDeferredPrompt(null)
-  }
 
   // Validate email format
   const validateEmail = (email: string): boolean => {
@@ -234,8 +201,8 @@ const Login = () => {
     setIsLoading(true)
 
     try {
-      const userData = await createAdminAccount(email, password, companyName, fullName)
-      toast.success(`Welcome to Anna ERP, ${fullName}! Your account is ready.`)
+      const userData = await createAdminAccount(email, password, fullName, companyName)
+      toast.success(`Welcome to ThisAI ERP, ${fullName}! Your account is ready.`)
 
       // Store user data
       localStorage.setItem('user', JSON.stringify(userData))
@@ -265,44 +232,6 @@ const Login = () => {
     toast.info('Password reset feature coming soon. Please contact support.')
   }
 
-  const handleSocialLogin = async (provider: 'google' | 'apple' | 'facebook') => {
-    setIsLoading(true)
-
-    try {
-      let userData
-
-      switch (provider) {
-        case 'google':
-          userData = await signInWithGoogle()
-          break
-        case 'facebook':
-          userData = await signInWithFacebook()
-          break
-        case 'apple':
-          userData = await signInWithApple()
-          break
-      }
-
-      if (userData) {
-        toast.success(`Welcome${userData.displayName ? `, ${userData.displayName}` : ''}!`)
-
-        // Store user data in localStorage for persistence
-        localStorage.setItem('user', JSON.stringify(userData))
-
-        // Navigate to dashboard or setup if new user
-        if (!userData.companyName) {
-          navigate('/setup')
-        } else {
-          navigate('/')
-        }
-      }
-    } catch (error: any) {
-      toast.error(error.message || `${provider} login failed`)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   // Load remembered email
   useEffect(() => {
     const remembered = localStorage.getItem('rememberedEmail')
@@ -320,20 +249,6 @@ const Login = () => {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-400/20 to-purple-400/20 rounded-full blur-3xl" />
       </div>
 
-      {/* Install App Button */}
-      <motion.button
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={handleInstallClick}
-        className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm text-primary border border-primary/20 rounded-xl shadow-lg hover:shadow-xl transition-all"
-        title="Install Desktop App"
-      >
-        <DownloadSimple size={20} weight="bold" />
-        <span className="text-sm font-semibold hidden sm:inline">Install App</span>
-      </motion.button>
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -349,10 +264,10 @@ const Login = () => {
             <Sparkle size={32} weight="duotone" className="text-primary" />
           </motion.div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
-            Anna ERP
+            ThisAI ERP
           </h1>
           <p className="text-slate-600">
-            {mode === 'login' && 'Anna - Sign in to continue'}
+            {mode === 'login' && 'ThisAI ERP - Sign in to continue'}
             {mode === 'register' && 'Create your business account'}
             {mode === 'forgot' && 'Reset your password'}
           </p>
@@ -442,49 +357,6 @@ const Login = () => {
                     </>
                   )}
                 </motion.button>
-
-                {/* Divider */}
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-3 bg-white/90 text-slate-600 font-medium">Or continue with</span>
-                  </div>
-                </div>
-
-                {/* Social Login */}
-                <div className="grid grid-cols-3 gap-3">
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSocialLogin('google')}
-                    className="flex items-center justify-center gap-2 py-2.5 px-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
-                  >
-                    <GoogleLogo size={20} weight="bold" className="text-red-500" />
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSocialLogin('apple')}
-                    className="flex items-center justify-center gap-2 py-2.5 px-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
-                  >
-                    <AppleLogo size={20} weight="fill" className="text-slate-800" />
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSocialLogin('facebook')}
-                    className="flex items-center justify-center gap-2 py-2.5 px-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
-                  >
-                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                  </motion.button>
-                </div>
 
                 {/* Register Link */}
                 <p className="text-center text-sm text-slate-600">
@@ -655,7 +527,7 @@ const Login = () => {
                 <div className="mt-4 p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl border border-primary/10">
                   <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                     <Lightning size={16} weight="fill" className="text-amber-500" />
-                    What you get with Anna ERP
+                    What you get with ThisAI ERP
                   </h4>
                   <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
                     <div className="flex items-center gap-1">
@@ -735,7 +607,7 @@ const Login = () => {
 
         {/* Footer */}
         <p className="text-center text-sm text-slate-500 mt-6">
-          © 2025 Anna ERP. All rights reserved.
+          © 2025 ThisAI ERP. All rights reserved.
         </p>
       </motion.div>
     </div>

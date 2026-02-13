@@ -1,65 +1,12 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   base: '/',
   plugins: [
     react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
-      manifest: {
-        name: 'ThisAI CRM - Billing Pro',
-        short_name: 'ThisAI CRM',
-        description: 'Complete CRM solution for managing sales, purchases, inventory, and business operations. Works offline!',
-        theme_color: '#3b82f6',
-        background_color: '#ffffff',
-        display: 'standalone',
-        scope: '/',
-        start_url: '/',
-        orientation: 'portrait-primary',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB limit
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/api\./,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              }
-            }
-          }
-        ]
-      },
-      // Disable PWA in development for faster builds
-      disable: mode === 'development'
-    })
   ].filter(Boolean),
   define: {
     '__DEFINES__': {},
@@ -86,7 +33,6 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           // Vendor chunks
           'react-vendor': ['react', 'react-dom'],
-          'firebase-vendor': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
           'ui-vendor': ['framer-motion', 'react-router-dom', 'sonner'],
           'utils-vendor': ['clsx', 'tailwind-merge', 'date-fns']
         }
@@ -105,6 +51,7 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     port: 3000,
+    strictPort: true,
     open: true,
     // CORS for development
     cors: true

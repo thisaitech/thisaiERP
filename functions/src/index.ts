@@ -1,5 +1,5 @@
 /**
- * Firebase Cloud Functions for Anna ERP
+ * Firebase Cloud Functions for ThisAI ERP
  *
  * This file contains the Razorpay webhook handler for automatic subscription activation.
  *
@@ -288,7 +288,7 @@ export const healthCheck = functions.https.onRequest((req, res) => {
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'Anna ERP Functions'
+    service: 'ThisAI ERP Functions'
   });
 });
 

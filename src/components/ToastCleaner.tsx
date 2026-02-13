@@ -11,7 +11,6 @@ import { toastManager } from '../utils/toastManager'
  * - Dismisses all toasts on route change
  * - Prevents stuck loading toasts
  * - Clears toastManager active operations
- * - Works with both sonner and react-hot-toast
  */
 const ToastCleaner = () => {
   const location = useLocation()
@@ -29,16 +28,6 @@ const ToastCleaner = () => {
 
     // Dismiss all toasts from toastManager
     toastManager.dismissAll()
-
-    // Also try to dismiss react-hot-toast if available
-    try {
-      const hotToast = require('react-hot-toast')
-      if (hotToast && hotToast.dismiss) {
-        hotToast.dismiss()
-      }
-    } catch {
-      // react-hot-toast not available, ignore
-    }
   }, [location.pathname])
 
   // Cleanup on unmount - dismiss any remaining toasts

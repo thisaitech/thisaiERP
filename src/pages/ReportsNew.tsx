@@ -23,6 +23,7 @@ import { motion } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useAuth } from '../contexts/AuthContext'
 import {
   getSalesSummaryReport,
   getPurchaseSummaryReport,
@@ -86,11 +87,11 @@ import {
   exportSlowMovingItemsPDF,
   exportSlowMovingItemsExcel
 } from '../utils/exportUtils'
-import { subscribeBanking } from '../services/syncService'
-import { useBanking } from '../hooks/useBanking'
+import { subscribeToBankingPageData } from '../services/bankingService'
 
 const ReportsNew = () => {
   const { t } = useLanguage()
+  const { userData } = useAuth()
   const [selectedTab, setSelectedTab] = useState('everyday')
   const [selectedPeriod, setSelectedPeriod] = useState('today')
   const [loading, setLoading] = useState(false)
@@ -263,7 +264,7 @@ const ReportsNew = () => {
 
   // When banking accounts change, refresh cash & bank balance report if active
   useEffect(() => {
-    const unsub = subscribeBanking((accounts) => {
+    const unsub = subscribeToBankingPageData(() => {
       if (currentReportType === 'cash-bank-balance') {
         // reload the report to reflect live changes
         loadReport('cash-bank-balance')
@@ -290,7 +291,7 @@ const ReportsNew = () => {
           break
         case 'day-book':
           exportDayBookPDF(reportData)
-          toast.success('Day Book exported to PDF')
+          toast.success('Daily Register exported to PDF')
           break
         case 'cash-bank-balance':
           exportCashBankBalancePDF(reportData)
@@ -306,27 +307,27 @@ const ReportsNew = () => {
           break
         case 'discount':
           exportDiscountReportPDF(reportData)
-          toast.success('Discount Report exported to PDF')
+          toast.success('Scholarship & Discount Report exported to PDF')
           break
         case 'purchase-register':
           exportPurchaseRegisterPDF(reportData)
-          toast.success('Purchase Register exported to PDF')
+          toast.success('Expense Register exported to PDF')
           break
         case 'sales-register':
           exportSalesRegisterPDF(reportData)
-          toast.success('Sales Register exported to PDF')
+          toast.success('Fee Register exported to PDF')
           break
         case 'stock-alert':
           exportStockAlertPDF(reportData)
-          toast.success('Stock Alert exported to PDF')
+          toast.success('Seat Alert exported to PDF')
           break
         case 'fast-moving-items':
           exportFastMovingItemsPDF(reportData)
-          toast.success('Fast Moving Items exported to PDF')
+          toast.success('Popular Courses exported to PDF')
           break
         case 'slow-moving-items':
           exportSlowMovingItemsPDF(reportData)
-          toast.success('Slow Moving Items exported to PDF')
+          toast.success('Low Enrollment Courses exported to PDF')
           break
         case 'profit-loss':
           exportProfitLossPDF(reportData, selectedPeriod)
@@ -342,15 +343,15 @@ const ReportsNew = () => {
           break
         case 'bill-profit':
           exportBillProfitPDF(reportData)
-          toast.success('Bill-wise Profit exported to PDF')
+          toast.success('Receipt-wise Summary exported to PDF')
           break
         case 'item-pl':
           exportItemPLPDF(reportData)
-          toast.success('Item-wise Profit & Loss exported to PDF')
+          toast.success('Course-wise Fee Summary exported to PDF')
           break
         case 'party-pl':
           exportPartyPLPDF(reportData)
-          toast.success('Party-wise Profit & Loss exported to PDF')
+          toast.success('Student-wise Fee Summary exported to PDF')
           break
         default:
           toast.info('PDF export not available for this report')
@@ -372,7 +373,7 @@ const ReportsNew = () => {
       switch (currentReportType) {
         case 'day-book':
           exportDayBookExcel(reportData)
-          toast.success('Day Book exported to Excel')
+          toast.success('Daily Register exported to Excel')
           break
         case 'cash-bank-balance':
           exportCashBankBalanceExcel(reportData)
@@ -388,35 +389,35 @@ const ReportsNew = () => {
           break
         case 'discount':
           exportDiscountReportExcel(reportData)
-          toast.success('Discount Report exported to Excel')
+          toast.success('Scholarship & Discount Report exported to Excel')
           break
         case 'purchase-register':
           exportPurchaseRegisterExcel(reportData)
-          toast.success('Purchase Register exported to Excel')
+          toast.success('Expense Register exported to Excel')
           break
         case 'sales-register':
           exportSalesRegisterExcel(reportData)
-          toast.success('Sales Register exported to Excel')
+          toast.success('Fee Register exported to Excel')
           break
         case 'stock-alert':
           exportStockAlertExcel(reportData)
-          toast.success('Stock Alert exported to Excel')
+          toast.success('Seat Alert exported to Excel')
           break
         case 'fast-moving-items':
           exportFastMovingItemsExcel(reportData)
-          toast.success('Fast Moving Items exported to Excel')
+          toast.success('Popular Courses exported to Excel')
           break
         case 'slow-moving-items':
           exportSlowMovingItemsExcel(reportData)
-          toast.success('Slow Moving Items exported to Excel')
+          toast.success('Low Enrollment Courses exported to Excel')
           break
         case 'profit-loss':
           exportProfitLossExcel(reportData, selectedPeriod)
-          toast.success('Profit & Loss exported to Excel')
+          toast.success('Income & Expenses exported to Excel')
           break
         case 'party-pl':
           exportPartyPLExcel(reportData)
-          toast.success('Party P&L exported to Excel')
+          toast.success('Student Fee Summary exported to Excel')
           break
         case 'item-pl':
           exportItemPLExcel(reportData)
@@ -424,11 +425,11 @@ const ReportsNew = () => {
           break
         case 'bill-profit':
           exportBillProfitExcel(reportData)
-          toast.success('Bill Profit exported to Excel')
+          toast.success('Receipt Summary exported to Excel')
           break
         case 'hsn':
           exportHSNExcel(reportData)
-          toast.success('HSN Summary exported to Excel')
+          toast.success('SAC/HSN Summary exported to Excel')
           break
         case 'gstr1':
           exportGSTR1Excel(reportData)
@@ -465,25 +466,25 @@ const ReportsNew = () => {
 
       // Get report type label
       const reportTypeLabels: Record<string, string> = {
-        'everyday': 'Every Day Report',
-        'day-book': 'Day Book Report',
+        'everyday': 'Daily Report',
+        'day-book': 'Daily Register Report',
         'overview': 'Overview Report',
-        'profit-loss': 'Profit & Loss Report',
+        'profit-loss': 'Income & Expenses Report',
         'cash-bank-balance': 'Cash & Bank Balance Report',
-        'accounts-receivable': 'Accounts Receivable Report',
-        'accounts-payable': 'Accounts Payable Report',
+        'accounts-receivable': 'Fees Receivable Report',
+        'accounts-payable': 'Payments Payable Report',
         'gstr1': 'GSTR-1 Report',
         'gstr3b': 'GSTR-3B Report',
-        'party-pl': 'Party-wise Profit & Loss Report',
-        'item-pl': 'Item-wise Profit & Loss Report',
-        'bill-profit': 'Bill-wise Profit Report',
-        'hsn': 'HSN Summary Report',
-        'discount': 'Discount Report',
-        'purchase-register': 'Purchase Register',
-        'sales-register': 'Sales Register',
-        'stock-alert': 'Stock Alert Report',
-        'fast-moving-items': 'Fast Moving Items Report',
-        'slow-moving-items': 'Slow Moving Items Report'
+        'party-pl': 'Student-wise Fee Summary Report',
+        'item-pl': 'Course-wise Fee Summary Report',
+        'bill-profit': 'Receipt-wise Summary Report',
+        'hsn': 'SAC/HSN Summary Report',
+        'discount': 'Scholarship & Discount Report',
+        'purchase-register': 'Expense Register',
+        'sales-register': 'Fee Register',
+        'stock-alert': 'Seat Alert Report',
+        'fast-moving-items': 'Popular Courses Report',
+        'slow-moving-items': 'Low Enrollment Courses Report'
       }
 
       // Get period label
@@ -504,7 +505,7 @@ const ReportsNew = () => {
           to: endDate
         },
         generatedAt: new Date().toISOString(),
-        businessName: "Anna", // Can be made dynamic from settings
+        businessName: userData?.companyName || userData?.displayName || 'ThisAI ERP',
         summary: {},
         transactions: []
       }
@@ -974,7 +975,7 @@ const ReportsNew = () => {
                 {/* P&L Statement */}
                 {reportData && reportData.revenue !== undefined && currentReportType === 'profit-loss' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Profit & Loss Statement</h2>
+                    <h2 className="text-lg font-bold mb-4">Income & Expenses Statement</h2>
                     <p className="text-sm text-muted-foreground mb-6">
                       Period: {reportData.period?.startDate} to {reportData.period?.endDate}
                     </p>
@@ -1022,7 +1023,7 @@ const ReportsNew = () => {
                     <div className="space-y-4">
                       <div>
                         <div className="flex justify-between py-2">
-                          <span className="font-medium">Revenue (Sales)</span>
+                          <span className="font-medium">Revenue (Fees)</span>
                           <span className="font-bold">₹{(reportData.revenue || 0).toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex justify-between py-2">
@@ -1160,15 +1161,15 @@ const ReportsNew = () => {
                             <span className="font-medium">₹{reportData.cashBreakdown.opening.toLocaleString('en-IN')}</span>
                           </div>
                           <div className="flex justify-between text-success">
-                            <span>+ Sales Receipts:</span>
+                            <span>+ Fee Receipts:</span>
                             <span className="font-medium">₹{reportData.cashBreakdown.salesReceipts.toLocaleString('en-IN')}</span>
                           </div>
                           <div className="flex justify-between text-destructive">
-                            <span>– Purchase Payments:</span>
+                            <span>– Vendor Payments:</span>
                             <span className="font-medium">₹{reportData.cashBreakdown.purchasePayments.toLocaleString('en-IN')}</span>
                           </div>
                           <div className="flex justify-between text-destructive">
-                            <span>– Expense Payments:</span>
+                            <span>– Operating Expenses:</span>
                             <span className="font-medium">₹{reportData.cashBreakdown.expensePayments.toLocaleString('en-IN')}</span>
                           </div>
                           <div className="flex justify-between border-t pt-2 font-bold">
@@ -1184,8 +1185,8 @@ const ReportsNew = () => {
                 {/* Accounts Receivable Report */}
                 {reportData && reportData.totalReceivables !== undefined && currentReportType === 'accounts-receivable' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Pending Payments to Receive</h2>
-                    <p className="text-sm text-muted-foreground mb-6">Customers who owe you money</p>
+                    <h2 className="text-lg font-bold mb-4">Pending Fees to Receive</h2>
+                    <p className="text-sm text-muted-foreground mb-6">Students who owe fees</p>
 
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -1198,7 +1199,7 @@ const ReportsNew = () => {
                         <p className="text-3xl font-bold text-primary">{reportData.totalInvoices}</p>
                       </div>
                       <div className="p-6 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Customers Owing</p>
+                        <p className="text-sm text-muted-foreground mb-2">Students Owing</p>
                         <p className="text-3xl font-bold text-accent">{reportData.totalCustomers}</p>
                       </div>
                     </div>
@@ -1231,7 +1232,7 @@ const ReportsNew = () => {
                     {/* Customer List */}
                     {reportData.customers && reportData.customers.length > 0 ? (
                       <div className="space-y-4">
-                        <h3 className="font-semibold text-sm">Customers to Call</h3>
+                        <h3 className="font-semibold text-sm">Students to Call</h3>
                         {reportData.customers.map((customer: any, idx: number) => (
                           <div key={idx} className="border border-border rounded-lg p-4 hover:border-warning transition-colors">
                             <div className="flex justify-between items-start mb-3">
@@ -1282,7 +1283,7 @@ const ReportsNew = () => {
                 {reportData && reportData.totalPayables !== undefined && currentReportType === 'accounts-payable' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
                     <h2 className="text-lg font-bold mb-4">Pending Payments to Pay</h2>
-                    <p className="text-sm text-muted-foreground mb-6">Suppliers you owe money to</p>
+                    <p className="text-sm text-muted-foreground mb-6">Vendors you owe money to</p>
 
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -1295,7 +1296,7 @@ const ReportsNew = () => {
                         <p className="text-3xl font-bold text-primary">{reportData.totalInvoices}</p>
                       </div>
                       <div className="p-6 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Suppliers to Pay</p>
+                        <p className="text-sm text-muted-foreground mb-2">Vendors to Pay</p>
                         <p className="text-3xl font-bold text-accent">{reportData.totalSuppliers}</p>
                       </div>
                     </div>
@@ -1328,7 +1329,7 @@ const ReportsNew = () => {
                     {/* Supplier List */}
                     {reportData.suppliers && reportData.suppliers.length > 0 ? (
                       <div className="space-y-4">
-                        <h3 className="font-semibold text-sm">Suppliers to Pay</h3>
+                        <h3 className="font-semibold text-sm">Vendors to Pay</h3>
                         {reportData.suppliers.map((supplier: any, idx: number) => (
                           <div key={idx} className="border border-border rounded-lg p-4 hover:border-destructive transition-colors">
                             <div className="flex justify-between items-start mb-3">
@@ -1378,7 +1379,7 @@ const ReportsNew = () => {
                 {/* Discount Report - Enhanced */}
                 {reportData && reportData.totalDiscount !== undefined && currentReportType === 'discount' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Discount Report</h2>
+                    <h2 className="text-lg font-bold mb-4">Scholarship & Discount Report</h2>
                     <p className="text-sm text-muted-foreground mb-2">
                       Period: {new Date(reportData.period.startDate).toLocaleDateString('en-IN')} to {new Date(reportData.period.endDate).toLocaleDateString('en-IN')}
                     </p>
@@ -1445,7 +1446,7 @@ const ReportsNew = () => {
                             <tr className="border-b border-border bg-muted/30">
                               <th className="text-left py-3 px-3 text-xs font-semibold">Date</th>
                               <th className="text-left py-3 px-3 text-xs font-semibold">Order/Invoice</th>
-                              <th className="text-left py-3 px-3 text-xs font-semibold">Customer</th>
+                              <th className="text-left py-3 px-3 text-xs font-semibold">Student</th>
                               <th className="text-right py-3 px-3 text-xs font-semibold">Original ₹</th>
                               <th className="text-center py-3 px-3 text-xs font-semibold">Coupon Code</th>
                               <th className="text-right py-3 px-3 text-xs font-semibold">Discount ₹</th>
@@ -1544,7 +1545,7 @@ const ReportsNew = () => {
                 {/* Purchase Register Report (ITC) - Enhanced */}
                 {reportData && reportData.summary && reportData.purchases !== undefined && currentReportType === 'purchase-register' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Purchase Register (ITC - Input Tax Credit)</h2>
+                    <h2 className="text-lg font-bold mb-4">Expense Register (ITC - Input Tax Credit)</h2>
                     <p className="text-sm text-muted-foreground mb-2">
                       Period: {new Date(reportData.period.startDate).toLocaleDateString('en-IN')} to {new Date(reportData.period.endDate).toLocaleDateString('en-IN')}
                     </p>
@@ -1555,7 +1556,7 @@ const ReportsNew = () => {
                     {/* Summary Cards - GREEN theme for ITC */}
                     <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
                       <div className="p-3 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Total Purchases</p>
+                        <p className="text-xs text-muted-foreground mb-1">Total Expenses</p>
                         <p className="text-xl font-bold text-primary">{reportData.summary.totalPurchases}</p>
                       </div>
                       <div className="p-3 bg-blue-500/5 border-2 border-blue-500/20 rounded-xl">
@@ -1629,7 +1630,7 @@ const ReportsNew = () => {
                           <thead>
                             <tr className="border-b border-border bg-muted/30">
                               <th className="text-left py-2 px-2 font-semibold">Date</th>
-                              <th className="text-left py-2 px-2 font-semibold">Supplier</th>
+                              <th className="text-left py-2 px-2 font-semibold">Vendor</th>
                               <th className="text-left py-2 px-2 font-semibold">GSTIN</th>
                               <th className="text-left py-2 px-2 font-semibold">Bill No</th>
                               <th className="text-center py-2 px-2 font-semibold">Category</th>
@@ -1722,7 +1723,7 @@ const ReportsNew = () => {
                 {/* Sales Register Report (Output Tax) - Marketplace-Aware */}
                 {reportData && reportData.summary && reportData.sales !== undefined && currentReportType === 'sales-register' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-2">Sales Register (Output Tax)</h2>
+                    <h2 className="text-lg font-bold mb-2">Fee Register (Output Tax)</h2>
                     <p className="text-sm text-muted-foreground mb-2">
                       Period: {new Date(reportData.period.startDate).toLocaleDateString('en-IN')} to {new Date(reportData.period.endDate).toLocaleDateString('en-IN')}
                     </p>
@@ -1738,13 +1739,13 @@ const ReportsNew = () => {
                     {/* Main Summary Cards - Shows Flow: Invoice Value → Deductions → Taxable Value → Output Tax */}
                     <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-6">
                       <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Total Sales</p>
+                        <p className="text-xs text-muted-foreground mb-1">Total Fees</p>
                         <p className="text-2xl font-bold text-primary">{reportData.summary.totalSales}</p>
                       </div>
                       <div className="p-4 bg-slate-500/5 border-2 border-slate-500/20 rounded-xl">
                         <p className="text-xs text-muted-foreground mb-1">Invoice Value</p>
                         <p className="text-lg font-bold text-slate-600">₹{(reportData.summary.totalInvoiceValue || 0).toLocaleString('en-IN')}</p>
-                        <p className="text-[10px] text-muted-foreground">Customer Paid</p>
+                        <p className="text-[10px] text-muted-foreground">Student Paid</p>
                       </div>
                       <div className="p-4 bg-orange-500/5 border-2 border-orange-500/20 rounded-xl">
                         <p className="text-xs text-muted-foreground mb-1">(-) Deductions</p>
@@ -1911,7 +1912,7 @@ const ReportsNew = () => {
                             <tr className="border-b border-border bg-muted/30">
                               <th className="text-left py-3 px-2 font-semibold">Date</th>
                               <th className="text-left py-3 px-2 font-semibold">Order ID</th>
-                              <th className="text-left py-3 px-2 font-semibold">Customer</th>
+                              <th className="text-left py-3 px-2 font-semibold">Student</th>
                               <th className="text-left py-3 px-2 font-semibold">GSTIN</th>
                               <th className="text-center py-3 px-2 font-semibold">Platform</th>
                               <th className="text-right py-3 px-2 font-semibold">Invoice ₹</th>
@@ -2022,7 +2023,7 @@ const ReportsNew = () => {
                 {/* Stock Alert Report */}
                 {reportData && reportData.summary && reportData.items && currentReportType === 'stock-alert' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Low Stock Alert - Items to Reorder</h2>
+                    <h2 className="text-lg font-bold mb-4">Low Seats Alert - Courses to Review</h2>
 
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -2031,17 +2032,17 @@ const ReportsNew = () => {
                         <p className="text-2xl font-bold text-primary">{reportData.summary.totalItems}</p>
                       </div>
                       <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">In Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">Seats Available</p>
                         <p className="text-2xl font-bold text-success">
                           {reportData.items.filter((item: any) => item.status === 'In Stock').length}
                         </p>
                       </div>
                       <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Low Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">Low Seats</p>
                         <p className="text-2xl font-bold text-warning">{reportData.summary.lowStock}</p>
                       </div>
                       <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Out of Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">No Seats</p>
                         <p className="text-2xl font-bold text-destructive">{reportData.summary.outOfStock}</p>
                       </div>
                     </div>
@@ -2119,8 +2120,8 @@ const ReportsNew = () => {
                       <div className="mt-6 p-4 bg-warning/10 border border-warning/20 rounded-lg">
                         <p className="text-sm font-semibold text-warning mb-1">Action Required</p>
                         <p className="text-xs text-muted-foreground">
-                          {reportData.summary.outOfStock > 0 && `${reportData.summary.outOfStock} item(s) are out of stock. `}
-                          {reportData.summary.lowStock > 0 && `${reportData.summary.lowStock} item(s) are running low. `}
+                          {reportData.summary.outOfStock > 0 && `${reportData.summary.outOfStock} course(s) have no seats. `}
+                          {reportData.summary.lowStock > 0 && `${reportData.summary.lowStock} course(s) are running low on seats. `}
                           Please reorder these items soon to avoid stockouts.
                         </p>
                       </div>
@@ -2131,7 +2132,7 @@ const ReportsNew = () => {
                 {/* Sales Register Report (Output Tax) - Inventory Tab Version */}
                 {reportData && reportData.summary && reportData.sales !== undefined && currentReportType === 'sales-register' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-2">Sales Register (Output Tax)</h2>
+                    <h2 className="text-lg font-bold mb-2">Fee Register (Output Tax)</h2>
                     <p className="text-sm text-muted-foreground mb-2">
                       Period: {new Date(reportData.period.startDate).toLocaleDateString('en-IN')} to {new Date(reportData.period.endDate).toLocaleDateString('en-IN')}
                     </p>
@@ -2147,7 +2148,7 @@ const ReportsNew = () => {
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
                       <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Total Sales</p>
+                        <p className="text-xs text-muted-foreground mb-1">Total Fees</p>
                         <p className="text-2xl font-bold text-primary">{reportData.summary.totalSales}</p>
                       </div>
                       <div className="p-4 bg-blue-500/5 border-2 border-blue-500/20 rounded-xl">
@@ -2207,10 +2208,10 @@ const ReportsNew = () => {
                           <thead>
                             <tr className="border-b border-border">
                               <th className="text-left py-3 px-4 text-sm font-semibold">Date</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">Customer</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Student</th>
                               <th className="text-left py-3 px-4 text-sm font-semibold">GSTIN</th>
                               <th className="text-left py-3 px-4 text-sm font-semibold">Invoice</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">HSN</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">SAC/HSN</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Taxable ₹</th>
                               <th className="text-center py-3 px-4 text-sm font-semibold">GST%</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">CGST</th>
@@ -2271,7 +2272,7 @@ const ReportsNew = () => {
                 {reportData && reportData.items && currentReportType === 'fast-moving-items' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-bold">Fast Moving Items - Top Sellers (Last 30 Days)</h2>
+                      <h2 className="text-lg font-bold">Popular Courses - Top Enrollments (Last 30 Days)</h2>
                       <div className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded">
                         Showing items with ≥100 units sold
                       </div>
@@ -2284,11 +2285,11 @@ const ReportsNew = () => {
                         <p className="text-2xl font-bold text-primary">{reportData.summary.totalQuantitySold}</p>
                       </div>
                       <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Safe Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">Healthy Seats</p>
                         <p className="text-2xl font-bold text-success">{reportData.summary.safeCount}</p>
                       </div>
                       <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Low Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">Low Seats</p>
                         <p className="text-2xl font-bold text-warning">{reportData.summary.lowCount}</p>
                       </div>
                       <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
@@ -2307,7 +2308,7 @@ const ReportsNew = () => {
                               <th className="text-left py-3 px-4 text-sm font-semibold">Item Name</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Qty Sold (30d)</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Avg Daily Sale</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Current Stock</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Seats Available</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Days Left</th>
                               <th className="text-center py-3 px-4 text-sm font-semibold">Status</th>
                             </tr>
@@ -2366,7 +2367,7 @@ const ReportsNew = () => {
                     ) : (
                       <div className="text-center py-12 bg-muted/20 rounded-lg">
                         <div className="text-4xl mb-3">📊</div>
-                        <p className="text-lg font-semibold mb-2">No Fast Moving Items Yet</p>
+                        <p className="text-lg font-semibold mb-2">No Popular Courses Yet</p>
                         <p className="text-sm text-muted-foreground mb-4">
                           No items have sold ≥100 units in the last 30 days.
                         </p>
@@ -2422,7 +2423,7 @@ const ReportsNew = () => {
                         <Receipt size={24} className="text-success" weight="duotone" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-muted-foreground">Total Sales</h3>
+                        <h3 className="text-sm font-medium text-muted-foreground">Total Fees</h3>
                         <p className="text-2xl font-bold">₹{(reportData.sales?.totalSales || 0).toLocaleString('en-IN')}</p>
                       </div>
                     </div>
@@ -2444,7 +2445,7 @@ const ReportsNew = () => {
                         <ShoppingCart size={24} className="text-warning" weight="duotone" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-muted-foreground">Total Purchases</h3>
+                        <h3 className="text-sm font-medium text-muted-foreground">Total Expenses</h3>
                         <p className="text-2xl font-bold">₹{(reportData.purchases?.totalPurchases || 0).toLocaleString('en-IN')}</p>
                       </div>
                     </div>
@@ -2466,17 +2467,17 @@ const ReportsNew = () => {
                         <Package size={24} className="text-primary" weight="duotone" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-muted-foreground">Stock Value</h3>
+                        <h3 className="text-sm font-medium text-muted-foreground">Course Value</h3>
                         <p className="text-2xl font-bold">₹{(reportData.stock?.totalStockValue || 0).toLocaleString('en-IN')}</p>
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Items:</span>
+                        <span className="text-muted-foreground">Courses:</span>
                         <span className="font-medium">{reportData.stock?.totalItems || 0}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Low Stock:</span>
+                        <span className="text-muted-foreground">Low Seats:</span>
                         <span className="font-medium text-warning">{reportData.stock?.lowStockItems || 0}</span>
                       </div>
                     </div>
@@ -2486,14 +2487,14 @@ const ReportsNew = () => {
                 {/* Top Customers */}
                 {reportData.sales?.topCustomers?.length > 0 && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Top Customers</h2>
+                    <h2 className="text-lg font-bold mb-4">Top Students</h2>
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-border">
-                            <th className="text-left py-3 px-4 text-sm font-semibold">Customer</th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold">Student</th>
                             <th className="text-right py-3 px-4 text-sm font-semibold">Amount</th>
-                            <th className="text-right py-3 px-4 text-sm font-semibold">Invoices</th>
+                            <th className="text-right py-3 px-4 text-sm font-semibold">Receipts</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2519,11 +2520,11 @@ const ReportsNew = () => {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[
-                    { id: 'day-book', label: 'Day Book', icon: Calendar, description: 'Daily transactions summary' },
-                    { id: 'cash-bank-balance', label: 'Cash & Bank Balance', icon: CurrencyCircleDollar, description: 'Cash in hand & bank' },
-                    { id: 'accounts-receivable', label: 'Pending Payments to Receive', icon: TrendUp, description: 'Customers who owe money' },
-                    { id: 'accounts-payable', label: 'Pending Payments to Pay', icon: TrendDown, description: 'Suppliers you owe money' },
-                    { id: 'bill-profit', label: 'Bill-wise Profit', icon: TrendUp, description: 'Profit per invoice' }
+                    { id: 'day-book', label: 'Daily Register', icon: Calendar, description: 'Daily admissions and fees summary' },
+                    { id: 'cash-bank-balance', label: 'Cash & Bank Balance', icon: CurrencyCircleDollar, description: 'Cash in hand and bank' },
+                    { id: 'accounts-receivable', label: 'Pending Fees to Receive', icon: TrendUp, description: 'Students with pending fees' },
+                    { id: 'accounts-payable', label: 'Pending Payments to Pay', icon: TrendDown, description: 'Vendors you owe money' },
+                    { id: 'bill-profit', label: 'Receipt-wise Summary', icon: TrendUp, description: 'Summary per receipt' }
                   ].map((report) => (
                     <button
                       key={report.id}
@@ -2591,15 +2592,15 @@ const ReportsNew = () => {
                             <span className="font-medium">₹{reportData.cashBreakdown.opening.toLocaleString('en-IN')}</span>
                           </div>
                           <div className="flex justify-between text-success">
-                            <span>+ Sales Receipts:</span>
+                            <span>+ Fee Receipts:</span>
                             <span className="font-medium">₹{reportData.cashBreakdown.salesReceipts.toLocaleString('en-IN')}</span>
                           </div>
                           <div className="flex justify-between text-destructive">
-                            <span>– Purchase Payments:</span>
+                            <span>– Vendor Payments:</span>
                             <span className="font-medium">₹{reportData.cashBreakdown.purchasePayments.toLocaleString('en-IN')}</span>
                           </div>
                           <div className="flex justify-between text-destructive">
-                            <span>– Expense Payments:</span>
+                            <span>– Operating Expenses:</span>
                             <span className="font-medium">₹{reportData.cashBreakdown.expensePayments.toLocaleString('en-IN')}</span>
                           </div>
                           <div className="flex justify-between border-t pt-2 font-bold">
@@ -2615,8 +2616,8 @@ const ReportsNew = () => {
                 {/* Accounts Receivable Report */}
                 {reportData && reportData.totalReceivables !== undefined && currentReportType === 'accounts-receivable' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Pending Payments to Receive</h2>
-                    <p className="text-sm text-muted-foreground mb-6">Customers who owe you money</p>
+                    <h2 className="text-lg font-bold mb-4">Pending Fees to Receive</h2>
+                    <p className="text-sm text-muted-foreground mb-6">Students who owe fees</p>
 
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -2629,7 +2630,7 @@ const ReportsNew = () => {
                         <p className="text-3xl font-bold text-primary">{reportData.totalInvoices}</p>
                       </div>
                       <div className="p-6 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Customers Owing</p>
+                        <p className="text-sm text-muted-foreground mb-2">Students Owing</p>
                         <p className="text-3xl font-bold text-accent">{reportData.totalCustomers}</p>
                       </div>
                     </div>
@@ -2662,7 +2663,7 @@ const ReportsNew = () => {
                     {/* Customer List */}
                     {reportData.customers && reportData.customers.length > 0 ? (
                       <div className="space-y-4">
-                        <h3 className="font-semibold text-sm">Customers to Call</h3>
+                        <h3 className="font-semibold text-sm">Students to Call</h3>
                         {reportData.customers.map((customer: any, idx: number) => (
                           <div key={idx} className="border border-border rounded-lg p-4 hover:border-warning transition-colors">
                             <div className="flex justify-between items-start mb-3">
@@ -2713,7 +2714,7 @@ const ReportsNew = () => {
                 {reportData && reportData.totalPayables !== undefined && currentReportType === 'accounts-payable' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
                     <h2 className="text-lg font-bold mb-4">Pending Payments to Pay</h2>
-                    <p className="text-sm text-muted-foreground mb-6">Suppliers you owe money to</p>
+                    <p className="text-sm text-muted-foreground mb-6">Vendors you owe money to</p>
 
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -2726,7 +2727,7 @@ const ReportsNew = () => {
                         <p className="text-3xl font-bold text-primary">{reportData.totalInvoices}</p>
                       </div>
                       <div className="p-6 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Suppliers to Pay</p>
+                        <p className="text-sm text-muted-foreground mb-2">Vendors to Pay</p>
                         <p className="text-3xl font-bold text-accent">{reportData.totalSuppliers}</p>
                       </div>
                     </div>
@@ -2759,7 +2760,7 @@ const ReportsNew = () => {
                     {/* Supplier List */}
                     {reportData.suppliers && reportData.suppliers.length > 0 ? (
                       <div className="space-y-4">
-                        <h3 className="font-semibold text-sm">Suppliers to Pay</h3>
+                        <h3 className="font-semibold text-sm">Vendors to Pay</h3>
                         {reportData.suppliers.map((supplier: any, idx: number) => (
                           <div key={idx} className="border border-border rounded-lg p-4 hover:border-destructive transition-colors">
                             <div className="flex justify-between items-start mb-3">
@@ -2863,7 +2864,7 @@ const ReportsNew = () => {
                 {/* Bill-wise Profit Report */}
                 {reportData && reportData.bills && currentReportType === 'bill-profit' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Bill-wise Profit Analysis</h2>
+                    <h2 className="text-lg font-bold mb-4">Receipt-wise Summary</h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                       <div className="p-4 bg-primary/5 rounded-lg">
                         <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
@@ -2888,7 +2889,7 @@ const ReportsNew = () => {
                           <tr className="border-b border-border">
                             <th className="text-left py-3 px-4 text-sm font-semibold">Invoice #</th>
                             <th className="text-left py-3 px-4 text-sm font-semibold">Date</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">Party</th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold">Student</th>
                             <th className="text-right py-3 px-4 text-sm font-semibold">Revenue</th>
                             <th className="text-right py-3 px-4 text-sm font-semibold">Cost</th>
                             <th className="text-right py-3 px-4 text-sm font-semibold">Profit</th>
@@ -2919,7 +2920,7 @@ const ReportsNew = () => {
                 {/* P&L Statement */}
                 {reportData && reportData.revenue !== undefined && currentReportType === 'profit-loss' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Profit & Loss Statement</h2>
+                    <h2 className="text-lg font-bold mb-4">Income & Expenses Statement</h2>
                     <p className="text-sm text-muted-foreground mb-6">
                       Period: {reportData.period?.startDate} to {reportData.period?.endDate}
                     </p>
@@ -2967,7 +2968,7 @@ const ReportsNew = () => {
                     <div className="space-y-4">
                       <div>
                         <div className="flex justify-between py-2">
-                          <span className="font-medium">Revenue (Sales)</span>
+                          <span className="font-medium">Revenue (Fees)</span>
                           <span className="font-bold">₹{(reportData.revenue || 0).toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex justify-between py-2">
@@ -3098,11 +3099,11 @@ const ReportsNew = () => {
                             <p className="text-sm font-bold text-success">₹{(reportData.categoryBreakdown.marketplacePayouts || 0).toLocaleString('en-IN')}</p>
                           </div>
                           <div className="text-center p-2 bg-success/10 rounded">
-                            <p className="text-xs text-muted-foreground mb-1">Direct Sales</p>
+                            <p className="text-xs text-muted-foreground mb-1">Direct Fees</p>
                             <p className="text-sm font-bold text-success">₹{(reportData.categoryBreakdown.directSales || 0).toLocaleString('en-IN')}</p>
                           </div>
                           <div className="text-center p-2 bg-destructive/10 rounded">
-                            <p className="text-xs text-muted-foreground mb-1">Supplier Payments</p>
+                            <p className="text-xs text-muted-foreground mb-1">Vendor Payments</p>
                             <p className="text-sm font-bold text-destructive">₹{(reportData.categoryBreakdown.supplierPayments || 0).toLocaleString('en-IN')}</p>
                           </div>
                           <div className="text-center p-2 bg-destructive/10 rounded">
@@ -3191,7 +3192,7 @@ const ReportsNew = () => {
 
                           <div className="flex justify-between items-center p-3 bg-blue-500/5 rounded-lg">
                             <div>
-                              <p className="font-medium">Stock / Inventory</p>
+                              <p className="font-medium">Course Capacity</p>
                               <p className="text-xs text-muted-foreground">Current stock valuation</p>
                             </div>
                             <p className="text-lg font-bold text-blue-600">₹{(reportData.assets.inventory || 0).toLocaleString('en-IN')}</p>
@@ -3235,7 +3236,7 @@ const ReportsNew = () => {
 
                           <div className="flex justify-between items-center p-3 bg-orange-500/5 rounded-lg">
                             <div>
-                              <p className="font-medium">Suppliers Payable</p>
+                              <p className="font-medium">Vendors Payable</p>
                               <p className="text-xs text-muted-foreground">Unpaid purchase bills</p>
                             </div>
                             <p className="text-lg font-bold text-orange-600">₹{(reportData.liabilities.suppliersPayable || 0).toLocaleString('en-IN')}</p>
@@ -3435,7 +3436,7 @@ const ReportsNew = () => {
                       <Users size={20} className="text-accent" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Party-wise Profit & Loss</p>
+                      <p className="font-medium text-sm">Student-wise Fee Summary</p>
                       <p className="text-xs text-muted-foreground">Profit analysis by party</p>
                     </div>
                   </button>
@@ -3444,7 +3445,7 @@ const ReportsNew = () => {
                 {/* Party P&L Data */}
                 {reportData && reportData.parties && currentReportType === 'party-pl' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-2">Party-wise Profit & Loss</h2>
+                    <h2 className="text-lg font-bold mb-2">Student-wise Fee Summary</h2>
                     <p className="text-sm text-muted-foreground mb-6">Revenue and profit analysis by customer</p>
 
                     {/* Summary Cards */}
@@ -3465,7 +3466,7 @@ const ReportsNew = () => {
                           </p>
                         </div>
                         <div className="p-4 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                          <p className="text-xs text-muted-foreground mb-1">Customers</p>
+                          <p className="text-xs text-muted-foreground mb-1">Students</p>
                           <p className="text-xl font-bold text-accent">{reportData.summary.totalParties || 0}</p>
                         </div>
                         <div className="p-4 bg-blue-500/5 border-2 border-blue-500/20 rounded-xl">
@@ -3480,7 +3481,7 @@ const ReportsNew = () => {
                         <table className="w-full">
                           <thead>
                             <tr className="border-b border-border bg-muted/30">
-                              <th className="text-left py-3 px-4 text-sm font-semibold">Party Name</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Student Name</th>
                               <th className="text-center py-3 px-4 text-sm font-semibold">Invoices</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Revenue</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Cost (COGS)</th>
@@ -3547,7 +3548,7 @@ const ReportsNew = () => {
                   {[
                     { id: 'gstr1', label: 'GSTR-1', icon: FileText, description: 'Outward supplies' },
                     { id: 'gstr3b', label: 'GSTR-3B', icon: FileText, description: 'Monthly summary' },
-                    { id: 'hsn', label: 'HSN Summary', icon: Tag, description: 'HSN-wise sales' }
+                    { id: 'hsn', label: 'SAC/HSN Summary', icon: Tag, description: 'SAC/HSN-wise fees' }
                   ].map((report) => (
                     <button
                       key={report.id}
@@ -3743,12 +3744,12 @@ const ReportsNew = () => {
                 {/* HSN Summary */}
                 {reportData && reportData.hsnWiseData && currentReportType === 'hsn' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">HSN-wise Summary</h2>
+                    <h2 className="text-lg font-bold mb-4">SAC/HSN-wise Summary</h2>
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-border">
-                            <th className="text-left py-3 px-4 text-sm font-semibold">HSN Code</th>
+                            <th className="text-left py-3 px-4 text-sm font-semibold">SAC/HSN Code</th>
                             <th className="text-left py-3 px-4 text-sm font-semibold">Description</th>
                             <th className="text-right py-3 px-4 text-sm font-semibold">Quantity</th>
                             <th className="text-right py-3 px-4 text-sm font-semibold">Taxable Value</th>
@@ -3790,8 +3791,8 @@ const ReportsNew = () => {
                       <TrendUp size={20} className="text-success" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Fast Moving Items</p>
-                      <p className="text-xs text-muted-foreground">Never run out of hot sellers</p>
+                      <p className="font-medium text-sm">Popular Courses</p>
+                      <p className="text-xs text-muted-foreground">Track high-demand courses</p>
                     </div>
                   </button>
 
@@ -3808,8 +3809,8 @@ const ReportsNew = () => {
                       <TrendDown size={20} className="text-destructive" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Slow Moving Items</p>
-                      <p className="text-xs text-muted-foreground">Clear dead stock to free capital</p>
+                      <p className="font-medium text-sm">Low Enrollment Courses</p>
+                      <p className="text-xs text-muted-foreground">Identify courses needing attention</p>
                     </div>
                   </button>
 
@@ -3826,8 +3827,8 @@ const ReportsNew = () => {
                       <Package size={20} className="text-warning" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Low Stock Alert</p>
-                      <p className="text-xs text-muted-foreground">Items to reorder</p>
+                      <p className="font-medium text-sm">Low Seats Alert</p>
+                      <p className="text-xs text-muted-foreground">Courses needing more seats</p>
                     </div>
                   </button>
 
@@ -3844,8 +3845,8 @@ const ReportsNew = () => {
                       <Package size={20} className="text-primary" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Item-wise Profit & Loss</p>
-                      <p className="text-xs text-muted-foreground">Profitability per product</p>
+                      <p className="font-medium text-sm">Course-wise Fee Summary</p>
+                      <p className="text-xs text-muted-foreground">Fee performance per course</p>
                     </div>
                   </button>
 
@@ -3862,8 +3863,8 @@ const ReportsNew = () => {
                       <Percent size={20} className="text-warning" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Discount Report</p>
-                      <p className="text-xs text-muted-foreground">Total discounts given</p>
+                      <p className="font-medium text-sm">Scholarship & Discount Report</p>
+                      <p className="text-xs text-muted-foreground">Scholarships and discounts given</p>
                     </div>
                   </button>
 
@@ -3880,8 +3881,8 @@ const ReportsNew = () => {
                       <ShoppingCart size={20} className="text-green-500" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Purchase Register (ITC)</p>
-                      <p className="text-xs text-muted-foreground">GST Input Tax Credit tracking</p>
+                      <p className="font-medium text-sm">Expense Register (ITC)</p>
+                      <p className="text-xs text-muted-foreground">GST input tax credit tracking</p>
                     </div>
                   </button>
 
@@ -3898,8 +3899,8 @@ const ReportsNew = () => {
                       <Receipt size={20} className="text-red-500" weight="duotone" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Sales Register (Output Tax)</p>
-                      <p className="text-xs text-muted-foreground">GST Output Tax tracking</p>
+                      <p className="font-medium text-sm">Fee Register (Output Tax)</p>
+                      <p className="text-xs text-muted-foreground">GST output tax tracking</p>
                     </div>
                   </button>
                 </div>
@@ -3907,7 +3908,7 @@ const ReportsNew = () => {
                 {/* Stock Alert Report */}
                 {reportData && reportData.summary && reportData.items && currentReportType === 'stock-alert' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Low Stock Alert - Items to Reorder</h2>
+                    <h2 className="text-lg font-bold mb-4">Low Seats Alert - Courses to Review</h2>
 
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -3916,17 +3917,17 @@ const ReportsNew = () => {
                         <p className="text-2xl font-bold text-primary">{reportData.summary.totalItems}</p>
                       </div>
                       <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">In Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">Seats Available</p>
                         <p className="text-2xl font-bold text-success">
                           {reportData.items.filter((item: any) => item.status === 'In Stock').length}
                         </p>
                       </div>
                       <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Low Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">Low Seats</p>
                         <p className="text-2xl font-bold text-warning">{reportData.summary.lowStock}</p>
                       </div>
                       <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Out of Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">No Seats</p>
                         <p className="text-2xl font-bold text-destructive">{reportData.summary.outOfStock}</p>
                       </div>
                     </div>
@@ -4004,8 +4005,8 @@ const ReportsNew = () => {
                       <div className="mt-6 p-4 bg-warning/10 border border-warning/20 rounded-lg">
                         <p className="text-sm font-semibold text-warning mb-1">Action Required</p>
                         <p className="text-xs text-muted-foreground">
-                          {reportData.summary.outOfStock > 0 && `${reportData.summary.outOfStock} item(s) are out of stock. `}
-                          {reportData.summary.lowStock > 0 && `${reportData.summary.lowStock} item(s) are running low. `}
+                          {reportData.summary.outOfStock > 0 && `${reportData.summary.outOfStock} course(s) have no seats. `}
+                          {reportData.summary.lowStock > 0 && `${reportData.summary.lowStock} course(s) are running low on seats. `}
                           Please reorder these items soon to avoid stockouts.
                         </p>
                       </div>
@@ -4016,7 +4017,7 @@ const ReportsNew = () => {
                 {/* Sales Register Report (Output Tax) - Inventory Tab Version */}
                 {reportData && reportData.summary && reportData.sales !== undefined && currentReportType === 'sales-register' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-2">Sales Register (Output Tax)</h2>
+                    <h2 className="text-lg font-bold mb-2">Fee Register (Output Tax)</h2>
                     <p className="text-sm text-muted-foreground mb-2">
                       Period: {new Date(reportData.period.startDate).toLocaleDateString('en-IN')} to {new Date(reportData.period.endDate).toLocaleDateString('en-IN')}
                     </p>
@@ -4032,7 +4033,7 @@ const ReportsNew = () => {
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
                       <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Total Sales</p>
+                        <p className="text-xs text-muted-foreground mb-1">Total Fees</p>
                         <p className="text-2xl font-bold text-primary">{reportData.summary.totalSales}</p>
                       </div>
                       <div className="p-4 bg-blue-500/5 border-2 border-blue-500/20 rounded-xl">
@@ -4092,10 +4093,10 @@ const ReportsNew = () => {
                           <thead>
                             <tr className="border-b border-border">
                               <th className="text-left py-3 px-4 text-sm font-semibold">Date</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">Customer</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Student</th>
                               <th className="text-left py-3 px-4 text-sm font-semibold">GSTIN</th>
                               <th className="text-left py-3 px-4 text-sm font-semibold">Invoice</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">HSN</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">SAC/HSN</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Taxable ₹</th>
                               <th className="text-center py-3 px-4 text-sm font-semibold">GST%</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">CGST</th>
@@ -4156,7 +4157,7 @@ const ReportsNew = () => {
                 {reportData && reportData.items && currentReportType === 'fast-moving-items' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-bold">Fast Moving Items - Top Sellers (Last 30 Days)</h2>
+                      <h2 className="text-lg font-bold">Popular Courses - Top Enrollments (Last 30 Days)</h2>
                       <div className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded">
                         Showing items with ≥100 units sold
                       </div>
@@ -4169,11 +4170,11 @@ const ReportsNew = () => {
                         <p className="text-2xl font-bold text-primary">{reportData.summary.totalQuantitySold}</p>
                       </div>
                       <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Safe Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">Healthy Seats</p>
                         <p className="text-2xl font-bold text-success">{reportData.summary.safeCount}</p>
                       </div>
                       <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Low Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">Low Seats</p>
                         <p className="text-2xl font-bold text-warning">{reportData.summary.lowCount}</p>
                       </div>
                       <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
@@ -4192,7 +4193,7 @@ const ReportsNew = () => {
                               <th className="text-left py-3 px-4 text-sm font-semibold">Item Name</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Qty Sold (30d)</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Avg Daily Sale</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Current Stock</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Seats Available</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Days Left</th>
                               <th className="text-center py-3 px-4 text-sm font-semibold">Status</th>
                             </tr>
@@ -4251,7 +4252,7 @@ const ReportsNew = () => {
                     ) : (
                       <div className="text-center py-12 bg-muted/20 rounded-lg">
                         <div className="text-4xl mb-3">📊</div>
-                        <p className="text-lg font-semibold mb-2">No Fast Moving Items Yet</p>
+                        <p className="text-lg font-semibold mb-2">No Popular Courses Yet</p>
                         <p className="text-sm text-muted-foreground mb-4">
                           No items have sold ≥100 units in the last 30 days.
                         </p>
@@ -4298,7 +4299,7 @@ const ReportsNew = () => {
                 {reportData && reportData.items && currentReportType === 'slow-moving-items' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-bold">Slow Moving Items - Dead Stock (Last 30 Days)</h2>
+                      <h2 className="text-lg font-bold">Low Enrollment Courses - No Enrollments (Last 30 Days)</h2>
                       <div className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded">
                         Showing items with ≤10 units sold
                       </div>
@@ -4311,7 +4312,7 @@ const ReportsNew = () => {
                         <p className="text-2xl font-bold text-primary">₹{reportData.summary.totalStockValue.toLocaleString('en-IN')}</p>
                       </div>
                       <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Dead Stock</p>
+                        <p className="text-sm text-muted-foreground mb-1">No Enrollments</p>
                         <p className="text-2xl font-bold text-destructive">{reportData.summary.deadStockCount}</p>
                       </div>
                       <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
@@ -4334,8 +4335,8 @@ const ReportsNew = () => {
                               <th className="text-left py-3 px-4 text-sm font-semibold">Item Name</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Qty Sold (30d)</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Avg Daily Sale</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Current Stock</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Stock Value</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Seats Available</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Course Value</th>
                               <th className="text-center py-3 px-4 text-sm font-semibold">Status</th>
                             </tr>
                           </thead>
@@ -4375,7 +4376,7 @@ const ReportsNew = () => {
                                     item.status === 'Very Slow' && "bg-warning/10 text-warning",
                                     item.status === 'Slow' && "bg-yellow-500/10 text-yellow-600"
                                   )}>
-                                    {item.status === 'Dead Stock' && '⛔ Dead'}
+                                    {item.status === 'Dead Stock' && '⛔ No Enrollments'}
                                     {item.status === 'Very Slow' && '🐌 Very Slow'}
                                     {item.status === 'Slow' && '🟡 Slow'}
                                   </span>
@@ -4388,7 +4389,7 @@ const ReportsNew = () => {
                     ) : (
                       <div className="text-center py-12 bg-muted/20 rounded-lg">
                         <div className="text-4xl mb-3">🎉</div>
-                        <p className="text-lg font-semibold mb-2">No Slow Moving Items</p>
+                        <p className="text-lg font-semibold mb-2">No Low Enrollment Courses</p>
                         <p className="text-sm text-muted-foreground mb-4">
                           Great! All items are selling well. No dead stock found.
                         </p>
@@ -4404,7 +4405,7 @@ const ReportsNew = () => {
                       <div className="mt-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
                         <p className="text-sm font-semibold text-destructive mb-1">⚠️ Action Required</p>
                         <p className="text-xs text-muted-foreground">
-                          {reportData.summary.deadStockCount} item(s) have ZERO sales in 30 days!
+                          {reportData.summary.deadStockCount} course(s) have zero enrollments in 30 days!
                           ₹{reportData.summary.totalStockValue.toLocaleString('en-IN')} capital is tied up.
                           Consider discounts, promotions, or bundle offers to clear dead stock.
                         </p>
@@ -4415,7 +4416,7 @@ const ReportsNew = () => {
                       <div className="mt-6 p-4 bg-warning/10 border border-warning/20 rounded-lg">
                         <p className="text-sm font-semibold text-warning mb-1">📋 Monitor Closely</p>
                         <p className="text-xs text-muted-foreground">
-                          These slow-moving items are tying up ₹{reportData.summary.totalStockValue.toLocaleString('en-IN')} in capital.
+                          These low-enrollment courses are tying up ₹{reportData.summary.totalStockValue.toLocaleString('en-IN')} in resources.
                           Monitor sales closely and consider promotions if they don't improve soon.
                         </p>
                       </div>
@@ -4426,7 +4427,7 @@ const ReportsNew = () => {
                 {/* Item P&L Data */}
                 {reportData && reportData.items && currentReportType === 'item-pl' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Item-wise Profit & Loss</h2>
+                    <h2 className="text-lg font-bold mb-4">Course-wise Fee Summary</h2>
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
@@ -4502,7 +4503,7 @@ const ReportsNew = () => {
                 {/* Discount Report - Inventory Tab */}
                 {reportData && reportData.totalDiscount !== undefined && currentReportType === 'discount' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Discount Report</h2>
+                    <h2 className="text-lg font-bold mb-4">Scholarship & Discount Report</h2>
                     <p className="text-sm text-muted-foreground mb-2">
                       Period: {new Date(reportData.period.startDate).toLocaleDateString('en-IN')} to {new Date(reportData.period.endDate).toLocaleDateString('en-IN')}
                     </p>
@@ -4539,7 +4540,7 @@ const ReportsNew = () => {
                             <tr className="border-b border-border bg-muted/30">
                               <th className="text-left py-3 px-3 text-xs font-semibold">Date</th>
                               <th className="text-left py-3 px-3 text-xs font-semibold">Invoice</th>
-                              <th className="text-left py-3 px-3 text-xs font-semibold">Customer</th>
+                              <th className="text-left py-3 px-3 text-xs font-semibold">Student</th>
                               <th className="text-right py-3 px-3 text-xs font-semibold">Original ₹</th>
                               <th className="text-center py-3 px-3 text-xs font-semibold">Coupon</th>
                               <th className="text-right py-3 px-3 text-xs font-semibold">Discount ₹</th>
@@ -4604,7 +4605,7 @@ const ReportsNew = () => {
                 {/* Purchase Register (ITC) - Inventory Tab */}
                 {reportData && reportData.summary && reportData.purchases !== undefined && currentReportType === 'purchase-register' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Purchase Register (ITC - Input Tax Credit)</h2>
+                    <h2 className="text-lg font-bold mb-4">Expense Register (ITC - Input Tax Credit)</h2>
                     <p className="text-sm text-muted-foreground mb-2">
                       Period: {new Date(reportData.period.startDate).toLocaleDateString('en-IN')} to {new Date(reportData.period.endDate).toLocaleDateString('en-IN')}
                     </p>
@@ -4613,7 +4614,7 @@ const ReportsNew = () => {
                     {/* Summary Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
                       <div className="p-3 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Total Purchases</p>
+                        <p className="text-xs text-muted-foreground mb-1">Total Expenses</p>
                         <p className="text-xl font-bold text-primary">{reportData.summary.totalPurchases}</p>
                       </div>
                       <div className="p-3 bg-blue-500/5 border-2 border-blue-500/20 rounded-xl">
@@ -4674,11 +4675,11 @@ const ReportsNew = () => {
                           <thead>
                             <tr className="border-b border-border bg-muted/30">
                               <th className="text-left py-2 px-2 font-semibold">Date</th>
-                              <th className="text-left py-2 px-2 font-semibold">Supplier</th>
+                              <th className="text-left py-2 px-2 font-semibold">Vendor</th>
                               <th className="text-left py-2 px-2 font-semibold">GSTIN</th>
                               <th className="text-left py-2 px-2 font-semibold">Bill No</th>
                               <th className="text-center py-2 px-2 font-semibold">Category</th>
-                              <th className="text-left py-2 px-2 font-semibold">HSN</th>
+                              <th className="text-left py-2 px-2 font-semibold">SAC/HSN</th>
                               <th className="text-right py-2 px-2 font-semibold">Taxable ₹</th>
                               <th className="text-right py-2 px-2 font-semibold">CGST</th>
                               <th className="text-right py-2 px-2 font-semibold">SGST</th>
@@ -4820,11 +4821,11 @@ const ReportsNew = () => {
                             <p className="text-sm font-bold text-success">₹{(reportData.categoryBreakdown.marketplacePayouts || 0).toLocaleString('en-IN')}</p>
                           </div>
                           <div className="p-2 bg-success/10 rounded">
-                            <p className="text-xs text-muted-foreground mb-1">Direct Sales</p>
+                            <p className="text-xs text-muted-foreground mb-1">Direct Fees</p>
                             <p className="text-sm font-bold text-success">₹{(reportData.categoryBreakdown.directSales || 0).toLocaleString('en-IN')}</p>
                           </div>
                           <div className="p-2 bg-destructive/10 rounded">
-                            <p className="text-xs text-muted-foreground mb-1">Supplier Payments</p>
+                            <p className="text-xs text-muted-foreground mb-1">Vendor Payments</p>
                             <p className="text-sm font-bold text-destructive">₹{(reportData.categoryBreakdown.supplierPayments || 0).toLocaleString('en-IN')}</p>
                           </div>
                           <div className="p-2 bg-destructive/10 rounded">
@@ -4913,7 +4914,7 @@ const ReportsNew = () => {
 
                           <div className="flex justify-between items-center p-3 bg-blue-500/5 rounded-lg">
                             <div>
-                              <p className="font-medium">Stock / Inventory</p>
+                              <p className="font-medium">Course Capacity</p>
                               <p className="text-xs text-muted-foreground">Current stock valuation</p>
                             </div>
                             <p className="text-lg font-bold text-blue-600">₹{(reportData.assets.inventory || 0).toLocaleString('en-IN')}</p>
@@ -4957,7 +4958,7 @@ const ReportsNew = () => {
 
                           <div className="flex justify-between items-center p-3 bg-orange-500/5 rounded-lg">
                             <div>
-                              <p className="font-medium">Suppliers Payable</p>
+                              <p className="font-medium">Vendors Payable</p>
                               <p className="text-xs text-muted-foreground">Unpaid purchase bills</p>
                             </div>
                             <p className="text-lg font-bold text-orange-600">₹{(reportData.liabilities.suppliersPayable || 0).toLocaleString('en-IN')}</p>

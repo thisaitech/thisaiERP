@@ -1,6 +1,6 @@
 {
-  "name": "Anna ERP",
-  "short_name": "Anna ERP",
+  "name": "ThisAI ERP",
+  "short_name": "ThisAI ERP",
   "description": "Complete ERP solution for managing sales, purchases, inventory, and business operations. Works offline!",
   "start_url": "/",
   "display": "standalone",

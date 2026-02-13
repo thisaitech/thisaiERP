@@ -1,6 +1,5 @@
-// Category Defaults for Unit Conversion
-// Auto-fills alternate unit and pieces per unit when category is selected
-// Vyapar 2025 Standard - Zero confusion for staff
+// Course Category Defaults for Unit Conversion
+// Auto-fills alternate unit and units per batch when category is selected
 
 export interface CategoryDefault {
   category: string
@@ -12,46 +11,19 @@ export interface CategoryDefault {
 // Default category configurations
 // Owner can customize these in Settings
 export const CATEGORY_DEFAULTS: CategoryDefault[] = [
-  // Food & Beverages
-  { category: 'Biscuits', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Packets' },
-  { category: 'Chips', alternateUnit: 'Box', piecesPerUnit: 24, description: '1 Box = 24 Packets' },
-  { category: 'Chocolate', alternateUnit: 'Box', piecesPerUnit: 24, description: '1 Box = 24 Pieces' },
-  { category: 'Soft Drinks', alternateUnit: 'Crate', piecesPerUnit: 24, description: '1 Crate = 24 Bottles' },
-  { category: 'Juice', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Packs' },
-  { category: 'Water Bottles', alternateUnit: 'Case', piecesPerUnit: 24, description: '1 Case = 24 Bottles' },
-  { category: 'Noodles', alternateUnit: 'Box', piecesPerUnit: 30, description: '1 Box = 30 Packets' },
-  { category: 'Pasta', alternateUnit: 'Box', piecesPerUnit: 10, description: '1 Box = 10 Packets' },
-  { category: 'Rice', alternateUnit: 'Bag', piecesPerUnit: 10, description: '1 Bag = 10 Kg Packets' },
-  { category: 'Oil', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Litres' },
-  { category: 'Milk', alternateUnit: 'Crate', piecesPerUnit: 20, description: '1 Crate = 20 Packets' },
-  { category: 'Tea', alternateUnit: 'Box', piecesPerUnit: 24, description: '1 Box = 24 Packets' },
-  { category: 'Coffee', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Sachets' },
-
-  // Personal Care
-  { category: 'Soap', alternateUnit: 'Pack', piecesPerUnit: 4, description: '1 Pack = 4 Bars' },
-  { category: 'Shampoo', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Bottles' },
-  { category: 'Toothpaste', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Tubes' },
-  { category: 'Cream', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Tubes' },
-  { category: 'Detergent', alternateUnit: 'Box', piecesPerUnit: 6, description: '1 Box = 6 Packs' },
-  { category: 'Sanitizer', alternateUnit: 'Box', piecesPerUnit: 24, description: '1 Box = 24 Bottles' },
-
-  // Stationery
-  { category: 'Stationery', alternateUnit: 'Box', piecesPerUnit: 10, description: '1 Box = 10 Pieces' },
-  { category: 'Pens', alternateUnit: 'Box', piecesPerUnit: 10, description: '1 Box = 10 Pens' },
-  { category: 'Notebooks', alternateUnit: 'Pack', piecesPerUnit: 6, description: '1 Pack = 6 Books' },
-  { category: 'Pencils', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Pencils' },
-
-  // Electronics
-  { category: 'Batteries', alternateUnit: 'Pack', piecesPerUnit: 4, description: '1 Pack = 4 Batteries' },
-  { category: 'Bulbs', alternateUnit: 'Box', piecesPerUnit: 10, description: '1 Box = 10 Bulbs' },
-
-  // Medicine/Health
-  { category: 'Tablets', alternateUnit: 'Strip', piecesPerUnit: 10, description: '1 Strip = 10 Tablets' },
-  { category: 'Syrup', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Bottles' },
-
-  // General
-  { category: 'General', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Pieces' },
-  { category: 'Other', alternateUnit: 'Box', piecesPerUnit: 12, description: '1 Box = 12 Pieces' },
+  { category: 'Programming', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Web Development', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Data Science', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Accounting', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Office Tools', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Design', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Marketing', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Hardware & Networking', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Language', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Soft Skills', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Test Prep', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'General', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
+  { category: 'Other', alternateUnit: 'Batch', piecesPerUnit: 1, description: '1 Batch = 1 Cohort' },
 ]
 
 // Local storage key for custom category defaults

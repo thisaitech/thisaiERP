@@ -1,6 +1,6 @@
-# Anna ERP - Firebase Cloud Functions
+# ThisAI ERP - Firebase Cloud Functions
 
-This directory contains Firebase Cloud Functions for Anna ERP, including the Razorpay webhook handler for automatic subscription activation.
+This directory contains Firebase Cloud Functions for ThisAI ERP, including the Razorpay webhook handler for automatic subscription activation.
 
 ## Setup Instructions
 

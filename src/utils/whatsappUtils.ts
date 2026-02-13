@@ -96,7 +96,7 @@ ${summary}
 Generated on: ${new Date().toLocaleString('en-IN')}
 
 ---
-Sent from Anna ERP`
+Sent from ThisAI ERP`
 
   const encodedMessage = encodeURIComponent(message)
   const whatsappURL = `https://wa.me/${formattedPhone}?text=${encodedMessage}`
@@ -174,7 +174,7 @@ export function shareReportSummary(reportData: {
   }
 
   message += `\nGenerated: ${new Date().toLocaleString('en-IN')}\n`
-  message += `\n---\nSent from Anna ERP`
+  message += `\n---\nSent from ThisAI ERP`
 
   const encodedMessage = encodeURIComponent(message)
   const whatsappURL = `https://wa.me/?text=${encodedMessage}`

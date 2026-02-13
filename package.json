@@ -1,5 +1,5 @@
 {
-  "name": "anna-erp",
+  "name": "thisai-erp",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -20,8 +20,8 @@
     "electron:build:linux": "npm run build:electron && electron-builder --linux"
   },
   "build": {
-    "appId": "com.anna.erp",
-    "productName": "Anna ERP",
+    "appId": "com.thisai.erp",
+    "productName": "ThisAI ERP",
     "directories": {
       "output": "release"
     },

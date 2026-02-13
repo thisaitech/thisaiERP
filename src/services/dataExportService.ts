@@ -320,7 +320,7 @@ export const createBackupJSON = async () => {
         totalInvoices: invoices.length,
         totalParties: parties.length,
         totalItems: items.length,
-        application: 'Anna ERP'
+        application: 'ThisAI ERP'
       }
     }
 

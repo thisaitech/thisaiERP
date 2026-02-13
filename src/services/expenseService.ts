@@ -1,60 +1,6 @@
-// Expense Service - Track business expenses
-// OFFLINE-FIRST: Always save locally first, sync silently when online
+// Expense Service (REST backend)
 
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  orderBy,
-  where
-} from 'firebase/firestore'
-import { db, COLLECTIONS, isFirebaseReady } from './firebase'
-import {
-  saveToOffline,
-  getAllFromOffline,
-  getFromOffline,
-  deleteFromOffline,
-  addToSyncQueue,
-  isDeviceOnline,
-  STORES
-} from './offlineSyncService'
-
-const LOCAL_STORAGE_KEY = 'thisai_crm_expenses'
-
-// Helper to generate offline-safe ID
-const generateOfflineId = () => `expense_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
-// Check if ID is offline-generated
-const isOfflineId = (id: string) => id.startsWith('expense_') || id.startsWith('exp_') || id.startsWith('offline_')
-
-/**
- * Helper function to deeply remove undefined values from an object
- */
-function removeUndefinedDeep(obj: any): any {
-  if (obj === null || obj === undefined) {
-    return obj
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(item => removeUndefinedDeep(item))
-  }
-
-  if (typeof obj === 'object') {
-    const cleaned: any = {}
-    for (const [key, value] of Object.entries(obj)) {
-      if (value !== undefined) {
-        cleaned[key] = removeUndefinedDeep(value)
-      }
-    }
-    return cleaned
-  }
-
-  return obj
-}
+import { apiDelete, apiGet, apiPost } from './apiClient'
 
 export interface Expense {
   id: string
@@ -76,424 +22,124 @@ export interface Expense {
   notes?: string
   createdAt: string
   createdBy: string
-  // New fields for recurring expense logic
-  isRecurring?: boolean // Is this a monthly recurring expense?
-  recurringType?: 'monthly' | 'quarterly' | 'yearly' | 'one-time' // Type of recurrence
-  monthlyAmount?: number // Full monthly amount (for proration calculation)
-  dailyRate?: number // Daily rate (monthlyAmount ÷ 30)
+  isRecurring?: boolean
+  recurringType?: 'monthly' | 'quarterly' | 'yearly' | 'one-time'
+  monthlyAmount?: number
+  dailyRate?: number
 }
 
-/**
- * Create expense - OFFLINE FIRST
- * Always saves locally first, then syncs to Firebase silently when online
- */
-export async function createExpense(
-  expense: Omit<Expense, 'id' | 'createdAt'>
-): Promise<Expense | null> {
-  console.log('[createExpense] Starting offline-first creation...')
+type ListResponse<T> = { data: T[] }
+type OneResponse<T> = { data: T }
 
-  const now = new Date().toISOString()
-  const id = generateOfflineId()
-
-  // Deep clean undefined values
-  const cleanData = removeUndefinedDeep(expense)
-
-  const newExpense: Expense = {
-    ...cleanData,
-    id,
-    createdAt: now,
-    _pendingSync: !isDeviceOnline(),
-    _savedAt: now,
-    _syncedAt: null
-  } as Expense
-
-  // STEP 1: Always save locally first
-  try {
-    await saveToOffline(STORES.EXPENSES, newExpense)
-    // Also save to localStorage for backward compatibility
-    const expenses = getExpensesFromLocalStorage()
-    expenses.push(newExpense)
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expenses))
-    console.log('[createExpense] ✅ Expense saved locally:', id)
-  } catch (error) {
-    console.error('[createExpense] Failed to save locally:', error)
-    // Fallback to localStorage only
-    const expenses = getExpensesFromLocalStorage()
-    expenses.push(newExpense)
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expenses))
-  }
-
-  // STEP 2: If online, sync to Firebase silently
-  if (isDeviceOnline() && isFirebaseReady()) {
-    try {
-      const serverData = removeUndefinedDeep({
-        ...expense,
-        createdAt: now
-      })
-
-      const docRef = await addDoc(collection(db!, COLLECTIONS.EXPENSES || 'expenses'), serverData)
-
-      // Update local expense with Firebase ID
-      const syncedExpense: Expense = {
-        ...newExpense,
-        id: docRef.id,
-        _pendingSync: false,
-        _syncedAt: now
-      } as Expense
-
-      // Remove old offline ID record and save with new Firebase ID
-      await deleteFromOffline(STORES.EXPENSES, id)
-      await saveToOffline(STORES.EXPENSES, syncedExpense)
-
-      // Update localStorage too
-      const expenses = getExpensesFromLocalStorage()
-      const filteredExpenses = expenses.filter(e => e.id !== id)
-      filteredExpenses.push(syncedExpense)
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filteredExpenses))
-
-      console.log('[createExpense] ✅ Synced to Firebase:', docRef.id)
-      return syncedExpense
-    } catch (error) {
-      console.warn('[createExpense] Firebase sync failed, queuing for later:', error)
-      await addToSyncQueue('create', STORES.EXPENSES, newExpense)
-    }
-  } else {
-    console.log('[createExpense] 📱 Offline mode - queuing for sync')
-    await addToSyncQueue('create', STORES.EXPENSES, newExpense)
-  }
-
-  return newExpense
+export function generateExpenseNumber(prefix: string = 'EXP'): string {
+  const now = new Date()
+  const yy = String(now.getFullYear()).slice(-2)
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const rand = Math.floor(1000 + Math.random() * 9000)
+  return `${prefix}-${yy}${mm}-${rand}`
 }
 
-/**
- * Get all expenses
- * OFFLINE-FIRST: Returns from IndexedDB first, then syncs with Firebase in background
- */
 export async function getExpenses(): Promise<Expense[]> {
-  console.log('📥 expenseService.getExpenses called')
-
-  // STEP 1: Always try IndexedDB first
-  let localExpenses: Expense[] = []
-  try {
-    localExpenses = await getAllFromOffline<Expense>(STORES.EXPENSES)
-    // Sort by date descending
-    localExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  } catch (error) {
-    console.warn('IndexedDB read failed, trying localStorage:', error)
-    localExpenses = getExpensesFromLocalStorage()
-  }
-
-  // STEP 2: If offline or Firebase not ready, return local data immediately
-  if (!isDeviceOnline() || !isFirebaseReady()) {
-    console.log('📱 Offline mode: Returning', localExpenses.length, 'expenses from local storage')
-    return localExpenses
-  }
-
-  // STEP 3: If online, try to fetch from Firebase and merge
-  try {
-    const q = query(
-      collection(db!, COLLECTIONS.EXPENSES || 'expenses'),
-      orderBy('date', 'desc')
-    )
-
-    const snapshot = await getDocs(q)
-    const serverExpenses = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Expense))
-
-    // Merge: Keep local-only items (offline created, not yet synced)
-    const localOnlyExpenses = localExpenses.filter(e => isOfflineId(e.id))
-    const mergedExpenses = [...serverExpenses, ...localOnlyExpenses]
-
-    // Update local cache with server data (in background)
-    for (const expense of serverExpenses) {
-      saveToOffline(STORES.EXPENSES, expense).catch(() => {})
-    }
-
-    console.log('☁️ Retrieved from Firebase:', serverExpenses.length, 'expenses, merged with', localOnlyExpenses.length, 'local')
-    return mergedExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  } catch (error) {
-    console.warn('Firebase fetch failed, returning local data:', error)
-    return localExpenses
-  }
+  const res = await apiGet<ListResponse<Expense>>('/expenses')
+  const rows = res.data || []
+  rows.sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  return rows
 }
 
-/**
- * Get expense summary
- */
-export async function getExpenseSummary(startDate?: string, endDate?: string) {
-  const expenses = await getExpenses()
-
-  let filtered = expenses
-  if (startDate) {
-    filtered = filtered.filter(e => e.date >= startDate)
-  }
-  if (endDate) {
-    filtered = filtered.filter(e => e.date <= endDate)
-  }
-
-  const total = filtered.reduce((sum, e) => sum + e.amount, 0)
-  const totalGST = filtered.reduce((sum, e) => sum + (e.gstAmount || 0), 0)
-
-  const byCategory = filtered.reduce((acc, e) => {
-    acc[e.category] = (acc[e.category] || 0) + e.amount
-    return acc
-  }, {} as Record<string, number>)
-
-  const byPaymentMode = filtered.reduce((acc, e) => {
-    acc[e.paymentMode] = (acc[e.paymentMode] || 0) + e.amount
-    return acc
-  }, {} as Record<string, number>)
-
-  return {
-    total,
-    totalGST,
-    count: filtered.length,
-    byCategory,
-    byPaymentMode
-  }
-}
-
-/**
- * Generate expense number
- */
-export function generateExpenseNumber(): string {
-  const date = new Date()
-  const year = date.getFullYear().toString().slice(-2)
-  const month = (date.getMonth() + 1).toString().padStart(2, '0')
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
-  return `EXP-${year}${month}-${random}`
-}
-
-/**
- * Calculate prorated expense amount for a date range
- * This is the "Smart Expense Logic" that prorates monthly expenses
- */
-export function calculateProratedAmount(
-  expense: Expense,
-  startDate: string,
-  endDate: string
-): number {
-  // If not recurring or one-time expense, return full amount if date falls in range
-  if (!expense.isRecurring || expense.recurringType === 'one-time') {
-    const expenseDate = expense.date
-    if (expenseDate >= startDate && expenseDate <= endDate) {
-      return expense.amount
-    }
-    return 0
-  }
-
-  // For monthly recurring expenses, calculate days in period
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  const expenseMonth = new Date(expense.date).getMonth()
-  const expenseYear = new Date(expense.date).getFullYear()
-
-  // Check if expense month matches the period
-  const periodMonth = start.getMonth()
-  const periodYear = start.getFullYear()
-
-  if (expenseYear !== periodYear || expenseMonth !== periodMonth) {
-    return 0 // Expense not in this period
-  }
-
-  // Calculate number of days in the period
-  const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
-  const daysInMonth = new Date(periodYear, periodMonth + 1, 0).getDate()
-
-  // Use daily rate for accurate proration
-  const dailyRate = expense.dailyRate || (expense.monthlyAmount || expense.amount) / 30
-  const proratedAmount = dailyRate * daysDiff
-
-  return Math.min(proratedAmount, expense.monthlyAmount || expense.amount)
-}
-
-/**
- * Get expense summary with smart proration
- */
-export async function getExpenseSummaryWithProration(startDate?: string, endDate?: string) {
-  const expenses = await getExpenses()
-
-  let total = 0
-  let totalGST = 0
-  const byCategory: Record<string, number> = {}
-  const byPaymentMode: Record<string, number> = {}
-
-  expenses.forEach(expense => {
-    const proratedAmount = startDate && endDate
-      ? calculateProratedAmount(expense, startDate, endDate)
-      : expense.amount
-
-    if (proratedAmount > 0) {
-      total += proratedAmount
-      totalGST += (expense.gstAmount || 0)
-
-      byCategory[expense.category] = (byCategory[expense.category] || 0) + proratedAmount
-      byPaymentMode[expense.paymentMode] = (byPaymentMode[expense.paymentMode] || 0) + proratedAmount
-    }
-  })
-
-  const filteredCount = expenses.filter(e => {
-    if (!startDate || !endDate) return true
-    return calculateProratedAmount(e, startDate, endDate) > 0
-  }).length
-
-  return {
-    total,
-    totalGST,
-    count: filteredCount,
-    byCategory,
-    byPaymentMode
-  }
-}
-
-/**
- * Update expense - OFFLINE FIRST
- * Always saves locally first, then syncs to Firebase silently when online
- */
-export async function updateExpense(id: string, updates: Partial<Expense>): Promise<boolean> {
+export async function createExpense(expense: Omit<Expense, 'id' | 'createdAt'>): Promise<Expense | null> {
   const now = new Date().toISOString()
-
-  // STEP 1: Get existing expense from local
-  let existingExpense: Expense | null = null
-  try {
-    existingExpense = await getFromOffline<Expense>(STORES.EXPENSES, id)
-  } catch (error) {
-    const localExpenses = getExpensesFromLocalStorage()
-    existingExpense = localExpenses.find(e => e.id === id) || null
-  }
-
-  if (!existingExpense) {
-    console.error('[updateExpense] Expense not found:', id)
-    return false
-  }
-
-  const updatedExpense: Expense = {
-    ...existingExpense,
-    ...updates,
-    _pendingSync: !isDeviceOnline() || isOfflineId(id),
-    _savedAt: now
-  } as Expense
-
-  // STEP 2: Always save to IndexedDB first
-  try {
-    await saveToOffline(STORES.EXPENSES, updatedExpense)
-    updateExpenseInLocalStorage(id, updatedExpense)
-    console.log('[updateExpense] ✅ Updated locally:', id)
-  } catch (error) {
-    console.error('[updateExpense] Local save failed:', error)
-    updateExpenseInLocalStorage(id, updatedExpense)
-  }
-
-  // STEP 3: If online and not an offline-only record, sync to Firebase
-  if (isDeviceOnline() && isFirebaseReady() && !isOfflineId(id)) {
-    try {
-      const serverData = removeUndefinedDeep(updates)
-      const docRef = doc(db!, COLLECTIONS.EXPENSES || 'expenses', id)
-      await updateDoc(docRef, serverData)
-
-      // Mark as synced
-      updatedExpense._pendingSync = false
-      updatedExpense._syncedAt = now
-      await saveToOffline(STORES.EXPENSES, updatedExpense)
-
-      console.log('[updateExpense] ✅ Synced to Firebase:', id)
-    } catch (error) {
-      console.warn('[updateExpense] Firebase sync failed, queuing:', error)
-      await addToSyncQueue('update', STORES.EXPENSES, updatedExpense)
-    }
-  } else if (!isOfflineId(id)) {
-    await addToSyncQueue('update', STORES.EXPENSES, updatedExpense)
-  }
-
-  return true
-}
-
-/**
- * Delete expense - OFFLINE FIRST
- * Always deletes locally first, then syncs to Firebase silently when online
- */
-export async function deleteExpense(id: string): Promise<boolean> {
-  // STEP 1: Always delete from local first
-  try {
-    await deleteFromOffline(STORES.EXPENSES, id)
-    deleteExpenseFromLocalStorage(id)
-    console.log('[deleteExpense] ✅ Deleted locally:', id)
-  } catch (error) {
-    console.error('[deleteExpense] Local delete failed:', error)
-    deleteExpenseFromLocalStorage(id)
-  }
-
-  // STEP 2: If online and has Firebase ID, sync deletion
-  if (isDeviceOnline() && isFirebaseReady() && !isOfflineId(id)) {
-    try {
-      const docRef = doc(db!, COLLECTIONS.EXPENSES || 'expenses', id)
-      await deleteDoc(docRef)
-      console.log('[deleteExpense] ✅ Deleted from Firebase:', id)
-    } catch (error) {
-      console.warn('[deleteExpense] Firebase delete failed, queuing:', error)
-      await addToSyncQueue('delete', STORES.EXPENSES, { id })
-    }
-  } else if (!isOfflineId(id)) {
-    await addToSyncQueue('delete', STORES.EXPENSES, { id })
-  }
-
-  return true
-}
-
-// LocalStorage implementations
-function createExpenseToLocalStorage(
-  expense: Omit<Expense, 'id' | 'createdAt'>
-): Expense {
-  const expenses = getExpensesFromLocalStorage()
-
-  const newExpense: Expense = {
+  const payload: any = {
     ...expense,
-    id: `exp_${Date.now()}`,
-    createdAt: new Date().toISOString()
+    expenseNumber: (expense as any).expenseNumber || generateExpenseNumber(),
+    createdAt: now,
   }
-
-  expenses.push(newExpense)
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expenses))
-
-  return newExpense
+  const res = await apiPost<OneResponse<Expense>>('/expenses', payload)
+  return res.data
 }
 
-function getExpensesFromLocalStorage(): Expense[] {
-  try {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch (error) {
-    console.error('Error reading expenses:', error)
-    return []
-  }
+export async function deleteExpense(id: string): Promise<boolean> {
+  await apiDelete<{ ok: boolean }>(`/expenses/${encodeURIComponent(id)}`)
+  return true
 }
 
-function updateExpenseInLocalStorage(id: string, updates: Partial<Expense>): boolean {
-  try {
-    const expenses = getExpensesFromLocalStorage()
-    const index = expenses.findIndex(e => e.id === id)
-
-    if (index === -1) return false
-
-    expenses[index] = { ...expenses[index], ...updates }
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expenses))
-    return true
-  } catch (error) {
-    console.error('Error updating expense in localStorage:', error)
-    return false
-  }
+// Used by reportService for prorated P&L.
+function parseYmd(date: string): Date | null {
+  if (!date || typeof date !== 'string') return null
+  // Accept YYYY-MM-DD, otherwise Date() will handle ISO strings.
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(`${date}T00:00:00`) : new Date(date)
+  return Number.isNaN(d.getTime()) ? null : d
 }
 
-function deleteExpenseFromLocalStorage(id: string): boolean {
-  try {
-    const expenses = getExpensesFromLocalStorage()
-    const filtered = expenses.filter(e => e.id !== id)
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtered))
-    return true
-  } catch (error) {
-    console.error('Error deleting expense from localStorage:', error)
-    return false
+function clampDate(d: Date, min: Date, max: Date): Date {
+  if (d < min) return min
+  if (d > max) return max
+  return d
+}
+
+function daysBetweenInclusive(a: Date, b: Date): number {
+  const start = new Date(a.getFullYear(), a.getMonth(), a.getDate())
+  const end = new Date(b.getFullYear(), b.getMonth(), b.getDate())
+  const diff = Math.floor((end.getTime() - start.getTime()) / 86400000)
+  return diff + 1
+}
+
+export function calculateProratedAmount(expense: Expense, startDate: string, endDate: string): number {
+  const start = parseYmd(startDate)
+  const end = parseYmd(endDate)
+  if (!start || !end) return 0
+  if (end < start) return 0
+
+  const expDate = parseYmd(expense.date)
+
+  // Non-recurring (one-time) expenses count only if they fall inside the period.
+  if (!expense.isRecurring || expense.recurringType === 'one-time') {
+    if (!expDate) return 0
+    return expDate >= start && expDate <= end ? (Number(expense.amount) || 0) : 0
   }
+
+  // Recurring expenses apply over the period, optionally starting from the expense.date.
+  const recurringStart = expDate || start
+  const rangeStart = recurringStart > start ? recurringStart : start
+  if (rangeStart > end) return 0
+
+  const dailyRate = typeof expense.dailyRate === 'number' && Number.isFinite(expense.dailyRate) ? expense.dailyRate : null
+  if (dailyRate && dailyRate > 0) {
+    return Math.round(daysBetweenInclusive(rangeStart, end) * dailyRate * 100) / 100
+  }
+
+  const recurringType = expense.recurringType || 'monthly'
+  const baseAmount = typeof expense.monthlyAmount === 'number' && Number.isFinite(expense.monthlyAmount)
+    ? expense.monthlyAmount
+    : (Number(expense.amount) || 0)
+
+  const monthlyAmount = (() => {
+    if (baseAmount <= 0) return 0
+    if (recurringType === 'yearly') return baseAmount / 12
+    if (recurringType === 'quarterly') return baseAmount / 3
+    return baseAmount // monthly
+  })()
+
+  if (!Number.isFinite(monthlyAmount) || monthlyAmount <= 0) return 0
+
+  // Sum month-by-month proration for accuracy if range spans multiple months.
+  let total = 0
+  let monthCursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1)
+  const endMonth = new Date(end.getFullYear(), end.getMonth(), 1)
+
+  while (monthCursor <= endMonth) {
+    const monthStart = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1)
+    const monthEnd = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 0)
+    const overlapStart = clampDate(rangeStart, monthStart, monthEnd)
+    const overlapEnd = clampDate(end, monthStart, monthEnd)
+
+    if (overlapEnd >= overlapStart) {
+      const daysInMonth = monthEnd.getDate()
+      const overlapDays = daysBetweenInclusive(overlapStart, overlapEnd)
+      total += monthlyAmount * (overlapDays / daysInMonth)
+    }
+
+    monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1)
+  }
+
+  return Math.round(total * 100) / 100
 }

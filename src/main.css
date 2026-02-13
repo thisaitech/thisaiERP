@@ -50,6 +50,16 @@
     box-shadow: 0 0 0 30px white inset !important;
   }
 
+  /* Dark mode autofill: avoid forcing white fields */
+  .dark input:-webkit-autofill,
+  .dark input:-webkit-autofill:hover,
+  .dark input:-webkit-autofill:focus,
+  .dark input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #1e293b inset !important; /* slate-800 */
+    box-shadow: 0 0 0 30px #1e293b inset !important;
+    -webkit-text-fill-color: #e2e8f0 !important; /* slate-200 */
+  }
+
   /* Hide datalist/autocomplete suggestions */
   input::-webkit-calendar-picker-indicator {
     display: none !important;
@@ -1482,6 +1492,7 @@
     display: flex;
     flex-direction: column;
     background: #FFFFFF;
+    min-height: calc(100vh - 60px);
   }
 
   /* Fixed Header Section - Invoice tabs, search, customer info */
@@ -3539,6 +3550,52 @@
   --festival-primary: var(--primary);
   --festival-accent: var(--accent);
   --festival-glow: rgba(138, 82, 218, 0.4);
+}
+
+/* ============================================
+   DARK MODE NORMALIZATION
+   Fixes leftover light UI when a component forgets to add dark: classes.
+   Rules are opt-out: if an element already has a dark:bg-* / dark:text-* / dark:border-* class,
+   we do NOT override it.
+   ============================================ */
+.dark [class~="bg-white"]:not([class*="dark:bg-"]) {
+  background-color: #1e293b; /* slate-800 */
+}
+
+/* Also normalize common semi-transparent light surfaces like bg-white/80 */
+.dark [class^="bg-white/"]:not([class*="dark:bg-"]),
+.dark [class*=" bg-white/"]:not([class*="dark:bg-"]) {
+  background-color: rgba(30, 41, 59, 0.92); /* slate-800-ish */
+}
+
+.dark [class~="bg-slate-50"]:not([class*="dark:bg-"]),
+.dark [class~="bg-slate-100"]:not([class*="dark:bg-"]),
+.dark [class~="bg-slate-200"]:not([class*="dark:bg-"]),
+.dark [class~="bg-gray-50"]:not([class*="dark:bg-"]),
+.dark [class~="bg-gray-100"]:not([class*="dark:bg-"]) {
+  background-color: #0f172a; /* slate-900 */
+}
+
+/* Common hard-coded light page backgrounds used across pages */
+.dark [class*="bg-[#f5f7fa]"]:not([class*="dark:bg-"]),
+.dark [class*="bg-[#e4ebf5]"]:not([class*="dark:bg-"]) {
+  background-color: #0f172a; /* slate-900 */
+}
+
+.dark [class~="text-slate-700"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-800"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-900"]:not([class*="dark:text-"]),
+.dark [class~="text-slate-600"]:not([class*="dark:text-"]),
+.dark [class~="text-gray-700"]:not([class*="dark:text-"]),
+.dark [class~="text-gray-800"]:not([class*="dark:text-"]),
+.dark [class~="text-gray-600"]:not([class*="dark:text-"]),
+.dark [class~="text-gray-900"]:not([class*="dark:text-"]) {
+  color: #e2e8f0; /* slate-200 */
+}
+
+.dark [class~="border-slate-200"]:not([class*="dark:border-"]),
+.dark [class~="border-gray-200"]:not([class*="dark:border-"]) {
+  border-color: rgba(148, 163, 184, 0.25); /* slate-400 @ 25% */
 }
 
 /* ============================================
