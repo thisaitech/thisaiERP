@@ -1,6 +1,6 @@
 import sqlite3 from 'sqlite3'
 import { createPool, type Pool, type ResultSetHeader, type RowDataPacket } from 'mysql2/promise'
-import type { Env } from './env'
+import type { Env } from './env.js'
 
 export type SqliteDB = { driver: 'sqlite'; sqlite: sqlite3.Database }
 export type MysqlDB = { driver: 'mysql'; pool: Pool }
@@ -281,4 +281,3 @@ export async function upsertRecord(
 export async function deleteRecord(db: DB, companyId: string, type: string, id: string): Promise<void> {
   await run(db, `DELETE FROM records WHERE companyId = ? AND type = ? AND id = ?`, [companyId, type, id])
 }
-

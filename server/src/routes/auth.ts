@@ -2,9 +2,9 @@ import express from 'express'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { v4 as uuidv4 } from 'uuid'
-import type { DB } from '../db'
-import { getUserByEmail, insertUser, updateUserLastLogin } from '../db'
-import { signJwt } from '../auth'
+import type { DB } from '../db.js'
+import { getUserByEmail, insertUser, updateUserLastLogin } from '../db.js'
+import { signJwt } from '../auth.js'
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -111,4 +111,3 @@ export function buildAuthRouter(opts: { db: DB; jwtSecret: string }) {
 
   return router
 }
-

@@ -3,12 +3,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import express from 'express'
 import cors from 'cors'
-import { loadEnv } from './env'
-import { initDb, openDb } from './db'
-import { ensureDefaultAdmin } from './bootstrapAdmin'
-import { buildAuthRouter } from './routes/auth'
-import { buildEntityRouter } from './routes/entity'
-import { requireAuth } from './auth'
+import { loadEnv } from './env.js'
+import { initDb, openDb } from './db.js'
+import { ensureDefaultAdmin } from './bootstrapAdmin.js'
+import { buildAuthRouter } from './routes/auth.js'
+import { buildEntityRouter } from './routes/entity.js'
+import { requireAuth } from './auth.js'
 
 async function main() {
   const envFiles = [path.resolve(process.cwd(), '.env'), path.resolve(process.cwd(), '..', '.env')]

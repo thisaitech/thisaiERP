@@ -1,9 +1,9 @@
 import express from 'express'
 import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
-import type { DB } from '../db'
-import { deleteRecord, getRecord, listRecords, upsertRecord } from '../db'
-import type { AuthedRequest } from '../auth'
+import type { DB } from '../db.js'
+import { deleteRecord, getRecord, listRecords, upsertRecord } from '../db.js'
+import type { AuthedRequest } from '../auth.js'
 
 const anyJson = z.unknown()
 
@@ -116,4 +116,3 @@ export function buildEntityRouter(opts: { db: DB; type: string }) {
 
   return router
 }
-

@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
-import type { DB } from './db'
-import { getUserByEmail, insertUser } from './db'
-import type { Env } from './env'
+import type { DB } from './db.js'
+import { getUserByEmail, insertUser } from './db.js'
+import type { Env } from './env.js'
 
 function deriveCompanyId(email: string, companyName: string) {
   const source = companyName && companyName.trim().length > 0 ? companyName : email.split('@')[1] || ''
