@@ -17,6 +17,10 @@ dist
 *.log
 npm-debug.log*
 
+# Local databases
+*.sqlite
+*.sqlite3
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -27,9 +27,18 @@ async function main() {
   const app = express()
 
   app.use(express.json({ limit: '5mb' }))
+  const configuredOrigins = env.CORS_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean)
+  const allowedOrigins = new Set([...configuredOrigins, 'http://localhost:3000', 'http://127.0.0.1:3000'])
+  const isLocalOrigin = (origin: string) => /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)
+
   app.use(
     cors({
-      origin: env.CORS_ORIGIN.split(',').map((s) => s.trim()),
+      origin(origin, callback) {
+        if (!origin) return callback(null, true)
+        if (isLocalOrigin(origin)) return callback(null, true)
+        if (allowedOrigins.has(origin)) return callback(null, true)
+        return callback(new Error(`Not allowed by CORS: ${origin}`), false)
+      },
       credentials: true,
     })
   )

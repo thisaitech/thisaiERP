@@ -252,7 +252,8 @@ const ReportsNew = () => {
       setCurrentReportType(reportType)
     } catch (error) {
       console.error('Error loading report:', error)
-      toast.error('Failed to load report')
+      const message = error instanceof Error ? error.message : 'Unexpected error'
+      toast.error(`Failed to load report: ${message}`)
     } finally {
       setLoading(false)
     }

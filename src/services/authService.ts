@@ -58,9 +58,21 @@ export const signOut = async (): Promise<void> => {
   emitAuthChanged()
 }
 
+export const getAuthToken = (): string | null => {
+  return localStorage.getItem('auth_token')
+}
+
 export const getCurrentUser = (): UserData | null => {
+  // Treat missing token as logged-out even if a stale `user` object exists.
+  // Otherwise pages can render while API calls fail with 401 (missing Authorization header).
+  const token = getAuthToken()
   const raw = localStorage.getItem('user')
-  if (!raw) return null
+  if (!raw || !token) {
+    if (raw && !token) {
+      localStorage.removeItem('user')
+    }
+    return null
+  }
   try {
     return JSON.parse(raw) as UserData
   } catch {
@@ -81,4 +93,3 @@ export const onAuthChange = (callback: (user: UserData | null) => void) => {
     window.removeEventListener('storage', handler)
   }
 }
-

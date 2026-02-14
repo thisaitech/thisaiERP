@@ -23,7 +23,7 @@ const envSchema = z.object({
   MYSQL_CONNECTION_LIMIT: z.coerce.number().default(10),
 
   JWT_SECRET: z.string().min(16).default('dev-secret-change-me-please'),
-  CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  CORS_ORIGIN: z.string().default('http://localhost:3000,http://127.0.0.1:3000'),
   DEFAULT_ADMIN_EMAIL: z.string().email().optional(),
   DEFAULT_ADMIN_PASSWORD: z.string().optional(),
   DEFAULT_ADMIN_NAME: z.string().optional(),

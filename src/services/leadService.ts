@@ -3,6 +3,17 @@
 import { apiDelete, apiGet, apiPost, apiPut } from './apiClient'
 
 export type LeadStatus = 'new' | 'contacted' | 'converted' | 'lost'
+export type LeadStage =
+  | 'lead_created'
+  | 'qualified'
+  | 'site_visit_scheduled'
+  | 'requirements_collected'
+  | 'drawing_prepared'
+  | 'quotation_sent'
+  | 'negotiation'
+  | 'confirmed'
+  | 'waiting'
+  | 'lost'
 
 export interface Lead {
   id: string
@@ -10,7 +21,12 @@ export interface Lead {
   phone?: string
   email?: string
   status: LeadStatus
+  stage?: LeadStage
   notes?: string
+  expectedValue?: number
+  nextFollowUpAt?: string
+  lastActivityTitle?: string
+  lastActivityAt?: string
   createdAt: string
   updatedAt: string
 }
@@ -42,4 +58,3 @@ export async function updateLead(id: string, updates: Partial<Lead>): Promise<Le
 export async function deleteLead(id: string): Promise<void> {
   await apiDelete<{ ok: boolean }>(`/leads/${encodeURIComponent(id)}`)
 }
-

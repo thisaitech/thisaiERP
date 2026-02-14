@@ -20,11 +20,13 @@ async function getFinancialSettings() {
  * Normalize date to YYYY-MM-DD string format (local timezone)
  * Handles various date formats including ISO strings and Date objects
  */
-function normalizeDate(dateInput: string | Date | undefined | null): string {
+function normalizeDate(dateInput: string | Date | number | undefined | null): string {
   if (!dateInput) return ''
 
   let date: Date
-  if (typeof dateInput === 'string') {
+  if (typeof dateInput === 'number') {
+    date = new Date(dateInput)
+  } else if (typeof dateInput === 'string') {
     // If it's already in YYYY-MM-DD format, return as is
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
       return dateInput
@@ -42,6 +44,15 @@ function normalizeDate(dateInput: string | Date | undefined | null): string {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+function getInvoiceDate(row: any): string {
+  if (!row) return ''
+  return normalizeDate((row.invoiceDate || row.date || row.createdAt) as string | Date | number | undefined)
+}
+
+function getInvoiceItems(invoice: any): Array<any> {
+  return Array.isArray(invoice?.items) ? invoice.items : []
 }
 
 /**
@@ -111,13 +122,13 @@ export async function getSalesSummaryReport(
   let salesInvoices = allInvoices.filter(inv => inv.type === 'sale')
 
   if (startDate || endDate) {
-    salesInvoices = salesInvoices.filter(inv => isDateInRange(inv.invoiceDate, startDate, endDate))
+    salesInvoices = salesInvoices.filter(inv => isDateInRange(getInvoiceDate(inv), startDate, endDate))
   }
 
   // Calculate totals
   const totalSales = salesInvoices.reduce((sum, inv) => sum + inv.grandTotal, 0)
   const totalTax = salesInvoices.reduce((sum, inv) => {
-    const tax = inv.items.reduce((t, item) => t + (item.tax || 0), 0)
+    const tax = getInvoiceItems(inv).reduce((t, item) => t + (item.tax || 0), 0)
     return sum + tax
   }, 0)
 
@@ -139,7 +150,7 @@ export async function getSalesSummaryReport(
   // Sales by month
   const monthMap = new Map<string, { amount: number; count: number }>()
   salesInvoices.forEach(inv => {
-    const month = inv.invoiceDate.substring(0, 7) // YYYY-MM
+    const month = normalizeDate(getInvoiceDate(inv)).slice(0, 7) // YYYY-MM
     const existing = monthMap.get(month) || { amount: 0, count: 0 }
     monthMap.set(month, {
       amount: existing.amount + inv.grandTotal,
@@ -174,13 +185,13 @@ export async function getPurchaseSummaryReport(
   let purchaseInvoices = allInvoices.filter(inv => inv.type === 'purchase')
 
   if (startDate || endDate) {
-    purchaseInvoices = purchaseInvoices.filter(inv => isDateInRange(inv.invoiceDate, startDate, endDate))
+    purchaseInvoices = purchaseInvoices.filter(inv => isDateInRange(getInvoiceDate(inv), startDate, endDate))
   }
 
   // Calculate totals
   const totalPurchases = purchaseInvoices.reduce((sum, inv) => sum + inv.grandTotal, 0)
   const totalTax = purchaseInvoices.reduce((sum, inv) => {
-    const tax = inv.items.reduce((t, item) => t + (item.tax || 0), 0)
+    const tax = getInvoiceItems(inv).reduce((t, item) => t + (item.tax || 0), 0)
     return sum + tax
   }, 0)
 
@@ -202,7 +213,7 @@ export async function getPurchaseSummaryReport(
   // Purchases by month
   const monthMap = new Map<string, { amount: number; count: number }>()
   purchaseInvoices.forEach(inv => {
-    const month = inv.invoiceDate.substring(0, 7) // YYYY-MM
+    const month = normalizeDate(getInvoiceDate(inv)).slice(0, 7) // YYYY-MM
     const existing = monthMap.get(month) || { amount: 0, count: 0 }
     monthMap.set(month, {
       amount: existing.amount + inv.grandTotal,
@@ -299,7 +310,7 @@ export async function getDayBook(date: string) {
   // Use normalized date comparison to handle various date formats
   const dayInvoices = allInvoices.filter(inv => {
     // Use invoiceDate or fallback to createdAt
-    const invoiceDate = inv.invoiceDate || (inv as any).createdAt
+    const invoiceDate = getInvoiceDate(inv)
     return matchesDate(invoiceDate, date)
   })
 
@@ -315,7 +326,7 @@ export async function getDayBook(date: string) {
       return bTime - aTime // Newest first
     }
     // Fall back to invoice number comparison (descending for most recent)
-    return b.invoiceNumber.localeCompare(a.invoiceNumber)
+    return String(b.invoiceNumber || '').localeCompare(String(a.invoiceNumber || ''))
   })
 
   return {
@@ -355,15 +366,16 @@ export async function getBillWiseProfit() {
   // Calculate average cost per item from recent purchases
   const itemCosts = new Map<string, number>()
   purchases.forEach(purchase => {
-    purchase.items.forEach(item => {
-      itemCosts.set(item.description.toLowerCase(), item.rate)
+    getInvoiceItems(purchase).forEach(item => {
+      const itemDescription = (item.description || '').toLowerCase()
+      itemCosts.set(itemDescription, item.rate || 0)
     })
   })
 
   const profitData = sales.map(sale => {
     let totalCost = 0
-    sale.items.forEach(item => {
-      const itemDescription = item.description.toLowerCase();
+    getInvoiceItems(sale).forEach(item => {
+      const itemDescription = (item.description || '').toLowerCase()
       let cost = itemCosts.get(itemDescription);
 
       if (cost === undefined) {
@@ -371,11 +383,13 @@ export async function getBillWiseProfit() {
       }
       
       if (cost === undefined) {
-        console.warn(`Could not determine cost for item: ${item.description}. Profit calculation for invoice ${sale.invoiceNumber} may be inaccurate.`);
+        console.warn(
+          `Could not determine cost for item: ${item.description || 'Unknown item'}. Profit calculation for invoice ${sale.invoiceNumber} may be inaccurate.`
+        )
         cost = 0; // Default to 0 if no cost can be found, to avoid using arbitrary estimates
       }
 
-      totalCost += cost * item.quantity
+      totalCost += (cost || 0) * (item.quantity || 0)
     })
 
     const profit = sale.grandTotal - totalCost
@@ -383,7 +397,7 @@ export async function getBillWiseProfit() {
 
     return {
       invoiceNumber: sale.invoiceNumber,
-      invoiceDate: sale.invoiceDate,
+      invoiceDate: getInvoiceDate(sale),
       partyName: sale.partyName,
       revenue: sale.grandTotal,
       cost: totalCost,
@@ -414,10 +428,10 @@ export async function getProfitAndLoss(startDate: string, endDate: string) {
   const allExpenses = await getExpenses()
 
   const filteredSales = sales.filter(inv =>
-    inv.invoiceDate >= startDate && inv.invoiceDate <= endDate
+    getInvoiceDate(inv) >= startDate && getInvoiceDate(inv) <= endDate
   )
   const filteredPurchases = purchases.filter(inv =>
-    inv.invoiceDate >= startDate && inv.invoiceDate <= endDate
+    getInvoiceDate(inv) >= startDate && getInvoiceDate(inv) <= endDate
   )
 
   const revenue = filteredSales.reduce((sum, inv) => sum + inv.grandTotal, 0)
@@ -519,10 +533,10 @@ export async function getCashFlow(startDate: string, endDate: string) {
 
   // Filter by date range
   const filteredSales = sales.filter(inv =>
-    inv.invoiceDate >= startDate && inv.invoiceDate <= endDate
+    getInvoiceDate(inv) >= startDate && getInvoiceDate(inv) <= endDate
   )
   const filteredPurchases = purchases.filter(inv =>
-    inv.invoiceDate >= startDate && inv.invoiceDate <= endDate
+    getInvoiceDate(inv) >= startDate && getInvoiceDate(inv) <= endDate
   )
   const filteredExpenses = expenses.filter(exp =>
     exp.date >= startDate && exp.date <= endDate
@@ -554,7 +568,7 @@ export async function getCashFlow(startDate: string, endDate: string) {
         'offline': 'Cash/Bank Receipt'
       }
       transactions.push({
-        date: inv.invoiceDate,
+        date: getInvoiceDate(inv),
         type: platform !== 'offline' ? 'marketplace_payout' : 'sale_receipt',
         description: platformNames[platform] || 'Sale Receipt',
         reference: inv.invoiceNumber,
@@ -569,7 +583,7 @@ export async function getCashFlow(startDate: string, endDate: string) {
     const paidAmount = inv.payment?.paidAmount || 0
     if (paidAmount > 0) {
       transactions.push({
-        date: inv.invoiceDate,
+        date: getInvoiceDate(inv),
         type: 'purchase_payment',
         description: `Paid supplier: ${inv.partyName || 'Unknown'}`,
         reference: inv.invoiceNumber,
@@ -606,7 +620,7 @@ export async function getCashFlow(startDate: string, endDate: string) {
   })
 
   // Sort by date
-  transactions.sort((a, b) => a.date.localeCompare(b.date))
+  transactions.sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')))
 
   // Calculate running balance (starting from opening balance)
   // For now, use a default opening balance - this should come from settings
@@ -693,8 +707,8 @@ export async function getBalanceSheet(asOfDate: string) {
   const expenses = await getExpenses()
 
   // Filter up to the given date
-  const salesUpToDate = sales.filter(inv => inv.invoiceDate <= asOfDate)
-  const purchasesUpToDate = purchases.filter(inv => inv.invoiceDate <= asOfDate)
+  const salesUpToDate = sales.filter(inv => getInvoiceDate(inv) <= asOfDate)
+  const purchasesUpToDate = purchases.filter(inv => getInvoiceDate(inv) <= asOfDate)
   const expensesUpToDate = expenses.filter(exp => exp.date <= asOfDate)
 
   // === ASSETS ===
@@ -725,12 +739,12 @@ export async function getBalanceSheet(asOfDate: string) {
 
   // GST Payable (Output GST - ITC claimed - GST already paid)
   const outputGst = salesUpToDate.reduce((sum, inv) => {
-    const gst = inv.items.reduce((itemSum, item) =>
+    const gst = getInvoiceItems(inv).reduce((itemSum, item) =>
       itemSum + (item.cgstAmount || 0) + (item.sgstAmount || 0) + (item.igstAmount || 0), 0)
     return sum + gst
   }, 0)
   const inputGst = purchasesUpToDate.reduce((sum, inv) => {
-    const gst = inv.items.reduce((itemSum, item) =>
+    const gst = getInvoiceItems(inv).reduce((itemSum, item) =>
       itemSum + (item.cgstAmount || 0) + (item.sgstAmount || 0) + (item.igstAmount || 0), 0)
     return sum + gst
   }, 0)
@@ -812,8 +826,8 @@ export async function getTrialBalance(asOfDate: string) {
   const expenses = await getExpenses()
 
   // Filter up to the given date
-  const salesUpToDate = sales.filter(inv => inv.invoiceDate <= asOfDate)
-  const purchasesUpToDate = purchases.filter(inv => inv.invoiceDate <= asOfDate)
+  const salesUpToDate = sales.filter(inv => getInvoiceDate(inv) <= asOfDate)
+  const purchasesUpToDate = purchases.filter(inv => getInvoiceDate(inv) <= asOfDate)
   const expensesUpToDate = expenses.filter(exp => exp.date <= asOfDate)
 
   // Calculate totals
@@ -824,11 +838,11 @@ export async function getTrialBalance(asOfDate: string) {
 
   // GST calculations
   const outputGst = salesUpToDate.reduce((sum, inv) => {
-    return sum + inv.items.reduce((itemSum, item) =>
+    return sum + getInvoiceItems(inv).reduce((itemSum, item) =>
       itemSum + (item.cgstAmount || 0) + (item.sgstAmount || 0) + (item.igstAmount || 0), 0)
   }, 0)
   const inputGst = purchasesUpToDate.reduce((sum, inv) => {
-    return sum + inv.items.reduce((itemSum, item) =>
+    return sum + getInvoiceItems(inv).reduce((itemSum, item) =>
       itemSum + (item.cgstAmount || 0) + (item.sgstAmount || 0) + (item.igstAmount || 0), 0)
   }, 0)
 
@@ -1048,7 +1062,7 @@ export async function getPartyStatement(partyName: string, startDate?: string, e
 
   if (startDate && endDate) {
     partyInvoices = partyInvoices.filter(inv =>
-      inv.invoiceDate >= startDate && inv.invoiceDate <= endDate
+      getInvoiceDate(inv) >= startDate && getInvoiceDate(inv) <= endDate
     )
   }
 
@@ -1070,7 +1084,7 @@ export async function getPartyStatement(partyName: string, startDate?: string, e
       paid: purchases.reduce((sum, inv) => sum + (inv.payment?.paidAmount || 0), 0),
       due: purchases.reduce((sum, inv) => sum + (inv.payment?.dueAmount || 0), 0)
     },
-    transactions: partyInvoices.sort((a, b) => a.invoiceDate.localeCompare(b.invoiceDate))
+    transactions: partyInvoices.sort((a, b) => getInvoiceDate(a).localeCompare(getInvoiceDate(b)))
   }
 }
 
@@ -1089,7 +1103,7 @@ export async function getPartyWiseProfitLoss() {
 
   // First, get costs from purchase invoices
   purchases.forEach(purchase => {
-    purchase.items.forEach(item => {
+    getInvoiceItems(purchase).forEach(item => {
       const itemName = (item.description || item.itemName || '').toLowerCase().trim()
       if (!itemName) return
 
@@ -1135,7 +1149,7 @@ export async function getPartyWiseProfitLoss() {
     partyData.invoiceCount += 1
 
     // Calculate COGS for each item in this sale
-    sale.items.forEach(item => {
+    getInvoiceItems(sale).forEach(item => {
       const itemName = (item.description || item.itemName || '').toLowerCase().trim()
       const qty = item.quantity || 1
 
@@ -1197,13 +1211,13 @@ export async function getPartyWiseProfitLoss() {
  * GST Compliance: Always use exclusive base regardless of inclusive/exclusive entry mode
  */
 function calculateTaxableValue(inv: any): number {
-  if (!inv.items || inv.items.length === 0) {
+  if (!getInvoiceItems(inv) || getInvoiceItems(inv).length === 0) {
     // Fallback for old invoices without item details
     return inv.taxableAmount || inv.subtotal || 0
   }
 
   // Calculate from items: sum of (basePrice × quantity) for each item
-  return inv.items.reduce((sum: number, item: any) => {
+  return getInvoiceItems(inv).reduce((sum: number, item: any) => {
     const basePrice = item.basePrice || item.basePurchasePrice || item.price || 0
     const quantity = item.qty || item.quantity || 1
     return sum + (basePrice * quantity)
@@ -1216,7 +1230,7 @@ function calculateTaxableValue(inv: any): number {
 export async function getGSTR1(month: string, year: string) {
   const sales = await getInvoices('sale')
   const filtered = sales.filter(inv => {
-    const date = new Date(inv.invoiceDate)
+    const date = new Date(getInvoiceDate(inv))
     return date.getMonth() + 1 === parseInt(month) && date.getFullYear() === parseInt(year)
   })
 
@@ -1252,7 +1266,7 @@ export async function getGSTR3B(month: string, year: string) {
   const purchases = await getInvoices('purchase')
 
   const filteredPurchases = purchases.filter(inv => {
-    const date = new Date(inv.invoiceDate)
+    const date = new Date(getInvoiceDate(inv))
     return date.getMonth() + 1 === parseInt(month) && date.getFullYear() === parseInt(year)
   })
 
@@ -1287,7 +1301,7 @@ export async function getSaleSummaryByHSN() {
   const hsnMap = new Map<string, any>()
 
   sales.forEach(sale => {
-    sale.items.forEach(item => {
+    getInvoiceItems(sale).forEach(item => {
       const hsn = item.hsn || 'N/A'
       if (!hsnMap.has(hsn)) {
         hsnMap.set(hsn, {
@@ -1368,17 +1382,18 @@ export async function getItemWiseProfitLoss() {
 
   // Calculate item costs from purchases
   purchases.forEach(purchase => {
-    purchase.items.forEach(item => {
-      if (!itemMap.has(item.description)) {
-        itemMap.set(item.description, {
-          itemName: item.description,
+    getInvoiceItems(purchase).forEach(item => {
+      const itemDescription = (item.description || 'Unknown item')
+      if (!itemMap.has(itemDescription)) {
+        itemMap.set(itemDescription, {
+          itemName: itemDescription,
           totalCost: 0,
           totalRevenue: 0,
           quantitySold: 0,
           quantityPurchased: 0
         })
       }
-      const data = itemMap.get(item.description)
+      const data = itemMap.get(itemDescription)
       data.totalCost += item.amount
       data.quantityPurchased += item.quantity
     })
@@ -1386,17 +1401,18 @@ export async function getItemWiseProfitLoss() {
 
   // Calculate item revenue from sales
   sales.forEach(sale => {
-    sale.items.forEach(item => {
-      if (!itemMap.has(item.description)) {
-        itemMap.set(item.description, {
-          itemName: item.description,
+    getInvoiceItems(sale).forEach(item => {
+      const itemDescription = (item.description || 'Unknown item')
+      if (!itemMap.has(itemDescription)) {
+        itemMap.set(itemDescription, {
+          itemName: itemDescription,
           totalCost: 0,
           totalRevenue: 0,
           quantitySold: 0,
           quantityPurchased: 0
         })
       }
-      const data = itemMap.get(item.description)
+      const data = itemMap.get(itemDescription)
       data.totalRevenue += item.amount + (item.amount * item.taxRate / 100)
       data.quantitySold += item.quantity
     })
@@ -1446,7 +1462,7 @@ export async function getItemWiseProfitLoss() {
 export async function getDiscountReport(startDate: string, endDate: string) {
   const allInvoices = await getInvoices()
   // Use normalized date comparison to handle various date formats
-  const filtered = allInvoices.filter(inv => isDateInRange(inv.invoiceDate, startDate, endDate))
+  const filtered = allInvoices.filter(inv => isDateInRange(getInvoiceDate(inv), startDate, endDate))
 
   // Get item-level discounts for detailed breakdown
   const itemDiscounts: Array<{
@@ -1480,8 +1496,8 @@ export async function getDiscountReport(startDate: string, endDate: string) {
     let invoiceItemDiscount = 0
     let invoiceOriginalAmount = 0
 
-    if (inv.items && inv.items.length > 0) {
-      inv.items.forEach(item => {
+    if (getInvoiceItems(inv) && getInvoiceItems(inv).length > 0) {
+      getInvoiceItems(inv).forEach(item => {
         const itemOriginal = (item.rate || (item as any).price || 0) * (item.quantity || 1)
         // Check multiple discount fields: discountAmount, discountPercent, or discount (percentage)
         const discountPercent = (item as any).discountPercent || (item as any).discount || 0
@@ -1493,11 +1509,11 @@ export async function getDiscountReport(startDate: string, endDate: string) {
 
         // Only include items with discounts OR invoice has discount
         if (itemDiscount > 0 || invoiceDiscount > 0) {
-          const itemShare = inv.items.length > 1 ? invoiceDiscount / inv.items.length : invoiceDiscount
+          const itemShare = getInvoiceItems(inv).length > 1 ? invoiceDiscount / getInvoiceItems(inv).length : invoiceDiscount
           itemDiscounts.push({
             invoiceNumber: inv.invoiceNumber,
             partyName: inv.partyName || 'Walk-in Customer',
-            invoiceDate: inv.invoiceDate,
+            invoiceDate: getInvoiceDate(inv),
             productName: item.itemName || item.description || 'Item',
             originalPrice: itemOriginal,
             sellingPrice: itemOriginal - itemDiscount - itemShare,
@@ -1518,12 +1534,12 @@ export async function getDiscountReport(startDate: string, endDate: string) {
     totalDiscount += invoiceDiscount + invoiceItemDiscount
     totalOriginal += invoiceOriginalAmount > 0 ? invoiceOriginalAmount : (inv.grandTotal + invoiceDiscount)
 
-    if (invoiceDiscount > 0 && (!inv.items || inv.items.length === 0)) {
+    if (invoiceDiscount > 0 && (!getInvoiceItems(inv) || getInvoiceItems(inv).length === 0)) {
       // Invoice without items but has discount
       itemDiscounts.push({
         invoiceNumber: inv.invoiceNumber,
         partyName: inv.partyName || 'Walk-in Customer',
-        invoiceDate: inv.invoiceDate,
+        invoiceDate: getInvoiceDate(inv),
         productName: 'Various Items',
         originalPrice: inv.grandTotal + invoiceDiscount,
         sellingPrice: inv.grandTotal,
@@ -1544,13 +1560,13 @@ export async function getDiscountReport(startDate: string, endDate: string) {
     .map(inv => ({
       invoiceNumber: inv.invoiceNumber,
       partyName: inv.partyName,
-      invoiceDate: inv.invoiceDate,
+      invoiceDate: getInvoiceDate(inv),
       originalAmount: inv.grandTotal + (inv.discountAmount || 0),
       discount: inv.discountAmount || 0,
       finalAmount: inv.grandTotal,
       couponCode: (inv as any).couponCode || '',
       platform: (inv as any).platform || 'Direct',
-      itemCount: inv.items?.length || 0
+      itemCount: getInvoiceItems(inv)?.length || 0
     }))
     .sort((a, b) => b.discount - a.discount)
 
@@ -1597,7 +1613,7 @@ export async function getCashAndBankBalance(asOfDate: string) {
   console.log('📦 Fetched data:', { invoiceCount: allInvoices.length, expenseCount: allExpenses.length })
 
   // Filter all transactions up to the selected date
-  const invoicesUpToDate = allInvoices.filter(inv => inv.invoiceDate <= asOfDate)
+  const invoicesUpToDate = allInvoices.filter(inv => getInvoiceDate(inv) <= asOfDate)
   const expensesUpToDate = allExpenses.filter(exp => exp.date <= asOfDate)
 
   // Get opening balances from Banking page's localStorage (dynamic data)
@@ -1628,7 +1644,7 @@ export async function getCashAndBankBalance(asOfDate: string) {
 
   // Calculate opening cash for TODAY (previous day's closing)
   // This should be: opening balance + all previous transactions before today
-  const invoicesBeforeToday = allInvoices.filter(inv => inv.invoiceDate < asOfDate)
+  const invoicesBeforeToday = allInvoices.filter(inv => getInvoiceDate(inv) < asOfDate)
   const expensesBeforeToday = allExpenses.filter(exp => exp.date < asOfDate)
 
   const cashSalesBeforeToday = invoicesBeforeToday
@@ -1652,7 +1668,7 @@ export async function getCashAndBankBalance(asOfDate: string) {
 
   // Calculate TODAY'S Cash Receipts (for breakdown display)
   const cashSalesToday = allInvoices
-    .filter(inv => inv.type === 'sale' && inv.payment?.mode === 'cash' && matchesDate(inv.invoiceDate, asOfDate))
+    .filter(inv => inv.type === 'sale' && inv.payment?.mode === 'cash' && matchesDate(getInvoiceDate(inv), asOfDate))
     .reduce((sum, inv) => sum + (inv.payment?.paidAmount || inv.grandTotal || 0), 0)
 
   // Calculate Bank Receipts (money that came IN to bank)
@@ -1667,7 +1683,7 @@ export async function getCashAndBankBalance(asOfDate: string) {
       bankReceiptsTotal[bank] = (bankReceiptsTotal[bank] || 0) + (inv.payment?.paidAmount || inv.grandTotal || 0)
 
       // Track today's receipts separately
-      if (matchesDate(inv.invoiceDate, asOfDate)) {
+      if (matchesDate(getInvoiceDate(inv), asOfDate)) {
         bankReceiptsToday[bank] = (bankReceiptsToday[bank] || 0) + (inv.payment?.paidAmount || inv.grandTotal || 0)
       }
     })
@@ -1683,7 +1699,7 @@ export async function getCashAndBankBalance(asOfDate: string) {
 
   // Calculate TODAY'S Cash Payments (for breakdown display)
   const cashPurchasesToday = allInvoices
-    .filter(inv => inv.type === 'purchase' && inv.payment?.mode === 'cash' && matchesDate(inv.invoiceDate, asOfDate))
+    .filter(inv => inv.type === 'purchase' && inv.payment?.mode === 'cash' && matchesDate(getInvoiceDate(inv), asOfDate))
     .reduce((sum, inv) => sum + (inv.payment?.paidAmount || inv.grandTotal || 0), 0)
 
   const cashExpensesToday = allExpenses
@@ -1701,7 +1717,7 @@ export async function getCashAndBankBalance(asOfDate: string) {
       bankPaymentsTotal[bank] = (bankPaymentsTotal[bank] || 0) + (inv.payment?.paidAmount || inv.grandTotal || 0)
 
       // Track today's payments separately
-      if (matchesDate(inv.invoiceDate, asOfDate)) {
+      if (matchesDate(getInvoiceDate(inv), asOfDate)) {
         bankPaymentsToday[bank] = (bankPaymentsToday[bank] || 0) + (inv.payment?.paidAmount || inv.grandTotal || 0)
       }
     })
@@ -1793,7 +1809,7 @@ export async function getFastMovingItems(
   const startDateStr = startDate.toISOString().split('T')[0]
 
   // Filter invoices within the period
-  const periodInvoices = allInvoices.filter(inv => inv.invoiceDate >= startDateStr)
+  const periodInvoices = allInvoices.filter(inv => getInvoiceDate(inv) >= startDateStr)
 
   // Aggregate quantity sold per item
   const itemSalesMap = new Map<string, {
@@ -1803,14 +1819,14 @@ export async function getFastMovingItems(
   }>()
 
   periodInvoices.forEach(invoice => {
-    invoice.items.forEach(item => {
-      const itemName = item.itemName || item.description
+    getInvoiceItems(invoice).forEach(item => {
+      const itemName = item.itemName || item.description || 'Unnamed item'
       const existing = itemSalesMap.get(itemName) || {
         itemName,
         totalQuantitySold: 0,
         itemId: item.itemId
       }
-      existing.totalQuantitySold += item.quantity
+      existing.totalQuantitySold += item.quantity || 0
       itemSalesMap.set(itemName, existing)
     })
   })
@@ -1915,7 +1931,7 @@ export async function getSlowMovingItems(
   const startDateStr = startDate.toISOString().split('T')[0]
 
   // Filter invoices within the period
-  const periodInvoices = allInvoices.filter(inv => inv.invoiceDate >= startDateStr)
+  const periodInvoices = allInvoices.filter(inv => getInvoiceDate(inv) >= startDateStr)
 
   // Aggregate quantity sold per item
   const itemSalesMap = new Map<string, {
@@ -1925,14 +1941,14 @@ export async function getSlowMovingItems(
   }>()
 
   periodInvoices.forEach(invoice => {
-    invoice.items.forEach(item => {
-      const itemName = item.itemName || item.description
+    getInvoiceItems(invoice).forEach(item => {
+      const itemName = item.itemName || item.description || 'Unnamed item'
       const existing = itemSalesMap.get(itemName) || {
         itemName,
         totalQuantitySold: 0,
         itemId: item.itemId
       }
-      existing.totalQuantitySold += item.quantity
+      existing.totalQuantitySold += item.quantity || 0
       itemSalesMap.set(itemName, existing)
     })
   })
@@ -2145,7 +2161,7 @@ export async function getAccountsReceivable() {
     customer.invoiceCount++
     customer.invoices.push({
       invoiceNumber: inv.invoiceNumber,
-      invoiceDate: inv.invoiceDate,
+      invoiceDate: getInvoiceDate(inv),
       grandTotal: inv.grandTotal,
       paidAmount,
       dueAmount,
@@ -2313,7 +2329,7 @@ export async function getAccountsPayable() {
     supplier.invoiceCount++
     supplier.invoices.push({
       invoiceNumber: inv.invoiceNumber,
-      invoiceDate: inv.invoiceDate,
+      invoiceDate: getInvoiceDate(inv),
       grandTotal: inv.grandTotal,
       paidAmount,
       dueAmount,
@@ -2383,20 +2399,20 @@ export async function getPurchaseRegister(startDate: string, endDate: string) {
 
   // Filter purchases within date range
   const filtered = allPurchases.filter(inv =>
-    inv.invoiceDate >= startDate && inv.invoiceDate <= endDate
+    getInvoiceDate(inv) >= startDate && getInvoiceDate(inv) <= endDate
   )
 
   // Process each purchase with full GST details
   const purchases = filtered.map(inv => {
     const supplierName = inv.partyName || 'Unknown Supplier'
     const invoiceNumber = inv.invoiceNumber
-    const invoiceDate = inv.invoiceDate
+    const invoiceDate = getInvoiceDate(inv)
 
     // Calculate totals (GST Compliance: Use exclusive base)
     const taxableValue = calculateTaxableValue(inv)
-    const cgst = inv.items.reduce((sum, item) => sum + (item.cgstAmount || 0), 0)
-    const sgst = inv.items.reduce((sum, item) => sum + (item.sgstAmount || 0), 0)
-    const igst = inv.items.reduce((sum, item) => sum + (item.igstAmount || 0), 0)
+    const cgst = getInvoiceItems(inv).reduce((sum, item) => sum + (item.cgstAmount || 0), 0)
+    const sgst = getInvoiceItems(inv).reduce((sum, item) => sum + (item.sgstAmount || 0), 0)
+    const igst = getInvoiceItems(inv).reduce((sum, item) => sum + (item.igstAmount || 0), 0)
     const totalITC = cgst + sgst + igst
     const grandTotal = inv.grandTotal
 
@@ -2417,7 +2433,7 @@ export async function getPurchaseRegister(startDate: string, endDate: string) {
     const paymentDate = inv.payment?.status === 'paid' ? invoiceDate : null
 
     // HSN details (from first item - can be expanded for multiple HSNs)
-    const firstItem = inv.items[0] || {}
+    const firstItem = getInvoiceItems(inv)[0] || {}
     const hsnCode = firstItem.hsnCode || 'N/A'
     const description = firstItem.description || firstItem.itemName || 'N/A'
     const gstRate = firstItem.taxRate || 0
@@ -2478,7 +2494,7 @@ export async function getPurchaseRegister(startDate: string, endDate: string) {
       dueAmount,
       isRCM: inv.isReverseCharge || false, // Reverse Charge Mechanism
       placeOfSupply: inv.placeOfSupply || 'Same State', // New: Place of supply
-      items: inv.items // Full item details for drill-down
+      items: getInvoiceItems(inv) // Full item details for drill-down
     }
   })
 
@@ -2517,7 +2533,7 @@ export async function getPurchaseRegister(startDate: string, endDate: string) {
 
   return {
     period: { startDate, endDate },
-    purchases: purchases.sort((a, b) => a.invoiceDate.localeCompare(b.invoiceDate)),
+    purchases: purchases.sort((a, b) => getInvoiceDate(a).localeCompare(getInvoiceDate(b))),
     summary,
     categoryBreakdown, // New: Category-wise ITC breakdown
     generatedAt: new Date().toISOString(),
@@ -2548,14 +2564,14 @@ export async function getSalesRegister(startDate: string, endDate: string) {
 
   // Filter sales within date range
   const filtered = allSales.filter(inv =>
-    inv.invoiceDate >= startDate && inv.invoiceDate <= endDate
+    getInvoiceDate(inv) >= startDate && getInvoiceDate(inv) <= endDate
   )
 
   // Process each sale with full GST details and marketplace deductions
   const sales = filtered.map(inv => {
     const customerName = inv.partyName || 'Walk-in Customer'
     const invoiceNumber = inv.invoiceNumber
-    const invoiceDate = inv.invoiceDate
+    const invoiceDate = getInvoiceDate(inv)
     const grandTotal = inv.grandTotal
 
     // === MARKETPLACE DEDUCTIONS (for correct taxable value) ===
@@ -2601,10 +2617,10 @@ export async function getSalesRegister(startDate: string, endDate: string) {
     taxableValue = Math.max(0, taxableValue)
 
     // Get weighted average GST rate from items
-    const itemsWithTax = inv.items.filter((item: any) => (item.taxRate || item.gstRate || 0) > 0)
+    const itemsWithTax = getInvoiceItems(inv).filter((item: any) => (item.taxRate || item.gstRate || 0) > 0)
     const avgGstRate = itemsWithTax.length > 0
       ? itemsWithTax.reduce((sum: number, item: any) => sum + (item.taxRate || item.gstRate || 0), 0) / itemsWithTax.length
-      : (inv.items[0] as any)?.taxRate || (inv.items[0] as any)?.gstRate || 18 // Default 18% if no rate
+      : (getInvoiceItems(inv)[0] as any)?.taxRate || (getInvoiceItems(inv)[0] as any)?.gstRate || 18 // Default 18% if no rate
 
     // === GST CALCULATION (CGST/SGST vs IGST) ===
     // Determine if inter-state or intra-state
@@ -2624,9 +2640,9 @@ export async function getSalesRegister(startDate: string, endDate: string) {
       }
     } else {
       // For offline sales, use the invoice's stored GST amounts
-      cgst = inv.items.reduce((sum, item) => sum + (item.cgstAmount || 0), 0)
-      sgst = inv.items.reduce((sum, item) => sum + (item.sgstAmount || 0), 0)
-      igst = inv.items.reduce((sum, item) => sum + (item.igstAmount || 0), 0)
+      cgst = getInvoiceItems(inv).reduce((sum, item) => sum + (item.cgstAmount || 0), 0)
+      sgst = getInvoiceItems(inv).reduce((sum, item) => sum + (item.sgstAmount || 0), 0)
+      igst = getInvoiceItems(inv).reduce((sum, item) => sum + (item.igstAmount || 0), 0)
     }
 
     const totalOutputTax = cgst + sgst + igst
@@ -2648,7 +2664,7 @@ export async function getSalesRegister(startDate: string, endDate: string) {
     const paymentDate = inv.payment?.status === 'paid' ? invoiceDate : null
 
     // HSN details (from first item - can be expanded for multiple HSNs)
-    const firstItem = inv.items[0] || {}
+    const firstItem = getInvoiceItems(inv)[0] || {}
     const hsnCode = (firstItem as any).hsnCode || 'N/A'
     const description = (firstItem as any).description || (firstItem as any).itemName || 'N/A'
     const gstRate = (firstItem as any).taxRate || (firstItem as any).gstRate || avgGstRate
@@ -2718,7 +2734,7 @@ export async function getSalesRegister(startDate: string, endDate: string) {
       // Classification
       saleType,
       eInvoiceIRN: inv.eInvoiceIRN || null,
-      items: inv.items
+      items: getInvoiceItems(inv)
     }
   })
 
@@ -2791,7 +2807,7 @@ export async function getSalesRegister(startDate: string, endDate: string) {
 
   return {
     period: { startDate, endDate },
-    sales: sales.sort((a, b) => a.invoiceDate.localeCompare(b.invoiceDate)),
+    sales: sales.sort((a, b) => getInvoiceDate(a).localeCompare(getInvoiceDate(b))),
     summary,
     platformBreakdown,
     gstRateBreakdown,
@@ -2800,3 +2816,4 @@ export async function getSalesRegister(startDate: string, endDate: string) {
     calculationNote: 'Taxable Value = Invoice Value - Shipping Charged - TCS - TDS - Marketplace Fees. Output Tax = Taxable Value × GST Rate.'
   }
 }
+
