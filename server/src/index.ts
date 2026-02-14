@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import { loadEnv } from './env'
 import { initDb, openDb } from './db'
+import { ensureDefaultAdmin } from './bootstrapAdmin'
 import { buildAuthRouter } from './routes/auth'
 import { buildEntityRouter } from './routes/entity'
 import { requireAuth } from './auth'
@@ -12,6 +13,7 @@ async function main() {
 
   const db = openDb(env)
   await initDb(db)
+  await ensureDefaultAdmin(db, env)
 
   const app = express()
 

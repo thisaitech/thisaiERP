@@ -24,6 +24,10 @@ const envSchema = z.object({
 
   JWT_SECRET: z.string().min(16).default('dev-secret-change-me-please'),
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  DEFAULT_ADMIN_EMAIL: z.string().email().optional(),
+  DEFAULT_ADMIN_PASSWORD: z.string().optional(),
+  DEFAULT_ADMIN_NAME: z.string().optional(),
+  DEFAULT_ADMIN_COMPANY: z.string().optional(),
 }).superRefine((env, ctx) => {
   if (env.DB_DRIVER !== 'mysql') return
 
@@ -58,6 +62,10 @@ export function loadEnv(): Env {
 
     JWT_SECRET: process.env.JWT_SECRET,
     CORS_ORIGIN: process.env.CORS_ORIGIN,
+    DEFAULT_ADMIN_EMAIL: process.env.DEFAULT_ADMIN_EMAIL,
+    DEFAULT_ADMIN_PASSWORD: process.env.DEFAULT_ADMIN_PASSWORD,
+    DEFAULT_ADMIN_NAME: process.env.DEFAULT_ADMIN_NAME,
+    DEFAULT_ADMIN_COMPANY: process.env.DEFAULT_ADMIN_COMPANY,
   })
 
   if (!parsed.success) {

@@ -1,6 +1,6 @@
 type ApiErrorPayload = { error?: string; message?: string }
 
-const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8787/api'
+const API_BASE = (import.meta as any).env?.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8787/api' : '/api')
 
 function getToken(): string | null {
   return localStorage.getItem('auth_token')
@@ -48,4 +48,3 @@ export function apiPut<T>(path: string, body?: unknown): Promise<T> {
 export function apiDelete<T>(path: string): Promise<T> {
   return request<T>(path, { method: 'DELETE' })
 }
-
