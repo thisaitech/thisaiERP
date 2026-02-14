@@ -1,4 +1,6 @@
-import 'dotenv/config'
+import { config as loadEnvFile } from 'dotenv'
+import fs from 'node:fs'
+import path from 'node:path'
 import express from 'express'
 import cors from 'cors'
 import { loadEnv } from './env'
@@ -9,6 +11,13 @@ import { buildEntityRouter } from './routes/entity'
 import { requireAuth } from './auth'
 
 async function main() {
+  const envFiles = [path.resolve(process.cwd(), '.env'), path.resolve(process.cwd(), '..', '.env')]
+  for (const file of envFiles) {
+    if (fs.existsSync(file)) {
+      loadEnvFile({ path: file, override: true })
+    }
+  }
+
   const env = loadEnv()
 
   const db = openDb(env)
