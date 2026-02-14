@@ -1,48 +1,27 @@
-# Construction CRM Module
+# Admissions CRM Module
 
-A modular CRM package for construction businesses that integrates with ERP systems.
+Student admissions CRM (lead pipeline) for ThisAI ERP.
 
 ## Features
 
-- Lead management pipeline
-- Site visit scheduling and tracking
-- Requirements collection and drawing management
-- Quotation generation and revision tracking
-- Project handover to ERP
-- Activity timeline and audit logs
-- File attachments and document management
-- Role-based permissions
-- Mobile responsive design
+- Dashboard (pipeline overview, follow-ups, performance insights)
+- Leads list (search, filters, quick actions)
+- Admissions pipeline board (drag and drop between stages)
+- Settings (lead sources, lost reasons, programs, follow-up checklist, stage label overrides)
 
-## Architecture
+## Data / API
 
-This CRM module is designed as a self-contained package that can be integrated into existing ERP systems. It uses Firebase/Firestore for data storage and follows clean architecture principles.
+This module uses the ERP REST API (not Firebase):
 
-## Folder Structure
+- Leads: `GET/POST/PUT/DELETE /api/leads`
+- Settings: `GET/PUT /api/settings/admissions_crm_settings`
 
-```
-src/crm/
-├── components/          # React components
-├── pages/              # Page components
-├── services/           # Business logic and Firebase operations
-├── types/              # TypeScript type definitions
-├── utils/              # Utility functions
-├── hooks/              # Custom React hooks
-├── constants/          # Constants and configuration
-├── contexts/           # React contexts
-└── config.ts           # Module configuration
-```
+## Routing
 
-## Integration Points
+The main ERP route `/crm` renders `src/crm/pages/CRMPage.tsx` via `src/pages/CRM.tsx`.
 
-- **Navigation**: Add CRM routes to main navigation
-- **Permissions**: Configure role-based access
-- **Projects**: Handover confirmed leads to project module
-- **Storage**: Configure file upload destinations
+## Dev
 
-
-
-
-
-
+1. Start API: `cd server; npm run dev`
+2. Start web: `npm run dev`
 
