@@ -1,6 +1,18 @@
 type ApiErrorPayload = { error?: string; message?: string }
 
-const API_BASE = (import.meta as any).env?.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8787/api' : '/api')
+const configuredApiUrl = (
+  (import.meta as any).env?.VITE_API_URL ||
+  (import.meta as any).env?.VITE_API_BASE_URL ||
+  ''
+).trim()
+
+const isLocalHttpOrHttps = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(configuredApiUrl)
+const API_BASE =
+  import.meta.env.DEV
+    ? configuredApiUrl || 'http://localhost:8787/api'
+    : configuredApiUrl && !isLocalHttpOrHttps
+      ? configuredApiUrl
+      : '/api'
 
 function getToken(): string | null {
   return localStorage.getItem('auth_token')
