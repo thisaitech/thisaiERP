@@ -30,11 +30,42 @@ function isPriority(value: any): value is CRMPriority {
   return typeof value === 'string' && (PRIORITIES as string[]).includes(value)
 }
 
+function mapLegacyStage(value: string): CRMStage | null {
+  const s = String(value || '').trim().toLowerCase()
+  if (!s) return null
+
+  // Construction-style legacy pipeline keys.
+  if (s === 'lead_created' || s === 'lead created' || s === 'new' || s === 'open') return 'enquiry_received'
+  if (s === 'qualified') return 'contacted'
+  if (s === 'site_visit_scheduled' || s === 'site visit scheduled') return 'counselling_scheduled'
+  if (s === 'requirements_collected' || s === 'requirements collected') return 'documents_collected'
+  if (s === 'drawing_prepared' || s === 'drawing prepared') return 'application_submitted'
+  if (s === 'quotation_sent' || s === 'quotation sent') return 'fee_discussion'
+  if (s === 'negotiation') return 'fee_discussion'
+  if (s === 'confirmed' || s === 'won' || s === 'converted') return 'admitted'
+  if (s === 'waiting') return 'waiting'
+  if (s === 'lost') return 'lost'
+
+  // Admissions-style legacy keys.
+  if (s === 'enquiry_received' || s === 'enquiry received') return 'enquiry_received'
+  if (s === 'contacted') return 'contacted'
+  if (s === 'counselling_scheduled' || s === 'counselling scheduled') return 'counselling_scheduled'
+  if (s === 'counselling_completed' || s === 'counselling completed') return 'counselling_completed'
+  if (s === 'application_submitted' || s === 'application submitted') return 'application_submitted'
+  if (s === 'documents_collected' || s === 'documents collected') return 'documents_collected'
+  if (s === 'fee_discussion' || s === 'fee discussion') return 'fee_discussion'
+  if (s === 'admitted') return 'admitted'
+
+  return null
+}
+
 function inferStageFromLegacy(lead: any): CRMStage {
-  const legacy = String(lead?.status || '').toLowerCase()
-  if (legacy === 'converted') return 'admitted'
-  if (legacy === 'lost') return 'lost'
-  if (legacy === 'contacted') return 'contacted'
+  const fromStage = mapLegacyStage(String(lead?.stage || ''))
+  if (fromStage) return fromStage
+
+  const fromStatus = mapLegacyStage(String(lead?.status || ''))
+  if (fromStatus) return fromStatus
+
   return 'enquiry_received'
 }
 
@@ -157,4 +188,3 @@ export async function saveSettings(settings: CRMSettings): Promise<CRMSettings> 
     updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : now,
   }
 }
-
