@@ -3,7 +3,7 @@ import { Eye, Pencil, Plus, Trash, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { cn } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
-import { createParty, getParties } from '../services/partyService'
+import { createParty, getParties, updateParty } from '../services/partyService'
 import { getItems } from '../services/itemService'
 import { createInvoice, deleteInvoice, getInvoices, updateInvoice } from '../services/invoiceService'
 
@@ -189,6 +189,7 @@ const Sales: React.FC = () => {
     const typedStudentName = (selectedStudent?.name || selectedStudent?.companyName || studentSearch || '').trim()
     let admissionStudentId = selectedStudentId
     let admissionStudent: Student | null = selectedStudent
+    let shouldUpdateLinkedStudent = false
 
     if (!admissionStudentId) {
       if (!typedStudentName) {
@@ -198,6 +199,7 @@ const Sales: React.FC = () => {
       // In edit mode, never create a new student record automatically.
       if (formMode === 'edit') {
         admissionStudentId = editingPartyId || ''
+        shouldUpdateLinkedStudent = Boolean(editingPartyId)
       } else {
         try {
           const now = new Date().toISOString()
@@ -247,6 +249,29 @@ const Sales: React.FC = () => {
     try {
       const now = new Date().toISOString()
       const paidAmountNumber = Math.max(0, Number(paidAmount || 0))
+
+      // Keep Student section in sync when admission edit changes student details.
+      if (formMode === 'edit' && shouldUpdateLinkedStudent && editingPartyId) {
+        const studentNameForUpdate = typedStudentName || selectedStudent?.name || selectedStudent?.companyName || ''
+        if (studentNameForUpdate) {
+          await updateParty(editingPartyId, {
+            name: studentNameForUpdate,
+            companyName: studentNameForUpdate,
+            displayName: studentNameForUpdate,
+            phone: phone.trim(),
+            email: email.trim(),
+            updatedAt: now,
+          } as any)
+          admissionStudent = {
+            ...(admissionStudent || { id: editingPartyId }),
+            id: editingPartyId,
+            name: studentNameForUpdate,
+            companyName: studentNameForUpdate,
+            phone: phone.trim(),
+            email: email.trim(),
+          }
+        }
+      }
 
       const payload: any = {
         type: 'sale',
