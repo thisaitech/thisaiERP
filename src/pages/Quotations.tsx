@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Plus, Trash, ArrowRight, X, Calendar } from '@phosphor-icons/react'
+import { Plus, Trash, ArrowRight, X, Calendar, MagnifyingGlass, TrendUp, CheckCircle, Clock, FileText } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { getPartiesWithOutstanding } from '../services/partyService'
@@ -46,6 +46,10 @@ const Quotations: React.FC = () => {
   const courseInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const [studentDropdownRect, setStudentDropdownRect] = useState<{ left: number; top: number; width: number } | null>(null)
   const [courseDropdownRect, setCourseDropdownRect] = useState<{ left: number; top: number; width: number } | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [periodFilter, setPeriodFilter] = useState<'today' | 'week' | 'month' | 'year' | 'all' | 'custom'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'pending' | 'partial' | 'returned'>('all')
+  const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0])
 
   const [quotationNumber, setQuotationNumber] = useState(generateQuotationNumber())
   const [quotationDate, setQuotationDate] = useState(new Date().toISOString().split('T')[0])
@@ -286,6 +290,74 @@ const Quotations: React.FC = () => {
     }
   }, [items, discount])
 
+  const periodFilteredQuotations = useMemo(() => {
+    const now = new Date()
+    const today = now.toISOString().split('T')[0]
+    const weekAgo = new Date(now)
+    weekAgo.setDate(weekAgo.getDate() - 6)
+    const monthAgo = new Date(now)
+    monthAgo.setMonth(monthAgo.getMonth() - 1)
+    const yearAgo = new Date(now)
+    yearAgo.setFullYear(yearAgo.getFullYear() - 1)
+
+    return quotations.filter((q) => {
+      const qDate = String(q.quotationDate || q.createdAt || '').split('T')[0]
+      if (!qDate) return false
+
+      if (periodFilter === 'today') return qDate === today
+      if (periodFilter === 'week') return qDate >= weekAgo.toISOString().split('T')[0]
+      if (periodFilter === 'month') return qDate >= monthAgo.toISOString().split('T')[0]
+      if (periodFilter === 'year') return qDate >= yearAgo.toISOString().split('T')[0]
+      if (periodFilter === 'custom') return qDate === customDate
+      return true
+    })
+  }, [quotations, periodFilter, customDate])
+
+  const isPaidStatus = (q: Quotation) => q.status === 'converted'
+  const isPendingStatus = (q: Quotation) => q.status === 'draft' || q.status === 'sent'
+  const isPartialStatus = (q: Quotation) => q.status === 'accepted'
+  const isReturnedStatus = (q: Quotation) => q.status === 'rejected' || q.status === 'expired'
+
+  const filteredQuotations = useMemo(() => {
+    return periodFilteredQuotations.filter((q) => {
+      const query = searchQuery.trim().toLowerCase()
+      const matchesSearch =
+        !query ||
+        q.quotationNumber.toLowerCase().includes(query) ||
+        q.partyName.toLowerCase().includes(query) ||
+        String(q.partyPhone || '').toLowerCase().includes(query)
+
+      if (!matchesSearch) return false
+      if (statusFilter === 'all') return true
+      if (statusFilter === 'paid') return isPaidStatus(q)
+      if (statusFilter === 'pending') return isPendingStatus(q)
+      if (statusFilter === 'partial') return isPartialStatus(q)
+      if (statusFilter === 'returned') return isReturnedStatus(q)
+      return true
+    })
+  }, [periodFilteredQuotations, searchQuery, statusFilter])
+
+  const summary = useMemo(() => {
+    const quotationAmount = periodFilteredQuotations.reduce((sum, q) => sum + (Number(q.grandTotal) || 0), 0)
+    const collectedAmount = periodFilteredQuotations.filter(isPaidStatus).reduce((sum, q) => sum + (Number(q.grandTotal) || 0), 0)
+    const pendingAmount = periodFilteredQuotations.filter(isPendingStatus).reduce((sum, q) => sum + (Number(q.grandTotal) || 0), 0)
+    const invoiceCount = periodFilteredQuotations.filter((q) => q.status === 'converted').length
+    return { quotationAmount, collectedAmount, pendingAmount, invoiceCount }
+  }, [periodFilteredQuotations])
+
+  const statusCounts = useMemo(() => {
+    return {
+      all: periodFilteredQuotations.length,
+      paid: periodFilteredQuotations.filter(isPaidStatus).length,
+      pending: periodFilteredQuotations.filter(isPendingStatus).length,
+      partial: periodFilteredQuotations.filter(isPartialStatus).length,
+      returned: periodFilteredQuotations.filter(isReturnedStatus).length
+    }
+  }, [periodFilteredQuotations])
+
+  const formatCurrency = (value: number) =>
+    `₹${Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
   const handleSave = async () => {
     if (!partyName.trim()) {
       toast.error('Please enter student name')
@@ -412,18 +484,116 @@ const Quotations: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f5f7fa] dark:bg-slate-900 px-4 py-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-800 dark:text-white">{t.quotations.title}</h1>
-          <p className="text-xs text-slate-500">Create and manage course quotes</p>
+      <div className="space-y-3 mb-4">
+        <div className="grid grid-cols-1 2xl:grid-cols-12 gap-3">
+          <div className="2xl:col-span-9 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="rounded-2xl border-2 border-emerald-400 bg-white px-4 py-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-emerald-600">
+                <TrendUp size={18} />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-emerald-600">Quotations</div>
+                <div className="text-3xl font-bold text-slate-900">{formatCurrency(summary.quotationAmount)}</div>
+              </div>
+            </div>
+            <div className="rounded-2xl border-2 border-rose-400 bg-white px-4 py-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-rose-600">
+                <CheckCircle size={18} />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-rose-600">Collected</div>
+                <div className="text-3xl font-bold text-slate-900">{formatCurrency(summary.collectedAmount)}</div>
+              </div>
+            </div>
+            <div className="rounded-2xl border-2 border-amber-400 bg-white px-4 py-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-amber-600">
+                <Clock size={18} />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-amber-600">Pending</div>
+                <div className="text-3xl font-bold text-slate-900">{formatCurrency(summary.pendingAmount)}</div>
+              </div>
+            </div>
+            <div className="rounded-2xl border-2 border-sky-400 bg-white px-4 py-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-sky-600">
+                <FileText size={18} />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-sky-600">Invoice</div>
+                <div className="text-3xl font-bold text-slate-900">{summary.invoiceCount}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="2xl:col-span-3 flex flex-col gap-2">
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowForm(true)}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
+              >
+                <Plus size={16} weight="bold" />
+                Add
+              </button>
+            </div>
+            <div className="rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-end gap-1 flex-wrap">
+              {(['today', 'week', 'month', 'year', 'all', 'custom'] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setPeriodFilter(period)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                    periodFilter === period ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {period === 'today' ? 'Today' :
+                   period === 'week' ? 'Week' :
+                   period === 'month' ? 'Month' :
+                   period === 'year' ? 'Year' :
+                   period === 'all' ? 'All' : 'Custom'}
+                </button>
+              ))}
+            </div>
+            {periodFilter === 'custom' && (
+              <input
+                type="date"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                className="ml-auto w-44 px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white"
+              />
+            )}
+          </div>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
-        >
-          <Plus size={16} weight="bold" />
-          {t.quotations.newQuotation}
-        </button>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-2.5 flex flex-col xl:flex-row xl:items-center gap-2">
+          <div className="relative flex-1">
+            <MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search invoice, customer, mobile..."
+              className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap xl:justify-end">
+            {([
+              { key: 'all', label: 'All' },
+              { key: 'paid', label: 'Paid' },
+              { key: 'pending', label: 'Pending' },
+              { key: 'partial', label: 'Partial' },
+              { key: 'returned', label: 'Returned' }
+            ] as const).map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setStatusFilter(tab.key)}
+                className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
+                  statusFilter === tab.key ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+                title={`${statusCounts[tab.key]} records`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {showForm && (
@@ -799,16 +969,18 @@ const Quotations: React.FC = () => {
       <div className="bg-card rounded-xl border border-border shadow-sm p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold">Recent Course Quotes</h2>
-          <span className="text-xs text-muted-foreground">{quotations.length} total</span>
+          <span className="text-xs text-muted-foreground">{filteredQuotations.length} shown</span>
         </div>
 
         {loading ? (
           <div className="py-6 text-center text-sm text-muted-foreground">Loading...</div>
-        ) : quotations.length === 0 ? (
-          <div className="py-6 text-center text-sm text-muted-foreground">No course quotes yet</div>
+        ) : filteredQuotations.length === 0 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            {searchQuery || statusFilter !== 'all' || periodFilter !== 'all' ? 'No matching course quotes' : 'No course quotes yet'}
+          </div>
         ) : (
           <div className="space-y-2">
-            {quotations.map((quotation) => (
+            {filteredQuotations.map((quotation) => (
               <div
                 key={quotation.id}
                 className="border border-border rounded-lg p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
