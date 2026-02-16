@@ -128,15 +128,23 @@ const Layout = () => {
     { id: 'dash', path: '/', label: 'DASH', gradient: 'from-blue-500 to-blue-700', end: true },
     { id: 'admis', path: '/sales', label: 'ADMIS', gradient: 'from-violet-500 to-fuchsia-600', pageKey: 'sales' },
     { id: 'course', path: '/inventory', label: 'COURSE', gradient: 'from-amber-500 to-orange-600', pageKey: 'inventory', allowedRoles: ['admin', 'manager'] },
-    { id: 'student', path: '/parties', label: 'STUDENT', gradient: 'from-pink-500 to-rose-600', pageKey: 'parties', allowedRoles: ['admin', 'manager'] },
+    { id: 'student', path: '/parties', label: 'STUDENT', gradient: 'from-sky-500 to-cyan-600', pageKey: 'parties', allowedRoles: ['admin', 'manager'] },
     { id: 'report', path: '/reports', label: 'REPORT', gradient: 'from-rose-500 to-pink-600', pageKey: 'reports', allowedRoles: ['admin', 'manager'] },
     { id: 'spend', path: '/expenses', label: 'SPEND', gradient: 'from-orange-400 to-red-500', pageKey: 'expenses', allowedRoles: ['admin', 'manager'] },
     { id: 'quote', path: '/quotations', label: 'QUOTE', gradient: 'from-indigo-500 to-violet-600', pageKey: 'quotations' },
     { id: 'crm', path: '/crm', label: 'CRM', gradient: 'from-emerald-500 to-green-600', pageKey: 'crm', allowedRoles: ['admin', 'manager', 'sales'] },
-    { id: 'bank', path: '/banking', label: 'BANK', gradient: 'from-sky-500 to-blue-600', pageKey: 'banking', allowedRoles: ['admin', 'manager'] },
+    { id: 'bank', path: '/banking', label: 'BANK', gradient: 'from-pink-500 to-rose-600', pageKey: 'banking', allowedRoles: ['admin', 'manager'] },
     { id: 'setup', path: '/settings', label: 'SETUP', gradient: 'from-slate-500 to-slate-700', pageKey: 'settings', allowedRoles: ['admin'] },
   ]
   const filteredDesktopRailItems = desktopRailItems.filter(canAccessNavItem)
+  const topNavGradientByPath = desktopRailItems.reduce((acc, item) => {
+    acc[item.path] = item.gradient
+    return acc
+  }, {} as Record<string, string>)
+  const getTopNavActiveClass = (path: string) => cn(
+    "bg-gradient-to-br text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]",
+    topNavGradientByPath[path] || "from-blue-500 to-blue-700"
+  )
 
   const companyInitials = (() => {
     const name = (userData?.companyName || userData?.displayName || 'T').trim()
@@ -167,7 +175,7 @@ const Layout = () => {
                   className={({ isActive }) => cn(
                     "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                     isActive
-                      ? "bg-blue-600 text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]"
+                      ? getTopNavActiveClass('/')
                       : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
                   )}
                 >
@@ -182,7 +190,7 @@ const Layout = () => {
                     className={({ isActive }) => cn(
                       "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
-                        ? "bg-blue-600 text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]"
+                        ? getTopNavActiveClass(item.path)
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
                     )}
                   >
@@ -199,7 +207,7 @@ const Layout = () => {
                     className={({ isActive }) => cn(
                       "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
-                        ? "bg-blue-600 text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]"
+                        ? getTopNavActiveClass(item.path)
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
                     )}
                   >
@@ -216,7 +224,7 @@ const Layout = () => {
                     className={({ isActive }) => cn(
                       "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
-                        ? "bg-blue-600 text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]"
+                        ? getTopNavActiveClass(settingsItem.path)
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
                     )}
                   >
@@ -238,7 +246,7 @@ const Layout = () => {
                     )}
                     title={userData?.companyName || 'Company'}
                   >
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[11px] font-bold text-white shadow-sm">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-[11px] font-bold text-white shadow-sm">
                       {companyInitials}
                     </div>
                   </button>
@@ -313,7 +321,7 @@ const Layout = () => {
             transition-transform duration-200 hover:-translate-y-0.5"
           title={userData?.companyName || 'Company'}
         >
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-base font-bold text-white">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-base font-bold text-white">
             {companyInitials}
           </div>
         </button>
