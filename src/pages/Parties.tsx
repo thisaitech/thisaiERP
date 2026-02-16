@@ -357,6 +357,7 @@ const Parties = () => {
 
       const partyData: any = {
         type: partyType,
+        name: partyName.trim(),
         companyName: partyName.trim(),
         displayName: partyName.trim(),
         phone: formattedPhone,
