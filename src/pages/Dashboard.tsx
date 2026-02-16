@@ -142,6 +142,43 @@ const Dashboard = () => {
         return ''
       }
 
+      // Prefer exact event timestamps (createdAt/updatedAt) for recent activity,
+      // then fall back to date-only fields when time is unavailable.
+      const getTimestampFromRecord = (rec: any, fallbackCandidates: any[] = []) => {
+        const candidates = [
+          rec?.createdAt,
+          rec?.created_at,
+          rec?.updatedAt,
+          rec?.updated_at,
+          ...fallbackCandidates
+        ]
+
+        for (const candidate of candidates) {
+          if (candidate === null || candidate === undefined || candidate === '') continue
+
+          if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+            return candidate
+          }
+
+          const raw = String(candidate).trim()
+          if (!raw) continue
+
+          // Handle YYYY-MM-DD values deterministically in local time.
+          if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+            const [year, month, day] = raw.split('-').map(Number)
+            return new Date(year, month - 1, day, 12, 0, 0, 0).getTime()
+          }
+
+          const parsed = new Date(raw).getTime()
+          if (!Number.isNaN(parsed)) return parsed
+
+          const reparsed = new Date(raw.replace(' ', 'T')).getTime()
+          if (!Number.isNaN(reparsed)) return reparsed
+        }
+
+        return Date.now()
+      }
+
       const todayStr = today.toISOString().split('T')[0]
       const yesterdayStr = yesterday.toISOString().split('T')[0]
       const weekStartStr = weekStart.toISOString().split('T')[0]
@@ -379,8 +416,8 @@ const Dashboard = () => {
           amount: inv.total || inv.grandTotal || 0,
           status: (inv.paidAmount || 0) >= (inv.total || inv.grandTotal || 0) ? 'paid' :
                   (inv.paidAmount || 0) > 0 ? 'partial' : 'pending',
-          date: inv.invoiceDate || inv.date || inv.createdAt,
-          timestamp: new Date(inv.invoiceDate || inv.date || inv.createdAt).getTime(),
+          date: inv.createdAt || inv.updatedAt || inv.invoiceDate || inv.date,
+          timestamp: getTimestampFromRecord(inv, [inv.invoiceDate, inv.date]),
           icon: Receipt
         })
       })
@@ -394,8 +431,8 @@ const Dashboard = () => {
           amount: inv.total || inv.grandTotal || 0,
           status: (inv.paidAmount || 0) >= (inv.total || inv.grandTotal || 0) ? 'paid' :
                   (inv.paidAmount || 0) > 0 ? 'partial' : 'pending',
-          date: inv.billDate || inv.purchaseDate || inv.date || inv.createdAt,
-          timestamp: new Date(inv.billDate || inv.purchaseDate || inv.date || inv.createdAt).getTime(),
+          date: inv.createdAt || inv.updatedAt || inv.billDate || inv.purchaseDate || inv.date,
+          timestamp: getTimestampFromRecord(inv, [inv.billDate, inv.purchaseDate, inv.date]),
           icon: ShoppingCart
         })
       })
@@ -408,8 +445,8 @@ const Dashboard = () => {
           party: exp.category || exp.description || 'Expense',
           amount: exp.amount || 0,
           status: 'paid',
-          date: exp.date || exp.createdAt,
-          timestamp: new Date(exp.date || exp.createdAt).getTime(),
+          date: exp.createdAt || exp.date,
+          timestamp: getTimestampFromRecord(exp, [exp.date]),
           icon: Calculator
         })
       })
