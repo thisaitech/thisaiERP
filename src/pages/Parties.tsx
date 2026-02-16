@@ -30,7 +30,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { getPartyLedger, getPartyBalance, type LedgerEntry } from '../services/ledgerService'
-import { getParties, getPartiesWithOutstanding, createParty, updateParty, deleteParty, findPartyByName, findPartyByGSTIN, autoCleanupDuplicates } from '../services/partyService'
+import { getParties, getPartiesWithOutstanding, createParty, updateParty, deleteParty, findPartyByName, findPartyByGSTIN } from '../services/partyService'
 import { getPartySettings, type PartySettings } from '../services/settingsService'
 import { getInvoices } from '../services/invoiceService'
 import { toast } from 'sonner'
@@ -111,7 +111,6 @@ const Parties = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [partyToDelete, setPartyToDelete] = useState<any>(null)
   const [allInvoices, setAllInvoices] = useState<any[]>([])
-  const [isCleaningDuplicates, setIsCleaningDuplicates] = useState(false)
 
   // Party settings from Settings page
   const [partySettings, setPartySettings] = useState<PartySettings>(() => getPartySettings())
@@ -186,31 +185,6 @@ const Parties = () => {
   useEffect(() => {
     loadPartiesFromDatabase()
   }, [])
-
-  // Handle cleanup duplicates
-  const handleCleanupDuplicates = async () => {
-    try {
-      setIsCleaningDuplicates(true)
-      const result = await autoCleanupDuplicates()
-
-      if (result.partiesRemoved > 0) {
-        toast.success(`Removed ${result.partiesRemoved} duplicate records from ${result.groupsCleaned} groups`)
-        // Reload parties list
-        await loadPartiesFromDatabase()
-      } else {
-        toast.info('No duplicate records found')
-      }
-
-      if (result.errors.length > 0) {
-        console.warn('Cleanup errors:', result.errors)
-      }
-    } catch (error) {
-      console.error('Error cleaning up duplicates:', error)
-      toast.error('Failed to cleanup duplicates')
-    } finally {
-      setIsCleaningDuplicates(false)
-    }
-  }
 
   // Check for action parameter and auto-open modal
   useEffect(() => {
@@ -1012,27 +986,6 @@ const Parties = () => {
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
             {/* Action Buttons Row */}
             <div className="flex items-center gap-2">
-              {/* Cleanup Duplicates Button */}
-              <button
-                onClick={handleCleanupDuplicates}
-                disabled={isCleaningDuplicates}
-                className="h-9 px-3 rounded-xl bg-amber-50 text-xs text-amber-700 font-medium flex items-center gap-1.5
-                  shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                  dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                  hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                  active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  transition-all duration-200"
-                title="Remove duplicate records (case-insensitive)"
-              >
-                {isCleaningDuplicates ? (
-                  <ArrowsClockwise size={14} weight="bold" className="animate-spin" />
-                ) : (
-                  <ArrowsClockwise size={14} weight="bold" />
-                )}
-                <span className="hidden sm:inline">{isCleaningDuplicates ? 'Cleaning...' : 'Cleanup'}</span>
-              </button>
-
               {/* Add Student/Client Button */}
               <button
                 onClick={() => setShowAddModal(true)}

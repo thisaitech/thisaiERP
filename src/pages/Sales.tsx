@@ -192,7 +192,7 @@ const Sales: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900 p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Admissions</h1>
@@ -472,4 +472,3 @@ const Sales: React.FC = () => {
 }
 
 export default Sales
-

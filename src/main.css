@@ -77,6 +77,17 @@
     overscroll-behavior-x: none;
   }
 
+  /* Global font scale: make all rem-based text larger across the app */
+  html {
+    font-size: 17px;
+  }
+
+  @media (min-width: 1280px) {
+    html {
+      font-size: 18px;
+    }
+  }
+
   /* Hide scrollbar globally when invoice create page is active */
   body:has(.fixed-bottom-container),
   body:has(.fixed-bottom-container) main,

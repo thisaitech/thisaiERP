@@ -1,4 +1,8 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
+
+const serverDataPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'data.sqlite')
 
 const boolFromEnv = z.preprocess((v) => {
   if (v === undefined || v === null) return undefined
@@ -11,7 +15,7 @@ const boolFromEnv = z.preprocess((v) => {
 const envSchema = z.object({
   PORT: z.coerce.number().default(8787),
   DB_DRIVER: z.enum(['sqlite', 'mysql']).default('sqlite'),
-  DATABASE_PATH: z.string().default('./data.sqlite'),
+  DATABASE_PATH: z.string().default(serverDataPath),
 
   // Hostinger (MySQL/MariaDB) configuration.
   MYSQL_HOST: z.string().optional(),

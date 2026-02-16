@@ -890,7 +890,7 @@ const Dashboard = () => {
   // ==================== DESKTOP DASHBOARD (Neumorphic Soft UI Design) ====================
     const DesktopDashboard = () => (
       <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900 p-8">
-        <div className="max-w-screen-xl mx-auto space-y-8">
+        <div className="w-full space-y-8">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>

@@ -760,17 +760,16 @@ const Banking = () => {
         animate={{ opacity: 1, y: 0 }}
         className="mb-3"
       >
-        {/* Top Row: Period Filter Left + Action Button Right */}
-        <div className="flex items-center justify-between mb-3">
-          {/* Period Filter Tabs - Left Side */}
-          <div className="flex-shrink-0">
-            <div className="inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+        {/* Top Row: Date Filter + Action Button (Right Aligned) */}
+        <div className="flex items-center justify-end mb-3">
+          <div className="flex items-center gap-2">
+            <div className="inline-flex items-center gap-1.5 text-base bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-2 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
               {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
                 <button
                   key={period}
                   onClick={() => setSelectedPeriod(period)}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                    "px-4 py-2 rounded-lg text-base font-semibold transition-all whitespace-nowrap",
                     selectedPeriod === period
                       ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
@@ -780,21 +779,19 @@ const Banking = () => {
                 </button>
               ))}
             </div>
+            <button
+              onClick={() => setShowAddAccount(true)}
+              className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
+                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
+                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
+                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
+                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
+                transition-all duration-200"
+            >
+              <Plus size={14} weight="bold" />
+              <span className="hidden sm:inline">{t.banking.addAccount}</span>
+            </button>
           </div>
-
-          {/* Action Button - Right Side */}
-          <button
-            onClick={() => setShowAddAccount(true)}
-            className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
-              shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-              dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-              hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-              active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-              transition-all duration-200"
-          >
-            <Plus size={14} weight="bold" />
-            <span className="hidden sm:inline">{t.banking.addAccount}</span>
-          </button>
         </div>
 
         {/* Stats Cards - Second Row */}

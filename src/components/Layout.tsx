@@ -10,6 +10,7 @@ import { cn } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
 import { signOut } from '../services/authService'
 import { canAccessPage, PagePermissions } from '../services/permissionsService'
+import { migrateLegacyLocalDataToApi } from '../services/legacyDataMigrationService'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -36,6 +37,29 @@ const Layout = () => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (!userData?.uid) return
+
+    let cancelled = false
+    migrateLegacyLocalDataToApi(userData.companyId)
+      .then(({ found, migrated }) => {
+        if (cancelled) return
+        if (migrated > 0) {
+          toast.success(`Recovered ${migrated} old record(s) from browser data`)
+        } else if (found > 0) {
+          // Legacy data was found but backend already had records for these modules.
+          toast.message('Legacy data found; keeping existing backend records')
+        }
+      })
+      .catch(() => {
+        // Silent fail; app should remain usable even if migration cannot run.
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [userData?.uid, userData?.companyId])
 
   const handleLogout = async () => {
     try {
@@ -80,27 +104,56 @@ const Layout = () => {
   // Settings item (shown separately)
   const settingsItem = { path: '/settings', label: t.nav.settings, icon: Gear, allowedRoles: ['admin'], pageKey: 'settings' as keyof PagePermissions }
 
-  const navigationItems = allNavigationItems.filter(item => {
+  const canAccessNavItem = (item: { pageKey?: keyof PagePermissions; allowedRoles?: string[] }) => {
+    if (!item.pageKey && !item.allowedRoles) return true
     if (!userData?.uid || !userData?.role) return false
     if (userData.role === 'admin') return true
     if (item.pageKey) return canAccessPage(userData.uid, userData.role, item.pageKey)
     return !item.allowedRoles || item.allowedRoles.includes(userData.role)
-  })
+  }
 
-  const filteredMoreMenuItems = moreMenuItems.filter(item => {
-    if (!userData?.uid || !userData?.role) return false
-    if (userData.role === 'admin') return true
-    if (item.pageKey) return canAccessPage(userData.uid, userData.role, item.pageKey)
-    return !item.allowedRoles || item.allowedRoles.includes(userData.role)
-  })
-
+  const navigationItems = allNavigationItems.filter(canAccessNavItem)
+  const filteredMoreMenuItems = moreMenuItems.filter(canAccessNavItem)
   const canAccessSettings = userData?.role === 'admin' || (userData?.uid && userData?.role && settingsItem.pageKey && canAccessPage(userData.uid, userData.role, settingsItem.pageKey))
+
+  const desktopRailItems: Array<{
+    id: string;
+    path: string;
+    label: string;
+    gradient: string;
+    pageKey?: keyof PagePermissions;
+    allowedRoles?: string[];
+    end?: boolean;
+  }> = [
+    { id: 'dash', path: '/', label: 'DASH', gradient: 'from-blue-500 to-blue-700', end: true },
+    { id: 'admis', path: '/sales', label: 'ADMIS', gradient: 'from-violet-500 to-fuchsia-600', pageKey: 'sales' },
+    { id: 'course', path: '/inventory', label: 'COURSE', gradient: 'from-amber-500 to-orange-600', pageKey: 'inventory', allowedRoles: ['admin', 'manager'] },
+    { id: 'student', path: '/parties', label: 'STUDENT', gradient: 'from-pink-500 to-rose-600', pageKey: 'parties', allowedRoles: ['admin', 'manager'] },
+    { id: 'report', path: '/reports', label: 'REPORT', gradient: 'from-rose-500 to-pink-600', pageKey: 'reports', allowedRoles: ['admin', 'manager'] },
+    { id: 'spend', path: '/expenses', label: 'SPEND', gradient: 'from-orange-400 to-red-500', pageKey: 'expenses', allowedRoles: ['admin', 'manager'] },
+    { id: 'quote', path: '/quotations', label: 'QUOTE', gradient: 'from-indigo-500 to-violet-600', pageKey: 'quotations' },
+    { id: 'crm', path: '/crm', label: 'CRM', gradient: 'from-emerald-500 to-green-600', pageKey: 'crm', allowedRoles: ['admin', 'manager', 'sales'] },
+    { id: 'bank', path: '/banking', label: 'BANK', gradient: 'from-sky-500 to-blue-600', pageKey: 'banking', allowedRoles: ['admin', 'manager'] },
+    { id: 'setup', path: '/settings', label: 'SETUP', gradient: 'from-slate-500 to-slate-700', pageKey: 'settings', allowedRoles: ['admin'] },
+  ]
+  const filteredDesktopRailItems = desktopRailItems.filter(canAccessNavItem)
+
+  const companyInitials = (() => {
+    const name = (userData?.companyName || userData?.displayName || 'T').trim()
+    const initials = name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(w => w[0]?.toUpperCase())
+      .join('')
+    return initials || 'T'
+  })()
 
   return (
     <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900 text-slate-800 dark:text-slate-200">
       {/* Desktop Navigation - Neumorphic Style */}
-      <header className="sticky top-0 z-50 hidden lg:block py-2 px-3 bg-[#e4ebf5] dark:bg-slate-900">
-        <div className="max-w-[1920px] mx-auto">
+      <header className="sticky top-0 z-50 hidden lg:block py-2 px-3 lg:pl-[112px] bg-[#e4ebf5] dark:bg-slate-900">
+        <div className="w-full">
           <div className="flex items-center justify-between h-11 px-3 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
             shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
             dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
@@ -112,7 +165,7 @@ const Layout = () => {
                   to="/"
                   end
                   className={({ isActive }) => cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-200",
+                    "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                     isActive
                       ? "bg-blue-600 text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]"
                       : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
@@ -127,7 +180,7 @@ const Layout = () => {
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-200",
+                      "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
                         ? "bg-blue-600 text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]"
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
@@ -144,7 +197,7 @@ const Layout = () => {
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-200",
+                      "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
                         ? "bg-blue-600 text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]"
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
@@ -161,7 +214,7 @@ const Layout = () => {
                     key="__settings"
                     to={settingsItem.path}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-200",
+                      "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
                         ? "bg-blue-600 text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]"
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
@@ -186,16 +239,7 @@ const Layout = () => {
                     title={userData?.companyName || 'Company'}
                   >
                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[11px] font-bold text-white shadow-sm">
-                      {(() => {
-                        const name = (userData?.companyName || userData?.displayName || 'T').trim()
-                        const initials = name
-                          .split(/\s+/)
-                          .filter(Boolean)
-                          .slice(0, 2)
-                          .map(w => w[0]?.toUpperCase())
-                          .join('')
-                        return initials || 'T'
-                      })()}
+                      {companyInitials}
                     </div>
                   </button>
 
@@ -235,6 +279,45 @@ const Layout = () => {
           </div>
         </div>
       </header>
+
+      {/* Desktop Vertical Menu Bar (keeps top horizontal menu intact) */}
+      <aside className="fixed left-0 top-0 bottom-0 z-[55] hidden lg:flex w-[102px] flex-col items-center py-2 bg-[#dfe7f2] dark:bg-slate-900/90 border-r border-white/50 dark:border-slate-700">
+        <div className="flex-1 flex flex-col items-center gap-3 overflow-y-auto px-2 pt-1 pb-2">
+          {filteredDesktopRailItems.map((item) => (
+            <NavLink
+              key={item.id}
+              to={item.path}
+              end={item.end}
+              className={({ isActive }) => cn(
+                "w-[78px] h-[78px] rounded-2xl bg-gradient-to-br text-white text-[14px] font-extrabold tracking-wide leading-none",
+                "flex items-center justify-center text-center px-1 transition-all duration-200 shadow-[0_10px_20px_rgba(30,64,175,0.25)]",
+                item.gradient,
+                isActive
+                  ? "ring-2 ring-white/90 scale-[1.02]"
+                  : "opacity-95 hover:opacity-100 hover:-translate-y-0.5"
+              )}
+              title={item.label}
+            >
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (canAccessSettings) navigate('/settings')
+          }}
+          className="mb-2 w-[66px] h-[66px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-800 flex items-center justify-center
+            shadow-[5px_5px_10px_#c5ccd6,-5px_-5px_10px_#ffffff] dark:shadow-[5px_5px_10px_#1e293b,-5px_-5px_10px_#334155]
+            transition-transform duration-200 hover:-translate-y-0.5"
+          title={userData?.companyName || 'Company'}
+        >
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-base font-bold text-white">
+            {companyInitials}
+          </div>
+        </button>
+      </aside>
 
       {/* Mobile Header - Neumorphic */}
       <header className="sticky top-0 z-40 lg:hidden px-3 py-2 bg-[#e4ebf5] dark:bg-slate-900">
@@ -394,7 +477,7 @@ const Layout = () => {
         )}
       </AnimatePresence>
 
-      <main className="max-w-[1800px] mx-auto px-3 py-2">
+      <main className="w-full px-3 py-2 lg:pl-[112px]">
         <Outlet />
       </main>
 
