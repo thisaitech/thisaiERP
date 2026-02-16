@@ -1078,7 +1078,7 @@ const Parties = () => {
       </div>
 
       {/* Desktop Table Header (Hidden on Mobile) */}
-      <div className="hidden md:flex items-center px-3 py-2 mb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+      <div className="hidden md:flex items-center px-3 py-2 mb-1 text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">
         <div style={{ width: '18%' }}>Name</div>
         <div style={{ width: '12%' }}>Phone</div>
         <div style={{ width: '12%' }}>Record Type</div>

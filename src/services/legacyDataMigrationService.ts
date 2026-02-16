@@ -7,7 +7,7 @@ type MigrationSpec = {
   apiPath: string
 }
 
-const MIGRATION_VERSION = 'v1'
+const MIGRATION_VERSION = 'v2'
 
 const migrationSpecs: MigrationSpec[] = [
   { storageKey: 'thisai_crm_items', apiPath: '/items' },
@@ -40,6 +40,7 @@ export async function migrateLegacyLocalDataToApi(companyId?: string): Promise<{
 
   let found = 0
   let migrated = 0
+  let hadErrors = false
 
   for (const spec of migrationSpecs) {
     const legacyRows = readLegacyRows(spec.storageKey)
@@ -55,23 +56,38 @@ export async function migrateLegacyLocalDataToApi(companyId?: string): Promise<{
       return { found, migrated }
     }
 
-    // If backend already has rows for this entity, skip migration to avoid duplicates.
-    if (existing.length > 0) continue
+    // Import only missing rows by ID so partial datasets can still be recovered.
+    const existingIds = new Set(
+      existing
+        .map((row) => row?.id)
+        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+    )
 
     for (const row of legacyRows) {
       if (!row || typeof row !== 'object') continue
       const payload: any = { ...row }
-      if (!payload.id) delete payload.id
+      const rowId = typeof payload.id === 'string' ? payload.id : undefined
+      if (rowId && existingIds.has(rowId)) continue
+
+      // Let backend generate an id when legacy id is missing/invalid.
+      if (!rowId || rowId.trim().length === 0) delete payload.id
+
       try {
-        await apiPost(spec.apiPath, payload)
+        const created = await apiPost<any>(spec.apiPath, payload)
+        const createdId = created?.data?.id || created?.id || payload.id
+        if (typeof createdId === 'string' && createdId.trim().length > 0) {
+          existingIds.add(createdId)
+        }
         migrated += 1
       } catch {
-        // Ignore individual row errors and continue.
+        // Keep going for other rows and retry in future app loads.
+        hadErrors = true
       }
     }
   }
 
-  localStorage.setItem(flagKey, '1')
+  if (!hadErrors) {
+    localStorage.setItem(flagKey, '1')
+  }
   return { found, migrated }
 }
-

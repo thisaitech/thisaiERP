@@ -1272,7 +1272,7 @@ const Inventory = () => {
       </div>
 
       {/* Desktop Table Header (Hidden on Mobile) */}
-      <div className="hidden md:flex items-center px-3 py-2 mb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex-shrink-0">
+      <div className="hidden md:flex items-center px-3 py-2 mb-1 text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex-shrink-0">
         <div style={{ width: '20%' }}>{t.inventory.itemName}</div>
         <div style={{ width: '12%' }}>{t.inventory.category}</div>
         <div style={{ width: '10%' }} className="text-right">{t.inventory.stock}</div>
