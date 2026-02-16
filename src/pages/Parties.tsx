@@ -32,7 +32,7 @@ import { cn } from '../lib/utils'
 import { getPartyLedger, getPartyBalance, type LedgerEntry } from '../services/ledgerService'
 import { getParties, getPartiesWithOutstanding, createParty, updateParty, deleteParty, findPartyByName, findPartyByGSTIN } from '../services/partyService'
 import { getPartySettings, type PartySettings } from '../services/settingsService'
-import { getInvoices } from '../services/invoiceService'
+import { getInvoices, updateInvoice } from '../services/invoiceService'
 import { toast } from 'sonner'
 import { validateCustomerName, validatePhoneNumber, validateGSTIN } from '../utils/inputValidation'
 import { getPartyName } from '../utils/partyUtils'
@@ -432,10 +432,67 @@ const Parties = () => {
           }
         }
 
+        const oldPartySnapshot = parties.find((p) => p.id === editingPartyId)
+
         // Update existing party
         const success = await updateParty(editingPartyId, partyData)
 
         if (success) {
+          // Sync student details to related admissions so Admissions page reflects updates automatically.
+          if (partyType === 'customer') {
+            try {
+              const normalizeName = (value: any) => String(value || '').trim().toLowerCase()
+              const normalizePhone = (value: any) => String(value || '').replace(/\D/g, '')
+              const oldNames = Array.from(new Set([
+                normalizeName((oldPartySnapshot as any)?.name),
+                normalizeName((oldPartySnapshot as any)?.displayName),
+                normalizeName((oldPartySnapshot as any)?.companyName),
+                normalizeName(getPartyName(oldPartySnapshot as any)),
+              ].filter(Boolean)))
+              const oldPhones = Array.from(new Set([
+                normalizePhone((oldPartySnapshot as any)?.phone),
+              ].filter(Boolean)))
+
+              const salesInvoices = await getInvoices('sale')
+              const linkedAdmissions = (salesInvoices || []).filter((inv: any) => {
+                if (inv.partyId === editingPartyId) return true
+
+                const invName = normalizeName(inv.partyName)
+                const invPhone = normalizePhone(inv.phone)
+                const nameMatch = Boolean(invName) && oldNames.includes(invName)
+                const phoneMatch = Boolean(invPhone) && oldPhones.some((p) => p === invPhone || p.endsWith(invPhone) || invPhone.endsWith(p))
+                return nameMatch || phoneMatch
+              })
+
+              await Promise.all(
+                linkedAdmissions.map((inv: any) =>
+                  updateInvoice(inv.id, {
+                    partyId: editingPartyId,
+                    partyName: partyName.trim(),
+                    phone: formattedPhone,
+                    email: partyEmail?.trim() || '',
+                  } as any)
+                )
+              )
+
+              setAllInvoices((prev: any[]) =>
+                prev.map((inv: any) => {
+                  const matched = linkedAdmissions.some((a: any) => a.id === inv.id)
+                  if (!matched) return inv
+                  return {
+                    ...inv,
+                    partyId: editingPartyId,
+                    partyName: partyName.trim(),
+                    phone: formattedPhone,
+                    email: partyEmail?.trim() || '',
+                  }
+                })
+              )
+            } catch (syncError) {
+              console.error('Failed to sync admissions with updated student:', syncError)
+            }
+          }
+
           // Update party in local state
           setParties(parties.map(p => p.id === editingPartyId ? { ...p, ...partyData } : p))
           toast.success(`${partyType === 'customer' ? 'Student' : 'Client'} updated successfully!`)
