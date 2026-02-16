@@ -375,7 +375,7 @@ const Sales: React.FC = () => {
   }, [students, studentSearch])
 
   return (
-    <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900 p-6">
+    <div className="erp-module-page p-6">
       <div className="w-full space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -384,14 +384,14 @@ const Sales: React.FC = () => {
           </div>
           <button
             onClick={openNew}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
+            className="erp-module-primary-btn"
           >
             <Plus size={18} weight="bold" />
             New Admission
           </button>
         </div>
 
-        <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="erp-module-panel overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
             <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Recent Admissions</div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -400,7 +400,7 @@ const Sales: React.FC = () => {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300">
+              <thead className="erp-module-table-header bg-slate-50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300">
                 <tr>
                   <th className="text-left px-4 py-2 font-semibold">Admission No</th>
                   <th className="text-left px-4 py-2 font-semibold">Date</th>

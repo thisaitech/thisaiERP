@@ -36,7 +36,7 @@ export const PartySettingsSection = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h2 className="text-sm font-semibold mb-2 text-slate-800">Party Settings</h2>
+      <h2 className="text-lg font-semibold mb-2 text-slate-800">Party Settings</h2>
       <div className="space-y-6">
         <div className="p-4 bg-muted/50 rounded-lg space-y-3">
           <h3 className="font-medium">Party Preferences</h3>
@@ -70,12 +70,12 @@ export const PartySettingsSection = () => {
         </div>
 
         <div>
-          <label className="block text-[10px] font-medium mb-1 text-slate-600">Default Credit Period (Days)</label>
+          <label className="block text-sm font-medium mb-1 text-slate-600">Default Credit Period (Days)</label>
           <input
             type="number"
             value={partySettings.defaultCreditPeriod}
             onChange={(e) => setPartySettings({ ...partySettings, defaultCreditPeriod: parseInt(e.target.value) || 0 })}
-            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
+            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 focus:border-purple-400 focus:outline-none focus:ring-1 focus:ring-purple-100"
           />
         </div>
 
@@ -90,7 +90,7 @@ export const PartySettingsSection = () => {
                     setCategoryToDelete(category);
                     setShowDeleteCategoryModal(true);
                   }}
-                  className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
+                  className="px-2.5 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
                 >
                   Remove
                 </button>
@@ -110,7 +110,7 @@ export const PartySettingsSection = () => {
 
         <button
           onClick={handleSavePartySettings}
-          className="w-full px-3 py-1.5 bg-purple-600 text-white rounded-lg font-medium text-xs hover:bg-purple-700 transition-colors"
+          className="w-full px-4 py-2.5 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition-colors"
         >
           Save Party Settings
         </button>

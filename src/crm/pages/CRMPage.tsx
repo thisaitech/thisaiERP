@@ -33,14 +33,14 @@ const KPI: React.FC<{
   iconClass: string
 }> = ({ title, value, icon: Icon, borderClass, valueClass, iconClass }) => {
   return (
-    <div className={`rounded-2xl border bg-white dark:bg-slate-800 px-5 py-4 shadow-sm ${borderClass}`}>
+    <div className={`erp-module-stat-card ${borderClass}`}>
       <div className="flex items-center gap-3">
-        <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${iconClass}`}>
+        <div className={`erp-module-stat-icon ${iconClass}`}>
           <Icon size={18} />
         </div>
         <div>
-          <p className="text-sm text-slate-600 dark:text-slate-400">{title}</p>
-          <p className={`text-4xl leading-none font-bold mt-1 ${valueClass}`}>{value}</p>
+          <p className="erp-module-stat-title text-slate-600 dark:text-slate-400">{title}</p>
+          <p className={`erp-module-stat-value mt-1 ${valueClass}`}>{value}</p>
         </div>
       </div>
     </div>
@@ -101,8 +101,8 @@ const CRMPageInner: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="erp-module-page">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* KPI row */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-5">
           <KPI
@@ -140,7 +140,7 @@ const CRMPageInner: React.FC = () => {
 
           <button
             onClick={handleCreateLead}
-            className="h-full rounded-2xl bg-blue-600 text-white font-semibold text-xl px-6 py-4 shadow-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-3"
+            className="erp-module-primary-btn h-full justify-center text-base"
           >
             <Plus size={24} weight="bold" />
             New Lead
@@ -148,7 +148,7 @@ const CRMPageInner: React.FC = () => {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm mb-5">
+        <div className="erp-module-panel mb-5">
           <div className="flex overflow-x-auto">
             {crmTabs.map((tab) => {
               const Icon = tab.icon
@@ -157,10 +157,10 @@ const CRMPageInner: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-4 text-base font-medium whitespace-nowrap border-b-2 transition-colors ${
+                  className={`erp-module-filter-chip flex items-center gap-2 m-2 whitespace-nowrap ${
                     isActive
-                      ? 'border-blue-600 text-blue-600 bg-blue-50/60 dark:bg-blue-900/20'
-                      : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                      ? 'is-active'
+                      : 'border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300'
                   }`}
                 >
                   <Icon size={18} weight={isActive ? 'fill' : 'regular'} />
@@ -177,7 +177,7 @@ const CRMPageInner: React.FC = () => {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden"
+          className="erp-module-panel overflow-hidden"
         >
           {activeTab === 'overview' && <CRMDashboard />}
           {activeTab === 'leads' && (

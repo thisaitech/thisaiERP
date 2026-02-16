@@ -3416,6 +3416,260 @@
   }
 }
 
+@layer utilities {
+  /* Cross-page sizing system for module pages (Quotations/Banking/Settings). */
+  .erp-module-page {
+    min-height: 100vh;
+    background: #f5f7fa;
+    padding: 14px;
+  }
+
+  .dark .erp-module-page {
+    background: #0f172a;
+  }
+
+  .erp-module-panel {
+    background: #ffffff;
+    border: 1px solid #dbe4f0;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  }
+
+  .dark .erp-module-panel {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: none;
+  }
+
+  .erp-module-stat-card {
+    min-height: 104px;
+    border-radius: 16px;
+    border-width: 2px;
+    background: #ffffff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dark .erp-module-stat-card {
+    background: #1e293b;
+  }
+
+  .erp-module-stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .dark .erp-module-stat-icon {
+    background: #334155;
+  }
+
+  .erp-module-stat-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .erp-module-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .erp-module-stat-card-compact {
+    min-height: 88px;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .erp-module-stat-card-compact .erp-module-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .erp-module-stat-card-compact .erp-module-stat-title {
+    font-size: 0.88rem;
+  }
+
+  .erp-module-stat-card-compact .erp-module-stat-value {
+    font-size: 1.55rem;
+  }
+
+  /* Normalize legacy KPI card markup still used by a few pages. */
+  .erp-legacy-kpi-grid {
+    align-items: stretch;
+  }
+
+  .erp-legacy-kpi-shell {
+    min-height: 108px;
+    border-radius: 16px;
+  }
+
+  .erp-legacy-kpi-button {
+    min-height: 104px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .erp-legacy-kpi-button span[class*='text-[8px]'] {
+    font-size: 0.95rem !important;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  .erp-legacy-kpi-button span[class*='text-xs md:text-xl'] {
+    font-size: 2rem !important;
+    line-height: 1.1;
+    font-weight: 700;
+  }
+
+  .erp-module-filter-wrap {
+    border-radius: 14px;
+    border: 1px solid #dbe4f0;
+    background: #ffffff;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .dark .erp-module-filter-wrap {
+    border-color: #334155;
+    background: #1e293b;
+  }
+
+  .erp-module-filter-chip {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #475569;
+    transition: all 0.2s ease;
+  }
+
+  .erp-module-filter-chip:hover {
+    background: #f1f5f9;
+  }
+
+  .dark .erp-module-filter-chip {
+    color: #cbd5e1;
+  }
+
+  .dark .erp-module-filter-chip:hover {
+    background: #334155;
+  }
+
+  .erp-module-filter-chip.is-active {
+    background: #2563eb;
+    color: #ffffff;
+  }
+
+  .erp-module-search-input {
+    width: 100%;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    color: #334155;
+  }
+
+  .dark .erp-module-search-input {
+    border-color: #334155;
+    background: #1e293b;
+    color: #e2e8f0;
+  }
+
+  .erp-module-search-input::placeholder {
+    color: #94a3b8;
+  }
+
+  .erp-module-primary-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 12px;
+    background: #2563eb;
+    color: #ffffff;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: background-color 0.2s ease;
+  }
+
+  .erp-module-primary-btn:hover {
+    background: #1d4ed8;
+  }
+
+  .erp-module-table-header th {
+    padding: 12px 14px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #334155;
+  }
+
+  .dark .erp-module-table-header th {
+    color: #cbd5e1;
+  }
+
+  /* ========================================
+     Global Typography Harmonization
+     Makes font scale consistent across all pages/modules
+     ======================================== */
+  .text-\[8px\],
+  .text-\[9px\],
+  .text-\[10px\],
+  .text-\[11px\] {
+    font-size: 0.9rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .text-xs {
+    font-size: 0.95rem !important;
+    line-height: 1.3rem !important;
+  }
+
+  .text-sm {
+    font-size: 1rem !important;
+    line-height: 1.45rem !important;
+  }
+
+  .text-base {
+    font-size: 1.05rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+
+  table thead th {
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em;
+  }
+}
+
 /* Waveform keyframe */
 @keyframes waveform {
 

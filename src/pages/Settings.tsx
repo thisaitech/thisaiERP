@@ -58,23 +58,20 @@ const Settings = () => {
     return null;
   };
 
-  const activeShadow = "shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]";
-  const inactiveShadow = "shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]";
-
   return (
-    <div className="overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3 bg-[#f5f7fa] dark:bg-slate-900 min-h-screen">
+    <div className="erp-module-page overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3">
       <div className="flex-shrink-0">
         <div className="mb-3">
-          <div className="flex items-center justify-center flex-wrap gap-2">
+          <div className="erp-module-filter-wrap justify-center">
             {settingsSections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setSelectedSection(section.id)}
                 className={cn(
-                  "px-4 py-3 rounded-xl text-base font-medium transition-all whitespace-nowrap flex items-center gap-2.5 duration-200",
+                  "erp-module-filter-chip flex items-center gap-2 whitespace-nowrap text-sm md:text-base",
                   selectedSection === section.id
-                    ? `bg-purple-600 text-white ${activeShadow}`
-                    : `bg-[#f5f7fa] dark:bg-slate-800 text-slate-600 dark:text-slate-400 ${inactiveShadow} hover:text-purple-600 dark:hover:text-purple-400`
+                    ? "is-active"
+                    : "text-slate-600 dark:text-slate-300"
                 )}
               >
                 <section.icon size={18} weight={selectedSection === section.id ? "duotone" : "regular"} />
@@ -86,7 +83,7 @@ const Settings = () => {
       </div>
 
       <div className="mt-2">
-        <div className="bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-4 shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff] dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
+        <div className="erp-module-panel p-4">
           <Suspense fallback={<Loading />}>
             {renderSection()}
           </Suspense>

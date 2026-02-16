@@ -1019,7 +1019,7 @@ const Inventory = () => {
   })
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col p-3 sm:p-4 lg:p-4 pb-2 bg-[#f5f7fa] dark:bg-slate-900">
+    <div className="erp-module-page h-screen overflow-hidden flex flex-col p-3 sm:p-4 lg:p-4 pb-2">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -1029,12 +1029,12 @@ const Inventory = () => {
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
           {/* Left Side: KPI Cards - Rectangular filling space */}
-          <div className="flex-1 grid grid-cols-4 gap-1.5 md:gap-3">
+          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-4 gap-1.5 md:gap-3">
             {/* Total Items Card - Blue Theme */}
-            <div className="p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
                 onClick={() => setActiveTab('all')}
-                className="w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+                className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
               >
                 <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
                   <Package size={20} weight="duotone" className="text-blue-500" />
@@ -1047,10 +1047,10 @@ const Inventory = () => {
             </div>
 
             {/* Low Stock Card - Amber Theme */}
-            <div className="p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 shadow-[6px_6px_12px_rgba(245,158,11,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(245,158,11,0.18),-8px_-8px_16px_#ffffff] transition-all">
+            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 shadow-[6px_6px_12px_rgba(245,158,11,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(245,158,11,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
                 onClick={() => setActiveTab('low')}
-                className="w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+                className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
               >
                 <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
                   <WarningCircle size={20} weight="duotone" className="text-amber-500" />
@@ -1063,10 +1063,10 @@ const Inventory = () => {
             </div>
 
             {/* Out of Stock Card - Red Theme */}
-            <div className="p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
+            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
                 onClick={() => setActiveTab('out')}
-                className="w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+                className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
               >
                 <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
                   <X size={20} weight="bold" className="text-red-500" />
@@ -1079,9 +1079,9 @@ const Inventory = () => {
             </div>
 
             {/* Stock Value Card - Green Theme */}
-            <div className="p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
+            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
-                className="w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+                className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
               >
                 <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
                   <CurrencyInr size={20} weight="duotone" className="text-green-500" />
@@ -1105,19 +1105,14 @@ const Inventory = () => {
                 setShowAddModal(true)
                 console.log('🟢 showAddModal set to TRUE')
               }}
-              className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
-                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                transition-all duration-200"
+              className="erp-module-primary-btn"
             >
               <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">{t.inventory.addItem}</span>
             </button>
 
             {/* Date Filter Tabs */}
-            <div className="relative inline-flex items-center gap-1 text-xs bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+            <div className="relative erp-module-filter-wrap">
               {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
                 <button
                   key={period}
@@ -1129,12 +1124,7 @@ const Inventory = () => {
                       setShowCustomDatePicker(false)
                     }
                   }}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
-                    selectedPeriod === period
-                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                  )}
+                  className={cn('erp-module-filter-chip', selectedPeriod === period && 'is-active')}
                 >
                   {period === 'custom' && customStartDate && customEndDate
                     ? `${new Date(customStartDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} - ${new Date(customEndDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
@@ -1210,22 +1200,22 @@ const Inventory = () => {
               placeholder={t.inventory.searchByNameSku}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2.5 bg-[#f5f7fa] dark:bg-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 outline-none shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155] transition-all"
+              className="erp-module-search-input pl-9 pr-3"
             />
           </div>
 
           {/* Category Filter Pills - Right Side */}
           <div className="flex-shrink-0">
-            <div className="inline-flex items-center gap-1 bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-1.5 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+            <div className="erp-module-filter-wrap">
               {categories.slice(0, 6).map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all whitespace-nowrap",
+                    "erp-module-filter-chip",
                     selectedCategory === cat.id
-                      ? "bg-[#f5f7fa] dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                      ? "is-active"
+                      : "border border-slate-200 dark:border-slate-600"
                   )}
                 >
                   {cat.name} ({cat.count})
@@ -1260,10 +1250,10 @@ const Inventory = () => {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap",
+              "erp-module-filter-chip",
               activeTab === tab.id
-                ? "bg-[#f5f7fa] dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                ? "is-active"
+                : "border border-slate-200 dark:border-slate-600"
             )}
           >
             {tab.label} ({tab.count})
@@ -1272,7 +1262,7 @@ const Inventory = () => {
       </div>
 
       {/* Desktop Table Header (Hidden on Mobile) */}
-      <div className="hidden md:flex items-center px-3 py-2 mb-1 text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex-shrink-0">
+      <div className="erp-module-table-header hidden md:flex items-center px-3 py-2 mb-1 text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex-shrink-0">
         <div style={{ width: '20%' }}>{t.inventory.itemName}</div>
         <div style={{ width: '12%' }}>{t.inventory.category}</div>
         <div style={{ width: '10%' }} className="text-right">{t.inventory.stock}</div>
@@ -3593,3 +3583,4 @@ const Inventory = () => {
 }
 
 export default Inventory
+

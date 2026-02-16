@@ -753,7 +753,7 @@ const Banking = () => {
   const netWorth = totalAssets - totalLoanOutstanding  // Assets - Liabilities
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] dark:bg-slate-900 p-3 pb-20 lg:pb-6">
+    <div className="erp-module-page pb-20 lg:pb-6">
       {/* Modern Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -763,16 +763,14 @@ const Banking = () => {
         {/* Top Row: Date Filter + Action Button (Right Aligned) */}
         <div className="flex items-center justify-end mb-3">
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 text-base bg-[#f5f7fa] dark:bg-slate-800 rounded-xl p-2 shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
+            <div className="erp-module-filter-wrap">
               {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
                 <button
                   key={period}
                   onClick={() => setSelectedPeriod(period)}
                   className={cn(
-                    "px-4 py-2 rounded-lg text-base font-semibold transition-all whitespace-nowrap",
-                    selectedPeriod === period
-                      ? "bg-blue-600 text-white shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                    "erp-module-filter-chip whitespace-nowrap",
+                    selectedPeriod === period && "is-active"
                   )}
                 >
                   {period.charAt(0).toUpperCase() + period.slice(1)}
@@ -781,12 +779,7 @@ const Banking = () => {
             </div>
             <button
               onClick={() => setShowAddAccount(true)}
-              className="h-9 px-4 rounded-xl bg-blue-600 text-xs text-white font-semibold flex items-center gap-1.5
-                shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.15)]
-                transition-all duration-200"
+              className="erp-module-primary-btn text-xs sm:text-sm"
             >
               <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">{t.banking.addAccount}</span>
@@ -794,75 +787,45 @@ const Banking = () => {
           </div>
         </div>
 
-        {/* Stats Cards - Second Row */}
-        <div className="grid grid-cols-4 gap-1.5 md:gap-3 mb-3">
-          {/* Available Balance Card - Blue Theme */}
-          <button className="bg-blue-50 rounded-lg md:rounded-2xl p-1.5 md:p-4 shadow-[10px_10px_20px_#b8d4f5,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8d4f5,-15px_-15px_30px_#ffffff] transition-all duration-200">
-            <div className="hidden md:flex items-center justify-between mb-3">
-              <span className="text-sm text-blue-600 font-medium">{t.banking.availableBalance}</span>
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8d4f5,inset_-3px_-3px_6px_#ffffff]">
-                <Bank size={20} weight="duotone" className="text-blue-600" />
-              </div>
+                {/* Stats Cards - Second Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-3">
+          <button className="erp-module-stat-card border-blue-400 text-left">
+            <div className="erp-module-stat-icon text-blue-600">
+              <Bank size={20} weight="duotone" />
             </div>
-            <div className="flex flex-col items-center md:items-start">
-              <span className="md:hidden text-[8px] text-blue-600 font-medium">Balance</span>
-              <div className="text-xs md:text-2xl font-bold text-blue-700">₹{(availableBalance / 100000).toFixed(2)}L</div>
+            <div className="min-w-0">
+              <div className="erp-module-stat-title text-blue-600">{t.banking.availableBalance}</div>
+              <div className="erp-module-stat-value text-blue-700">₹{(availableBalance / 100000).toFixed(2)}L</div>
             </div>
           </button>
 
-          {/* Cash in Hand Card - Green Theme */}
-          <button className="bg-green-50 rounded-lg md:rounded-2xl p-1.5 md:p-4 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8e0c8,-15px_-15px_30px_#ffffff] transition-all duration-200">
-            <div className="hidden md:flex items-center justify-between mb-3">
-              <span className="text-sm text-green-600 font-medium">{t.banking.cashInHand}</span>
-              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]">
-                <Wallet size={20} weight="duotone" className="text-green-600" />
-              </div>
+          <button className="erp-module-stat-card border-emerald-400 text-left">
+            <div className="erp-module-stat-icon text-emerald-600">
+              <Wallet size={20} weight="duotone" />
             </div>
-            <div className="flex flex-col items-center md:items-start">
-              <span className="md:hidden text-[8px] text-green-600 font-medium">Cash</span>
-              <div className="text-xs md:text-2xl font-bold text-green-700">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</div>
+            <div className="min-w-0">
+              <div className="erp-module-stat-title text-emerald-600">{t.banking.cashInHand}</div>
+              <div className="erp-module-stat-value text-emerald-700">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</div>
             </div>
           </button>
 
-          {/* Pending Cheques Card - Orange Theme */}
-          <button className="bg-orange-50 rounded-lg md:rounded-2xl p-1.5 md:p-4 shadow-[10px_10px_20px_#f5e0b8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5e0b8,-15px_-15px_30px_#ffffff] transition-all duration-200">
-            <div className="hidden md:flex items-center justify-between mb-3">
-              <span className="text-sm text-orange-600 font-medium">{t.banking.pendingCheques}</span>
-              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shadow-[inset_3px_3px_6px_#f5e0b8,inset_-3px_-3px_6px_#ffffff]">
-                <Receipt size={20} weight="duotone" className="text-orange-600" />
-              </div>
+          <button className="erp-module-stat-card border-amber-400 text-left">
+            <div className="erp-module-stat-icon text-amber-600">
+              <Receipt size={20} weight="duotone" />
             </div>
-            <div className="flex flex-col items-center md:items-start">
-              <span className="md:hidden text-[8px] text-orange-600 font-medium">Cheques</span>
-              <div className="text-xs md:text-2xl font-bold text-orange-700">{accounts.cheques.filter(ch => ch.status === 'pending').length}</div>
+            <div className="min-w-0">
+              <div className="erp-module-stat-title text-amber-600">{t.banking.pendingCheques}</div>
+              <div className="erp-module-stat-value text-amber-700">{accounts.cheques.filter(ch => ch.status === 'pending').length}</div>
             </div>
           </button>
 
-          {/* Net Worth Card - Dynamic Green/Red Theme */}
-          <button className={cn(
-            "rounded-lg md:rounded-2xl p-1.5 md:p-4 transition-all duration-200",
-            netWorth >= 0
-              ? "bg-green-50 shadow-[10px_10px_20px_#b8e0c8,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#b8e0c8,-15px_-15px_30px_#ffffff]"
-              : "bg-red-50 shadow-[10px_10px_20px_#f5c4c4,-10px_-10px_20px_#ffffff] hover:shadow-[15px_15px_30px_#f5c4c4,-15px_-15px_30px_#ffffff]"
-          )}>
-            <div className="hidden md:flex items-center justify-between mb-3">
-              <span className={cn("text-sm font-medium", netWorth >= 0 ? "text-green-600" : "text-red-600")}>{t.banking.netWorth}</span>
-              <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center",
-                netWorth >= 0 ? "bg-green-100 shadow-[inset_3px_3px_6px_#b8e0c8,inset_-3px_-3px_6px_#ffffff]" : "bg-red-100 shadow-[inset_3px_3px_6px_#f5c4c4,inset_-3px_-3px_6px_#ffffff]"
-              )}>
-                {netWorth >= 0 ?
-                  <TrendUp size={20} weight="duotone" className="text-green-600" /> :
-                  <TrendDown size={20} weight="duotone" className="text-red-500" />
-                }
-              </div>
+          <button className={cn("erp-module-stat-card text-left", netWorth >= 0 ? "border-emerald-400" : "border-rose-400")}>
+            <div className={cn("erp-module-stat-icon", netWorth >= 0 ? "text-emerald-600" : "text-rose-600")}>
+              {netWorth >= 0 ? <TrendUp size={20} weight="duotone" /> : <TrendDown size={20} weight="duotone" />}
             </div>
-            <div className="flex flex-col items-center md:items-start">
-              <span className={cn("md:hidden text-[8px] font-medium", netWorth >= 0 ? "text-green-600" : "text-red-600")}>Net Worth</span>
-              <div className={cn(
-                "text-xs md:text-2xl font-bold",
-                netWorth >= 0 ? "text-green-700" : "text-red-600"
-              )}>
+            <div className="min-w-0">
+              <div className={cn("erp-module-stat-title", netWorth >= 0 ? "text-emerald-600" : "text-rose-600")}>{t.banking.netWorth}</div>
+              <div className={cn("erp-module-stat-value", netWorth >= 0 ? "text-emerald-700" : "text-rose-700")}>
                 {netWorth >= 0 ? '+' : '-'}₹{(Math.abs(netWorth) / 100000).toFixed(1)}L
               </div>
             </div>
@@ -871,28 +834,25 @@ const Banking = () => {
       </motion.div>
 
       {/* Centered Filter Pills / Tabs */}
-      <div className="flex items-center justify-center gap-2 mb-3">
-        {[
-          { id: 'overview', label: t.banking.overview, icon: Bank },
-          { id: 'transactions', label: t.banking.transactions, icon: ArrowsLeftRight },
-          { id: 'razorpay', label: t.banking.razorpay, icon: CreditCard },
-          { id: 'cheques', label: t.banking.cheques, icon: Receipt },
-          { id: 'loans', label: t.banking.loans, icon: CreditCard }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setSelectedTab(tab.id)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-200",
-              selectedTab === tab.id
-                ? "bg-[#f5f7fa] dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-[3px_3px_6px_#e0e3e7,-3px_-3px_6px_#ffffff] dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-            )}
-          >
-            <tab.icon size={14} weight={selectedTab === tab.id ? "duotone" : "regular"} />
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex justify-center mb-3">
+        <div className="erp-module-filter-wrap justify-center">
+          {[
+            { id: 'overview', label: t.banking.overview, icon: Bank },
+            { id: 'transactions', label: t.banking.transactions, icon: ArrowsLeftRight },
+            { id: 'razorpay', label: t.banking.razorpay, icon: CreditCard },
+            { id: 'cheques', label: t.banking.cheques, icon: Receipt },
+            { id: 'loans', label: t.banking.loans, icon: CreditCard }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setSelectedTab(tab.id)}
+              className={cn("erp-module-filter-chip flex items-center gap-1.5", selectedTab === tab.id && "is-active")}
+            >
+              <tab.icon size={14} weight={selectedTab === tab.id ? "duotone" : "regular"} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div>
@@ -901,7 +861,7 @@ const Banking = () => {
         {selectedTab === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {/* Bank Accounts */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
+            <div className="erp-module-panel p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                   <Bank size={16} weight="duotone" className="text-blue-600" />
@@ -952,7 +912,7 @@ const Banking = () => {
             </div>
 
             {/* Cash in Hand */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
+            <div className="erp-module-panel p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                   <Wallet size={16} weight="duotone" className="text-green-600" />
@@ -1039,7 +999,7 @@ const Banking = () => {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-muted/50 border-b border-border">
+                <thead className="bg-muted/50 border-b border-border erp-module-table-header">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{t.banking.chequeNo}</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">{t.banking.party}</th>
@@ -1145,7 +1105,7 @@ const Banking = () => {
             {/* Stats Cards */}
             {isRazorpayConfigured() && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-card rounded-xl p-5 border border-border">
+                <div className="erp-module-panel p-5">
                   <div className="text-muted-foreground text-sm mb-1">{t.banking.totalCollected}</div>
                   <div className="text-2xl font-bold text-green-600">
                     ₹{razorpayStats.totalAmountCollected.toLocaleString('en-IN')}
@@ -1155,7 +1115,7 @@ const Banking = () => {
                   </div>
                 </div>
 
-                <div className="bg-card rounded-xl p-5 border border-border">
+                <div className="erp-module-panel p-5">
                   <div className="text-muted-foreground text-sm mb-1">{t.banking.pending}</div>
                   <div className="text-2xl font-bold text-amber-600">
                     ₹{razorpayStats.totalAmountPending.toLocaleString('en-IN')}
@@ -1165,7 +1125,7 @@ const Banking = () => {
                   </div>
                 </div>
 
-                <div className="bg-card rounded-xl p-5 border border-border">
+                <div className="erp-module-panel p-5">
                   <div className="text-muted-foreground text-sm mb-1">{t.banking.successRate}</div>
                   <div className="text-2xl font-bold text-primary">
                     {razorpayStats.totalTransactions > 0
@@ -1177,7 +1137,7 @@ const Banking = () => {
                   </div>
                 </div>
 
-                <div className="bg-card rounded-xl p-5 border border-border">
+                <div className="erp-module-panel p-5">
                   <div className="text-muted-foreground text-sm mb-1">{t.banking.totalLinks}</div>
                   <div className="text-2xl font-bold">{razorpayStats.totalTransactions}</div>
                   <div className="text-xs text-muted-foreground mt-1">{t.banking.allTime}</div>
@@ -1186,7 +1146,7 @@ const Banking = () => {
             )}
 
             {/* Transactions Table */}
-            <div className="bg-card rounded-xl border border-border overflow-hidden">
+            <div className="erp-module-panel overflow-hidden">
               <div className="p-4 border-b border-border flex items-center justify-between">
                 <h3 className="font-semibold flex items-center gap-2">
                   <CreditCard size={20} weight="duotone" className="text-indigo-600" />
@@ -1203,7 +1163,7 @@ const Banking = () => {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-muted/50">
+                    <thead className="bg-muted/50 erp-module-table-header">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Invoice</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Customer</th>
@@ -2217,3 +2177,4 @@ const Banking = () => {
 }
 
 export default Banking
+

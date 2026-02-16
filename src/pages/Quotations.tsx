@@ -7,6 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 import { getPartiesWithOutstanding } from '../services/partyService'
 import { getItems } from '../services/itemService'
 import { getPartyName } from '../utils/partyUtils'
+import { cn } from '../lib/utils'
 import {
   createQuotation,
   deleteQuotation,
@@ -341,7 +342,10 @@ const Quotations: React.FC = () => {
     const quotationAmount = periodFilteredQuotations.reduce((sum, q) => sum + (Number(q.grandTotal) || 0), 0)
     const collectedAmount = periodFilteredQuotations.filter(isPaidStatus).reduce((sum, q) => sum + (Number(q.grandTotal) || 0), 0)
     const pendingAmount = periodFilteredQuotations.filter(isPendingStatus).reduce((sum, q) => sum + (Number(q.grandTotal) || 0), 0)
-    return { quotationAmount, collectedAmount, pendingAmount }
+    const convertedToAdmissionAmount = periodFilteredQuotations
+      .filter(isPaidStatus)
+      .reduce((sum, q) => sum + (Number(q.grandTotal) || 0), 0)
+    return { quotationAmount, collectedAmount, pendingAmount, convertedToAdmissionAmount }
   }, [periodFilteredQuotations])
 
   const statusCounts = useMemo(() => {
@@ -482,57 +486,64 @@ const Quotations: React.FC = () => {
     (showForm && openCourseDropdownId ? { left: 16, top: 72, width: 520 } : null)
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] dark:bg-slate-900 px-4 py-4">
+    <div className="erp-module-page px-4 py-4">
       <div className="space-y-3 mb-4">
-        <div className="grid grid-cols-1 2xl:grid-cols-12 gap-3">
-          <div className="2xl:col-span-9 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            <div className="rounded-2xl border-2 border-emerald-400 bg-white px-4 py-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-emerald-600">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] gap-3">
+          <div className="min-w-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="erp-module-stat-card erp-module-stat-card-compact border-emerald-400 min-w-0">
+              <div className="erp-module-stat-icon text-emerald-600">
                 <TrendUp size={18} />
               </div>
               <div>
-                <div className="text-sm font-semibold text-emerald-600">Quotations</div>
-                <div className="text-3xl font-bold text-slate-900">{formatCurrency(summary.quotationAmount)}</div>
+                <div className="erp-module-stat-title text-emerald-600">Quotations</div>
+                <div className="erp-module-stat-value text-slate-900 dark:text-slate-100">{formatCurrency(summary.quotationAmount)}</div>
               </div>
             </div>
-            <div className="rounded-2xl border-2 border-rose-400 bg-white px-4 py-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-rose-600">
+            <div className="erp-module-stat-card erp-module-stat-card-compact border-rose-400 min-w-0">
+              <div className="erp-module-stat-icon text-rose-600">
                 <CheckCircle size={18} />
               </div>
               <div>
-                <div className="text-sm font-semibold text-rose-600">Collected</div>
-                <div className="text-3xl font-bold text-slate-900">{formatCurrency(summary.collectedAmount)}</div>
+                <div className="erp-module-stat-title text-rose-600">Collected</div>
+                <div className="erp-module-stat-value text-slate-900 dark:text-slate-100">{formatCurrency(summary.collectedAmount)}</div>
               </div>
             </div>
-            <div className="rounded-2xl border-2 border-amber-400 bg-white px-4 py-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-amber-600">
+            <div className="erp-module-stat-card erp-module-stat-card-compact border-amber-400 min-w-0">
+              <div className="erp-module-stat-icon text-amber-600">
                 <Clock size={18} />
               </div>
               <div>
-                <div className="text-sm font-semibold text-amber-600">Pending</div>
-                <div className="text-3xl font-bold text-slate-900">{formatCurrency(summary.pendingAmount)}</div>
+                <div className="erp-module-stat-title text-amber-600">Pending</div>
+                <div className="erp-module-stat-value text-slate-900 dark:text-slate-100">{formatCurrency(summary.pendingAmount)}</div>
+              </div>
+            </div>
+            <div className="erp-module-stat-card erp-module-stat-card-compact border-blue-400 min-w-0">
+              <div className="erp-module-stat-icon text-blue-600">
+                <ArrowRight size={18} />
+              </div>
+              <div>
+                <div className="erp-module-stat-title text-blue-600">Converted to Admission</div>
+                <div className="erp-module-stat-value text-slate-900 dark:text-slate-100">{formatCurrency(summary.convertedToAdmissionAmount)}</div>
               </div>
             </div>
           </div>
 
-          <div className="2xl:col-span-3 flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <div className="flex justify-end">
               <button
                 onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
+                className="erp-module-primary-btn"
               >
                 <Plus size={16} weight="bold" />
                 Add
               </button>
             </div>
-            <div className="rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-end gap-1 flex-wrap">
+            <div className="erp-module-filter-wrap justify-end">
               {(['today', 'week', 'month', 'year', 'all', 'custom'] as const).map((period) => (
                 <button
                   key={period}
                   onClick={() => setPeriodFilter(period)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                    periodFilter === period ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
+                  className={cn('erp-module-filter-chip', periodFilter === period && 'is-active')}
                 >
                   {period === 'today' ? 'Today' :
                    period === 'week' ? 'Week' :
@@ -547,20 +558,20 @@ const Quotations: React.FC = () => {
                 type="date"
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
-                className="ml-auto w-44 px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white"
+                className="ml-auto w-44 erp-module-search-input"
               />
             )}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-2.5 flex flex-col xl:flex-row xl:items-center gap-2">
+        <div className="erp-module-panel p-2.5 flex flex-col xl:flex-row xl:items-center gap-2">
           <div className="relative flex-1">
             <MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search invoice, customer, mobile..."
-              className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm"
+              className="erp-module-search-input pl-10 pr-3"
             />
           </div>
           <div className="flex items-center gap-2 flex-wrap xl:justify-end">
@@ -574,9 +585,7 @@ const Quotations: React.FC = () => {
               <button
                 key={tab.key}
                 onClick={() => setStatusFilter(tab.key)}
-                className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
-                  statusFilter === tab.key ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
+                className={cn('erp-module-filter-chip rounded-full', statusFilter === tab.key ? 'is-active' : 'border border-slate-200 dark:border-slate-600')}
                 title={`${statusCounts[tab.key]} records`}
               >
                 {tab.label}
@@ -587,18 +596,9 @@ const Quotations: React.FC = () => {
       </div>
 
       {showForm && (
-        <div className="bg-card rounded-xl border border-border shadow-sm p-4 mb-4">
-          {/* Debug panel (temporary): helps confirm dropdown state and loaded counts */}
-          <div className="mb-3 text-[10px] text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
-            <span>students: {students.length}</span>
-            <span>courses: {courses.length}</span>
-            <span>studentDropdown: {String(showStudentDropdown)}</span>
-            <span>studentRect: {resolvedStudentRect ? 'yes' : 'no'}</span>
-            <span>courseOpen: {openCourseDropdownId ? 'yes' : 'no'}</span>
-            <span>courseRect: {resolvedCourseRect ? 'yes' : 'no'}</span>
-          </div>
+        <div className="erp-module-panel p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold">{t.quotations.createNewQuotation}</h2>
+            <h2 className="text-base font-semibold">{t.quotations.createNewQuotation}</h2>
             <button
               onClick={() => {
                 setShowForm(false)
@@ -612,7 +612,7 @@ const Quotations: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="text-xs font-medium">Quote Number</label>
+              <label className="text-sm font-medium">Quote Number</label>
               <input
                 value={quotationNumber}
                 onChange={(e) => setQuotationNumber(e.target.value)}
@@ -620,7 +620,7 @@ const Quotations: React.FC = () => {
               />
             </div>
             <div>
-              <label className="text-xs font-medium">Quote Date</label>
+              <label className="text-sm font-medium">Quote Date</label>
               <div className="relative mt-1">
                 <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -632,7 +632,7 @@ const Quotations: React.FC = () => {
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium">{t.quotations.validUntil}</label>
+              <label className="text-sm font-medium">{t.quotations.validUntil}</label>
               <div className="relative mt-1">
                 <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -647,9 +647,9 @@ const Quotations: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
             <div>
-              <label className="text-xs font-medium">
+              <label className="text-sm font-medium">
                 {t.quotations.customerDetails}
-                <span className="ml-2 text-[10px] text-muted-foreground">({students.length})</span>
+                <span className="ml-2 text-xs text-muted-foreground">({students.length})</span>
               </label>
               <div className="relative mt-1">
                 <input
@@ -666,7 +666,7 @@ const Quotations: React.FC = () => {
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium">{t.quotations.phoneNumber}</label>
+              <label className="text-sm font-medium">{t.quotations.phoneNumber}</label>
               <input
                 value={partyPhone}
                 onChange={(e) => setPartyPhone(e.target.value)}
@@ -675,7 +675,7 @@ const Quotations: React.FC = () => {
               />
             </div>
             <div>
-              <label className="text-xs font-medium">{t.quotations.emailAddress}</label>
+              <label className="text-sm font-medium">{t.quotations.emailAddress}</label>
               <input
                 value={partyEmail}
                 onChange={(e) => setPartyEmail(e.target.value)}
@@ -684,7 +684,7 @@ const Quotations: React.FC = () => {
               />
             </div>
             <div>
-              <label className="text-xs font-medium">{t.quotations.billingAddress}</label>
+              <label className="text-sm font-medium">{t.quotations.billingAddress}</label>
               <input
                 value={partyAddress}
                 onChange={(e) => setPartyAddress(e.target.value)}
@@ -693,7 +693,7 @@ const Quotations: React.FC = () => {
               />
             </div>
             <div>
-              <label className="text-xs font-medium">City</label>
+              <label className="text-sm font-medium">City</label>
               <input
                 value={partyCity}
                 onChange={(e) => setPartyCity(e.target.value)}
@@ -702,7 +702,7 @@ const Quotations: React.FC = () => {
               />
             </div>
             <div>
-              <label className="text-xs font-medium">State</label>
+              <label className="text-sm font-medium">State</label>
               <input
                 value={partyState}
                 onChange={(e) => setPartyState(e.target.value)}
@@ -716,7 +716,7 @@ const Quotations: React.FC = () => {
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold">
                 {t.quotations.addItems}
-                <span className="ml-2 text-[10px] text-muted-foreground">({courses.length})</span>
+                <span className="ml-2 text-xs text-muted-foreground">({courses.length})</span>
               </h3>
               <button
                 onClick={() => setItems(prev => [...prev, buildEmptyItem()])}
@@ -788,7 +788,7 @@ const Quotations: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
-              <label className="text-xs font-medium">{t.quotations.notesOptional}</label>
+              <label className="text-sm font-medium">{t.quotations.notesOptional}</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -956,9 +956,9 @@ const Quotations: React.FC = () => {
         document.body
       )}
 
-      <div className="bg-card rounded-xl border border-border shadow-sm p-4">
+      <div className="erp-module-panel p-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold">Recent Course Quotes</h2>
+          <h2 className="text-base font-semibold">Recent Course Quotes</h2>
           <span className="text-xs text-muted-foreground">{filteredQuotations.length} shown</span>
         </div>
 
@@ -978,7 +978,7 @@ const Quotations: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm">{quotation.quotationNumber}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase">
                       {quotation.status}
                     </span>
                   </div>
