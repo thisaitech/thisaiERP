@@ -24,7 +24,9 @@ export function openDb(env: Env): DB {
   }
 
   // sqlite3 opens (and creates) the DB file at `DATABASE_PATH`.
-  return { driver: 'sqlite', sqlite: new sqlite3.Database(env.DATABASE_PATH) }
+  const sqlite = new sqlite3.Database(env.DATABASE_PATH)
+  sqlite.configure('busyTimeout', 5000)
+  return { driver: 'sqlite', sqlite }
 }
 
 export function closeDb(db: DB): Promise<void> {
@@ -127,6 +129,13 @@ export async function initDb(db: DB): Promise<void> {
     await ensureMysqlIndexes(db)
     return
   }
+
+  // SQLite performance tuning for production-like workload:
+  // WAL improves read/write concurrency and NORMAL reduces fsync overhead.
+  await run(db, `PRAGMA journal_mode = WAL`)
+  await run(db, `PRAGMA synchronous = NORMAL`)
+  await run(db, `PRAGMA temp_store = MEMORY`)
+  await run(db, `PRAGMA cache_size = -20000`)
 
   // Users table (auth)
   await run(
