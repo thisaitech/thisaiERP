@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Plus, Trash, ArrowRight, X, Calendar, MagnifyingGlass, TrendUp, CheckCircle, Clock, FileText } from '@phosphor-icons/react'
+import { Plus, Trash, ArrowRight, X, Calendar, MagnifyingGlass, TrendUp, CheckCircle, Clock } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { getPartiesWithOutstanding } from '../services/partyService'
@@ -341,8 +341,7 @@ const Quotations: React.FC = () => {
     const quotationAmount = periodFilteredQuotations.reduce((sum, q) => sum + (Number(q.grandTotal) || 0), 0)
     const collectedAmount = periodFilteredQuotations.filter(isPaidStatus).reduce((sum, q) => sum + (Number(q.grandTotal) || 0), 0)
     const pendingAmount = periodFilteredQuotations.filter(isPendingStatus).reduce((sum, q) => sum + (Number(q.grandTotal) || 0), 0)
-    const invoiceCount = periodFilteredQuotations.filter((q) => q.status === 'converted').length
-    return { quotationAmount, collectedAmount, pendingAmount, invoiceCount }
+    return { quotationAmount, collectedAmount, pendingAmount }
   }, [periodFilteredQuotations])
 
   const statusCounts = useMemo(() => {
@@ -486,7 +485,7 @@ const Quotations: React.FC = () => {
     <div className="min-h-screen bg-[#f5f7fa] dark:bg-slate-900 px-4 py-4">
       <div className="space-y-3 mb-4">
         <div className="grid grid-cols-1 2xl:grid-cols-12 gap-3">
-          <div className="2xl:col-span-9 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div className="2xl:col-span-9 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             <div className="rounded-2xl border-2 border-emerald-400 bg-white px-4 py-3 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-emerald-600">
                 <TrendUp size={18} />
@@ -512,15 +511,6 @@ const Quotations: React.FC = () => {
               <div>
                 <div className="text-sm font-semibold text-amber-600">Pending</div>
                 <div className="text-3xl font-bold text-slate-900">{formatCurrency(summary.pendingAmount)}</div>
-              </div>
-            </div>
-            <div className="rounded-2xl border-2 border-sky-400 bg-white px-4 py-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-sky-600">
-                <FileText size={18} />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-sky-600">Invoice</div>
-                <div className="text-3xl font-bold text-slate-900">{summary.invoiceCount}</div>
               </div>
             </div>
           </div>
