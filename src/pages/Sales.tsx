@@ -123,11 +123,25 @@ const Sales: React.FC = () => {
   const openExisting = (inv: any, mode: 'edit' | 'view') => {
     setFormMode(mode)
     setEditingAdmissionId(inv.id || '')
-    setEditingPartyId(inv.partyId || '')
     setInvoiceNumber(inv.invoiceNumber || genAdmissionNo())
     setInvoiceDate(((inv.invoiceDate || inv.date || inv.createdAt || '').toString()).slice(0, 10) || new Date().toISOString().split('T')[0])
 
-    const linkedStudent = inv.partyId ? students.find((s) => s.id === inv.partyId) : null
+    const invName = String(inv.partyName || '').trim().toLowerCase()
+    const invPhone = String(inv.phone || '').replace(/\D/g, '')
+    const linkedStudent =
+      students.find((s) => {
+        if (inv.partyId && s.id === inv.partyId) return true
+        const studentName = String(s.name || s.companyName || '').trim().toLowerCase()
+        const studentPhone = String(s.phone || '').replace(/\D/g, '')
+        const sameName = invName.length > 0 && studentName === invName
+        const samePhone =
+          invPhone.length > 0 &&
+          studentPhone.length > 0 &&
+          (studentPhone === invPhone || studentPhone.endsWith(invPhone) || invPhone.endsWith(studentPhone))
+        return sameName || samePhone
+      }) || null
+    setEditingPartyId(inv.partyId || linkedStudent?.id || '')
+
     if (linkedStudent) {
       setSelectedStudentId(linkedStudent.id)
       setStudentSearch('')
@@ -197,7 +211,27 @@ const Sales: React.FC = () => {
 
       // In edit mode, never create a new student record automatically.
       if (formMode === 'edit') {
-        admissionStudentId = editingPartyId || ''
+        const searchName = typedStudentName.toLowerCase()
+        const searchPhone = phone.replace(/\D/g, '')
+        const inferredStudent = students.find((s) => {
+          const studentName = String(s.name || s.companyName || '').trim().toLowerCase()
+          const studentPhone = String(s.phone || '').replace(/\D/g, '')
+          const sameName = searchName.length > 0 && studentName === searchName
+          const samePhone =
+            searchPhone.length > 0 &&
+            studentPhone.length > 0 &&
+            (studentPhone === searchPhone || studentPhone.endsWith(searchPhone) || searchPhone.endsWith(studentPhone))
+          return sameName || samePhone
+        })
+
+        if (inferredStudent) {
+          admissionStudentId = inferredStudent.id
+          admissionStudent = inferredStudent
+          setEditingPartyId(inferredStudent.id)
+          setSelectedStudentId(inferredStudent.id)
+        } else {
+          admissionStudentId = editingPartyId || ''
+        }
       } else {
         try {
           const now = new Date().toISOString()
@@ -289,7 +323,7 @@ const Sales: React.FC = () => {
         type: 'sale',
         invoiceNumber,
         invoiceDate,
-        partyId: admissionStudentId,
+        partyId: linkedStudentId || admissionStudentId,
         partyName: admissionStudent?.name || admissionStudent?.companyName || typedStudentName || 'Student',
         phone: phone || admissionStudent?.phone || '',
         email: email || admissionStudent?.email || '',
