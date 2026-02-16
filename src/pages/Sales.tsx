@@ -189,7 +189,6 @@ const Sales: React.FC = () => {
     const typedStudentName = (selectedStudent?.name || selectedStudent?.companyName || studentSearch || '').trim()
     let admissionStudentId = selectedStudentId
     let admissionStudent: Student | null = selectedStudent
-    let shouldUpdateLinkedStudent = false
 
     if (!admissionStudentId) {
       if (!typedStudentName) {
@@ -199,7 +198,6 @@ const Sales: React.FC = () => {
       // In edit mode, never create a new student record automatically.
       if (formMode === 'edit') {
         admissionStudentId = editingPartyId || ''
-        shouldUpdateLinkedStudent = Boolean(editingPartyId)
       } else {
         try {
           const now = new Date().toISOString()
@@ -251,10 +249,11 @@ const Sales: React.FC = () => {
       const paidAmountNumber = Math.max(0, Number(paidAmount || 0))
 
       // Keep Student section in sync when admission edit changes student details.
-      if (formMode === 'edit' && shouldUpdateLinkedStudent && editingPartyId) {
-        const studentNameForUpdate = typedStudentName || selectedStudent?.name || selectedStudent?.companyName || ''
+      const linkedStudentId = admissionStudentId || (formMode === 'edit' ? editingPartyId : '')
+      if (formMode === 'edit' && linkedStudentId) {
+        const studentNameForUpdate = typedStudentName || admissionStudent?.name || admissionStudent?.companyName || ''
         if (studentNameForUpdate) {
-          await updateParty(editingPartyId, {
+          await updateParty(linkedStudentId, {
             name: studentNameForUpdate,
             companyName: studentNameForUpdate,
             displayName: studentNameForUpdate,
@@ -263,13 +262,26 @@ const Sales: React.FC = () => {
             updatedAt: now,
           } as any)
           admissionStudent = {
-            ...(admissionStudent || { id: editingPartyId }),
-            id: editingPartyId,
+            ...(admissionStudent || { id: linkedStudentId }),
+            id: linkedStudentId,
             name: studentNameForUpdate,
             companyName: studentNameForUpdate,
             phone: phone.trim(),
             email: email.trim(),
           }
+          setStudents((prev) =>
+            prev.map((s) =>
+              s.id === linkedStudentId
+                ? {
+                    ...s,
+                    name: studentNameForUpdate,
+                    companyName: studentNameForUpdate,
+                    phone: phone.trim(),
+                    email: email.trim(),
+                  }
+                : s
+            )
+          )
         }
       }
 
