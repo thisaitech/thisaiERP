@@ -52,6 +52,7 @@ const Sales: React.FC = () => {
   const [showForm, setShowForm] = useState(false)
   const [formMode, setFormMode] = useState<'create' | 'edit' | 'view'>('create')
   const [editingAdmissionId, setEditingAdmissionId] = useState('')
+  const [editingPartyId, setEditingPartyId] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState(genAdmissionNo())
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0])
   const [studentSearch, setStudentSearch] = useState('')
@@ -96,6 +97,7 @@ const Sales: React.FC = () => {
   const resetForm = () => {
     setFormMode('create')
     setEditingAdmissionId('')
+    setEditingPartyId('')
     setInvoiceNumber(genAdmissionNo())
     setInvoiceDate(new Date().toISOString().split('T')[0])
     setStudentSearch('')
@@ -121,6 +123,7 @@ const Sales: React.FC = () => {
   const openExisting = (inv: any, mode: 'edit' | 'view') => {
     setFormMode(mode)
     setEditingAdmissionId(inv.id || '')
+    setEditingPartyId(inv.partyId || '')
     setInvoiceNumber(inv.invoiceNumber || genAdmissionNo())
     setInvoiceDate(((inv.invoiceDate || inv.date || inv.createdAt || '').toString()).slice(0, 10) || new Date().toISOString().split('T')[0])
 
@@ -192,40 +195,45 @@ const Sales: React.FC = () => {
         return toast.error('Please select or enter a student name')
       }
 
-      try {
-        const now = new Date().toISOString()
-        const newStudent = await createParty({
-          id: '',
-          type: 'customer' as any,
-          name: typedStudentName,
-          companyName: typedStudentName,
-          displayName: typedStudentName,
-          phone: phone.trim(),
-          email: email.trim(),
-          contacts: [],
-          billingAddress: {
-            street: '',
-            city: '',
-            state: '',
-            pinCode: '',
-            country: 'India',
-          },
-          sameAsShipping: true,
-          openingBalance: 0,
-          currentBalance: 0,
-          paymentTerms: 'Regular',
-          createdBy: userData?.displayName || 'Admissions',
-          isActive: true,
-          createdAt: now,
-          updatedAt: now,
-        } as any)
+      // In edit mode, never create a new student record automatically.
+      if (formMode === 'edit') {
+        admissionStudentId = editingPartyId || ''
+      } else {
+        try {
+          const now = new Date().toISOString()
+          const newStudent = await createParty({
+            id: '',
+            type: 'customer' as any,
+            name: typedStudentName,
+            companyName: typedStudentName,
+            displayName: typedStudentName,
+            phone: phone.trim(),
+            email: email.trim(),
+            contacts: [],
+            billingAddress: {
+              street: '',
+              city: '',
+              state: '',
+              pinCode: '',
+              country: 'India',
+            },
+            sameAsShipping: true,
+            openingBalance: 0,
+            currentBalance: 0,
+            paymentTerms: 'Regular',
+            createdBy: userData?.displayName || 'Admissions',
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+          } as any)
 
-        admissionStudentId = newStudent.id
-        admissionStudent = newStudent as any
-        setSelectedStudentId(newStudent.id)
-        setStudents((prev) => [newStudent as any, ...prev.filter((s) => s.id !== newStudent.id)])
-      } catch (e: any) {
-        return toast.error(e?.message || 'Failed to create student')
+          admissionStudentId = newStudent.id
+          admissionStudent = newStudent as any
+          setSelectedStudentId(newStudent.id)
+          setStudents((prev) => [newStudent as any, ...prev.filter((s) => s.id !== newStudent.id)])
+        } catch (e: any) {
+          return toast.error(e?.message || 'Failed to create student')
+        }
       }
     }
 
