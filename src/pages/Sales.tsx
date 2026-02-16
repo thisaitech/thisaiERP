@@ -3,7 +3,7 @@ import { Plus, Trash, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { cn } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
-import { getParties } from '../services/partyService'
+import { createParty, getParties } from '../services/partyService'
 import { getItems } from '../services/itemService'
 import { createInvoice, deleteInvoice, getInvoices } from '../services/invoiceService'
 
@@ -130,7 +130,52 @@ const Sales: React.FC = () => {
   }
 
   const handleSave = async () => {
-    if (!selectedStudentId) return toast.error('Please select a student')
+    const typedStudentName = (selectedStudent?.name || selectedStudent?.companyName || studentSearch || '').trim()
+    let admissionStudentId = selectedStudentId
+    let admissionStudent: Student | null = selectedStudent
+
+    if (!admissionStudentId) {
+      if (!typedStudentName) {
+        return toast.error('Please select or enter a student name')
+      }
+
+      try {
+        const now = new Date().toISOString()
+        const newStudent = await createParty({
+          id: '',
+          type: 'customer' as any,
+          name: typedStudentName,
+          companyName: typedStudentName,
+          displayName: typedStudentName,
+          phone: phone.trim(),
+          email: email.trim(),
+          contacts: [],
+          billingAddress: {
+            street: '',
+            city: '',
+            state: '',
+            pinCode: '',
+            country: 'India',
+          },
+          sameAsShipping: true,
+          openingBalance: 0,
+          currentBalance: 0,
+          paymentTerms: 'Regular',
+          createdBy: userData?.displayName || 'Admissions',
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        } as any)
+
+        admissionStudentId = newStudent.id
+        admissionStudent = newStudent as any
+        setSelectedStudentId(newStudent.id)
+        setStudents((prev) => [newStudent as any, ...prev.filter((s) => s.id !== newStudent.id)])
+      } catch (e: any) {
+        return toast.error(e?.message || 'Failed to create student')
+      }
+    }
+
     const cleanItems = items
       .map(recalcLine)
       .filter((l) => l.itemId && l.quantity > 0)
@@ -146,10 +191,10 @@ const Sales: React.FC = () => {
         type: 'sale',
         invoiceNumber,
         invoiceDate,
-        partyId: selectedStudentId,
-        partyName: selectedStudent?.name || selectedStudent?.companyName || studentSearch || 'Student',
-        phone: phone || selectedStudent?.phone || '',
-        email: email || selectedStudent?.email || '',
+        partyId: admissionStudentId,
+        partyName: admissionStudent?.name || admissionStudent?.companyName || typedStudentName || 'Student',
+        phone: phone || admissionStudent?.phone || '',
+        email: email || admissionStudent?.email || '',
         items: cleanItems,
         subtotal: total,
         total,
