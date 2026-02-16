@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Plus, Trash, X } from '@phosphor-icons/react'
+import { Eye, Pencil, Plus, Trash, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { cn } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
 import { createParty, getParties } from '../services/partyService'
 import { getItems } from '../services/itemService'
-import { createInvoice, deleteInvoice, getInvoices } from '../services/invoiceService'
+import { createInvoice, deleteInvoice, getInvoices, updateInvoice } from '../services/invoiceService'
 
 type Student = { id: string; name?: string; companyName?: string; phone?: string; email?: string }
 type Course = { id: string; name: string; sellingPrice?: number; unit?: string }
@@ -50,6 +50,8 @@ const Sales: React.FC = () => {
 
   // Create modal
   const [showForm, setShowForm] = useState(false)
+  const [formMode, setFormMode] = useState<'create' | 'edit' | 'view'>('create')
+  const [editingAdmissionId, setEditingAdmissionId] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState(genAdmissionNo())
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0])
   const [studentSearch, setStudentSearch] = useState('')
@@ -64,6 +66,8 @@ const Sales: React.FC = () => {
     () => students.find((s) => s.id === selectedStudentId) || null,
     [students, selectedStudentId]
   )
+  const isViewMode = formMode === 'view'
+  const modalTitle = formMode === 'create' ? 'New Admission' : formMode === 'edit' ? 'Edit Admission' : 'View Admission'
 
   const total = useMemo(() => items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0), [items])
 
@@ -90,6 +94,8 @@ const Sales: React.FC = () => {
   }, [])
 
   const resetForm = () => {
+    setFormMode('create')
+    setEditingAdmissionId('')
     setInvoiceNumber(genAdmissionNo())
     setInvoiceDate(new Date().toISOString().split('T')[0])
     setStudentSearch('')
@@ -112,6 +118,48 @@ const Sales: React.FC = () => {
     return { ...line, quantity: qty, rate, amount: qty * rate }
   }
 
+  const openExisting = (inv: any, mode: 'edit' | 'view') => {
+    setFormMode(mode)
+    setEditingAdmissionId(inv.id || '')
+    setInvoiceNumber(inv.invoiceNumber || genAdmissionNo())
+    setInvoiceDate(((inv.invoiceDate || inv.date || inv.createdAt || '').toString()).slice(0, 10) || new Date().toISOString().split('T')[0])
+
+    const linkedStudent = inv.partyId ? students.find((s) => s.id === inv.partyId) : null
+    if (linkedStudent) {
+      setSelectedStudentId(linkedStudent.id)
+      setStudentSearch('')
+      setPhone(inv.phone || linkedStudent.phone || '')
+      setEmail(inv.email || linkedStudent.email || '')
+    } else {
+      setSelectedStudentId('')
+      setStudentSearch(inv.partyName || '')
+      setPhone(inv.phone || '')
+      setEmail(inv.email || '')
+    }
+
+    const mappedItems: AdmissionItem[] = Array.isArray(inv.items)
+      ? inv.items.map((it: any, idx: number) => {
+          const match = courses.find((c) => c.id === it.itemId || (it.itemName && c.name === it.itemName) || (it.name && c.name === it.name))
+          const quantity = Number(it.quantity ?? it.qty ?? 1) || 1
+          const rate = Number(it.rate ?? it.price ?? match?.sellingPrice ?? 0) || 0
+          return recalcLine({
+            id: `line_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 6)}`,
+            itemId: it.itemId || match?.id || '',
+            itemName: it.itemName || it.name || match?.name || '',
+            quantity,
+            unit: it.unit || match?.unit || 'Course',
+            rate,
+            amount: Number(it.amount ?? quantity * rate) || quantity * rate,
+          })
+        })
+      : []
+
+    setItems(mappedItems.length > 0 ? mappedItems : [newLine()])
+    setNotes(inv.notes || '')
+    setPaidAmount(String(Number(inv.paidAmount || 0)))
+    setShowForm(true)
+  }
+
   const handlePickCourse = (lineId: string, courseId: string) => {
     const c = courses.find((x) => x.id === courseId)
     setItems((prev) =>
@@ -130,6 +178,11 @@ const Sales: React.FC = () => {
   }
 
   const handleSave = async () => {
+    if (isViewMode) {
+      setShowForm(false)
+      return
+    }
+
     const typedStudentName = (selectedStudent?.name || selectedStudent?.companyName || studentSearch || '').trim()
     let admissionStudentId = selectedStudentId
     let admissionStudent: Student | null = selectedStudent
@@ -202,17 +255,22 @@ const Sales: React.FC = () => {
         paidAmount: Math.min(paidAmountNumber, total),
         status: paidAmountNumber >= total ? 'paid' : paidAmountNumber > 0 ? 'partial' : 'pending',
         notes,
-        createdAt: now,
         updatedAt: now,
         createdByUserId: userData?.uid || '',
       }
 
-      await createInvoice(payload)
-      toast.success('Admission saved')
+      if (formMode === 'edit' && editingAdmissionId) {
+        const ok = await updateInvoice(editingAdmissionId, payload)
+        if (!ok) throw new Error('Admission not found')
+        toast.success('Admission updated')
+      } else {
+        await createInvoice({ ...payload, createdAt: now })
+        toast.success('Admission saved')
+      }
       setShowForm(false)
       await load()
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to save admission')
+      toast.error(e?.message || (formMode === 'edit' ? 'Failed to update admission' : 'Failed to save admission'))
     } finally {
       setSaving(false)
     }
@@ -282,13 +340,29 @@ const Sales: React.FC = () => {
                     <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">₹{Number(inv.total || inv.grandTotal || 0).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-2 text-right text-slate-600 dark:text-slate-300">₹{Number(inv.paidAmount || 0).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-2 text-right">
-                      <button
-                        onClick={() => handleDelete(inv.id)}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                        title="Delete"
-                      >
-                        <Trash size={16} />
-                      </button>
+                      <div className="inline-flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => openExisting(inv, 'view')}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                          title="View"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={() => openExisting(inv, 'edit')}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                          title="Edit"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(inv.id)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                          title="Delete"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -310,7 +384,7 @@ const Sales: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700">
-              <div className="font-bold text-slate-800 dark:text-slate-100">New Admission</div>
+              <div className="font-bold text-slate-800 dark:text-slate-100">{modalTitle}</div>
               <button
                 onClick={() => setShowForm(false)}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -326,6 +400,7 @@ const Sales: React.FC = () => {
                   <input
                     value={invoiceNumber}
                     onChange={(e) => setInvoiceNumber(e.target.value)}
+                    disabled={isViewMode}
                     className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                   />
                 </div>
@@ -335,6 +410,7 @@ const Sales: React.FC = () => {
                     type="date"
                     value={invoiceDate}
                     onChange={(e) => setInvoiceDate(e.target.value)}
+                    disabled={isViewMode}
                     className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                   />
                 </div>
@@ -351,6 +427,7 @@ const Sales: React.FC = () => {
                       if (paidAmount.trim() === '') setPaidAmount('0')
                     }}
                     onChange={(e) => setPaidAmount(e.target.value)}
+                    disabled={isViewMode}
                     className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                   />
                 </div>
@@ -366,9 +443,10 @@ const Sales: React.FC = () => {
                       setSelectedStudentId('')
                     }}
                     placeholder="Search student..."
+                    disabled={isViewMode}
                     className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                   />
-                  {!selectedStudentId && studentSearch.trim().length > 0 && (
+                  {!isViewMode && !selectedStudentId && studentSearch.trim().length > 0 && (
                     <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl">
                       {filteredStudents.map((s) => (
                         <button
@@ -405,6 +483,7 @@ const Sales: React.FC = () => {
                     <input
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
+                      disabled={isViewMode}
                       className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                     />
                   </div>
@@ -413,6 +492,7 @@ const Sales: React.FC = () => {
                     <input
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      disabled={isViewMode}
                       className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                     />
                   </div>
@@ -422,13 +502,15 @@ const Sales: React.FC = () => {
               <div className="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
                   <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Courses</div>
-                  <button
-                    type="button"
-                    onClick={() => setItems((prev) => [...prev, newLine()])}
-                    className="text-sm font-semibold text-blue-600 hover:text-blue-700"
-                  >
-                    + Add Course
-                  </button>
+                  {!isViewMode && (
+                    <button
+                      type="button"
+                      onClick={() => setItems((prev) => [...prev, newLine()])}
+                      className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                    >
+                      + Add Course
+                    </button>
+                  )}
                 </div>
                 <div className="p-4 space-y-3">
                   {items.map((line) => (
@@ -438,6 +520,7 @@ const Sales: React.FC = () => {
                         <select
                           value={line.itemId}
                           onChange={(e) => handlePickCourse(line.id, e.target.value)}
+                          disabled={isViewMode}
                           className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                         >
                           <option value="">Select course...</option>
@@ -456,6 +539,7 @@ const Sales: React.FC = () => {
                           onChange={(e) =>
                             setItems((prev) => prev.map((l) => (l.id === line.id ? recalcLine({ ...l, quantity: Number(e.target.value) }) : l)))
                           }
+                          disabled={isViewMode}
                           className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                         />
                       </div>
@@ -467,19 +551,22 @@ const Sales: React.FC = () => {
                           onChange={(e) =>
                             setItems((prev) => prev.map((l) => (l.id === line.id ? recalcLine({ ...l, rate: Number(e.target.value) }) : l)))
                           }
+                          disabled={isViewMode}
                           className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                         />
                       </div>
-                      <div className="md:col-span-1 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => setItems((prev) => prev.filter((l) => l.id !== line.id))}
-                          className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-red-600"
-                          title="Remove"
-                        >
-                          <Trash size={18} />
-                        </button>
-                      </div>
+                      {!isViewMode && (
+                        <div className="md:col-span-1 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setItems((prev) => prev.filter((l) => l.id !== line.id))}
+                            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-red-600"
+                            title="Remove"
+                          >
+                            <Trash size={18} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -495,6 +582,7 @@ const Sales: React.FC = () => {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
+                  disabled={isViewMode}
                   className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                 />
               </div>
@@ -505,18 +593,20 @@ const Sales: React.FC = () => {
                 onClick={() => setShowForm(false)}
                 className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
-                Cancel
+                {isViewMode ? 'Close' : 'Cancel'}
               </button>
-              <button
-                disabled={saving}
-                onClick={handleSave}
-                className={cn(
-                  'px-5 py-2 rounded-xl font-semibold text-white',
-                  saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-                )}
-              >
-                {saving ? 'Saving...' : 'Save Admission'}
-              </button>
+              {!isViewMode && (
+                <button
+                  disabled={saving}
+                  onClick={handleSave}
+                  className={cn(
+                    'px-5 py-2 rounded-xl font-semibold text-white',
+                    saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                  )}
+                >
+                  {saving ? (formMode === 'edit' ? 'Updating...' : 'Saving...') : (formMode === 'edit' ? 'Update Admission' : 'Save Admission')}
+                </button>
+              )}
             </div>
           </div>
         </div>
