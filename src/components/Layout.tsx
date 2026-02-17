@@ -11,9 +11,39 @@ import { useAuth } from '../contexts/AuthContext'
 import { signOut } from '../services/authService'
 import { canAccessPage, PagePermissions } from '../services/permissionsService'
 import { migrateLegacyLocalDataToApi } from '../services/legacyDataMigrationService'
+import { getItems } from '../services/itemService'
+import { getParties } from '../services/partyService'
+import { getInvoices } from '../services/invoiceService'
+import { getExpenses } from '../services/expenseService'
+import { getQuotations } from '../services/quotationService'
+import { getLeads } from '../services/leadService'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTheme } from '../contexts/ThemeContext'
+
+const routePrefetchers: Record<string, () => Promise<unknown>> = {
+  '/': () => import('../pages/Dashboard'),
+  '/sales': () => import('../pages/Sales'),
+  '/inventory': () => import('../pages/Inventory'),
+  '/parties': () => import('../pages/Parties'),
+  '/expenses': () => import('../pages/Expenses'),
+  '/quotations': () => import('../pages/Quotations'),
+  '/banking': () => import('../pages/Banking'),
+  '/crm': () => import('../pages/CRM'),
+  '/settings': () => import('../pages/Settings'),
+  '/reports': () => import('../pages/ReportsNew'),
+  '/company-info': () => import('../pages/CompanyInfo'),
+}
+
+function scheduleIdle(callback: () => void, timeoutMs: number = 1200): { cancel: () => void } {
+  const w = window as any
+  if (typeof w.requestIdleCallback === 'function') {
+    const id = w.requestIdleCallback(callback, { timeout: timeoutMs })
+    return { cancel: () => w.cancelIdleCallback?.(id) }
+  }
+  const t = window.setTimeout(callback, Math.max(0, timeoutMs))
+  return { cancel: () => window.clearTimeout(t) }
+}
 
 const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -22,6 +52,17 @@ const Layout = () => {
   const navigate = useNavigate()
   const { userData } = useAuth()
   const userDropdownRef = useRef<HTMLDivElement>(null)
+
+  const prefetchRoute = (path: string) => {
+    const fn = routePrefetchers[path]
+    if (!fn) return
+    try {
+      // Fire-and-forget. Vite will fetch the chunk and cache it in the browser.
+      fn()
+    } catch {
+      // ignore
+    }
+  }
 
   useEffect(() => {
     document.body.dataset.mobileMenuOpen = isMobileMenuOpen ? 'true' : 'false'
@@ -60,6 +101,43 @@ const Layout = () => {
       cancelled = true
     }
   }, [userData?.uid, userData?.companyId])
+
+  // Speed: prefetch route chunks + warm the most-used data after login during idle time.
+  useEffect(() => {
+    if (!userData?.uid) return
+    let cancelled = false
+
+    const initial = scheduleIdle(() => {
+      if (cancelled) return
+
+      // Prefetch common modules to make first navigation feel instant.
+      ;['/sales', '/inventory', '/parties', '/expenses', '/quotations', '/banking', '/crm'].forEach(prefetchRoute)
+
+      // Warm API caches so modules render without extra spinners.
+      Promise.allSettled([
+        getItems(),
+        getParties('both'),
+        getInvoices(),
+        getExpenses(),
+        getQuotations(),
+        getLeads(),
+      ]).catch(() => {
+        // ignore
+      })
+    }, 800)
+
+    // Prefetch heavy reports chunk later (or on hover).
+    const reportsTimer = window.setTimeout(() => {
+      if (cancelled) return
+      prefetchRoute('/reports')
+    }, 6000)
+
+    return () => {
+      cancelled = true
+      initial.cancel()
+      window.clearTimeout(reportsTimer)
+    }
+  }, [userData?.uid])
 
   const handleLogout = async () => {
     try {
@@ -172,6 +250,7 @@ const Layout = () => {
                   key="__dashboard"
                   to="/"
                   end
+                  onMouseEnter={() => prefetchRoute('/')}
                   className={({ isActive }) => cn(
                     "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                     isActive
@@ -187,6 +266,7 @@ const Layout = () => {
                   <NavLink
                     key={item.path}
                     to={item.path}
+                    onMouseEnter={() => prefetchRoute(item.path)}
                     className={({ isActive }) => cn(
                       "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
@@ -204,6 +284,7 @@ const Layout = () => {
                   <NavLink
                     key={item.path}
                     to={item.path}
+                    onMouseEnter={() => prefetchRoute(item.path)}
                     className={({ isActive }) => cn(
                       "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
@@ -221,6 +302,7 @@ const Layout = () => {
                   <NavLink
                     key="__settings"
                     to={settingsItem.path}
+                    onMouseEnter={() => prefetchRoute(settingsItem.path)}
                     className={({ isActive }) => cn(
                       "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
@@ -296,6 +378,7 @@ const Layout = () => {
               key={item.id}
               to={item.path}
               end={item.end}
+              onMouseEnter={() => prefetchRoute(item.path)}
               className={({ isActive }) => cn(
                 "w-[78px] h-[78px] rounded-2xl bg-gradient-to-br text-white text-[14px] font-extrabold tracking-wide leading-none",
                 "flex items-center justify-center text-center px-1 transition-all duration-200 shadow-[0_10px_20px_rgba(30,64,175,0.25)]",
@@ -399,6 +482,7 @@ const Layout = () => {
                     key={item.path}
                     to={item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
+                    onMouseEnter={() => prefetchRoute(item.path)}
                     className={({ isActive }) => cn(
                       "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200",
                       isActive
@@ -417,6 +501,7 @@ const Layout = () => {
                     key={item.path}
                     to={item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
+                    onMouseEnter={() => prefetchRoute(item.path)}
                     className={({ isActive }) => cn(
                       "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200",
                       isActive
@@ -434,6 +519,7 @@ const Layout = () => {
                   <NavLink
                     to={settingsItem.path}
                     onClick={() => setIsMobileMenuOpen(false)}
+                    onMouseEnter={() => prefetchRoute(settingsItem.path)}
                     className={({ isActive }) => cn(
                       "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200",
                       isActive
@@ -498,6 +584,7 @@ const Layout = () => {
             <NavLink
               key={item.path}
               to={item.path}
+              onMouseEnter={() => prefetchRoute(item.path)}
               className={({ isActive }) => cn(
                 "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
                 isActive

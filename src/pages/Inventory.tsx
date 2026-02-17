@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { Suspense, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -43,7 +43,9 @@ import { searchItems, autoFillItem, formatItemSuggestion, type MasterItem } from
 import { getStockDisplay } from '../utils/multiUnitUtils'
 import { getLowStockItems } from '../utils/stockUtils'
 import { getCategoryDefault, getAllCategories, CATEGORY_DEFAULTS } from '../utils/categoryDefaults'
-import BarcodeScanner from '../components/BarcodeScanner'
+
+// Lazy-load the camera scanner so Inventory initial load stays fast.
+const BarcodeScanner = React.lazy(() => import('../components/BarcodeScanner'))
 
 const Inventory = () => {
   // Language support
@@ -3568,6 +3570,8 @@ const Inventory = () => {
         document.body
       )}
 
+      {showBarcodeScanner && (
+        <Suspense fallback={null}>
       {/* Camera Barcode Scanner Modal - Using proper BarcodeScanner component */}
       <BarcodeScanner
         isOpen={showBarcodeScanner}
@@ -3578,6 +3582,8 @@ const Inventory = () => {
         }}
         title="Scan Course Code"
       />
+        </Suspense>
+      )}
     </div>
   )
 }

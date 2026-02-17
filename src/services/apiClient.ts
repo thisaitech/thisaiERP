@@ -24,7 +24,10 @@ type GetCacheEntry = {
   text: string
 }
 
-const GET_CACHE_TTL_MS = Number((import.meta as any).env?.VITE_API_GET_CACHE_TTL_MS || 5000)
+// Fast navigation: cache GET responses briefly to avoid refetching on every module switch.
+// Writes (POST/PUT/DELETE) still invalidate the cache immediately.
+const DEFAULT_GET_CACHE_TTL_MS = import.meta.env.DEV ? 5000 : 60000
+const GET_CACHE_TTL_MS = Number((import.meta as any).env?.VITE_API_GET_CACHE_TTL_MS || DEFAULT_GET_CACHE_TTL_MS)
 const getResponseCache = new Map<string, GetCacheEntry>()
 const inFlightGetRequests = new Map<string, Promise<unknown>>()
 

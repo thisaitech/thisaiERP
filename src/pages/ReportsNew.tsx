@@ -49,44 +49,6 @@ import {
   getFastMovingItems,
   getSlowMovingItems
 } from '../services/reportService'
-import {
-  exportSalesSummaryPDF,
-  exportPurchaseSummaryPDF,
-  exportDayBookPDF,
-  exportDayBookExcel,
-  exportProfitLossPDF,
-  exportProfitLossExcel,
-  exportPartyPLPDF,
-  exportPartyPLExcel,
-  exportGSTR1PDF,
-  exportGSTR1Excel,
-  exportGSTR3BPDF,
-  exportItemPLExcel,
-  exportItemPLPDF,
-  exportBillProfitPDF,
-  exportBillProfitExcel,
-  exportHSNExcel,
-  exportGSTR3BExcel,
-  exportToExcel,
-  exportCashBankBalancePDF,
-  exportCashBankBalanceExcel,
-  exportAccountsReceivablePDF,
-  exportAccountsReceivableExcel,
-  exportAccountsPayablePDF,
-  exportAccountsPayableExcel,
-  exportDiscountReportPDF,
-  exportDiscountReportExcel,
-  exportPurchaseRegisterPDF,
-  exportPurchaseRegisterExcel,
-  exportSalesRegisterPDF,
-  exportSalesRegisterExcel,
-  exportStockAlertPDF,
-  exportStockAlertExcel,
-  exportFastMovingItemsPDF,
-  exportFastMovingItemsExcel,
-  exportSlowMovingItemsPDF,
-  exportSlowMovingItemsExcel
-} from '../utils/exportUtils'
 import { subscribeToBankingPageData } from '../services/bankingService'
 
 const ReportsNew = () => {
@@ -275,83 +237,85 @@ const ReportsNew = () => {
   }, [currentReportType, selectedPeriod])
 
   // Export handlers
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!reportData) {
       toast.error('No data to export')
       return
     }
 
     try {
+      // Lazy-load export libs (jsPDF, XLSX, etc.) only when user exports.
+      const ex = await import('../utils/exportUtils')
       console.log('Exporting PDF for report type:', currentReportType)
       console.log('Report data:', reportData)
 
       switch (currentReportType) {
         case 'overview':
-          exportSalesSummaryPDF(reportData.sales, selectedPeriod)
+          ex.exportSalesSummaryPDF(reportData.sales, selectedPeriod)
           toast.success('Report exported to PDF')
           break
         case 'day-book':
-          exportDayBookPDF(reportData)
+          ex.exportDayBookPDF(reportData)
           toast.success('Daily Register exported to PDF')
           break
         case 'cash-bank-balance':
-          exportCashBankBalancePDF(reportData)
+          ex.exportCashBankBalancePDF(reportData)
           toast.success('Cash & Bank Balance exported to PDF')
           break
         case 'accounts-receivable':
-          exportAccountsReceivablePDF(reportData)
+          ex.exportAccountsReceivablePDF(reportData)
           toast.success('Accounts Receivable exported to PDF')
           break
         case 'accounts-payable':
-          exportAccountsPayablePDF(reportData)
+          ex.exportAccountsPayablePDF(reportData)
           toast.success('Accounts Payable exported to PDF')
           break
         case 'discount':
-          exportDiscountReportPDF(reportData)
+          ex.exportDiscountReportPDF(reportData)
           toast.success('Scholarship & Discount Report exported to PDF')
           break
         case 'purchase-register':
-          exportPurchaseRegisterPDF(reportData)
+          ex.exportPurchaseRegisterPDF(reportData)
           toast.success('Expense Register exported to PDF')
           break
         case 'sales-register':
-          exportSalesRegisterPDF(reportData)
+          ex.exportSalesRegisterPDF(reportData)
           toast.success('Fee Register exported to PDF')
           break
         case 'stock-alert':
-          exportStockAlertPDF(reportData)
+          ex.exportStockAlertPDF(reportData)
           toast.success('Seat Alert exported to PDF')
           break
         case 'fast-moving-items':
-          exportFastMovingItemsPDF(reportData)
+          ex.exportFastMovingItemsPDF(reportData)
           toast.success('Popular Courses exported to PDF')
           break
         case 'slow-moving-items':
-          exportSlowMovingItemsPDF(reportData)
+          ex.exportSlowMovingItemsPDF(reportData)
           toast.success('Low Enrollment Courses exported to PDF')
           break
         case 'profit-loss':
-          exportProfitLossPDF(reportData, selectedPeriod)
+          ex.exportProfitLossPDF(reportData, selectedPeriod)
           toast.success('P&L exported to PDF')
           break
         case 'gstr1':
-          exportGSTR1PDF(reportData)
+          ex.exportGSTR1PDF(reportData)
           toast.success('GSTR-1 exported to PDF')
           break
         case 'gstr3b':
-          exportGSTR3BPDF(reportData)
+          ex.exportGSTR3BPDF(reportData)
           toast.success('GSTR-3B exported to PDF')
           break
         case 'bill-profit':
-          exportBillProfitPDF(reportData)
+          ex.exportBillProfitPDF(reportData)
           toast.success('Receipt-wise Summary exported to PDF')
           break
         case 'item-pl':
-          exportItemPLPDF(reportData)
+          ex.exportItemPLPDF(reportData)
           toast.success('Course-wise Fee Summary exported to PDF')
           break
         case 'party-pl':
-          exportPartyPLPDF(reportData)
+          ex.exportPartyPLPDF(reportData)
           toast.success('Student-wise Fee Summary exported to PDF')
           break
         default:
@@ -364,88 +328,89 @@ const ReportsNew = () => {
     }
   }
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!reportData) {
       toast.error('No data to export')
       return
     }
 
     try {
+      const ex = await import('../utils/exportUtils')
       switch (currentReportType) {
         case 'day-book':
-          exportDayBookExcel(reportData)
+          ex.exportDayBookExcel(reportData)
           toast.success('Daily Register exported to Excel')
           break
         case 'cash-bank-balance':
-          exportCashBankBalanceExcel(reportData)
+          ex.exportCashBankBalanceExcel(reportData)
           toast.success('Cash & Bank Balance exported to Excel')
           break
         case 'accounts-receivable':
-          exportAccountsReceivableExcel(reportData)
+          ex.exportAccountsReceivableExcel(reportData)
           toast.success('Accounts Receivable exported to Excel')
           break
         case 'accounts-payable':
-          exportAccountsPayableExcel(reportData)
+          ex.exportAccountsPayableExcel(reportData)
           toast.success('Accounts Payable exported to Excel')
           break
         case 'discount':
-          exportDiscountReportExcel(reportData)
+          ex.exportDiscountReportExcel(reportData)
           toast.success('Scholarship & Discount Report exported to Excel')
           break
         case 'purchase-register':
-          exportPurchaseRegisterExcel(reportData)
+          ex.exportPurchaseRegisterExcel(reportData)
           toast.success('Expense Register exported to Excel')
           break
         case 'sales-register':
-          exportSalesRegisterExcel(reportData)
+          ex.exportSalesRegisterExcel(reportData)
           toast.success('Fee Register exported to Excel')
           break
         case 'stock-alert':
-          exportStockAlertExcel(reportData)
+          ex.exportStockAlertExcel(reportData)
           toast.success('Seat Alert exported to Excel')
           break
         case 'fast-moving-items':
-          exportFastMovingItemsExcel(reportData)
+          ex.exportFastMovingItemsExcel(reportData)
           toast.success('Popular Courses exported to Excel')
           break
         case 'slow-moving-items':
-          exportSlowMovingItemsExcel(reportData)
+          ex.exportSlowMovingItemsExcel(reportData)
           toast.success('Low Enrollment Courses exported to Excel')
           break
         case 'profit-loss':
-          exportProfitLossExcel(reportData, selectedPeriod)
+          ex.exportProfitLossExcel(reportData, selectedPeriod)
           toast.success('Income & Expenses exported to Excel')
           break
         case 'party-pl':
-          exportPartyPLExcel(reportData)
+          ex.exportPartyPLExcel(reportData)
           toast.success('Student Fee Summary exported to Excel')
           break
         case 'item-pl':
-          exportItemPLExcel(reportData)
+          ex.exportItemPLExcel(reportData)
           toast.success('Item P&L exported to Excel')
           break
         case 'bill-profit':
-          exportBillProfitExcel(reportData)
+          ex.exportBillProfitExcel(reportData)
           toast.success('Receipt Summary exported to Excel')
           break
         case 'hsn':
-          exportHSNExcel(reportData)
+          ex.exportHSNExcel(reportData)
           toast.success('SAC/HSN Summary exported to Excel')
           break
         case 'gstr1':
-          exportGSTR1Excel(reportData)
+          ex.exportGSTR1Excel(reportData)
           toast.success('GSTR-1 exported to Excel')
           break
         case 'gstr3b':
-          exportGSTR3BExcel(reportData)
+          ex.exportGSTR3BExcel(reportData)
           toast.success('GSTR-3B exported to Excel')
           break
         default:
           // Generic export for any data
           if (reportData.parties) {
-            exportPartyPLExcel(reportData)
+            ex.exportPartyPLExcel(reportData)
           } else if (reportData.items) {
-            exportItemPLExcel(reportData)
+            ex.exportItemPLExcel(reportData)
           } else {
             toast.info('Excel export not available for this report')
           }
