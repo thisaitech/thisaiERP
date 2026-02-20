@@ -463,8 +463,7 @@ const Inventory = () => {
     }
     setUnitType(unitMap[masterItem.unit] || 'PCS')
 
-    // Auto-fill Description
-    setItemDescription(masterItem.description || `${masterItem.name} - Premium Quality`)
+    // Keep description manual in the popup (do not auto-fill)
 
     // Auto-fill Retail Price (MRP)
     setRetailPrice(masterItem.mrp.toString())
@@ -1534,9 +1533,6 @@ const Inventory = () => {
                         <div className="sm:col-span-2 relative">
                           <label className="text-xs font-medium mb-1 block flex items-center gap-2">
                             {t.inventory.itemName} <span className="text-destructive">*</span>
-                            <span className="text-[10px] bg-success/10 text-success px-1.5 py-0.5 rounded-full font-semibold">
-                              ✨ {t.inventory.autoFillMagic}
-                            </span>
                           </label>
                           <input
                             type="text"
@@ -1599,62 +1595,10 @@ const Inventory = () => {
                           <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
                             <Tag size={14} weight="duotone" />
                             {t.inventory.category}
-                            <span className="text-[10px] text-blue-600 font-normal ml-1">{t.inventory.autoFillsUnit}</span>
                           </label>
                           <select
                             value={itemCategory}
-                            onChange={(e) => {
-                              const category = e.target.value
-                              setItemCategory(category)
-
-                              // {t.inventory.hsnCode} mapping based on category
-                              const hsnMapping: Record<string, string> = {
-                                Programming: 'PRG',
-                                'Web Development': 'WEB',
-                                'Data Science': 'DATA',
-                                Design: 'DES',
-                                Marketing: 'MKT',
-                                Accounting: 'ACC',
-                                'Office Tools': 'OFF',
-                                'Hardware & Networking': 'NET',
-                                Language: 'LANG',
-                                'Soft Skills': 'SOFT',
-                                'Test Prep': 'TEST',
-                                General: 'GEN',
-                                Other: 'OTHER',
-                                programming: 'PRG',
-                                'web development': 'WEB',
-                                'data science': 'DATA',
-                                design: 'DES',
-                                marketing: 'MKT',
-                                accounting: 'ACC',
-                                'office tools': 'OFF',
-                                'hardware & networking': 'NET',
-                                language: 'LANG',
-                                'soft skills': 'SOFT',
-                                'test prep': 'TEST',
-                                general: 'GEN',
-                                other: 'OTHER'
-                              }
-
-                              // Auto-fill course code based on category
-                              const hsnCodeValue = hsnMapping[category] || 'GEN'
-                              setHsnCode(hsnCodeValue)
-                              setShowHSN(true)
-
-                              // AUTO-FILL UNIT CONVERSION from Category Defaults
-                              const categoryDefault = getCategoryDefault(category)
-                              if (categoryDefault) {
-                                setHasMultiUnit(true)
-                                setBaseUnit('Pcs')
-                                setPurchaseUnit(categoryDefault.alternateUnit)
-                                setPiecesPerPurchaseUnit(categoryDefault.piecesPerUnit.toString())
-                                toast.success(`Auto-filled: 1 ${categoryDefault.alternateUnit} = ${categoryDefault.piecesPerUnit} ${t.inventory.units}`, {
-                                  duration: 2000,
-                                  icon: '📦'
-                                })
-                              }
-                            }}
+                            onChange={(e) => setItemCategory(e.target.value)}
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           >
                             {/* Hide "Your Categories" list. If this item already has a custom category, keep it selectable. */}
@@ -1689,24 +1633,7 @@ const Inventory = () => {
 
                         {/* Description with {t.inventory.aiSuggestions} */}
                         <div className="sm:col-span-2">
-                          <label className="text-xs font-medium mb-1.5 flex items-center justify-between">
-                            <span className="flex items-center gap-1">
-                              {t.inventory.description}
-                              {itemName && itemName.length > 2 && (
-                                <Star size={12} weight="duotone" className="text-amber-500" />
-                              )}
-                            </span>
-                            {itemName && itemName.length > 2 && (
-                              <button
-                                type="button"
-                                onClick={() => setShowDescriptionAI(!showDescriptionAI)}
-                                className="text-[10px] text-primary hover:text-primary/80 flex items-center gap-1"
-                              >
-                                <Star size={10} weight="fill" />
-                                {t.inventory.aiSuggest}
-                              </button>
-                            )}
-                          </label>
+                          <label className="text-xs font-medium mb-1.5 block">{t.inventory.description}</label>
                           <textarea
                             value={itemDescription}
                             onChange={(e) => setItemDescription(e.target.value)}
@@ -1714,38 +1641,6 @@ const Inventory = () => {
                             placeholder={t.inventory.briefDescription}
                             className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none resize-none"
                           />
-                          {showDescriptionAI && itemName && itemName.length > 2 && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              className="mt-2 space-y-1"
-                            >
-                              <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                <Star size={10} weight="duotone" className="text-amber-500" />
-                                {t.inventory.aiSuggestions} - Click to use:
-                              </p>
-                              {(() => {
-                                try {
-                                  return getDescriptionSuggestions(itemName).map((suggestion, idx) => (
-                                    <button
-                                      key={idx}
-                                      type="button"
-                                      onClick={() => {
-                                        setItemDescription(suggestion)
-                                        setShowDescriptionAI(false)
-                                      }}
-                                      className="w-full text-left px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded text-xs text-amber-900 transition-colors"
-                                    >
-                                      {suggestion}
-                                    </button>
-                                  ))
-                                } catch (error) {
-                                  console.error('Error generating suggestions:', error)
-                                  return null
-                                }
-                              })()}
-                            </motion.div>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -1758,7 +1653,7 @@ const Inventory = () => {
                       </h3>
 
                       {/* Side-by-Side Pricing Layout */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 gap-6">
 
                         {/* LEFT: Retail Selling Price (Blue) */}
                         <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg space-y-3">
@@ -1853,8 +1748,8 @@ const Inventory = () => {
                           )}
                         </div>
 
-                        {/* RIGHT: {t.inventory.purchasePrice} (Orange) */}
-                        <div className="p-4 bg-orange-50 border-2 border-orange-200 rounded-lg space-y-3">
+                        {/* Course cost section hidden for cleaner course popup */}
+                        {false && <div className="p-4 bg-orange-50 border-2 border-orange-200 rounded-lg space-y-3">
                           <label className="text-xs font-semibold mb-1.5 block text-orange-900">
                             {t.inventory.purchasePrice}
                           </label>
@@ -1934,11 +1829,11 @@ const Inventory = () => {
                               </div>
                             </motion.div>
                           )}
-                        </div>
+                        </div>}
                       </div>
 
-                      {/* Item Type */}
-                      <div className="mt-3">
+                      {/* This course is for section hidden */}
+                      {false && <div className="mt-3">
                         <label className="text-xs font-medium mb-1.5 block">{t.inventory.itemIsFor}</label>
                         <div className="flex gap-2">
                           {['sales', 'purchase', 'both'].map((type) => (
@@ -1957,10 +1852,10 @@ const Inventory = () => {
                             </button>
                           ))}
                         </div>
-                      </div>
+                      </div>}
 
-                      {/* Profit Margin Display */}
-                      {retailPrice && purchasePrice && parseFloat(retailPrice) > 0 && parseFloat(purchasePrice) > 0 && (
+                      {/* Profit card hidden when course cost is not shown */}
+                      {false && retailPrice && purchasePrice && parseFloat(retailPrice) > 0 && parseFloat(purchasePrice) > 0 && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
@@ -2101,7 +1996,7 @@ const Inventory = () => {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {false && <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                         {/* Expandable: {t.inventory.hsnCode} */}
                         <div>
@@ -2215,7 +2110,7 @@ const Inventory = () => {
                             </motion.div>
                           )}
                         </div>
-                      </div>
+                      </div>}
                     </div>
 
                     {/* Section 4: Stock Management */}
@@ -2229,32 +2124,13 @@ const Inventory = () => {
                         {/* Stock Quantity with Unit Selector */}
                         <div>
                           <label className="text-xs font-medium mb-1.5 block">{t.inventory.openingStock}</label>
-                          <div className="flex gap-2">
-                            <input
-                              type="number"
-                              value={stockQuantity}
-                              onChange={(e) => setStockQuantity(e.target.value)}
-                              placeholder="0"
-                              className="flex-1 px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                            />
-                            {/* Unit selector - only show when multi-unit is enabled */}
-                            {hasMultiUnit && (
-                              <select
-                                value={stockEntryUnit}
-                                onChange={(e) => setStockEntryUnit(e.target.value)}
-                                className="w-24 px-2 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                              >
-                                <option value={baseUnit}>{baseUnit}</option>
-                                <option value={purchaseUnit}>{purchaseUnit}</option>
-                              </select>
-                            )}
-                          </div>
-                          {/* Show conversion info when entering in boxes */}
-                          {hasMultiUnit && stockQuantity && stockEntryUnit === purchaseUnit && (
-                            <p className="text-[10px] text-emerald-600 mt-1 font-medium">
-                              = {parseInt(stockQuantity || '0') * parseInt(piecesPerPurchaseUnit || '12')} {baseUnit} total
-                            </p>
-                          )}
+                          <input
+                            type="number"
+                            value={stockQuantity}
+                            onChange={(e) => setStockQuantity(e.target.value)}
+                            placeholder="0"
+                            className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
+                          />
                         </div>
 
                         {/* Expandable: {t.inventory.lowStockAlert} */}
@@ -2295,7 +2171,7 @@ const Inventory = () => {
                     </div>
 
                     {/* Section 5: {t.inventory.multiUnitConversion} */}
-                    <div className="space-y-3">
+                    {false && <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
                           <Package size={16} weight="duotone" />
@@ -2486,10 +2362,10 @@ const Inventory = () => {
                           </div>
                         </motion.div>
                       )}
-                    </div>
+                    </div>}
 
                     {/* Section 6: Additional Details (Optional) */}
-                    <div className="space-y-2 pt-2 border-t border-border">
+                    {false && <div className="space-y-2 pt-2 border-t border-border">
                       <p className="text-xs font-medium text-muted-foreground">{t.inventory.optionalDetails}</p>
 
                       {/* Expandable: Brand */}
@@ -2581,7 +2457,7 @@ const Inventory = () => {
                           </div>
                         </motion.div>
                       )}
-                    </div>
+                    </div>}
                   </div>
                 </div>
 
@@ -2701,18 +2577,7 @@ const Inventory = () => {
                           </label>
                           <select
                             value={itemCategory}
-                            onChange={(e) => {
-                              const category = e.target.value
-                              setItemCategory(category)
-                              // Auto-fill unit conversion for edit mode
-                              const categoryDefault = getCategoryDefault(category)
-                              if (categoryDefault && !hasMultiUnit) {
-                                setHasMultiUnit(true)
-                                setBaseUnit('Pcs')
-                                setPurchaseUnit(categoryDefault.alternateUnit)
-                                setPiecesPerPurchaseUnit(categoryDefault.piecesPerUnit.toString())
-                              }
-                            }}
+                            onChange={(e) => setItemCategory(e.target.value)}
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           >
                             {/* Hide "Your Categories" list. If this item already has a custom category, keep it selectable. */}
@@ -2767,7 +2632,7 @@ const Inventory = () => {
                       </h3>
 
                       {/* Side-by-Side Pricing Layout */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 gap-6">
 
                         {/* LEFT: Retail Selling Price (Blue) */}
                         <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg space-y-3">
@@ -2862,8 +2727,8 @@ const Inventory = () => {
                           )}
                         </div>
 
-                        {/* RIGHT: {t.inventory.purchasePrice} (Orange) */}
-                        <div className="p-4 bg-orange-50 border-2 border-orange-200 rounded-lg space-y-3">
+                        {/* Course cost section hidden for cleaner course popup */}
+                        {false && <div className="p-4 bg-orange-50 border-2 border-orange-200 rounded-lg space-y-3">
                           <label className="text-xs font-semibold mb-1.5 block text-orange-900">
                             {t.inventory.purchasePrice}
                           </label>
@@ -2943,11 +2808,11 @@ const Inventory = () => {
                               </div>
                             </motion.div>
                           )}
-                        </div>
+                        </div>}
                       </div>
 
-                      {/* Profit Margin Display */}
-                      {retailPrice && purchasePrice && parseFloat(retailPrice) > 0 && parseFloat(purchasePrice) > 0 && (
+                      {/* Profit card hidden when course cost is not shown */}
+                      {false && retailPrice && purchasePrice && parseFloat(retailPrice) > 0 && parseFloat(purchasePrice) > 0 && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
@@ -3054,7 +2919,7 @@ const Inventory = () => {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {false && <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* {t.inventory.hsnCode} */}
                         <div>
                           <label className="text-xs font-medium mb-1.5 block">{t.inventory.itemCode}</label>
@@ -3066,7 +2931,7 @@ const Inventory = () => {
                             className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                           />
                         </div>
-                      </div>
+                      </div>}
                     </div>
 
                     {/* Section 4: Stock */}
@@ -3107,7 +2972,7 @@ const Inventory = () => {
                     </div>
 
                     {/* Section 5: {t.inventory.multiUnitConversion} */}
-                    <div className="space-y-3">
+                    {false && <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
                           <Package size={16} weight="duotone" />
@@ -3299,10 +3164,10 @@ const Inventory = () => {
 
                         </motion.div>
                       )}
-                    </div>
+                    </div>}
 
                     {/* Section 6: Additional Details */}
-                    <div className="space-y-3">
+                    {false && <div className="space-y-3">
                       <h3 className="text-xs font-medium text-muted-foreground">{t.inventory.optionalDetails}</h3>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -3364,7 +3229,7 @@ const Inventory = () => {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </div>}
                   </div>
                 </div>
 

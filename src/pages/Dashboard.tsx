@@ -599,6 +599,14 @@ const Dashboard = () => {
     }
   }
 
+  const formatExactAmount = (value: number) => {
+    const safeValue = Number.isFinite(value) ? value : 0
+    return Math.abs(safeValue).toLocaleString('en-IN', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    })
+  }
+
   // Get period label for display
   const getPeriodLabel = () => {
     switch (selectedPeriod) {
@@ -801,7 +809,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <p className="text-3xl font-bold text-white mb-1">
-                {`₹${(stat.value / 1000).toLocaleString('en-IN', { maximumFractionDigits: stat.value === 0 ? 0 : 1 })}K`}
+                {`\u20B9${formatExactAmount(stat.value)}`}
               </p>
               {stat.growth !== null ? (
                 <p className="text-xs text-white/80">
@@ -1039,7 +1047,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <p className={cn("text-xl lg:text-2xl font-bold mb-1", valueColor)}>
-                  {isNegative && '-'}₹{displayValue >= 100000 ? `${(displayValue / 100000).toLocaleString('en-IN', { maximumFractionDigits: 1 })}L` : `${(displayValue / 1000).toLocaleString('en-IN', { maximumFractionDigits: displayValue < 1000 ? 0 : 1 })}K`}
+                  {isNegative && '-'}{`\u20B9${formatExactAmount(displayValue)}`}
                 </p>
                 {stat.growth !== null ? (
                   <p className={cn(
