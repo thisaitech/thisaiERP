@@ -1,11 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Eye, Pencil, Plus, Trash, X } from '@phosphor-icons/react'
+import { CurrencyInr, Eye, Pencil, Plus, Trash, Users, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { cn } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
 import { createParty, getParties, updateParty } from '../services/partyService'
 import { getItems } from '../services/itemService'
 import { createInvoice, deleteInvoice, getInvoices, updateInvoice } from '../services/invoiceService'
+import MobilePageScaffold from '../components/mobile/MobilePageScaffold'
+import MobileStatCards from '../components/mobile/MobileStatCards'
+import MobileSearchBar from '../components/mobile/MobileSearchBar'
+import MobileListCard from '../components/mobile/MobileListCard'
+import MobileActionMenu from '../components/mobile/MobileActionMenu'
+import MobileBottomSheet from '../components/mobile/MobileBottomSheet'
+import MobileFormSection from '../components/mobile/MobileFormSection'
+import MobileStickyCTA from '../components/mobile/MobileStickyCTA'
 
 type Student = { id: string; name?: string; companyName?: string; phone?: string; email?: string }
 type Course = { id: string; name: string; sellingPrice?: number; unit?: string }
@@ -40,17 +48,14 @@ const genAdmissionNo = () => {
 
 const Sales: React.FC = () => {
   const { userData } = useAuth()
-
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-
   const [invoices, setInvoices] = useState<any[]>([])
   const [students, setStudents] = useState<Student[]>([])
   const [courses, setCourses] = useState<Course[]>([])
-
-  // Create modal
   const [showForm, setShowForm] = useState(false)
   const [formMode, setFormMode] = useState<'create' | 'edit' | 'view'>('create')
+  const [admissionSearch, setAdmissionSearch] = useState('')
   const [editingAdmissionId, setEditingAdmissionId] = useState('')
   const [editingPartyId, setEditingPartyId] = useState('')
   const [invoiceNumber, setInvoiceNumber] = useState(genAdmissionNo())
@@ -62,6 +67,13 @@ const Sales: React.FC = () => {
   const [items, setItems] = useState<AdmissionItem[]>([newLine()])
   const [notes, setNotes] = useState('')
   const [paidAmount, setPaidAmount] = useState<string>('0')
+  const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth < 768)
+
+  useEffect(() => {
+    const onResize = () => setIsMobileViewport(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   const selectedStudent = useMemo(
     () => students.find((s) => s.id === selectedStudentId) || null,
@@ -69,17 +81,12 @@ const Sales: React.FC = () => {
   )
   const isViewMode = formMode === 'view'
   const modalTitle = formMode === 'create' ? 'New Admission' : formMode === 'edit' ? 'Edit Admission' : 'View Admission'
-
   const total = useMemo(() => items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0), [items])
 
   const load = async () => {
     setLoading(true)
     try {
-      const [inv, st, co] = await Promise.all([
-        getInvoices('sale'),
-        getParties('both'),
-        getItems(),
-      ])
+      const [inv, st, co] = await Promise.all([getInvoices('sale'), getParties('both'), getItems()])
       setInvoices(inv || [])
       setStudents(st as any)
       setCourses(co as any)
@@ -205,11 +212,7 @@ const Sales: React.FC = () => {
     let admissionStudent: Student | null = selectedStudent
 
     if (!admissionStudentId) {
-      if (!typedStudentName) {
-        return toast.error('Please select or enter a student name')
-      }
-
-      // In edit mode, never create a new student record automatically.
+      if (!typedStudentName) return toast.error('Please select or enter a student name')
       if (formMode === 'edit') {
         const searchName = typedStudentName.toLowerCase()
         const searchPhone = phone.replace(/\D/g, '')
@@ -223,7 +226,6 @@ const Sales: React.FC = () => {
             (studentPhone === searchPhone || studentPhone.endsWith(searchPhone) || searchPhone.endsWith(studentPhone))
           return sameName || samePhone
         })
-
         if (inferredStudent) {
           admissionStudentId = inferredStudent.id
           admissionStudent = inferredStudent
@@ -244,13 +246,7 @@ const Sales: React.FC = () => {
             phone: phone.trim(),
             email: email.trim(),
             contacts: [],
-            billingAddress: {
-              street: '',
-              city: '',
-              state: '',
-              pinCode: '',
-              country: 'India',
-            },
+            billingAddress: { street: '', city: '', state: '', pinCode: '', country: 'India' },
             sameAsShipping: true,
             openingBalance: 0,
             currentBalance: 0,
@@ -260,7 +256,6 @@ const Sales: React.FC = () => {
             createdAt: now,
             updatedAt: now,
           } as any)
-
           admissionStudentId = newStudent.id
           admissionStudent = newStudent as any
           setSelectedStudentId(newStudent.id)
@@ -271,18 +266,13 @@ const Sales: React.FC = () => {
       }
     }
 
-    const cleanItems = items
-      .map(recalcLine)
-      .filter((l) => l.itemId && l.quantity > 0)
-
+    const cleanItems = items.map(recalcLine).filter((l) => l.itemId && l.quantity > 0)
     if (cleanItems.length === 0) return toast.error('Please add at least 1 course')
 
     setSaving(true)
     try {
       const now = new Date().toISOString()
       const paidAmountNumber = Math.max(0, Number(paidAmount || 0))
-
-      // Keep Student section in sync when admission edit changes student details.
       const linkedStudentId = admissionStudentId || (formMode === 'edit' ? editingPartyId : '')
       if (formMode === 'edit' && linkedStudentId) {
         const studentNameForUpdate = typedStudentName || admissionStudent?.name || admissionStudent?.companyName || ''
@@ -295,24 +285,10 @@ const Sales: React.FC = () => {
             email: email.trim(),
             updatedAt: now,
           } as any)
-          admissionStudent = {
-            ...(admissionStudent || { id: linkedStudentId }),
-            id: linkedStudentId,
-            name: studentNameForUpdate,
-            companyName: studentNameForUpdate,
-            phone: phone.trim(),
-            email: email.trim(),
-          }
           setStudents((prev) =>
             prev.map((s) =>
               s.id === linkedStudentId
-                ? {
-                    ...s,
-                    name: studentNameForUpdate,
-                    companyName: studentNameForUpdate,
-                    phone: phone.trim(),
-                    email: email.trim(),
-                  }
+                ? { ...s, name: studentNameForUpdate, companyName: studentNameForUpdate, phone: phone.trim(), email: email.trim() }
                 : s
             )
           )
@@ -369,23 +345,251 @@ const Sales: React.FC = () => {
   const filteredStudents = useMemo(() => {
     const q = studentSearch.trim().toLowerCase()
     if (!q) return students.slice(0, 20)
-    return students
-      .filter((s) => `${s.name || s.companyName || ''} ${s.phone || ''}`.toLowerCase().includes(q))
-      .slice(0, 20)
+    return students.filter((s) => `${s.name || s.companyName || ''} ${s.phone || ''}`.toLowerCase().includes(q)).slice(0, 20)
   }, [students, studentSearch])
 
+  const filteredInvoices = useMemo(() => {
+    const q = admissionSearch.trim().toLowerCase()
+    if (!q) return invoices
+    return invoices.filter((inv) =>
+      `${inv.invoiceNumber || ''} ${inv.partyName || ''} ${inv.phone || ''}`.toLowerCase().includes(q)
+    )
+  }, [invoices, admissionSearch])
+
+  const totalAdmissionsAmount = useMemo(
+    () => filteredInvoices.reduce((sum, inv) => sum + Number(inv.total || inv.grandTotal || 0), 0),
+    [filteredInvoices]
+  )
+  const totalPaidAmount = useMemo(
+    () => filteredInvoices.reduce((sum, inv) => sum + Number(inv.paidAmount || 0), 0),
+    [filteredInvoices]
+  )
+
+  const inputClass = (mobile: boolean) =>
+    mobile ? 'mobile-control' : 'mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
+
+  const formFields = (mobile: boolean) => (
+    <div className="space-y-4">
+      <MobileFormSection title="Admission Details">
+        <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3')}>
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Admission No</label>
+            <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} disabled={isViewMode} className={inputClass(mobile)} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Date</label>
+            <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} disabled={isViewMode} className={inputClass(mobile)} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Paid Amount</label>
+            <input
+              type="number"
+              min={0}
+              value={paidAmount}
+              onFocus={() => {
+                if (paidAmount === '0') setPaidAmount('')
+              }}
+              onBlur={() => {
+                if (paidAmount.trim() === '') setPaidAmount('0')
+              }}
+              onChange={(e) => setPaidAmount(e.target.value)}
+              disabled={isViewMode}
+              className={inputClass(mobile)}
+            />
+          </div>
+        </div>
+      </MobileFormSection>
+
+      <MobileFormSection title="Student">
+        <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
+          <div className="relative">
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Student</label>
+            <input
+              value={selectedStudent ? (selectedStudent.name || selectedStudent.companyName || '') : studentSearch}
+              onChange={(e) => {
+                setStudentSearch(e.target.value)
+                setSelectedStudentId('')
+              }}
+              placeholder="Search student..."
+              disabled={isViewMode}
+              className={inputClass(mobile)}
+            />
+            {!isViewMode && !selectedStudentId && studentSearch.trim().length > 0 && (
+              <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl">
+                {filteredStudents.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedStudentId(s.id)
+                      setStudentSearch('')
+                      setPhone(s.phone || '')
+                      setEmail(s.email || '')
+                    }}
+                    className={cn('w-full text-left px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/60', 'flex items-center justify-between gap-3')}
+                  >
+                    <div className="min-w-0">
+                      <div className="font-medium text-slate-800 dark:text-slate-100 truncate">{s.name || s.companyName || 'Student'}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{s.phone || ''}</div>
+                    </div>
+                  </button>
+                ))}
+                {filteredStudents.length === 0 && <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">No students found</div>}
+              </div>
+            )}
+          </div>
+          <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-2')}>
+            <div>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone</label>
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} disabled={isViewMode} className={inputClass(mobile)} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Email</label>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} disabled={isViewMode} className={inputClass(mobile)} />
+            </div>
+          </div>
+        </div>
+      </MobileFormSection>
+
+      <MobileFormSection title="Courses" subtitle="Add at least one course line">
+        <div className="space-y-3">
+          {items.map((line) => (
+            <div key={line.id} className={cn('grid gap-3 items-end', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12')}>
+              <div className={mobile ? '' : 'md:col-span-6'}>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Course</label>
+                <select value={line.itemId} onChange={(e) => handlePickCourse(line.id, e.target.value)} disabled={isViewMode} className={inputClass(mobile)}>
+                  <option value="">Select course...</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={mobile ? '' : 'md:col-span-2'}>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Qty</label>
+                <input
+                  type="number"
+                  value={line.quantity}
+                  onChange={(e) => setItems((prev) => prev.map((l) => (l.id === line.id ? recalcLine({ ...l, quantity: Number(e.target.value) }) : l)))}
+                  disabled={isViewMode}
+                  className={inputClass(mobile)}
+                />
+              </div>
+              <div className={mobile ? '' : 'md:col-span-3'}>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Fee</label>
+                <input
+                  type="number"
+                  value={line.rate}
+                  onChange={(e) => setItems((prev) => prev.map((l) => (l.id === line.id ? recalcLine({ ...l, rate: Number(e.target.value) }) : l)))}
+                  disabled={isViewMode}
+                  className={inputClass(mobile)}
+                />
+              </div>
+              {!isViewMode && (
+                <div className={mobile ? '' : 'md:col-span-1 flex justify-end'}>
+                  <button type="button" onClick={() => setItems((prev) => prev.filter((l) => l.id !== line.id))} className="mobile-secondary-btn text-red-600" title="Remove">
+                    <Trash size={16} />
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {!isViewMode && (
+            <button type="button" onClick={() => setItems((prev) => [...prev, newLine()])} className="mobile-secondary-btn">
+              + Add Course
+            </button>
+          )}
+
+          <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-700 pt-2">
+            <div className="text-sm text-slate-600 dark:text-slate-300">Total</div>
+            <div className="text-lg font-bold text-slate-800 dark:text-slate-100">Rs {Number(total).toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+      </MobileFormSection>
+
+      <MobileFormSection title="Notes">
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={mobile ? 4 : 3} disabled={isViewMode} className={inputClass(mobile)} />
+      </MobileFormSection>
+    </div>
+  )
+
+  const footerActions = (
+    <>
+      <button onClick={() => setShowForm(false)} className="mobile-secondary-btn">
+        {isViewMode ? 'Close' : 'Cancel'}
+      </button>
+      {!isViewMode && (
+        <button disabled={saving} onClick={handleSave} className={cn('mobile-primary-btn', saving && 'opacity-70 pointer-events-none')}>
+          {saving ? (formMode === 'edit' ? 'Updating...' : 'Saving...') : (formMode === 'edit' ? 'Update Admission' : 'Save Admission')}
+        </button>
+      )}
+    </>
+  )
+
   return (
-    <div className="erp-module-page p-6">
-      <div className="w-full space-y-6">
+    <div className="erp-module-page p-3 md:p-6">
+      <MobilePageScaffold
+        title="Admissions"
+        subtitle="Create and manage admissions"
+        className="md:hidden"
+        actions={
+          <button onClick={openNew} className="mobile-primary-btn">
+            <Plus size={16} weight="bold" />
+            New
+          </button>
+        }
+      >
+        <MobileStatCards
+          items={[
+            { id: 'count', title: 'Admissions', value: `${filteredInvoices.length}`, subtitle: 'Records', icon: <Users size={18} weight="bold" className="text-blue-600" />, tone: 'primary' },
+            { id: 'value', title: 'Total Amount', value: `Rs ${totalAdmissionsAmount.toLocaleString('en-IN')}`, subtitle: `Paid Rs ${totalPaidAmount.toLocaleString('en-IN')}`, icon: <CurrencyInr size={18} weight="bold" className="text-emerald-600" />, tone: 'success' },
+          ]}
+        />
+        <MobileSearchBar value={admissionSearch} onChange={setAdmissionSearch} placeholder="Search by admission, student or phone" />
+        <div className="space-y-3">
+          {loading && <p className="text-sm text-slate-500">Loading admissions...</p>}
+          {!loading &&
+            filteredInvoices.slice(0, 40).map((inv) => (
+              <MobileListCard
+                key={inv.id}
+                title={inv.partyName || 'Student'}
+                subtitle={inv.invoiceNumber || inv.id}
+                fields={[
+                  { id: 'date', label: 'Date', value: (inv.invoiceDate || inv.createdAt || '').slice(0, 10) },
+                  { id: 'phone', label: 'Phone', value: inv.phone || '-' },
+                  { id: 'total', label: 'Total', value: `Rs ${Number(inv.total || inv.grandTotal || 0).toLocaleString('en-IN')}` },
+                  { id: 'paid', label: 'Paid', value: `Rs ${Number(inv.paidAmount || 0).toLocaleString('en-IN')}` },
+                ]}
+                status={
+                  <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase', inv.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : inv.status === 'partial' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700')}>
+                    {inv.status || 'pending'}
+                  </span>
+                }
+                actions={
+                  <MobileActionMenu
+                    actions={[
+                      { id: 'view', label: 'View', icon: <Eye size={14} />, onClick: () => openExisting(inv, 'view') },
+                      { id: 'edit', label: 'Edit', icon: <Pencil size={14} />, onClick: () => openExisting(inv, 'edit') },
+                      { id: 'delete', label: 'Delete', icon: <Trash size={14} />, tone: 'danger', onClick: () => handleDelete(inv.id) },
+                    ]}
+                  />
+                }
+              />
+            ))}
+          {!loading && filteredInvoices.length === 0 && <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">No admissions found</div>}
+        </div>
+      </MobilePageScaffold>
+
+      <div className="hidden md:block w-full space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Admissions</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">Create and manage admissions</p>
           </div>
-          <button
-            onClick={openNew}
-            className="erp-module-primary-btn"
-          >
+          <button onClick={openNew} className="erp-module-primary-btn">
             <Plus size={18} weight="bold" />
             New Admission
           </button>
@@ -394,9 +598,7 @@ const Sales: React.FC = () => {
         <div className="erp-module-panel overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
             <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Recent Admissions</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {loading ? 'Loading...' : `${invoices.length} record(s)`}
-            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{loading ? 'Loading...' : `${invoices.length} record(s)`}</div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -416,40 +618,20 @@ const Sales: React.FC = () => {
                     <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">{inv.invoiceNumber || inv.id}</td>
                     <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{(inv.invoiceDate || inv.createdAt || '').slice(0, 10)}</td>
                     <td className="px-4 py-2 text-slate-700 dark:text-slate-200">{inv.partyName || 'Student'}</td>
-                    <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">₹{Number(inv.total || inv.grandTotal || 0).toLocaleString('en-IN')}</td>
-                    <td className="px-4 py-2 text-right text-slate-600 dark:text-slate-300">₹{Number(inv.paidAmount || 0).toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">Rs {Number(inv.total || inv.grandTotal || 0).toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-2 text-right text-slate-600 dark:text-slate-300">Rs {Number(inv.paidAmount || 0).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-2 text-right">
                       <div className="inline-flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openExisting(inv, 'view')}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-                          title="View"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          onClick={() => openExisting(inv, 'edit')}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                          title="Edit"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(inv.id)}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                          title="Delete"
-                        >
-                          <Trash size={16} />
-                        </button>
+                        <button onClick={() => openExisting(inv, 'view')} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" title="View"><Eye size={16} /></button>
+                        <button onClick={() => openExisting(inv, 'edit')} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30" title="Edit"><Pencil size={16} /></button>
+                        <button onClick={() => handleDelete(inv.id)} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" title="Delete"><Trash size={16} /></button>
                       </div>
                     </td>
                   </tr>
                 ))}
                 {invoices.length === 0 && !loading && (
                   <tr>
-                    <td className="px-4 py-6 text-center text-slate-500 dark:text-slate-400" colSpan={6}>
-                      No admissions yet
-                    </td>
+                    <td className="px-4 py-6 text-center text-slate-500 dark:text-slate-400" colSpan={6}>No admissions yet</td>
                   </tr>
                 )}
               </tbody>
@@ -458,231 +640,18 @@ const Sales: React.FC = () => {
         </div>
       </div>
 
-      {/* Create Modal */}
-      {showForm && (
+      {showForm && !isMobileViewport && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700">
               <div className="font-bold text-slate-800 dark:text-slate-100">{modalTitle}</div>
-              <button
-                onClick={() => setShowForm(false)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <X size={18} />
-              </button>
+              <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X size={18} /></button>
             </div>
-
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Admission No</label>
-                  <input
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    disabled={isViewMode}
-                    className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Date</label>
-                  <input
-                    type="date"
-                    value={invoiceDate}
-                    onChange={(e) => setInvoiceDate(e.target.value)}
-                    disabled={isViewMode}
-                    className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Paid Amount</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={paidAmount}
-                    onFocus={() => {
-                      if (paidAmount === '0') setPaidAmount('')
-                    }}
-                    onBlur={() => {
-                      if (paidAmount.trim() === '') setPaidAmount('0')
-                    }}
-                    onChange={(e) => setPaidAmount(e.target.value)}
-                    disabled={isViewMode}
-                    className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="relative">
-                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Student</label>
-                  <input
-                    value={selectedStudent ? (selectedStudent.name || selectedStudent.companyName || '') : studentSearch}
-                    onChange={(e) => {
-                      setStudentSearch(e.target.value)
-                      setSelectedStudentId('')
-                    }}
-                    placeholder="Search student..."
-                    disabled={isViewMode}
-                    className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                  />
-                  {!isViewMode && !selectedStudentId && studentSearch.trim().length > 0 && (
-                    <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl">
-                      {filteredStudents.map((s) => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedStudentId(s.id)
-                            setStudentSearch('')
-                            setPhone(s.phone || '')
-                            setEmail(s.email || '')
-                          }}
-                          className={cn(
-                            'w-full text-left px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/60',
-                            'flex items-center justify-between gap-3'
-                          )}
-                        >
-                          <div className="min-w-0">
-                            <div className="font-medium text-slate-800 dark:text-slate-100 truncate">
-                              {s.name || s.companyName || 'Student'}
-                            </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{s.phone || ''}</div>
-                          </div>
-                        </button>
-                      ))}
-                      {filteredStudents.length === 0 && (
-                        <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">No students found</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone</label>
-                    <input
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      disabled={isViewMode}
-                      className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Email</label>
-                    <input
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={isViewMode}
-                      className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
-                  <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Courses</div>
-                  {!isViewMode && (
-                    <button
-                      type="button"
-                      onClick={() => setItems((prev) => [...prev, newLine()])}
-                      className="text-sm font-semibold text-blue-600 hover:text-blue-700"
-                    >
-                      + Add Course
-                    </button>
-                  )}
-                </div>
-                <div className="p-4 space-y-3">
-                  {items.map((line) => (
-                    <div key={line.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                      <div className="md:col-span-6">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Course</label>
-                        <select
-                          value={line.itemId}
-                          onChange={(e) => handlePickCourse(line.id, e.target.value)}
-                          disabled={isViewMode}
-                          className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                        >
-                          <option value="">Select course...</option>
-                          {courses.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Qty</label>
-                        <input
-                          type="number"
-                          value={line.quantity}
-                          onChange={(e) =>
-                            setItems((prev) => prev.map((l) => (l.id === line.id ? recalcLine({ ...l, quantity: Number(e.target.value) }) : l)))
-                          }
-                          disabled={isViewMode}
-                          className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                        />
-                      </div>
-                      <div className="md:col-span-3">
-                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Fee</label>
-                        <input
-                          type="number"
-                          value={line.rate}
-                          onChange={(e) =>
-                            setItems((prev) => prev.map((l) => (l.id === line.id ? recalcLine({ ...l, rate: Number(e.target.value) }) : l)))
-                          }
-                          disabled={isViewMode}
-                          className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                        />
-                      </div>
-                      {!isViewMode && (
-                        <div className="md:col-span-1 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => setItems((prev) => prev.filter((l) => l.id !== line.id))}
-                            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-red-600"
-                            title="Remove"
-                          >
-                            <Trash size={18} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
-                  <div className="text-sm text-slate-600 dark:text-slate-300">Total</div>
-                  <div className="text-lg font-bold text-slate-800 dark:text-slate-100">₹{Number(total).toLocaleString('en-IN')}</div>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Notes</label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                  disabled={isViewMode}
-                  className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                />
-              </div>
-            </div>
-
+            <div className="p-5 max-h-[68vh] overflow-auto">{formFields(false)}</div>
             <div className="px-5 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-              >
-                {isViewMode ? 'Close' : 'Cancel'}
-              </button>
+              <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">{isViewMode ? 'Close' : 'Cancel'}</button>
               {!isViewMode && (
-                <button
-                  disabled={saving}
-                  onClick={handleSave}
-                  className={cn(
-                    'px-5 py-2 rounded-xl font-semibold text-white',
-                    saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-                  )}
-                >
+                <button disabled={saving} onClick={handleSave} className={cn('px-5 py-2 rounded-xl font-semibold text-white', saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700')}>
                   {saving ? (formMode === 'edit' ? 'Updating...' : 'Saving...') : (formMode === 'edit' ? 'Update Admission' : 'Save Admission')}
                 </button>
               )}
@@ -690,8 +659,15 @@ const Sales: React.FC = () => {
           </div>
         </div>
       )}
+
+      {isMobileViewport && (
+        <MobileBottomSheet open={showForm} title={modalTitle} subtitle="Admission entry" onClose={() => setShowForm(false)} footer={<MobileStickyCTA>{footerActions}</MobileStickyCTA>}>
+          {formFields(true)}
+        </MobileBottomSheet>
+      )}
     </div>
   )
 }
 
 export default Sales
+

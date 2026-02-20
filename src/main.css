@@ -8,8 +8,8 @@
 
 /* Font Family Variables */
 :root {
-  --font-display: 'Poppins', sans-serif;      /* Headings, labels, titles */
-  --font-body: 'DM Sans', sans-serif;          /* Body text, descriptions */
+  --font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;      /* Headings, labels, titles */
+  --font-body: 'Inter', sans-serif;          /* Body text, descriptions */
   --font-mono: 'JetBrains Mono', monospace;    /* Numbers, currency, codes */
   --font-ui: 'Inter', sans-serif;              /* UI elements, buttons */
 
@@ -77,14 +77,14 @@
     overscroll-behavior-x: none;
   }
 
-  /* Global font scale: make all rem-based text larger across the app */
+  /* Consistent baseline typography */
   html {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   @media (min-width: 1280px) {
     html {
-      font-size: 18px;
+      font-size: 16.5px;
     }
   }
 
@@ -3633,40 +3633,37 @@
      Global Typography Harmonization
      Makes font scale consistent across all pages/modules
      ======================================== */
-  .text-\[8px\],
-  .text-\[9px\],
-  .text-\[10px\],
-  .text-\[11px\] {
-    font-size: 0.9rem !important;
-    line-height: 1.25rem !important;
+  [data-mobile-premium-ui='true'] .erp-module-page .text-\[8px\],
+  [data-mobile-premium-ui='true'] .erp-module-page .text-\[9px\],
+  [data-mobile-premium-ui='true'] .erp-module-page .text-\[10px\],
+  [data-mobile-premium-ui='true'] .erp-module-page .text-\[11px\] {
+    font-size: 0.82rem !important;
+    line-height: 1.15rem !important;
   }
 
-  .text-xs {
-    font-size: 0.95rem !important;
+  [data-mobile-premium-ui='true'] .erp-module-page .text-xs {
+    font-size: 0.84rem !important;
+    line-height: 1.2rem !important;
+  }
+
+  [data-mobile-premium-ui='true'] .erp-module-page .text-sm {
+    font-size: 0.9rem !important;
     line-height: 1.3rem !important;
   }
 
-  .text-sm {
-    font-size: 1rem !important;
-    line-height: 1.45rem !important;
+  [data-mobile-premium-ui='true'] .erp-module-page .text-base {
+    font-size: 0.96rem !important;
+    line-height: 1.35rem !important;
   }
 
-  .text-base {
-    font-size: 1.05rem !important;
-    line-height: 1.5rem !important;
+  [data-mobile-premium-ui='true'] .erp-module-page :where(button, input, select, textarea) {
+    font-size: 0.92rem;
   }
 
-  button,
-  input,
-  select,
-  textarea {
-    font-size: 1rem;
-  }
-
-  table thead th {
-    font-size: 0.88rem !important;
+  [data-mobile-premium-ui='true'] .erp-module-page table thead th {
+    font-size: 0.76rem !important;
     font-weight: 700 !important;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
   }
 }
 

@@ -24,6 +24,10 @@ import { cn } from '../lib/utils'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
+import useIsMobileViewport from '../hooks/useIsMobileViewport'
+import MobilePageScaffold from '../components/mobile/MobilePageScaffold'
+import MobileStatCards from '../components/mobile/MobileStatCards'
+import MobileFilterChips from '../components/mobile/MobileFilterChips'
 import {
   getSalesSummaryReport,
   getPurchaseSummaryReport,
@@ -54,6 +58,7 @@ import { subscribeToBankingPageData } from '../services/bankingService'
 const ReportsNew = () => {
   const { t } = useLanguage()
   const { userData } = useAuth()
+  const isMobileViewport = useIsMobileViewport()
   const [selectedTab, setSelectedTab] = useState('everyday')
   const [selectedPeriod, setSelectedPeriod] = useState('today')
   const [loading, setLoading] = useState(false)
@@ -589,8 +594,42 @@ const ReportsNew = () => {
 
   return (
     <div className="erp-module-page overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3 min-h-screen">
+      {isMobileViewport && (
+        <MobilePageScaffold
+          title={t.nav.reports}
+          subtitle="Business insights and exports"
+        >
+          <MobileStatCards
+            items={[
+              { id: 'reports', title: 'Reports', value: '12', tone: 'primary', icon: <ChartBar size={16} /> },
+              { id: 'downloads', title: 'Downloaded', value: '0', tone: 'success', icon: <Download size={16} /> },
+              { id: 'views', title: 'Views', value: String(currentReportType ? 1 : 0), tone: 'warning', icon: <Eye size={16} /> },
+              { id: 'categories', title: 'Categories', value: '4', tone: 'neutral', icon: <FolderOpen size={16} /> },
+            ]}
+          />
+
+          <MobileFilterChips
+            items={[
+              { id: 'today', label: t.common.today },
+              { id: 'this-week', label: t.common.week },
+              { id: 'this-month', label: t.common.month },
+              { id: 'this-year', label: t.common.year },
+              { id: 'all-time', label: t.reports.all || 'All' },
+            ]}
+            activeId={selectedPeriod}
+            onSelect={(id) => setSelectedPeriod(id)}
+          />
+
+          <MobileFilterChips
+            items={tabs.map((tab) => ({ id: tab.id, label: tab.label }))}
+            activeId={selectedTab}
+            onSelect={(id) => setSelectedTab(id)}
+          />
+        </MobilePageScaffold>
+      )}
+
       {/* Header - Clean & Simple */}
-      <div className="flex-shrink-0">
+      <div className={cn('flex-shrink-0', isMobileViewport && 'hidden md:block')}>
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
           {/* Left Side: KPI Cards - Rectangular filling space */}

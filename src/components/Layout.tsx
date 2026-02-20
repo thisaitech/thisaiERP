@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
-  House, Receipt, Users, Package, ChartLine, List, X, Sparkle,
+  House, Receipt, Users, Package, ChartLine, List, X,
   Moon, Sun, Wallet, Bank, Gear, FileText, SignOut,
-  Buildings
+  Buildings, SquaresFour
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -47,9 +47,11 @@ function scheduleIdle(callback: () => void, timeoutMs: number = 1200): { cancel:
 
 const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false)
   const { isDarkMode, toggleDarkMode } = useTheme()
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const { userData } = useAuth()
   const userDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -66,8 +68,12 @@ const Layout = () => {
 
   useEffect(() => {
     document.body.dataset.mobileMenuOpen = isMobileMenuOpen ? 'true' : 'false'
-    return () => { document.body.removeAttribute('data-mobile-menu-open') }
-  }, [isMobileMenuOpen])
+    document.body.dataset.mobileMoreOpen = isMobileMoreOpen ? 'true' : 'false'
+    return () => {
+      document.body.removeAttribute('data-mobile-menu-open')
+      document.body.removeAttribute('data-mobile-more-open')
+    }
+  }, [isMobileMenuOpen, isMobileMoreOpen])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -193,6 +199,18 @@ const Layout = () => {
   const navigationItems = allNavigationItems.filter(canAccessNavItem)
   const filteredMoreMenuItems = moreMenuItems.filter(canAccessNavItem)
   const canAccessSettings = userData?.role === 'admin' || (userData?.uid && userData?.role && settingsItem.pageKey && canAccessPage(userData.uid, userData.role, settingsItem.pageKey))
+  const mobilePrimaryItems = navigationItems.slice(0, 3)
+  const mobileOverflowItems = [...navigationItems.slice(3), ...filteredMoreMenuItems]
+  const mobileRouteLabels = [
+    { path: '/', label: t.nav.dashboard },
+    ...navigationItems.map((item) => ({ path: item.path, label: item.label })),
+    ...filteredMoreMenuItems.map((item) => ({ path: item.path, label: item.label })),
+    ...(canAccessSettings ? [{ path: settingsItem.path, label: settingsItem.label }] : []),
+  ]
+  const currentPageTitle =
+    mobileRouteLabels.find((item) => location.pathname === item.path)?.label ||
+    mobileRouteLabels.find((item) => location.pathname.startsWith(item.path + '/'))?.label ||
+    (userData?.companyName || t.nav.dashboard)
 
   const desktopRailItems: Array<{
     id: string;
@@ -425,10 +443,18 @@ const Layout = () => {
           >
             <List size={20} className="text-slate-600 dark:text-slate-300" />
           </button>
-          <h1 className="text-base font-bold text-slate-800 dark:text-white truncate max-w-[200px]">
-            {userData?.companyName || 'My Business'}
+          <h1 className="text-base font-bold text-slate-800 dark:text-white truncate max-w-[210px] text-center">
+            {currentPageTitle}
           </h1>
-          <div className="w-9"></div>
+          <button
+            onClick={() => setIsMobileMoreOpen(true)}
+            className="p-2 rounded-lg bg-[#e4ebf5] dark:bg-slate-700
+              shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]
+              dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
+            aria-label="More"
+          >
+            <SquaresFour size={20} className="text-slate-600 dark:text-slate-300" />
+          </button>
         </div>
       </header>
 
@@ -571,6 +597,72 @@ const Layout = () => {
         )}
       </AnimatePresence>
 
+      {/* Mobile More Sheet */}
+      <AnimatePresence>
+        {isMobileMoreOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-[55] lg:hidden"
+              onClick={() => setIsMobileMoreOpen(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+              className="fixed left-0 right-0 bottom-0 z-[56] lg:hidden rounded-t-2xl bg-[#e4ebf5] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl"
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-100">More Modules</h3>
+                <button
+                  type="button"
+                  className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  onClick={() => setIsMobileMoreOpen(false)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="px-3 py-3 max-h-[65vh] overflow-auto space-y-2">
+                {mobileOverflowItems.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setIsMobileMoreOpen(false)}
+                    className={({ isActive }) => cn(
+                      'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-700/80'
+                    )}
+                  >
+                    <item.icon size={18} weight="bold" />
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+                {canAccessSettings && (
+                  <NavLink
+                    to={settingsItem.path}
+                    onClick={() => setIsMobileMoreOpen(false)}
+                    className={({ isActive }) => cn(
+                      'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-700/80'
+                    )}
+                  >
+                    <settingsItem.icon size={18} weight="bold" />
+                    <span>{settingsItem.label}</span>
+                  </NavLink>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       <main className="w-full px-3 py-2 lg:pl-[112px]">
         <Outlet />
       </main>
@@ -580,7 +672,20 @@ const Layout = () => {
         <div className="flex justify-around items-center h-16 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
           shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
           dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
-          {navigationItems.slice(0, 5).map((item) => (
+          <NavLink
+            to="/"
+            className={({ isActive }) => cn(
+              "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
+              isActive
+                ? "text-blue-600 dark:text-blue-400 shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]"
+                : "text-slate-500 dark:text-slate-400"
+            )}
+          >
+            <House size={22} weight="regular" />
+            <span className="text-[10px] font-semibold">{t.nav.dashboard}</span>
+          </NavLink>
+
+          {mobilePrimaryItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -596,6 +701,17 @@ const Layout = () => {
               <span className="text-[10px] font-semibold">{item.label}</span>
             </NavLink>
           ))}
+          <button
+            type="button"
+            onClick={() => setIsMobileMoreOpen(true)}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
+              isMobileMoreOpen ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"
+            )}
+          >
+            <SquaresFour size={22} weight="regular" />
+            <span className="text-[10px] font-semibold">More</span>
+          </button>
         </div>
       </nav>
     </div>

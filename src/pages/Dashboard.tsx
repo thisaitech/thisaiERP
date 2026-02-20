@@ -1259,7 +1259,7 @@ const Dashboard = () => {
     )
 
     return (
-      <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900">
+      <div className="erp-module-page p-0 bg-[#e4ebf5] dark:bg-slate-900">
         {/* Mobile Dashboard */}
         <div className="md:hidden">
           <MobileDashboard />

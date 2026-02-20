@@ -11,6 +11,9 @@ import {
 } from '@phosphor-icons/react';
 import { cn } from '../lib/utils';
 import Loading from '../components/Loading';
+import useIsMobileViewport from '../hooks/useIsMobileViewport';
+import MobilePageScaffold from '../components/mobile/MobilePageScaffold';
+import MobileFilterChips from '../components/mobile/MobileFilterChips';
 
 const LanguageSettingsSection = lazy(() => import('../components/settings/LanguageSettingsSection').then(module => ({ default: module.LanguageSettingsSection })));
 const GeneralSettingsSection = lazy(() => import('../components/settings/GeneralSettings').then(module => ({ default: module.GeneralSettingsSection })));
@@ -28,6 +31,7 @@ interface SettingsSection {
 const Settings = () => {
   const { t } = useLanguage();
   const [searchParams] = useSearchParams();
+  const isMobileViewport = useIsMobileViewport();
   const [selectedSection, setSelectedSection] = useState('general');
 
   // Handle URL param for direct navigation (e.g., /settings?tab=subscription)
@@ -60,8 +64,25 @@ const Settings = () => {
 
   return (
     <div className="erp-module-page overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3">
+      {isMobileViewport && (
+        <MobilePageScaffold
+          title={t.nav.settings}
+          subtitle="Manage ERP preferences and business defaults"
+        >
+          <MobileFilterChips
+            items={settingsSections.map((section) => ({
+              id: section.id,
+              label: section.label,
+              icon: <section.icon size={16} weight={selectedSection === section.id ? 'duotone' : 'regular'} />,
+            }))}
+            activeId={selectedSection}
+            onSelect={(id) => setSelectedSection(id)}
+          />
+        </MobilePageScaffold>
+      )}
+
       <div className="flex-shrink-0">
-        <div className="mb-3">
+        <div className={cn("mb-3", isMobileViewport && "hidden")}>
           <div className="erp-module-filter-wrap justify-center">
             {settingsSections.map((section) => (
               <button

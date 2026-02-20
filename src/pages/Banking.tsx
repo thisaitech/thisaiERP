@@ -47,9 +47,14 @@ import {
   type BankingPageTransaction
 } from '../services/bankingService'
 import { useErrorHandler } from '../hooks/useErrorHandler'
+import useIsMobileViewport from '../hooks/useIsMobileViewport'
+import MobilePageScaffold from '../components/mobile/MobilePageScaffold'
+import MobileStatCards from '../components/mobile/MobileStatCards'
+import MobileFilterChips from '../components/mobile/MobileFilterChips'
 
 const Banking = () => {
   const { handleError } = useErrorHandler()
+  const isMobileViewport = useIsMobileViewport()
   // Language support
   const { t, language } = useLanguage()
 
@@ -754,11 +759,64 @@ const Banking = () => {
 
   return (
     <div className="erp-module-page pb-20 lg:pb-6">
+      {isMobileViewport && (
+        <MobilePageScaffold
+          title="Banking"
+          subtitle="Track cash flow, bank accounts and liabilities"
+          actions={
+            <button onClick={() => setShowAddAccount(true)} className="mobile-primary-btn">
+              <Plus size={16} weight="bold" />
+              {t.banking.addAccount}
+            </button>
+          }
+        >
+          <MobileStatCards
+            items={[
+              { id: 'available', title: t.banking.availableBalance, value: `₹${(availableBalance / 100000).toFixed(2)}L`, tone: 'primary', icon: <Bank size={16} /> },
+              { id: 'cash', title: t.banking.cashInHand, value: `₹${(accounts.cashInHand.balance / 1000).toFixed(1)}K`, tone: 'success', icon: <Wallet size={16} /> },
+              { id: 'pending', title: t.banking.pendingCheques, value: String(accounts.cheques.filter(ch => ch.status === 'pending').length), tone: 'warning', icon: <Receipt size={16} /> },
+              {
+                id: 'worth',
+                title: t.banking.netWorth,
+                value: `${netWorth >= 0 ? '+' : '-'}₹${(Math.abs(netWorth) / 100000).toFixed(1)}L`,
+                tone: netWorth >= 0 ? 'success' : 'danger',
+                icon: netWorth >= 0 ? <TrendUp size={16} /> : <TrendDown size={16} />
+              },
+            ]}
+          />
+
+          <MobileFilterChips
+            items={[
+              { id: 'today', label: t.common.today },
+              { id: 'week', label: t.common.week },
+              { id: 'month', label: t.common.month },
+              { id: 'year', label: t.common.year },
+              { id: 'all', label: t.common.all },
+              { id: 'custom', label: t.common.custom },
+            ]}
+            activeId={selectedPeriod}
+            onSelect={(id) => setSelectedPeriod(id)}
+          />
+
+          <MobileFilterChips
+            items={[
+              { id: 'overview', label: t.banking.overview },
+              { id: 'transactions', label: t.banking.transactions },
+              { id: 'razorpay', label: t.banking.razorpay },
+              { id: 'cheques', label: t.banking.cheques },
+              { id: 'loans', label: t.banking.loans },
+            ]}
+            activeId={selectedTab}
+            onSelect={(id) => setSelectedTab(id)}
+          />
+        </MobilePageScaffold>
+      )}
+
       {/* Modern Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-3"
+        className={cn('mb-3', isMobileViewport && 'hidden md:block')}
       >
         {/* Top Row: Date Filter + Action Button (Right Aligned) */}
         <div className="flex items-center justify-end mb-3">
@@ -834,7 +892,7 @@ const Banking = () => {
       </motion.div>
 
       {/* Centered Filter Pills / Tabs */}
-      <div className="flex justify-center mb-3">
+      <div className={cn('flex justify-center mb-3', isMobileViewport && 'hidden md:flex')}>
         <div className="erp-module-filter-wrap justify-center">
           {[
             { id: 'overview', label: t.banking.overview, icon: Bank },

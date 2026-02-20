@@ -17,7 +17,10 @@
     "electron:build": "npm run build:electron && electron-builder",
     "electron:build:win": "npm run build:electron && electron-builder --win",
     "electron:build:mac": "npm run build:electron && electron-builder --mac",
-    "electron:build:linux": "npm run build:electron && electron-builder --linux"
+    "electron:build:linux": "npm run build:electron && electron-builder --linux",
+    "mobile:sync:android": "npx cap sync android",
+    "mobile:sync:ios": "npx cap sync ios",
+    "mobile:add:ios": "npx cap add ios"
   },
   "build": {
     "appId": "com.thisai.erp",
@@ -54,10 +57,11 @@
     }
   },
   "dependencies": {
-    "@capacitor/android": "^7.4.4",
-    "@capacitor/cli": "^7.4.4",
-    "@capacitor/core": "^7.4.4",
+    "@capacitor/android": "7.4.4",
+    "@capacitor/cli": "7.4.4",
+    "@capacitor/core": "7.4.4",
     "@capacitor/filesystem": "^7.1.6",
+    "@capacitor/ios": "7.4.4",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",

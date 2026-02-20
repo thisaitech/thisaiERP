@@ -1,13 +1,22 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Plus, Trash, ArrowRight, X, Calendar, MagnifyingGlass, TrendUp, CheckCircle, Clock } from '@phosphor-icons/react'
+import { Plus, Trash, ArrowRight, X, Calendar, MagnifyingGlass, TrendUp, CheckCircle, Clock, Eye, NotePencil } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { getPartiesWithOutstanding } from '../services/partyService'
 import { getItems } from '../services/itemService'
 import { getPartyName } from '../utils/partyUtils'
 import { cn } from '../lib/utils'
+import useIsMobileViewport from '../hooks/useIsMobileViewport'
+import MobilePageScaffold from '../components/mobile/MobilePageScaffold'
+import MobileStatCards from '../components/mobile/MobileStatCards'
+import MobileFilterChips from '../components/mobile/MobileFilterChips'
+import MobileSearchBar from '../components/mobile/MobileSearchBar'
+import MobileListCard from '../components/mobile/MobileListCard'
+import MobileActionMenu from '../components/mobile/MobileActionMenu'
+import MobileBottomSheet from '../components/mobile/MobileBottomSheet'
+import MobileStickyCTA from '../components/mobile/MobileStickyCTA'
 import {
   createQuotation,
   deleteQuotation,
@@ -29,13 +38,23 @@ const buildEmptyItem = (): QuotationItem => ({
   tax: 0
 })
 
+const formatDateInput = (value?: string) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toISOString().split('T')[0]
+}
+
 const Quotations: React.FC = () => {
   const { t } = useLanguage()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const isMobileViewport = useIsMobileViewport()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [formMode, setFormMode] = useState<'create' | 'edit' | 'view'>('create')
+  const [editingQuotationId, setEditingQuotationId] = useState<string | null>(null)
   const [quotations, setQuotations] = useState<Quotation[]>([])
   const [students, setStudents] = useState<any[]>([])
   const [courses, setCourses] = useState<any[]>([])
@@ -192,11 +211,15 @@ const Quotations: React.FC = () => {
 
   useEffect(() => {
     if (searchParams.get('action') === 'new') {
+      resetForm()
+      setFormMode('create')
       setShowForm(true)
     }
   }, [searchParams])
 
   const resetForm = () => {
+    setEditingQuotationId(null)
+    setFormMode('create')
     setQuotationNumber(generateQuotationNumber())
     setQuotationDate(new Date().toISOString().split('T')[0])
     const d = new Date()
@@ -212,6 +235,43 @@ const Quotations: React.FC = () => {
     setItems([buildEmptyItem()])
     setNotes('')
     setDiscount(0)
+  }
+
+  const openCreateForm = () => {
+    resetForm()
+    setFormMode('create')
+    setShowForm(true)
+  }
+
+  const loadQuotationIntoForm = (quotation: Quotation, mode: 'edit' | 'view') => {
+    setEditingQuotationId(quotation.id)
+    setFormMode(mode)
+    setQuotationNumber(quotation.quotationNumber || generateQuotationNumber())
+    setQuotationDate(formatDateInput(quotation.quotationDate || quotation.createdAt) || new Date().toISOString().split('T')[0])
+    setValidUntil(formatDateInput(quotation.validUntil || quotation.quotationDate || quotation.createdAt))
+    setPartyId(quotation.partyId || '')
+    setPartyName(quotation.partyName || '')
+    setPartyPhone(quotation.partyPhone || '')
+    setPartyEmail(quotation.partyEmail || '')
+    setPartyAddress(quotation.partyAddress || '')
+    setPartyCity(quotation.partyCity || '')
+    setPartyState(quotation.partyState || '')
+    const nextItems = (quotation.items || []).length
+      ? quotation.items.map((item) => ({
+          id: item.id || `item_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          description: item.description || '',
+          quantity: Number(item.quantity) || 0,
+          unit: item.unit || 'Course',
+          rate: Number(item.rate) || 0,
+          amount: Number(item.amount) || 0,
+          taxRate: Number(item.taxRate) || 0,
+          tax: Number(item.tax) || 0
+        }))
+      : [buildEmptyItem()]
+    setItems(nextItems)
+    setNotes(quotation.notes || '')
+    setDiscount(Number(quotation.discount) || 0)
+    setShowForm(true)
   }
 
   const updateItem = (
@@ -358,10 +418,34 @@ const Quotations: React.FC = () => {
     }
   }, [periodFilteredQuotations])
 
+  const periodOptions = [
+    { id: 'today', label: 'Today' },
+    { id: 'week', label: 'Week' },
+    { id: 'month', label: 'Month' },
+    { id: 'year', label: 'Year' },
+    { id: 'all', label: 'All' },
+    { id: 'custom', label: 'Custom' }
+  ] as const
+
+  const statusOptions = [
+    { key: 'all', label: 'All' },
+    { key: 'paid', label: 'Paid' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'partial', label: 'Partial' },
+    { key: 'returned', label: 'Returned' }
+  ] as const
+
   const formatCurrency = (value: number) =>
     `₹${Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
+  const isViewMode = formMode === 'view'
+
   const handleSave = async () => {
+    if (isViewMode) {
+      setShowForm(false)
+      return
+    }
+
     if (!partyName.trim()) {
       toast.error('Please enter student name')
       return
@@ -400,17 +484,27 @@ const Quotations: React.FC = () => {
         createdBy: 'system'
       }
 
-      await createQuotation(quotationData)
-      toast.success('Quotation created')
+      if (formMode === 'edit' && editingQuotationId) {
+        await updateQuotation(editingQuotationId, quotationData)
+        toast.success('Quotation updated')
+      } else {
+        await createQuotation(quotationData)
+        toast.success('Quotation created')
+      }
       resetForm()
       setShowForm(false)
       await loadQuotations()
     } catch (error) {
-      console.error('Failed to create quotation:', error)
-      toast.error('Failed to create quotation')
+      console.error('Failed to save quotation:', error)
+      toast.error('Failed to save quotation')
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleCloseForm = () => {
+    setShowForm(false)
+    resetForm()
   }
 
   const handleDelete = async (id: string) => {
@@ -487,7 +581,60 @@ const Quotations: React.FC = () => {
 
   return (
     <div className="erp-module-page px-4 py-4">
-      <div className="space-y-3 mb-4">
+      {isMobileViewport && (
+        <MobilePageScaffold
+          title="Quotations"
+          subtitle="Create and manage course quotations"
+          actions={
+            <button onClick={openCreateForm} className="mobile-primary-btn">
+              <Plus size={16} weight="bold" />
+              Add
+            </button>
+          }
+        >
+          <MobileStatCards
+            items={[
+              { id: 'quotation-amount', title: 'Quotations', value: formatCurrency(summary.quotationAmount), tone: 'success', icon: <TrendUp size={16} /> },
+              { id: 'collected-amount', title: 'Collected', value: formatCurrency(summary.collectedAmount), tone: 'danger', icon: <CheckCircle size={16} /> },
+              { id: 'pending-amount', title: 'Pending', value: formatCurrency(summary.pendingAmount), tone: 'warning', icon: <Clock size={16} /> },
+              { id: 'converted-amount', title: 'Converted', value: formatCurrency(summary.convertedToAdmissionAmount), tone: 'primary', icon: <ArrowRight size={16} /> },
+            ]}
+          />
+
+          <MobileSearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search invoice, customer, mobile..."
+          />
+
+          <MobileFilterChips
+            items={periodOptions.map((option) => ({ id: option.id, label: option.label }))}
+            activeId={periodFilter}
+            onSelect={(id) => setPeriodFilter(id as typeof periodFilter)}
+          />
+
+          {periodFilter === 'custom' && (
+            <input
+              type="date"
+              value={customDate}
+              onChange={(e) => setCustomDate(e.target.value)}
+              className="mobile-control"
+            />
+          )}
+
+          <MobileFilterChips
+            items={statusOptions.map((option) => ({
+              id: option.key,
+              label: option.label,
+              count: statusCounts[option.key]
+            }))}
+            activeId={statusFilter}
+            onSelect={(id) => setStatusFilter(id as typeof statusFilter)}
+          />
+        </MobilePageScaffold>
+      )}
+
+      <div className={cn('space-y-3 mb-4', isMobileViewport && 'hidden')}>
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] gap-3">
           <div className="min-w-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             <div className="erp-module-stat-card erp-module-stat-card-compact border-emerald-400 min-w-0">
@@ -531,7 +678,7 @@ const Quotations: React.FC = () => {
           <div className="flex flex-col gap-2">
             <div className="flex justify-end">
               <button
-                onClick={() => setShowForm(true)}
+                onClick={openCreateForm}
                 className="erp-module-primary-btn"
               >
                 <Plus size={16} weight="bold" />
@@ -539,17 +686,13 @@ const Quotations: React.FC = () => {
               </button>
             </div>
             <div className="erp-module-filter-wrap justify-end">
-              {(['today', 'week', 'month', 'year', 'all', 'custom'] as const).map((period) => (
+              {periodOptions.map((period) => (
                 <button
-                  key={period}
-                  onClick={() => setPeriodFilter(period)}
-                  className={cn('erp-module-filter-chip', periodFilter === period && 'is-active')}
+                  key={period.id}
+                  onClick={() => setPeriodFilter(period.id)}
+                  className={cn('erp-module-filter-chip', periodFilter === period.id && 'is-active')}
                 >
-                  {period === 'today' ? 'Today' :
-                   period === 'week' ? 'Week' :
-                   period === 'month' ? 'Month' :
-                   period === 'year' ? 'Year' :
-                   period === 'all' ? 'All' : 'Custom'}
+                  {period.label}
                 </button>
               ))}
             </div>
@@ -575,13 +718,7 @@ const Quotations: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-2 flex-wrap xl:justify-end">
-            {([
-              { key: 'all', label: 'All' },
-              { key: 'paid', label: 'Paid' },
-              { key: 'pending', label: 'Pending' },
-              { key: 'partial', label: 'Partial' },
-              { key: 'returned', label: 'Returned' }
-            ] as const).map((tab) => (
+            {statusOptions.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setStatusFilter(tab.key)}
@@ -595,21 +732,21 @@ const Quotations: React.FC = () => {
         </div>
       </div>
 
-      {showForm && (
+      {showForm && !isMobileViewport && (
         <div className="erp-module-panel p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold">{t.quotations.createNewQuotation}</h2>
+            <h2 className="text-base font-semibold">
+              {formMode === 'view' ? 'View Quotation' : formMode === 'edit' ? 'Edit Quotation' : t.quotations.createNewQuotation}
+            </h2>
             <button
-              onClick={() => {
-                setShowForm(false)
-                resetForm()
-              }}
+              onClick={handleCloseForm}
               className="p-1.5 rounded-md hover:bg-muted"
             >
               <X size={16} />
             </button>
           </div>
 
+          <fieldset disabled={isViewMode} className="space-y-0">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="text-sm font-medium">Quote Number</label>
@@ -821,26 +958,236 @@ const Quotations: React.FC = () => {
               </div>
             </div>
           </div>
+          </fieldset>
 
           <div className="flex gap-2 justify-end mt-4">
             <button
-              onClick={() => {
-                setShowForm(false)
-                resetForm()
-              }}
+              onClick={handleCloseForm}
               className="px-4 py-2 rounded-lg border border-border text-sm font-semibold"
             >
-              Cancel
+              {formMode === 'view' ? 'Close' : 'Cancel'}
             </button>
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || isViewMode}
               className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save Quotation'}
+              {saving ? 'Saving...' : formMode === 'edit' ? 'Update Quotation' : 'Save Quotation'}
             </button>
           </div>
         </div>
+      )}
+
+      {showForm && isMobileViewport && (
+        <MobileBottomSheet
+          open={showForm}
+          onClose={handleCloseForm}
+          title={formMode === 'view' ? 'View Quotation' : formMode === 'edit' ? 'Edit Quotation' : t.quotations.createNewQuotation}
+          fullHeight
+        >
+          <fieldset disabled={isViewMode} className="space-y-3">
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <label className="text-sm font-medium">Quote Number</label>
+                <input
+                  value={quotationNumber}
+                  onChange={(e) => setQuotationNumber(e.target.value)}
+                  className="mobile-control mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Quote Date</label>
+                <input
+                  type="date"
+                  value={quotationDate}
+                  onChange={(e) => setQuotationDate(e.target.value)}
+                  className="mobile-control mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t.quotations.validUntil}</label>
+                <input
+                  type="date"
+                  value={validUntil}
+                  onChange={(e) => setValidUntil(e.target.value)}
+                  className="mobile-control mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">
+                  {t.quotations.customerDetails}
+                  <span className="ml-2 text-xs text-muted-foreground">({students.length})</span>
+                </label>
+                <input
+                  ref={studentInputRef}
+                  value={partyName}
+                  onChange={(e) => {
+                    setPartyName(e.target.value)
+                    setShowStudentDropdown(true)
+                  }}
+                  onFocus={() => setShowStudentDropdown(true)}
+                  placeholder="Student name"
+                  className="mobile-control mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t.quotations.phoneNumber}</label>
+                <input
+                  value={partyPhone}
+                  onChange={(e) => setPartyPhone(e.target.value)}
+                  placeholder="Phone"
+                  className="mobile-control mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t.quotations.emailAddress}</label>
+                <input
+                  value={partyEmail}
+                  onChange={(e) => setPartyEmail(e.target.value)}
+                  placeholder="Email"
+                  className="mobile-control mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t.quotations.billingAddress}</label>
+                <input
+                  value={partyAddress}
+                  onChange={(e) => setPartyAddress(e.target.value)}
+                  placeholder="Address"
+                  className="mobile-control mt-1"
+                />
+              </div>
+            </div>
+
+            <div className="mobile-form-section">
+              <div className="mobile-form-section-header flex items-center justify-between">
+                <h3 className="mobile-form-section-title">
+                  {t.quotations.addItems}
+                  <span className="ml-2 text-xs text-muted-foreground">({courses.length})</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setItems(prev => [...prev, buildEmptyItem()])}
+                  className="mobile-secondary-btn"
+                >
+                  + Add
+                </button>
+              </div>
+              <div className="mobile-form-section-body space-y-3">
+                {items.map((item) => (
+                  <div key={item.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 space-y-2">
+                    <input
+                      ref={(el) => {
+                        courseInputRefs.current[item.id] = el
+                      }}
+                      className="mobile-control"
+                      placeholder="Course / Service"
+                      value={item.description}
+                      onChange={(e) => {
+                        updateItem(item.id, 'description', e.target.value)
+                        setOpenCourseDropdownId(item.id)
+                      }}
+                      onFocus={() => setOpenCourseDropdownId(item.id)}
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        className="mobile-control"
+                        placeholder="Qty"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                      />
+                      <input
+                        className="mobile-control"
+                        placeholder="Unit"
+                        value={item.unit}
+                        onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
+                      />
+                      <input
+                        type="number"
+                        className="mobile-control"
+                        placeholder="Fee"
+                        value={item.rate}
+                        onChange={(e) => updateItem(item.id, 'rate', e.target.value)}
+                      />
+                      <input
+                        type="number"
+                        className="mobile-control"
+                        placeholder="Tax %"
+                        value={item.taxRate}
+                        onChange={(e) => updateItem(item.id, 'taxRate', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">₹{item.amount.toFixed(2)}</span>
+                      <button
+                        type="button"
+                        onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))}
+                        className="mobile-secondary-btn text-red-600"
+                        title="Remove"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>₹{totals.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Tax</span>
+                <span>₹{totals.taxAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span>Discount</span>
+                <input
+                  type="number"
+                  value={discount}
+                  onChange={(e) => setDiscount(Number(e.target.value) || 0)}
+                  className="mobile-control w-28 text-right"
+                />
+              </div>
+              <div className="flex justify-between font-semibold text-base border-t border-slate-200 dark:border-slate-700 pt-2">
+                <span>Total</span>
+                <span>₹{totals.grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">{t.quotations.notesOptional}</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+                className="mobile-control mt-1"
+                placeholder={t.quotations.addNotes}
+              />
+            </div>
+          </fieldset>
+
+          <MobileStickyCTA>
+            <button
+              type="button"
+              onClick={handleCloseForm}
+              className="mobile-secondary-btn flex-1"
+            >
+              {formMode === 'view' ? 'Close' : 'Cancel'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || isViewMode}
+              className="mobile-primary-btn flex-1 disabled:opacity-60"
+            >
+              {saving ? 'Saving...' : formMode === 'edit' ? 'Update Quotation' : 'Save Quotation'}
+            </button>
+          </MobileStickyCTA>
+        </MobileBottomSheet>
       )}
 
       {/* Student dropdown rendered in a portal to avoid overflow/z-index clipping */}
@@ -956,7 +1303,7 @@ const Quotations: React.FC = () => {
         document.body
       )}
 
-      <div className="erp-module-panel p-4">
+      <div className={cn('erp-module-panel p-4', isMobileViewport && 'hidden')}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-semibold">Recent Course Quotes</h2>
           <span className="text-xs text-muted-foreground">{filteredQuotations.length} shown</span>
@@ -989,6 +1336,18 @@ const Quotations: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold">₹{(quotation.grandTotal || 0).toLocaleString('en-IN')}</span>
                   <button
+                    onClick={() => loadQuotationIntoForm(quotation, 'view')}
+                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-slate-600 text-xs font-semibold border border-slate-200 dark:border-slate-700"
+                  >
+                    <Eye size={14} />
+                  </button>
+                  <button
+                    onClick={() => loadQuotationIntoForm(quotation, 'edit')}
+                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-primary text-xs font-semibold border border-slate-200 dark:border-slate-700"
+                  >
+                    <NotePencil size={14} />
+                  </button>
+                  <button
                     onClick={() => handleConvert(quotation)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold"
                   >
@@ -1007,6 +1366,67 @@ const Quotations: React.FC = () => {
           </div>
         )}
       </div>
+
+      {isMobileViewport && (
+        <div className="space-y-3 mt-3">
+          {loading ? (
+            <div className="mobile-list-card text-center text-sm text-slate-500 dark:text-slate-300">Loading...</div>
+          ) : filteredQuotations.length === 0 ? (
+            <div className="mobile-list-card text-center text-sm text-slate-500 dark:text-slate-300">
+              {searchQuery || statusFilter !== 'all' || periodFilter !== 'all' ? 'No matching course quotes' : 'No course quotes yet'}
+            </div>
+          ) : (
+            filteredQuotations.map((quotation) => (
+              <MobileListCard
+                key={quotation.id}
+                title={quotation.quotationNumber}
+                subtitle={`${quotation.partyName} • ${formatDateInput(quotation.quotationDate) || quotation.quotationDate || ''}`}
+                badge={quotation.status}
+                rightValue={`₹${(quotation.grandTotal || 0).toLocaleString('en-IN')}`}
+                items={[
+                  { label: 'Status', value: quotation.status.toUpperCase() },
+                  { label: 'Due Date', value: formatDateInput(quotation.validUntil) || '-' },
+                  { label: 'Courses', value: String((quotation.items || []).length) },
+                  { label: 'Phone', value: quotation.partyPhone || '-' }
+                ]}
+                footer={
+                  <div className="flex items-center justify-end">
+                    <MobileActionMenu
+                      actions={[
+                        {
+                          id: 'view',
+                          label: 'View',
+                          icon: <Eye size={16} />,
+                          onClick: () => loadQuotationIntoForm(quotation, 'view')
+                        },
+                        {
+                          id: 'edit',
+                          label: 'Edit',
+                          icon: <NotePencil size={16} />,
+                          onClick: () => loadQuotationIntoForm(quotation, 'edit')
+                        },
+                        {
+                          id: 'convert',
+                          label: 'Convert',
+                          icon: <ArrowRight size={16} />,
+                          onClick: () => handleConvert(quotation)
+                        },
+                        {
+                          id: 'delete',
+                          label: 'Delete',
+                          icon: <Trash size={16} />,
+                          danger: true,
+                          onClick: () => handleDelete(quotation.id)
+                        }
+                      ]}
+                    />
+                  </div>
+                }
+              />
+            ))
+          )}
+        </div>
+      )}
     </div>
   )
 }

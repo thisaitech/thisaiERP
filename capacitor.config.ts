@@ -5,7 +5,8 @@ const config: CapacitorConfig = {
   appName: 'ThisAI ERP',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    iosScheme: 'https'
   },
   plugins: {
     SplashScreen: {
@@ -13,6 +14,10 @@ const config: CapacitorConfig = {
       backgroundColor: "#3b82f6",
       showSpinner: true,
       spinnerColor: "#ffffff"
+    },
+    StatusBar: {
+      style: "LIGHT",
+      backgroundColor: "#1f4fd6"
     }
   }
 };

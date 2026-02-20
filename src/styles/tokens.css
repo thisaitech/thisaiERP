@@ -1,0 +1,74 @@
+:root {
+  --font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --mobile-bg: #f4f7fb;
+  --mobile-surface: #ffffff;
+  --mobile-surface-2: #eef3fa;
+  --mobile-border: #d7e2f0;
+  --mobile-text: #0f1f35;
+  --mobile-text-muted: #5f718d;
+
+  --mobile-primary: #265fe6;
+  --mobile-primary-strong: #1b46b8;
+  --mobile-success: #0f9f6e;
+  --mobile-warning: #d97706;
+  --mobile-danger: #dc3545;
+
+  --mobile-radius-xs: 10px;
+  --mobile-radius-sm: 12px;
+  --mobile-radius-md: 16px;
+  --mobile-radius-lg: 20px;
+
+  --mobile-shadow-sm: 0 2px 8px rgba(16, 33, 66, 0.08);
+  --mobile-shadow-md: 0 8px 24px rgba(16, 33, 66, 0.12);
+
+  --mobile-space-1: 4px;
+  --mobile-space-2: 8px;
+  --mobile-space-3: 12px;
+  --mobile-space-4: 16px;
+  --mobile-space-5: 20px;
+  --mobile-space-6: 24px;
+}
+
+.dark {
+  --mobile-bg: #0f172a;
+  --mobile-surface: #17233a;
+  --mobile-surface-2: #1f2f4d;
+  --mobile-border: #334765;
+  --mobile-text: #e5ecf7;
+  --mobile-text-muted: #a5b4cc;
+
+  --mobile-shadow-sm: 0 2px 8px rgba(2, 6, 23, 0.6);
+  --mobile-shadow-md: 0 8px 24px rgba(2, 6, 23, 0.65);
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--mobile-text);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+label,
+th {
+  font-family: var(--font-display);
+}
+
+.font-mono,
+[data-numeric],
+input[type='number'] {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum', 'zero';
+}
+

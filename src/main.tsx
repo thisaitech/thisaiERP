@@ -2,12 +2,16 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './main.css'
+import './styles/tokens.css'
+import './styles/mobile.css'
 import { initializeTheme } from './services/themeService'
 
 // If a PWA service worker was previously registered on this origin, it can keep serving
 // stale cached assets even during local development. Ensure dev always uses the latest
 // bundle from Vite.
-if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+const appEnv = (import.meta as any).env || {}
+
+if (appEnv.DEV && 'serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(async (registrations) => {
     if (registrations.length === 0) return
 
@@ -33,6 +37,14 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 
 // Initialize festival theme on app start
 initializeTheme()
+
+const motionLevel = (appEnv.VITE_MOTION_LEVEL || 'balanced').toLowerCase()
+const mobileDensity = (appEnv.VITE_MOBILE_DENSITY || 'compact').toLowerCase()
+const premiumMobileEnabled = (appEnv.VITE_MOBILE_PREMIUM_UI ?? 'true') !== 'false'
+
+document.documentElement.dataset.motionLevel = motionLevel
+document.documentElement.dataset.mobileDensity = mobileDensity
+document.documentElement.dataset.mobilePremiumUi = premiumMobileEnabled ? 'true' : 'false'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
