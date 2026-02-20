@@ -31,8 +31,7 @@ import {
   Stack,
   Camera,
   QrCode,
-  DotsThreeVertical,
-  Calendar
+  DotsThreeVertical
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -188,7 +187,6 @@ const Inventory = () => {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
   const [showNoSuggestionsMessage, setShowNoSuggestionsMessage] = useState(false)
   const [lowStockAlert, setLowStockAlert] = useState('')
-  const [expiryDate, setExpiryDate] = useState('')
   const [itemType, setItemType] = useState('sales') // sales, purchase, both
   const [brandName, setBrandName] = useState('')
   const [barcodeNumber, setBarcodeNumber] = useState('')
@@ -372,7 +370,6 @@ const Inventory = () => {
     setStockQuantity('')
     setStockEntryUnit('Pcs') // Reset stock entry unit
     setLowStockAlert('')
-    setExpiryDate('')
     setItemType('sales')
     // Reset multi-unit fields
     setHasMultiUnit(false)
@@ -594,9 +591,7 @@ const Inventory = () => {
             return qty * (parseInt(piecesPerPurchaseUnit) || 12)
           }
           return qty
-        })(),
-        // Expiry Date - optional
-        expiryDate: expiryDate || undefined
+        })()
       })
 
       setItems([newItem, ...items])
@@ -2297,36 +2292,6 @@ const Inventory = () => {
                         </div>
                       </div>
 
-                      {/* Expiry Date - Optional */}
-                      <div>
-                        <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
-                          <Calendar size={12} weight="duotone" />
-                          Expiry Date
-                          <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="date"
-                            value={expiryDate}
-                            onChange={(e) => setExpiryDate(e.target.value)}
-                            onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
-                            className="w-full px-3 py-2.5 pr-10 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none cursor-pointer"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement
-                              dateInput?.showPicker?.()
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors"
-                          >
-                            <Calendar size={16} weight="duotone" />
-                          </button>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          For perishable items only
-                        </p>
-                      </div>
                     </div>
 
                     {/* Section 5: {t.inventory.multiUnitConversion} */}
