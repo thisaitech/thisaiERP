@@ -121,6 +121,34 @@ const Sales: React.FC = () => {
     setShowForm(true)
   }
 
+  const normalizeStudentName = (value: string) => value.trim().replace(/\s+/g, ' ').toLowerCase()
+  const normalizePhone = (value: string) => value.replace(/\D/g, '')
+
+  const findMatchingStudent = (nameValue: string, phoneValue: string): Student | null => {
+    const searchName = normalizeStudentName(nameValue)
+    const searchPhone = normalizePhone(phoneValue)
+    if (!searchName && !searchPhone) return null
+
+    const exact = students.find((s) => {
+      const studentName = normalizeStudentName(String(s.name || s.companyName || ''))
+      const studentPhone = normalizePhone(String(s.phone || ''))
+      const sameName = searchName.length > 0 && studentName === searchName
+      const samePhone =
+        searchPhone.length > 0 &&
+        studentPhone.length > 0 &&
+        (studentPhone === searchPhone || studentPhone.endsWith(searchPhone) || searchPhone.endsWith(studentPhone))
+      return sameName || samePhone
+    })
+    if (exact) return exact
+
+    if (!searchName) return null
+    const prefixMatches = students.filter((s) => {
+      const studentName = normalizeStudentName(String(s.name || s.companyName || ''))
+      return studentName.startsWith(searchName)
+    })
+    return prefixMatches.length === 1 ? prefixMatches[0] : null
+  }
+
   const recalcLine = (line: AdmissionItem): AdmissionItem => {
     const qty = Number(line.quantity) || 0
     const rate = Number(line.rate) || 0
@@ -213,27 +241,15 @@ const Sales: React.FC = () => {
 
     if (!admissionStudentId) {
       if (!typedStudentName) return toast.error('Please select or enter a student name')
-      if (formMode === 'edit') {
-        const searchName = typedStudentName.toLowerCase()
-        const searchPhone = phone.replace(/\D/g, '')
-        const inferredStudent = students.find((s) => {
-          const studentName = String(s.name || s.companyName || '').trim().toLowerCase()
-          const studentPhone = String(s.phone || '').replace(/\D/g, '')
-          const sameName = searchName.length > 0 && studentName === searchName
-          const samePhone =
-            searchPhone.length > 0 &&
-            studentPhone.length > 0 &&
-            (studentPhone === searchPhone || studentPhone.endsWith(searchPhone) || searchPhone.endsWith(studentPhone))
-          return sameName || samePhone
-        })
-        if (inferredStudent) {
-          admissionStudentId = inferredStudent.id
-          admissionStudent = inferredStudent
-          setEditingPartyId(inferredStudent.id)
-          setSelectedStudentId(inferredStudent.id)
-        } else {
-          admissionStudentId = editingPartyId || ''
-        }
+
+      const inferredStudent = findMatchingStudent(typedStudentName, phone)
+      if (inferredStudent) {
+        admissionStudentId = inferredStudent.id
+        admissionStudent = inferredStudent
+        setEditingPartyId(inferredStudent.id)
+        setSelectedStudentId(inferredStudent.id)
+      } else if (formMode === 'edit') {
+        admissionStudentId = editingPartyId || ''
       } else {
         try {
           const now = new Date().toISOString()
@@ -670,4 +686,3 @@ const Sales: React.FC = () => {
 }
 
 export default Sales
-
