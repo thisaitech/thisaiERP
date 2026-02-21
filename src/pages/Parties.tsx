@@ -786,7 +786,7 @@ const Parties = () => {
         </div>
         <div class="balance ${outstanding > 0 ? 'positive' : outstanding < 0 ? 'negative' : 'zero'}">
           <h2>Balance Summary</h2>
-          <p style="font-size: 28px; font-weight: bold; margin: 10px 0;">₹${Math.abs(outstanding).toLocaleString('en-IN')}</p>
+          <p style="font-size: 28px; font-weight: bold; margin: 10px 0;">\u20B9${Math.abs(outstanding).toLocaleString('en-IN')}</p>
           <p>(${balanceLabel})</p>
         </div>
         <div class="footer">
@@ -830,9 +830,9 @@ const Parties = () => {
         <td>${entry.type === 'invoice' ? 'Invoice' : 'Payment'}</td>
         <td>${entry.referenceNumber}</td>
         <td>${entry.description || '-'}</td>
-        <td style="text-align: right">${entry.debit > 0 ? '₹' + entry.debit.toLocaleString('en-IN') : '-'}</td>
-        <td style="text-align: right">${entry.credit > 0 ? '₹' + entry.credit.toLocaleString('en-IN') : '-'}</td>
-        <td style="text-align: right; font-weight: bold">₹${entry.balance.toLocaleString('en-IN')}</td>
+        <td style="text-align: right">${entry.debit > 0 ? '\u20B9' + entry.debit.toLocaleString('en-IN') : '-'}</td>
+        <td style="text-align: right">${entry.credit > 0 ? '\u20B9' + entry.credit.toLocaleString('en-IN') : '-'}</td>
+        <td style="text-align: right; font-weight: bold">\u20B9${entry.balance.toLocaleString('en-IN')}</td>
       </tr>
     `).join('')
 
@@ -870,15 +870,15 @@ const Parties = () => {
         <div class="summary">
           <div class="summary-item">
             <label>Total Debit</label>
-            <value>₹${totalDebit.toLocaleString('en-IN')}</value>
+            <value>\u20B9${totalDebit.toLocaleString('en-IN')}</value>
           </div>
           <div class="summary-item">
             <label>Total Credit</label>
-            <value>₹${totalCredit.toLocaleString('en-IN')}</value>
+            <value>\u20B9${totalCredit.toLocaleString('en-IN')}</value>
           </div>
           <div class="summary-item">
             <label>Balance (${balanceLabel})</label>
-            <value style="color: ${outstanding > 0 ? '#16a34a' : outstanding < 0 ? '#dc2626' : '#374151'}">₹${Math.abs(outstanding).toLocaleString('en-IN')}</value>
+            <value style="color: ${outstanding > 0 ? '#16a34a' : outstanding < 0 ? '#dc2626' : '#374151'}">\u20B9${Math.abs(outstanding).toLocaleString('en-IN')}</value>
           </div>
         </div>
         <table>
@@ -899,9 +899,9 @@ const Parties = () => {
           <tfoot>
             <tr>
               <td colspan="4" style="text-align: right">Totals:</td>
-              <td style="text-align: right">₹${totalDebit.toLocaleString('en-IN')}</td>
-              <td style="text-align: right">₹${totalCredit.toLocaleString('en-IN')}</td>
-              <td style="text-align: right">₹${finalBalance.toLocaleString('en-IN')}</td>
+              <td style="text-align: right">\u20B9${totalDebit.toLocaleString('en-IN')}</td>
+              <td style="text-align: right">\u20B9${totalCredit.toLocaleString('en-IN')}</td>
+              <td style="text-align: right">\u20B9${finalBalance.toLocaleString('en-IN')}</td>
             </tr>
           </tfoot>
         </table>
@@ -974,7 +974,1349 @@ const Parties = () => {
                   <Users size={20} weight="duotone" className="text-blue-500" />
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{'Warning: This record has a balance. Deleting will remove all transaction history.'}
+                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯' : 'Students & Clients'}</span>
+                  <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{partiesSummary.totalParties}</span>
+                </div>
+              </button>
+            </div>
+
+            {/* Total Due Card - Green Theme */}
+            <div className="erp-legacy-kpi-shell !min-h-[66px] sm:!min-h-[84px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button
+                onClick={() => setActiveTab('customers')}
+                className="erp-legacy-kpi-button !min-h-[62px] sm:!min-h-[78px] md:!min-h-[104px] !px-1 !py-1 sm:!px-2.5 sm:!py-2 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+              >
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-center md:items-start flex-1">
+                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®ªà¯†à®± à®µà¯‡à®£à¯à®Ÿà®¿à®¯à®¤à¯' : 'Total Due'}</span>
+                  <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                    {"\u20B9"}{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Advance/Credit Card - Red Theme */}
+            <div className="erp-legacy-kpi-shell !min-h-[66px] sm:!min-h-[84px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button
+                onClick={() => setActiveTab('suppliers')}
+                className="erp-legacy-kpi-button !min-h-[62px] sm:!min-h-[78px] md:!min-h-[104px] !px-1 !py-1 sm:!px-2.5 sm:!py-2 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+              >
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-center md:items-start flex-1">
+                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®šà¯†à®²à¯à®¤à¯à®¤ à®µà¯‡à®£à¯à®Ÿà®¿à®¯à®¤à¯' : 'Advance/Credit'}</span>
+                  <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
+                    {"\u20B9"}{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Net Balance Card - Purple Theme */}
+            <div className="erp-legacy-kpi-shell !min-h-[66px] sm:!min-h-[84px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-purple-400 to-violet-500 shadow-[6px_6px_12px_rgba(139,92,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(139,92,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+              <button
+                className="erp-legacy-kpi-button !min-h-[62px] sm:!min-h-[78px] md:!min-h-[104px] !px-1 !py-1 sm:!px-2.5 sm:!py-2 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+              >
+                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+                  <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col items-center md:items-start flex-1">
+                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®¨à®¿à®•à®° à®‡à®°à¯à®ªà¯à®ªà¯' : 'Net Balance'}</span>
+                  <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                    {"\u20B9"}{Math.abs(partiesSummary.netBalance) >= 10000000 ? (partiesSummary.netBalance / 10000000).toFixed(1) + ' Cr' : Math.abs(partiesSummary.netBalance) >= 100000 ? (partiesSummary.netBalance / 100000).toFixed(1) + ' L' : Math.abs(partiesSummary.netBalance) >= 1000 ? (partiesSummary.netBalance / 1000).toFixed(1) + ' K' : partiesSummary.netBalance.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Controls Row (below KPI cards): + and date filters in one line */}
+          <div className="flex items-center gap-1 whitespace-nowrap pb-1">
+            {[
+              { value: 'today', label: t.common.today },
+              { value: 'week', label: t.common.week },
+              { value: 'month', label: t.common.month },
+              { value: 'year', label: t.common.year },
+              { value: 'all', label: t.common.all },
+              { value: 'custom', label: t.common.custom },
+            ].map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => {
+                  setStatsFilter(filter.value as any)
+                  if (filter.value === 'custom') {
+                    setShowCustomDatePicker(true)
+                  } else {
+                    setShowCustomDatePicker(false)
+                  }
+                }}
+                className={cn('erp-module-filter-chip !px-1.5 !py-1 !text-[10px] !leading-none shrink-0', statsFilter === filter.value && 'is-active')}
+              >
+                {filter.label}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="erp-module-primary-btn !w-12 !h-12 !p-0 !rounded-xl justify-center shrink-0"
+            >
+              <Plus size={18} weight="bold" />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Search Bar */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="mb-3"
+      >
+        <div className="relative">
+          <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder={language === 'ta' ? 'à®ªà¯†à®¯à®°à¯, à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®…à®²à¯à®²à®¤à¯ à®®à®¿à®©à¯à®©à®žà¯à®šà®²à®¾à®²à¯ à®¤à¯‡à®Ÿà¯...' : 'Search by name, phone, or email...'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="erp-module-search-input pl-9 pr-3"
+          />
+        </div>
+      </motion.div>
+
+      {/* Tab Filters */}
+      <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
+        {[
+          { id: 'all', label: language === 'ta' ? 'à®…à®©à¯ˆà®¤à¯à®¤à¯ à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯' : 'All Students & Clients', count: parties.length },
+          { id: 'customers', label: language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯à®•à®³à¯' : 'Students', count: parties.filter(p => p.type === 'customer').length },
+          { id: 'suppliers', label: language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯à®•à®³à¯' : 'Clients', count: parties.filter(p => p.type === 'supplier').length }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "erp-module-filter-chip",
+              activeTab === tab.id
+                ? "is-active"
+                : "border border-slate-200 dark:border-slate-600"
+            )}
+          >
+            {tab.label} ({tab.count})
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop Table Header (Hidden on Mobile) */}
+      <div className="erp-module-table-header hidden md:flex items-center px-3 py-2 mb-1 text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">
+        <div style={{ width: '18%' }}>Name</div>
+        <div style={{ width: '12%' }}>Phone</div>
+        <div style={{ width: '12%' }}>Record Type</div>
+        <div style={{ width: '12%' }} className="text-right">Balance Due</div>
+        <div style={{ width: '12%' }} className="text-right">Total Billed</div>
+        <div style={{ width: '10%' }} className="text-center">Status</div>
+        <div style={{ width: '24%' }} className="text-center">Actions</div>
+      </div>
+
+      {/* Parties List */}
+      <div className="space-y-1">
+        {isLoadingParties ? (
+          <div className="flex items-center justify-center py-20">
+            <ArrowsClockwise size={32} weight="duotone" className="text-blue-600 animate-spin" />
+          </div>
+        ) : filteredParties.length === 0 ? (
+          <div className="text-center py-20">
+            <Users size={48} weight="duotone" className="text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-500 text-sm">{language === 'ta' ? 'à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯ à®Žà®¤à¯à®µà¯à®®à¯ à®‡à®²à¯à®²à¯ˆ' : 'No students or clients found'}</p>
+          </div>
+        ) : (
+          filteredParties.map((party, index) => {
+            const status = getPartyStatus(party)
+            const outstanding = party.outstanding ?? party.currentBalance ?? 0
+
+            // Color logic - SAME for all party types:
+            // Positive (green) = they owe us money (we receive)
+            // Negative (red) = we owe them money (we pay)
+            // Zero (grey) = settled
+            const getProperColor = () => {
+              if (outstanding === 0) return 'grey'
+              return outstanding > 0 ? 'green' : 'red'
+            }
+            const outstandingColor = getProperColor()
+            const outstandingFormatted = `\u20B9${Math.abs(outstanding).toLocaleString('en-IN')}`
+
+            return (
+              <motion.div
+                key={party.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.02 }}
+              >
+                {/* Desktop Row */}
+                <div className="hidden md:flex items-center px-3 py-2 bg-white rounded-lg border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all">
+                  {/* Name with icon */}
+                  <div style={{ width: '18%' }} className="flex items-center gap-2 min-w-0">
+                    <div className={cn(
+                      "p-1.5 rounded-lg flex-shrink-0",
+                      party.type === 'customer' ? "bg-blue-50" : "bg-orange-50"
+                    )}>
+                      {party.type === 'customer' ? (
+                        <UserCircle size={16} weight="duotone" className="text-blue-600" />
+                      ) : (
+                        <Storefront size={16} weight="duotone" className="text-orange-600" />
+                      )}
+                    </div>
+                    <span className="font-medium text-xs text-slate-800 truncate">
+                      {getPartyName(party)}
+                    </span>
+                  </div>
+
+                  {/* Phone */}
+                  <div style={{ width: '12%' }} className="text-xs text-slate-600 truncate">
+                    {party.phone || '-'}
+                  </div>
+
+                  {/* Type Badge */}
+                  <div style={{ width: '12%' }}>
+                    <span className={cn(
+                      "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium",
+                      party.type === 'customer' ? "bg-blue-50 text-blue-700" : "bg-orange-50 text-orange-700"
+                    )}>
+                      {party.type === 'customer' ? (language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'Student') : (language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯' : 'Client')}
+                    </span>
+                  </div>
+
+                  {/* Outstanding */}
+                  <div style={{ width: '12%' }} className="text-right">
+                    <span className={cn(
+                      "font-semibold text-xs",
+                      outstandingColor === 'green' && "text-emerald-600",
+                      outstandingColor === 'red' && "text-red-600",
+                      outstandingColor === 'grey' && "text-slate-500"
+                    )}>
+                      {outstanding !== 0 && (outstandingColor === 'green' ? '+' : '-')}
+                      {outstandingFormatted}
+                    </span>
+                  </div>
+
+                  {/* Total Sales/Purchases */}
+                  <div style={{ width: '12%' }} className="text-right text-xs text-slate-600">
+                    {"\u20B9"}{((party.type === 'customer' ? (party.totalSales || 0) : (party.totalPurchases || 0))).toLocaleString('en-IN')}
+                  </div>
+
+                  {/* Status Badge */}
+                  <div style={{ width: '10%' }} className="flex justify-center">
+                    <span className={cn(
+                      "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium",
+                      status.color === 'success' && "bg-emerald-50 text-emerald-700",
+                      status.color === 'warning' && "bg-amber-50 text-amber-700",
+                      status.color === 'destructive' && "bg-red-50 text-red-700"
+                    )}>
+                      <status.icon size={10} weight="fill" />
+                      <span>{status.label}</span>
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ width: '24%' }} className="flex items-center justify-center gap-0.5">
+                    <button
+                      onClick={() => viewLedger(party)}
+                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                      title="View Ledger"
+                    >
+                      <FileText size={16} weight="duotone" className="text-blue-600" />
+                    </button>
+                    <button
+                      onClick={() => printParty(party)}
+                      className="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
+                      title="Print"
+                    >
+                      <Printer size={16} weight="duotone" className="text-slate-600" />
+                    </button>
+                    <button
+                      onClick={() => handleEditParty(party)}
+                      className="w-7 h-7 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                      title="Edit"
+                    >
+                      <Pencil size={16} weight="duotone" className="text-amber-600" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteParty(party)}
+                      className="w-7 h-7 flex items-center justify-center bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <Trash size={16} weight="duotone" className="text-red-600" />
+                    </button>
+
+                    {/* More Actions Dropdown */}
+                    <button
+                      onClick={(e) => handleActionMenuClick(e, party.id)}
+                      className="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
+                      title="More"
+                    >
+                      <DotsThreeVertical size={16} weight="bold" className="text-slate-600" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mobile Card */}
+                <div className="md:hidden bg-white rounded-lg border border-slate-100 p-3">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <div className={cn(
+                        "p-2 rounded-lg flex-shrink-0",
+                        party.type === 'customer' ? "bg-blue-50" : "bg-orange-50"
+                      )}>
+                        {party.type === 'customer' ? (
+                          <UserCircle size={18} weight="duotone" className="text-blue-600" />
+                        ) : (
+                          <Storefront size={18} weight="duotone" className="text-orange-600" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm text-slate-800 truncate">
+                          {getPartyName(party)}
+                        </h3>
+                        {party.phone && (
+                          <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-500">
+                            <Phone size={11} />
+                            <span>{party.phone}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <span className={cn(
+                      "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ml-2",
+                      status.color === 'success' && "bg-emerald-50 text-emerald-700",
+                      status.color === 'warning' && "bg-amber-50 text-amber-700",
+                      status.color === 'destructive' && "bg-red-50 text-red-700"
+                    )}>
+                      <status.icon size={10} weight="fill" />
+                    </span>
+                  </div>
+
+                  {/* Outstanding */}
+                  <div className={cn(
+                    "flex items-center justify-between p-2 rounded-lg mb-2",
+                    outstandingColor === 'green' && "bg-emerald-50",
+                    outstandingColor === 'red' && "bg-red-50",
+                    outstandingColor === 'grey' && "bg-slate-50"
+                  )}>
+                    <span className="text-xs text-slate-600">
+                      {outstanding > 0
+                        ? (language === 'ta' ? 'à®ªà¯†à®± à®µà¯‡à®£à¯à®Ÿà®¿à®¯à®¤à¯' : 'Due')
+                        : outstanding < 0
+                          ? (language === 'ta' ? 'à®®à¯à®©à¯à®ªà®£à®®à¯' : 'Advance/Credit')
+                          : (language === 'ta' ? 'à®‡à®°à¯à®ªà¯à®ªà¯' : 'Balance')}
+                    </span>
+                    <span className={cn(
+                      "font-bold text-sm",
+                      outstandingColor === 'green' && "text-emerald-600",
+                      outstandingColor === 'red' && "text-red-600",
+                      outstandingColor === 'grey' && "text-slate-500"
+                    )}>
+                      {outstanding !== 0 && (outstandingColor === 'green' ? '+' : '-')}
+                      {outstandingFormatted}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 pt-2 border-t border-slate-100">
+                    <button
+                      onClick={() => viewLedger(party)}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                    >
+                      <FileText size={14} weight="duotone" className="text-blue-600" />
+                      <span className="text-xs font-medium text-blue-700">Ledger</span>
+                    </button>
+                    <button
+                      onClick={() => handleEditParty(party)}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                    >
+                      <Pencil size={14} weight="duotone" className="text-amber-600" />
+                      <span className="text-xs font-medium text-amber-700">Edit</span>
+                    </button>
+                    <button
+                      onClick={(e) => handleActionMenuClick(e, party.id)}
+                      className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
+                    >
+                      <DotsThreeVertical size={16} weight="bold" className="text-slate-600" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })
+        )}
+      </div>
+
+      {/* Dropdown Menu Portal */}
+      {openActionMenu && dropdownPosition && createPortal(
+        <div
+          className="fixed bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-[9999] min-w-[140px]"
+          style={{
+            top: `${dropdownPosition.top}px`,
+            right: `${dropdownPosition.right}px`
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => {
+              const party = parties.find(p => p.id === openActionMenu)
+              if (party) printParty(party)
+              setOpenActionMenu(null)
+            }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 text-xs text-slate-700"
+          >
+            <Printer size={14} weight="duotone" />
+            <span>Print Details</span>
+          </button>
+          <button
+            onClick={() => {
+              const party = parties.find(p => p.id === openActionMenu)
+              if (party) handleDeleteParty(party)
+              setOpenActionMenu(null)
+            }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-xs text-red-600"
+          >
+            <Trash size={14} weight="duotone" />
+            <span>Delete Record</span>
+          </button>
+        </div>,
+        document.body
+      )}
+
+      {/* Add Student/Client Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowAddModal(false)
+                resetPartyForm()
+              }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              onClick={() => {
+                setShowAddModal(false)
+                resetPartyForm()
+              }}
+            >
+              <div
+                className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-lg shadow-2xl p-4 sm:p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold">
+                  {isEditMode ? (language === 'ta' ? 'à®¤à®¿à®°à¯à®¤à¯à®¤à¯' : 'Edit') : (language === 'ta' ? 'à®ªà¯à®¤à®¿à®¤à®¾à®• à®šà¯‡à®°à¯' : 'Add New')} {partyType === 'customer' ? (language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'Student') : (language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯' : 'Client')}
+                </h2>
+
+                {/* Record Type */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">{language === 'ta' ? 'à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯ à®µà®•à¯ˆ' : 'Record Type'}</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPartyType('customer')}
+                      className={cn(
+                        "p-3 border-2 rounded-lg flex items-center justify-center gap-2 transition-all",
+                        partyType === 'customer'
+                          ? "bg-success/10 border-success"
+                          : "bg-muted/50 border-border hover:bg-muted"
+                      )}
+                    >
+                      <UserCircle size={20} weight="duotone" className={partyType === 'customer' ? "text-success" : ""} />
+                      <span className="font-medium text-sm">{language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'Student'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPartyType('supplier')}
+                      className={cn(
+                        "p-3 border-2 rounded-lg flex items-center justify-center gap-2 transition-all",
+                        partyType === 'supplier'
+                          ? "bg-warning/10 border-warning"
+                          : "bg-muted/50 border-border hover:bg-muted"
+                      )}
+                    >
+                      <Storefront size={20} weight="duotone" className={partyType === 'supplier' ? "text-warning" : ""} />
+                      <span className="font-medium text-sm">{language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯' : 'Client'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mandatory Fields */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">
+                      {partyType === 'customer' ? (language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'Student') : (language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯' : 'Client')} {language === 'ta' ? 'à®ªà¯†à®¯à®°à¯' : 'Name'} <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={partyName}
+                      onChange={(e) => setPartyName(validateCustomerName(e.target.value))}
+                      placeholder={language === 'ta' ? `${partyType === 'customer' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯'} à®ªà¯†à®¯à®°à¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯` : `Enter ${partyType === 'customer' ? 'student' : 'client'} name (letters only)`}
+                      className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">
+                      {language === 'ta' ? 'à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®Žà®£à¯' : 'Phone Number'} <span className="text-destructive">*</span>
+                    </label>
+                    <div className="flex">
+                      {/* Fixed 91 prefix */}
+                      <div className="flex items-center justify-center px-3 py-2.5 bg-muted border border-r-0 border-border rounded-l-lg text-muted-foreground font-medium select-none">
+                        +91
+                      </div>
+                      <input
+                        type="tel"
+                        value={partyPhone}
+                        onChange={(e) => {
+                          // Only allow digits, max 10
+                          const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                          setPartyPhone(digits)
+                        }}
+                        placeholder={language === 'ta' ? '10 à®‡à®²à®•à¯à®• à®Žà®£à¯' : '10 digit number'}
+                        maxLength={10}
+                        className="flex-1 px-3 py-2.5 bg-background border border-border rounded-r-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                      />
+                    </div>
+                    {partyPhone && partyPhone.length > 0 && partyPhone.length < 10 && (
+                      <p className="text-xs text-destructive mt-1">{language === 'ta' ? 'à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®Žà®£à¯ 10 à®‡à®²à®•à¯à®•à®™à¯à®•à®³à®¾à®• à®‡à®°à¯à®•à¯à®• à®µà¯‡à®£à¯à®Ÿà¯à®®à¯' : `Phone number must be 10 digits (${partyPhone.length}/10)`}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Optional Fields - Expandable */}
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{language === 'ta' ? 'à®µà®¿à®°à¯à®ªà¯à®ª à®¤à®•à®µà®²à¯' : 'Optional Information'}</p>
+
+                  {/* Address */}
+                  <div>
+                    {!showBillingAddress ? (
+                      <button
+                        onClick={() => setShowBillingAddress(true)}
+                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                      >
+                        <Plus size={14} weight="bold" />
+                        {language === 'ta' ? 'à®ªà®¿à®²à¯à®²à®¿à®™à¯ à®®à¯à®•à®µà®°à®¿' : 'Address'}
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-2"
+                      >
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®ªà®¿à®²à¯à®²à®¿à®™à¯ à®®à¯à®•à®µà®°à®¿' : 'Address'}</label>
+                        <textarea
+                          rows={2}
+                          value={partyAddress}
+                          onChange={(e) => setPartyAddress(e.target.value)}
+                          placeholder={language === 'ta' ? 'à®ªà®¿à®²à¯à®²à®¿à®™à¯ à®®à¯à®•à®µà®°à®¿ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯' : 'Enter address'}
+                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
+                        ></textarea>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {partyType !== 'customer' && (
+                    <>
+                      {/* State */}
+                      <div>
+                        {!showState ? (
+                          <button
+                            onClick={() => setShowState(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'à®®à®¾à®¨à®¿à®²à®®à¯' : 'State'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®®à®¾à®¨à®¿à®²à®®à¯' : 'State'}</label>
+                            <select
+                              value={partyState}
+                              onChange={(e) => setPartyState(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              <option value="">{language === 'ta' ? 'à®®à®¾à®¨à®¿à®²à®®à¯ à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯' : 'Select State'}</option>
+                              {INDIAN_STATES.map((state) => (
+                                <option key={state} value={state}>
+                                  {state}
+                                </option>
+                              ))}
+                            </select>
+                          </motion.div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {partyType !== 'customer' && (
+                    <>
+                      {/* Tax ID / GST - Required if settings.requireGSTIN is true */}
+                      <div>
+                        {!showGstNumber && !partySettings.requireGSTIN ? (
+                          <button
+                            onClick={() => setShowGstNumber(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'GST à®Žà®£à¯' : 'Tax ID / GST'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">
+                              {language === 'ta' ? 'GST à®Žà®£à¯' : 'Tax ID / GST'}
+                              {partySettings.requireGSTIN && <span className="text-destructive ml-1">*</span>}
+                            </label>
+                            <input
+                              type="text"
+                              value={partyGst}
+                              onChange={(e) => setPartyGst(e.target.value.toUpperCase())}
+                              placeholder={language === 'ta' ? 'GST à®Žà®£à¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯ (à®Ž.à®•à®¾: 33AAAAA0000A1Z5)' : 'Enter GST / Tax ID (e.g., 33AAAAA0000A1Z5)'}
+                              maxLength={15}
+                              className={cn(
+                                "w-full px-3 py-2 bg-background border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all",
+                                partySettings.requireGSTIN && !partyGst?.trim() ? "border-destructive" : "border-border"
+                              )}
+                            />
+                            {partySettings.requireGSTIN && !partyGst?.trim() && (
+                              <p className="text-xs text-destructive">{language === 'ta' ? 'GSTIN à®•à®Ÿà¯à®Ÿà®¾à®¯à®®à®¾à®•à¯à®®à¯' : 'GSTIN is required'}</p>
+                            )}
+                          </motion.div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Email Address */}
+                  <div>
+                    {!showEmail ? (
+                      <button
+                        onClick={() => setShowEmail(true)}
+                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                      >
+                        <Plus size={14} weight="bold" />
+                        {language === 'ta' ? 'à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯ à®®à¯à®•à®µà®°à®¿' : 'Email Address'}
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-2"
+                      >
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯ à®®à¯à®•à®µà®°à®¿' : 'Email Address'}</label>
+                        <input
+                          type="email"
+                          value={partyEmail}
+                          onChange={(e) => setPartyEmail(e.target.value)}
+                          placeholder={language === 'ta' ? 'à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯ à®®à¯à®•à®µà®°à®¿ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯' : 'Enter email address'}
+                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        />
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {partyType === 'customer' && (
+                    <>
+                      {/* Date of Birth */}
+                      <div>
+                        {!showDob ? (
+                          <button
+                            onClick={() => setShowDob(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'à®ªà®¿à®±à®¨à¯à®¤à®¤à®¿à®©à¯ à®¤à¯‡à®¤à®¿' : 'Date of Birth'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®ªà®¿à®±à®¨à¯à®¤à®¤à®¿à®©à¯ à®¤à¯‡à®¤à®¿' : 'Date of Birth'}</label>
+                            <input
+                              type="date"
+                              value={studentDob}
+                              onChange={(e) => setStudentDob(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Gender */}
+                      <div>
+                        {!showGender ? (
+                          <button
+                            onClick={() => setShowGender(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'à®ªà®¾à®²à¯' : 'Gender'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®ªà®¾à®²à¯' : 'Gender'}</label>
+                            <select
+                              value={studentGender}
+                              onChange={(e) => setStudentGender(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              <option value="">{language === 'ta' ? 'à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯' : 'Select Gender'}</option>
+                              <option value="male">{language === 'ta' ? 'à®†à®£à¯' : 'Male'}</option>
+                              <option value="female">{language === 'ta' ? 'à®ªà¯†à®£à¯' : 'Female'}</option>
+                              <option value="other">{language === 'ta' ? 'à®®à®±à¯à®±à®µà®°à¯' : 'Other'}</option>
+                            </select>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* ID Proof */}
+                      <div>
+                        {!showIdProof ? (
+                          <button
+                            onClick={() => setShowIdProof(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'à®…à®Ÿà¯ˆà®¯à®¾à®³ à®†à®µà®£à®™à¯à®•à®³à¯' : 'ID Proof'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®…à®Ÿà¯ˆà®¯à®¾à®³ à®†à®µà®£à®™à¯à®•à®³à¯' : 'ID Proof'}</label>
+                            <select
+                              value={studentIdProofType}
+                              onChange={(e) => setStudentIdProofType(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              <option value="">{language === 'ta' ? 'à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯' : 'Select ID Proof'}</option>
+                              <option value="Aadhaar">Aadhaar</option>
+                              <option value="PAN">PAN</option>
+                              <option value="Driving License">Driving License</option>
+                              <option value="Passport">Passport</option>
+                              <option value="College ID">College ID</option>
+                              <option value="Other">Other</option>
+                            </select>
+                            <input
+                              type="text"
+                              value={studentIdProofNumber}
+                              onChange={(e) => setStudentIdProofNumber(e.target.value)}
+                              placeholder={language === 'ta' ? 'à®…à®Ÿà¯ˆà®¯à®¾à®³ à®Žà®£à¯' : 'Enter ID number'}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Emergency Contact */}
+                      <div>
+                        {!showEmergencyContact ? (
+                          <button
+                            onClick={() => setShowEmergencyContact(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'à®†à®ªà®¤à¯à®¤à¯ à®¤à¯Šà®Ÿà®°à¯à®ªà¯' : 'Emergency Contact'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®†à®ªà®¤à¯à®¤à¯ à®¤à¯Šà®Ÿà®°à¯à®ªà¯' : 'Emergency Contact'}</label>
+                            <input
+                              type="text"
+                              value={studentEmergencyName}
+                              onChange={(e) => setStudentEmergencyName(e.target.value)}
+                              placeholder={language === 'ta' ? 'à®ªà¯†à®¯à®°à¯' : 'Contact name'}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                            <input
+                              type="tel"
+                              value={studentEmergencyPhone}
+                              onChange={(e) => {
+                                const digits = e.target.value.replace(/\\D/g, '').slice(0, 10)
+                                setStudentEmergencyPhone(digits)
+                              }}
+                              placeholder={language === 'ta' ? 'à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®Žà®£à¯' : 'Phone number'}
+                              maxLength={10}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Admission Date */}
+                      <div>
+                        {!showAdmissionDate ? (
+                          <button
+                            onClick={() => setShowAdmissionDate(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'à®šà¯‡à®°à¯à®•à¯à®•à¯ˆ à®¤à¯‡à®¤à®¿' : 'Admission Date'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®šà¯‡à®°à¯à®•à¯à®•à¯ˆ à®¤à¯‡à®¤à®¿' : 'Admission Date'}</label>
+                            <input
+                              type="date"
+                              value={studentAdmissionDate}
+                              onChange={(e) => setStudentAdmissionDate(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Focus */}
+                      <div>
+                        {!showFocus ? (
+                          <button
+                            onClick={() => setShowFocus(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'à®•à®µà®©à¯' : 'Focus'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®•à®µà®©à¯' : 'Focus'}</label>
+                            <select
+                              value={studentFocus}
+                              onChange={(e) => setStudentFocus(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              <option value="">{language === 'ta' ? 'à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯' : 'Select focus'}</option>
+                              <option value="Career">{language === 'ta' ? 'à®•à®°à®¿à®¯à®°à¯' : 'Career'}</option>
+                              <option value="Education">{language === 'ta' ? 'à®•à®²à¯à®µà®¿' : 'Education'}</option>
+                              <option value="Other">{language === 'ta' ? 'à®®à®±à¯à®±à®µà®°à¯' : 'Other'}</option>
+                            </select>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* How did you hear about us */}
+                      <div>
+                        {!showLeadSource ? (
+                          <button
+                            onClick={() => setShowLeadSource(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'à®Žà®™à¯à®•à®³à¯ˆ à®•à¯à®±à®¿à®¤à¯à®¤à¯ à®Žà®ªà¯à®ªà®Ÿà®¿ à®¤à¯†à®°à®¿à®¨à¯à®¤à®¤à¯?' : 'How did you hear about us?'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®Žà®™à¯à®•à®³à¯ˆ à®•à¯à®±à®¿à®¤à¯à®¤à¯ à®Žà®ªà¯à®ªà®Ÿà®¿ à®¤à¯†à®°à®¿à®¨à¯à®¤à®¤à¯?' : 'How did you hear about us?'}</label>
+                            <select
+                              value={studentSource}
+                              onChange={(e) => setStudentSource(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              <option value="">{language === 'ta' ? 'à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯' : 'Select source'}</option>
+                              <option value="Google">Google</option>
+                              <option value="Instagram">Instagram</option>
+                              <option value="Friend">Friend</option>
+                              <option value="Walk-in">Walk-in</option>
+                              <option value="Other">Other</option>
+                            </select>
+                            {studentSource === 'Other' && (
+                              <input
+                                type="text"
+                                value={studentSourceOther}
+                                onChange={(e) => setStudentSourceOther(e.target.value)}
+                                placeholder={language === 'ta' ? 'à®ªà¯†à®°à¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯' : 'Enter source'}
+                                className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                              />
+                            )}
+                          </motion.div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {partyType !== 'customer' && (
+                    <>
+                      {/* Customer Type - Dynamic from Party Settings */}
+                      <div>
+                        {!showCustomerType ? (
+                          <button
+                            onClick={() => setShowCustomerType(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®µà®•à¯ˆ' : 'Category'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®µà®•à¯ˆ' : 'Category'}</label>
+                            <select
+                              value={partyCustomerType}
+                              onChange={(e) => setPartyCustomerType(e.target.value)}
+                              className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            >
+                              {partySettings.partyCategories.map((category) => (
+                                <option key={category} value={category}>{category}</option>
+                              ))}
+                            </select>
+                          </motion.div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {partyType !== 'customer' && partySettings.enableCreditLimit && (
+                    <div>
+                      {!showCreditLimit ? (
+                        <button
+                          onClick={() => setShowCreditLimit(true)}
+                          className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                        >
+                          <Plus size={14} weight="bold" />
+                          {language === 'ta' ? 'à®•à®Ÿà®©à¯ à®µà®°à®®à¯à®ªà¯' : 'Credit Limit'}
+                        </button>
+                      ) : (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-2"
+                        >
+                          <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®•à®Ÿà®©à¯ à®µà®°à®®à¯à®ªà¯' : 'Credit Limit'}</label>
+                          <div className="flex">
+                            <span className="inline-flex items-center px-3 py-2 bg-muted border border-r-0 border-border rounded-l-lg text-sm font-medium text-muted-foreground">
+                              {"\u20B9"}
+                            </span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1000"
+                              value={partyCreditLimit}
+                              onChange={(e) => setPartyCreditLimit(Number(e.target.value) || 0)}
+                              placeholder={language === 'ta' ? 'à®•à®Ÿà®©à¯ à®µà®°à®®à¯à®ªà¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯' : 'Enter credit limit'}
+                              className="flex-1 px-3 py-2 bg-background border border-border rounded-r-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {language === 'ta' ? 'à®‡à®¨à¯à®¤ à®µà®°à®®à¯à®ªà¯à®•à¯à®•à¯ à®®à¯‡à®²à¯ à®•à®Ÿà®©à¯ à®µà®¿à®±à¯à®ªà®©à¯ˆ à®…à®©à¯à®®à®¤à®¿à®•à¯à®•à®ªà¯à®ªà®Ÿà®¾à®¤à¯' : 'Credit sales above this limit will be restricted'}
+                          </p>
+                        </motion.div>
+                      )}
+                    </div>
+                  )}
+
+                  {partyType !== 'customer' && (
+                    <>
+                      {/* Credit Period (Days) - Always show with default from settings */}
+                      <div>
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="space-y-2"
+                        >
+                          <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®•à®Ÿà®©à¯ à®•à®¾à®²à®®à¯ (à®¨à®¾à®Ÿà¯à®•à®³à¯)' : 'Payment Due (Days)'}</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="365"
+                            value={partyCreditDays}
+                            onChange={(e) => setPartyCreditDays(Number(e.target.value) || 0)}
+                            placeholder={language === 'ta' ? 'à®•à®Ÿà®©à¯ à®•à®¾à®²à®®à¯ à®¨à®¾à®Ÿà¯à®•à®³à¯' : 'Payment due in days'}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {language === 'ta' ? `à®…à®Ÿà®¿à®ªà¯à®ªà®Ÿà¯ˆ: ${partySettings.defaultCreditPeriod} à®¨à®¾à®Ÿà¯à®•à®³à¯` : `Default: ${partySettings.defaultCreditPeriod} days`}
+                          </p>
+                        </motion.div>
+                      </div>
+                    </>
+                  )}
+
+                  {partyType !== 'customer' && (
+                    <>
+                      {/* Opening Balance */}
+                      <div>
+                        {!showOpeningBalance ? (
+                          <button
+                            onClick={() => setShowOpeningBalance(true)}
+                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                          >
+                            <Plus size={14} weight="bold" />
+                            {language === 'ta' ? 'à®†à®°à®®à¯à®ª à®‡à®°à¯à®ªà¯à®ªà¯' : 'Opening Balance'}
+                          </button>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-2"
+                          >
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®†à®°à®®à¯à®ª à®‡à®°à¯à®ªà¯à®ªà¯ (\u20B9)' : 'Opening Balance (\u20B9)'}</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={partyOpeningBalance}
+                              onChange={(e) => setPartyOpeningBalance(e.target.value)}
+                              placeholder={language === 'ta' ? 'à®†à®°à®®à¯à®ª à®‡à®°à¯à®ªà¯à®ªà¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯ (à®Ž.à®•à®¾., 5000)' : 'Enter opening balance (e.g., 5000)'}
+                              className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              {language === 'ta' ? 'à®¨à¯‡à®°à¯ = à®…à®µà®°à¯à®•à®³à¯ à®•à®Ÿà®©à¯à®ªà®Ÿà¯à®Ÿà¯à®³à¯à®³à®©à®°à¯, à®Žà®¤à®¿à®°à¯ = à®¨à¯€à®™à¯à®•à®³à¯ à®•à®Ÿà®©à¯à®ªà®Ÿà¯à®Ÿà¯à®³à¯à®³à¯€à®°à¯à®•à®³à¯' : 'Positive = They owe you, Negative = You owe them'}
+                            </p>
+                          </motion.div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Course / Batch */}
+                  <div>
+                    {!showVehicleNo ? (
+                      <button
+                        onClick={() => setShowVehicleNo(true)}
+                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                      >
+                        <Plus size={14} weight="bold" />
+                        {language === 'ta' ? 'à®µà®¾à®•à®© à®Žà®£à¯' : partyType === 'customer' ? 'Course / Batch' : 'Project / Engagement'}
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-2"
+                      >
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®µà®¾à®•à®© à®Žà®£à¯' : partyType === 'customer' ? 'Course / Batch' : 'Project / Engagement'}</label>
+                        <input
+                          type="text"
+                          value={partyVehicleNo}
+                          onChange={(e) => setPartyVehicleNo(e.target.value)}
+                          placeholder={language === 'ta' ? 'à®µà®¾à®•à®© à®Žà®£à¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯ (à®Ž.à®•à®¾., TN01AB1234)' : partyType === 'customer' ? 'Enter course or batch' : 'Enter project or engagement'}
+                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        />
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    {!showNotes ? (
+                      <button
+                        onClick={() => setShowNotes(true)}
+                        className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+                      >
+                        <Plus size={14} weight="bold" />
+                        {language === 'ta' ? 'à®•à¯à®±à®¿à®ªà¯à®ªà¯à®•à®³à¯' : 'Notes'}
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-2"
+                      >
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®•à¯à®±à®¿à®ªà¯à®ªà¯à®•à®³à¯' : 'Notes'}</label>
+                        <textarea
+                          rows={2}
+                          value={partyNotes}
+                          onChange={(e) => setPartyNotes(e.target.value)}
+                          placeholder={language === 'ta' ? 'à®•à¯‚à®Ÿà¯à®¤à®²à¯ à®•à¯à®±à®¿à®ªà¯à®ªà¯à®•à®³à¯ˆà®šà¯ à®šà¯‡à®°à¯à®•à¯à®•à®µà¯à®®à¯' : 'Add any additional notes'}
+                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
+                        ></textarea>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t border-border">
+                  <button
+                    onClick={() => {
+                      setShowAddModal(false)
+                      resetPartyForm()
+                    }}
+                    className="flex-1 px-4 py-2.5 bg-muted rounded-lg font-medium hover:bg-muted/80 transition-colors"
+                  >
+                    {t.common.cancel}
+                  </button>
+                  <button
+                    onClick={handleSaveParty}
+                    disabled={isLoadingParties || !partyName?.trim() || !partyPhone || partyPhone.length !== 10}
+                    className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isLoadingParties ? (
+                      <>
+                        <ArrowsClockwise size={18} weight="duotone" className="animate-spin" />
+                        {language === 'ta' ? 'à®šà¯‡à®®à®¿à®•à¯à®•à®¿à®±à®¤à¯...' : 'Saving...'}
+                      </>
+                    ) : (
+                      `${isEditMode ? (language === 'ta' ? 'à®ªà¯à®¤à¯à®ªà¯à®ªà®¿' : 'Update') : (language === 'ta' ? 'à®šà¯‡à®°à¯' : 'Add')} ${partyType === 'customer' ? (language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'Student') : (language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯' : 'Client')}`
+                    )}
+                  </button>
+                </div>
+              </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Ledger Modal */}
+      {showLedgerModal && selectedParty && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 sm:flex sm:items-center sm:justify-center sm:p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card text-card-foreground sm:rounded-xl border border-border w-full sm:max-w-5xl h-full sm:h-auto sm:max-h-[85vh] overflow-y-auto"
+          >
+            <div className="p-3 sm:p-6 border-b border-border sticky top-0 bg-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold">{selectedParty.name} - {language === 'ta' ? 'à®²à¯†à®Ÿà¯à®œà®°à¯' : 'Ledger'}</h2>
+                  <p className={cn(
+                    "text-xs sm:text-sm mt-1 font-medium",
+                    selectedParty.currentBalance > 0 ? "text-emerald-600" : selectedParty.currentBalance < 0 ? "text-red-600" : "text-gray-500"
+                  )}>
+                    Balance: {selectedParty.currentBalance > 0 ? '+' : selectedParty.currentBalance < 0 ? '-' : ''}
+                    Rs. {Math.abs(selectedParty.currentBalance || 0).toLocaleString()}
+                    {selectedParty.currentBalance > 0
+                      ? ' (Due)'
+                      : selectedParty.currentBalance < 0
+                        ? ' (Advance/Credit)'
+                        : ' (Settled)'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={printLedger}
+                    className="p-2 hover:bg-muted rounded-lg transition-colors active:scale-95"
+                    title="Print Ledger"
+                  >
+                    <Printer size={20} weight="duotone" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Reference</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Description</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Debit</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Credit</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoadingLedger ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                          Loading ledger entries...
+                        </td>
+                      </tr>
+                    ) : ledgerEntries.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                          No transactions yet. Ledger entries will appear here when you create invoices or record payments.
+                        </td>
+                      </tr>
+                    ) : (
+                      ledgerEntries.map((entry, index) => (
+                        <motion.tr
+                          key={entry.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="border-b border-border/50 hover:bg-muted/30 transition-colors"
+                        >
+                          <td className="px-4 py-3 text-sm">{new Date(entry.date).toLocaleDateString()}</td>
+                          <td className="px-4 py-3">
+                            <span className={cn(
+                              "px-2 py-1 rounded-full text-xs font-medium",
+                              entry.type === 'invoice' ? "bg-primary/10 text-primary" : "bg-success/10 text-success"
+                            )}>
+                              {entry.type === 'invoice' ? 'Invoice' : 'Payment'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm font-medium">{entry.referenceNumber}</td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">{entry.description}</td>
+                          <td className="px-4 py-3 text-sm text-right font-medium">
+                            {entry.debit > 0 ? `\u20B9${entry.debit.toLocaleString('en-IN')}` : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right font-medium text-success">
+                            {entry.credit > 0 ? `\u20B9${entry.credit.toLocaleString('en-IN')}` : '-'}
+                          </td>
+                          <td className={cn(
+                            "px-4 py-3 text-sm text-right font-semibold",
+                            entry.balance > 0 ? "text-primary" : entry.balance < 0 ? "text-destructive" : ""
+                          )}>
+                            {"\u20B9"}{entry.balance.toLocaleString('en-IN')}
+                          </td>
+                        </motion.tr>
+                      ))
+                    )}
+                  </tbody>
+                  {ledgerEntries.length > 0 && (
+                    <tfoot className="bg-muted/50 font-semibold">
+                      <tr>
+                        <td colSpan={4} className="px-4 py-3 text-right">Final Balance:</td>
+                        <td className="px-4 py-3 text-right">
+                          {"\u20B9"}{ledgerEntries.reduce((sum, e) => sum + e.debit, 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-4 py-3 text-right text-success">
+                          {"\u20B9"}{ledgerEntries.reduce((sum, e) => sum + e.credit, 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className={cn(
+                          "px-4 py-3 text-right",
+                          ledgerEntries[ledgerEntries.length - 1]?.balance > 0 ? "text-primary" :
+                          ledgerEntries[ledgerEntries.length - 1]?.balance < 0 ? "text-destructive" : ""
+                        )}>
+                          {"\u20B9"}{(ledgerEntries[ledgerEntries.length - 1]?.balance || 0).toLocaleString('en-IN')}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-border flex gap-3 justify-end">
+              <button
+                onClick={() => setShowLedgerModal(false)}
+                className="px-4 py-2 bg-muted rounded-lg font-medium hover:bg-muted/80 transition-colors"
+              >
+                {t.common.close}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && partyToDelete && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-card text-card-foreground rounded-xl border border-border w-full max-w-md overflow-hidden"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-border">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-destructive/10 rounded-lg">
+                    <Trash size={24} weight="duotone" className="text-destructive" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-destructive">{language === 'ta' ? 'à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯ à®¨à¯€à®•à¯à®•à¯' : 'Delete Record'}</h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {language === 'ta' ? 'à®‡à®¨à¯à®¤ à®šà¯†à®¯à®²à¯ˆ à®šà¯†à®¯à®²à¯à®¤à®µà®¿à®°à¯à®•à¯à®• à®®à¯à®Ÿà®¿à®¯à®¾à®¤à¯' : 'This action cannot be undone'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-6">
+                <p className="text-sm text-muted-foreground mb-4">
+                  {language === 'ta' ? 'à®‡à®¨à¯à®¤ à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯ˆ à®¨à®¿à®šà¯à®šà®¯à®®à®¾à®• à®¨à¯€à®•à¯à®• à®µà®¿à®°à¯à®®à¯à®ªà¯à®•à®¿à®±à¯€à®°à¯à®•à®³à®¾?' : 'Are you sure you want to delete this record?'}
+                </p>
+                <div className="bg-muted/50 rounded-lg p-4 border border-border">
+                  <p className="font-semibold text-foreground">
+                    {getPartyName(partyToDelete)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {partyToDelete.phone} {"\u2022"} {partyToDelete.email}
+                  </p>
+                  {(() => {
+                    // Use outstanding field (from getPartiesWithOutstanding) or currentBalance as fallback
+                    const balance = partyToDelete.outstanding ?? partyToDelete.currentBalance ?? 0
+                    // Skip if balance is 0, NaN, or undefined
+                    if (!balance || isNaN(balance) || balance === 0) return null
+                    return (
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <p className="text-xs text-muted-foreground">Balance Summary:</p>
+                        <p className={cn(
+                          "text-sm font-semibold mt-1",
+                          balance > 0 ? "text-emerald-600" : balance < 0 ? "text-red-600" : "text-slate-500"
+                        )}>
+                          {balance > 0 ? '+' : balance < 0 ? '-' : ''}
+                          Rs. {Math.abs(balance).toLocaleString()}
+                          {balance > 0
+                            ? ' (Due)'
+                            : balance < 0
+                              ? ' (Advance/Credit)'
+                              : ' (Settled)'}
+                        </p>
+                      </div>
+                    )
+                  })()}
+                </div>
+                {(() => {
+                  const balance = partyToDelete.outstanding ?? partyToDelete.currentBalance ?? 0
+                  if (!balance || isNaN(balance) || balance === 0) return null
+                  return (
+                    <div className="mt-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                      <p className="text-xs text-destructive">
+                        {language === 'ta' ? 'à®Žà®šà¯à®šà®°à®¿à®•à¯à®•à¯ˆ: à®‡à®¨à¯à®¤ à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯à®•à¯à®•à¯ à®¨à®¿à®²à¯à®µà¯ˆ à®‡à®°à¯à®ªà¯à®ªà¯ à®‰à®³à¯à®³à®¤à¯. à®¨à¯€à®•à¯à®•à¯à®µà®¤à¯ à®…à®©à¯ˆà®¤à¯à®¤à¯ à®ªà®°à®¿à®µà®°à¯à®¤à¯à®¤à®©à¯ˆ à®µà®°à®²à®¾à®±à¯à®±à¯ˆà®¯à¯à®®à¯ à®…à®•à®±à¯à®±à¯à®®à¯.' : 'Warning: This record has a balance. Deleting will remove all transaction history.'}
                       </p>
                     </div>
                   )
