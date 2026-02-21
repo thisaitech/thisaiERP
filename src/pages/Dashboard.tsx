@@ -672,6 +672,13 @@ const Dashboard = () => {
     ...weeklyOverviewData.map(entry => Math.max(entry.sales, entry.purchases))
   )
 
+  const handleWeeklyOverviewDayClick = (entry: WeeklyOverviewEntry) => {
+    setSelectedPeriod('week')
+    toast.info(
+      `${entry.day}: Admissions \u20B9${formatExactAmount(entry.sales)} | Spending \u20B9${formatExactAmount(entry.purchases)}`
+    )
+  }
+
   const lowStockCount = lowStockDetails.length
   const lowStockMessage = lowStockCount > 0
     ? `${lowStockCount} ${lowStockCount === 1 ? 'item needs' : 'items need'} reorder soon`
@@ -734,7 +741,7 @@ const Dashboard = () => {
   // ==================== MOBILE DASHBOARD (Neumorphic Soft UI Design) ====================
   const MobileDashboard = () => {
     return (
-      <div className="p-4 bg-[#e4ebf5] dark:bg-slate-900 min-h-screen">
+      <div className="p-4 pb-28 bg-[#e4ebf5] dark:bg-slate-900 min-h-screen">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -869,7 +876,13 @@ const Dashboard = () => {
                     title={`Spending: ₹${day.purchases.toLocaleString()}`}
                   />
                 </div>
-                <span className="text-xs font-medium text-slate-400">{day.day}</span>
+                <button
+                  type="button"
+                  onClick={() => handleWeeklyOverviewDayClick(day)}
+                  className="text-xs font-medium text-slate-500 hover:text-blue-600 active:text-blue-700 transition-colors"
+                >
+                  {day.day}
+                </button>
               </div>
             ))}
           </motion.div>
@@ -1190,7 +1203,13 @@ const Dashboard = () => {
                         title={`Spending: ₹${day.purchases.toLocaleString()}`}
                       />
                     </div>
-                    <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{day.day}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleWeeklyOverviewDayClick(day)}
+                      className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      {day.day}
+                    </button>
                   </div>
                 ))}
               </motion.div>
