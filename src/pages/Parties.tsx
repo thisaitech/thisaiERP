@@ -961,30 +961,30 @@ const Parties = () => {
         className="mb-3"
       >
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
-        <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
+        <div className="flex items-start justify-between gap-2 md:gap-4 mb-3">
           {/* Left Side: KPI Cards - Rectangular filling space */}
-          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-3">
             {/* Parties Card - Blue Theme */}
-            <div className="erp-legacy-kpi-shell !min-h-[84px] sm:!min-h-[96px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+            <div className="erp-legacy-kpi-shell !min-h-[72px] sm:!min-h-[88px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
                 onClick={() => setActiveTab('all')}
-                className="erp-legacy-kpi-button !min-h-[80px] sm:!min-h-[92px] md:!min-h-[104px] !px-2 !py-2 sm:!px-3 sm:!py-2.5 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+                className="erp-legacy-kpi-button !min-h-[68px] sm:!min-h-[84px] md:!min-h-[104px] !px-1.5 !py-1.5 sm:!px-3 sm:!py-2.5 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
               >
                 <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
                   <Users size={20} weight="duotone" className="text-blue-500" />
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[10px] sm:text-[11px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'தரப்பினர்' : 'Students & Clients'}</span>
-                  <span className="text-lg sm:text-xl md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{partiesSummary.totalParties}</span>
+                  <span className="text-[9px] sm:text-[11px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'தரப்பினர்' : 'Students & Clients'}</span>
+                  <span className="text-base sm:text-xl md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{partiesSummary.totalParties}</span>
                 </div>
               </button>
             </div>
 
             {/* Total Due Card - Green Theme */}
-            <div className="erp-legacy-kpi-shell !min-h-[84px] sm:!min-h-[96px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
+            <div className="erp-legacy-kpi-shell !min-h-[72px] sm:!min-h-[88px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
                 onClick={() => setActiveTab('customers')}
-                className="erp-legacy-kpi-button !min-h-[80px] sm:!min-h-[92px] md:!min-h-[104px] !px-2 !py-2 sm:!px-3 sm:!py-2.5 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+                className="erp-legacy-kpi-button !min-h-[68px] sm:!min-h-[84px] md:!min-h-[104px] !px-1.5 !py-1.5 sm:!px-3 sm:!py-2.5 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
               >
                 <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
                   <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -992,8 +992,8 @@ const Parties = () => {
                   </svg>
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[10px] sm:text-[11px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'பெற வேண்டியது' : 'Total Due'}</span>
-                  <span className="text-lg sm:text-xl md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                  <span className="text-[9px] sm:text-[11px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'பெற வேண்டியது' : 'Total Due'}</span>
+                  <span className="text-base sm:text-xl md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                     ₹{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
                   </span>
                 </div>
@@ -1001,10 +1001,10 @@ const Parties = () => {
             </div>
 
             {/* Advance/Credit Card - Red Theme */}
-            <div className="erp-legacy-kpi-shell !min-h-[84px] sm:!min-h-[96px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
+            <div className="erp-legacy-kpi-shell !min-h-[72px] sm:!min-h-[88px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
                 onClick={() => setActiveTab('suppliers')}
-                className="erp-legacy-kpi-button !min-h-[80px] sm:!min-h-[92px] md:!min-h-[104px] !px-2 !py-2 sm:!px-3 sm:!py-2.5 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+                className="erp-legacy-kpi-button !min-h-[68px] sm:!min-h-[84px] md:!min-h-[104px] !px-1.5 !py-1.5 sm:!px-3 sm:!py-2.5 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
               >
                 <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
                   <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1012,8 +1012,8 @@ const Parties = () => {
                   </svg>
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[10px] sm:text-[11px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'Advance/Credit'}</span>
-                  <span className="text-lg sm:text-xl md:text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
+                  <span className="text-[9px] sm:text-[11px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'Advance/Credit'}</span>
+                  <span className="text-base sm:text-xl md:text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
                     ₹{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
                   </span>
                 </div>
@@ -1021,9 +1021,9 @@ const Parties = () => {
             </div>
 
             {/* Net Balance Card - Purple Theme */}
-            <div className="erp-legacy-kpi-shell !min-h-[84px] sm:!min-h-[96px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-purple-400 to-violet-500 shadow-[6px_6px_12px_rgba(139,92,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(139,92,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
+            <div className="erp-legacy-kpi-shell !min-h-[72px] sm:!min-h-[88px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-purple-400 to-violet-500 shadow-[6px_6px_12px_rgba(139,92,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(139,92,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
               <button
-                className="erp-legacy-kpi-button !min-h-[80px] sm:!min-h-[92px] md:!min-h-[104px] !px-2 !py-2 sm:!px-3 sm:!py-2.5 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
+                className="erp-legacy-kpi-button !min-h-[68px] sm:!min-h-[84px] md:!min-h-[104px] !px-1.5 !py-1.5 sm:!px-3 sm:!py-2.5 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
               >
                 <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
                   <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1031,8 +1031,8 @@ const Parties = () => {
                   </svg>
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[10px] sm:text-[11px] md:text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'நிகர இருப்பு' : 'Net Balance'}</span>
-                  <span className="text-lg sm:text-xl md:text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                  <span className="text-[9px] sm:text-[11px] md:text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'நிகர இருப்பு' : 'Net Balance'}</span>
+                  <span className="text-base sm:text-xl md:text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
                     ₹{Math.abs(partiesSummary.netBalance) >= 10000000 ? (partiesSummary.netBalance / 10000000).toFixed(1) + ' Cr' : Math.abs(partiesSummary.netBalance) >= 100000 ? (partiesSummary.netBalance / 100000).toFixed(1) + ' L' : Math.abs(partiesSummary.netBalance) >= 1000 ? (partiesSummary.netBalance / 1000).toFixed(1) + ' K' : partiesSummary.netBalance.toLocaleString('en-IN')}
                   </span>
                 </div>
@@ -1041,13 +1041,13 @@ const Parties = () => {
           </div>
 
           {/* Right Side: Date Filters + Action Buttons */}
-          <div className="flex flex-col items-end gap-2 flex-shrink-0 w-full md:w-auto">
+          <div className="flex flex-col items-end gap-1.5 md:gap-2 flex-shrink-0 w-[66px] md:w-auto">
             {/* Action Buttons Row */}
             <div className="flex w-full md:w-auto items-center justify-end gap-2">
               {/* Add Student/Client Button */}
               <button
                 onClick={() => setShowAddModal(true)}
-                className="erp-module-primary-btn !px-3 !py-2 sm:!px-4 sm:!py-2.5"
+                className="erp-module-primary-btn !w-11 !h-11 !p-0 !rounded-xl justify-center sm:!w-12 sm:!h-12 md:!w-auto md:!h-auto md:!rounded-xl md:!px-4 md:!py-2.5"
               >
                 <Plus size={14} weight="bold" />
                 <span className="hidden sm:inline">{language === 'ta' ? 'தரப்பினர் சேர்' : 'Add Student/Client'}</span>
@@ -1055,7 +1055,7 @@ const Parties = () => {
             </div>
 
             {/* Date Filter Tabs */}
-            <div className="erp-module-filter-wrap ml-auto w-fit max-w-full !p-1.5 sm:!p-2 !justify-end">
+            <div className="erp-module-filter-wrap ml-auto w-full md:w-fit max-w-full !p-1 !justify-end !flex-col md:!flex-row !items-stretch md:!items-center gap-1">
               {[
                 { value: 'today', label: t.common.today },
                 { value: 'week', label: t.common.week },
@@ -1074,7 +1074,7 @@ const Parties = () => {
                       setShowCustomDatePicker(false)
                     }
                   }}
-                  className={cn('erp-module-filter-chip !px-2.5 !py-1.5 !text-[12px] sm:!text-sm', statsFilter === filter.value && 'is-active')}
+                  className={cn('erp-module-filter-chip !w-full md:!w-auto !px-1 !py-1 !text-[10px] sm:!text-[11px] md:!text-sm !leading-none text-center', statsFilter === filter.value && 'is-active')}
                 >
                   {filter.label}
                 </button>
