@@ -56,7 +56,7 @@ describe('Sales admissions flows', () => {
     render(<Sales />)
     fireEvent.click(await screen.findByText('New Admission'))
 
-    const studentInput = screen.getByPlaceholderText('Search student...')
+    const studentInput = screen.getByPlaceholderText(/Search student/i)
     fireEvent.change(studentInput, { target: { value: 'muthu' } })
 
     const select = screen.getByDisplayValue('Select course...')
@@ -113,4 +113,3 @@ describe('Sales admissions flows', () => {
     await waitFor(() => expect(deleteInvoiceMock).toHaveBeenCalledWith('i1'))
   })
 })
-

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { CurrencyInr, Eye, Pencil, Plus, Trash, Users, X } from '@phosphor-icons/react'
+import { Eye, Pencil, Plus, Trash, Users, Wallet, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { cn } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
@@ -15,7 +15,21 @@ import MobileBottomSheet from '../components/mobile/MobileBottomSheet'
 import MobileFormSection from '../components/mobile/MobileFormSection'
 import MobileStickyCTA from '../components/mobile/MobileStickyCTA'
 
-type Student = { id: string; name?: string; companyName?: string; phone?: string; email?: string }
+type Student = {
+  id: string
+  name?: string
+  companyName?: string
+  phone?: string
+  email?: string
+  address?: string
+  billingAddress?: {
+    street?: string
+    city?: string
+    state?: string
+    pinCode?: string
+    country?: string
+  }
+}
 type Course = { id: string; name: string; sellingPrice?: number; unit?: string }
 
 type AdmissionItem = {
@@ -30,23 +44,38 @@ type AdmissionItem = {
 
 const newLine = (): AdmissionItem => ({
   id: `line_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-  itemId: 'address',
+  itemId: '',
   itemName: '',
   quantity: 1,
-  unit: 'Address',
+  unit: 'Course',
   rate: 0,
   amount: 0,
 })
 
-const genAdmissionNo = () => {
-  const now = new Date()
-  const yy = String(now.getFullYear()).slice(-2)
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const rand = Math.floor(1000 + Math.random() * 9000)
-  return `ADM-${yy}${mm}-${rand}`
+const getSafeYear = (dateValue?: string) => {
+  if (dateValue && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return Number(dateValue.slice(0, 4)) || new Date().getFullYear()
+  }
+  return new Date().getFullYear()
+}
+
+const genAdmissionNo = (existingInvoices: any[] = [], dateValue?: string) => {
+  const year = getSafeYear(dateValue)
+  let maxSeq = 0
+
+  for (const inv of existingInvoices) {
+    const invoiceNo = String(inv?.invoiceNumber || '').trim()
+    const match = invoiceNo.match(/^ADM-(\d{4})-(\d{1,6})$/i)
+    if (!match) continue
+    if (Number(match[1]) !== year) continue
+    maxSeq = Math.max(maxSeq, Number(match[2]) || 0)
+  }
+
+  return `ADM-${year}-${String(maxSeq + 1).padStart(2, '0')}`
 }
 
 const Sales: React.FC = () => {
+  const todayISO = new Date().toISOString().split('T')[0]
   const { userData } = useAuth()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -58,16 +87,18 @@ const Sales: React.FC = () => {
   const [admissionSearch, setAdmissionSearch] = useState('')
   const [editingAdmissionId, setEditingAdmissionId] = useState('')
   const [editingPartyId, setEditingPartyId] = useState('')
-  const [invoiceNumber, setInvoiceNumber] = useState(genAdmissionNo())
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0])
+  const [invoiceDate, setInvoiceDate] = useState(todayISO)
+  const [invoiceNumber, setInvoiceNumber] = useState(genAdmissionNo([], todayISO))
   const [studentSearch, setStudentSearch] = useState('')
   const [selectedStudentId, setSelectedStudentId] = useState('')
   const [showStudentSuggestions, setShowStudentSuggestions] = useState(false)
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
+  const [address, setAddress] = useState('')
   const [items, setItems] = useState<AdmissionItem[]>([newLine()])
   const [notes, setNotes] = useState('')
   const [paidAmount, setPaidAmount] = useState<string>('0')
+  const [focusedFeeLineId, setFocusedFeeLineId] = useState<string | null>(null)
   const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth < 768)
 
   useEffect(() => {
@@ -103,19 +134,22 @@ const Sales: React.FC = () => {
   }, [])
 
   const resetForm = () => {
+    const nextDate = new Date().toISOString().split('T')[0]
     setFormMode('create')
     setEditingAdmissionId('')
     setEditingPartyId('')
-    setInvoiceNumber(genAdmissionNo())
-    setInvoiceDate(new Date().toISOString().split('T')[0])
+    setInvoiceDate(nextDate)
+    setInvoiceNumber(genAdmissionNo(invoices, nextDate))
     setStudentSearch('')
     setSelectedStudentId('')
     setShowStudentSuggestions(false)
     setPhone('')
     setEmail('')
+    setAddress('')
     setItems([newLine()])
     setNotes('')
     setPaidAmount('0')
+    setFocusedFeeLineId(null)
   }
 
   const openNew = () => {
@@ -157,11 +191,29 @@ const Sales: React.FC = () => {
     return { ...line, quantity: qty, rate, amount: qty * rate }
   }
 
+  const handlePickCourse = (lineId: string, courseId: string) => {
+    const selectedCourse = courses.find((c) => c.id === courseId)
+    setItems((prev) =>
+      prev.map((line) => {
+        if (line.id !== lineId) return line
+        const nextLine = {
+          ...line,
+          itemId: selectedCourse?.id || '',
+          itemName: selectedCourse?.name || '',
+          unit: selectedCourse?.unit || 'Course',
+          rate: Number(selectedCourse?.sellingPrice ?? line.rate) || 0,
+        }
+        return recalcLine(nextLine)
+      })
+    )
+  }
+
   const openExisting = (inv: any, mode: 'edit' | 'view') => {
+    const resolvedDate = ((inv.invoiceDate || inv.date || inv.createdAt || '').toString()).slice(0, 10) || new Date().toISOString().split('T')[0]
     setFormMode(mode)
     setEditingAdmissionId(inv.id || '')
-    setInvoiceNumber(inv.invoiceNumber || genAdmissionNo())
-    setInvoiceDate(((inv.invoiceDate || inv.date || inv.createdAt || '').toString()).slice(0, 10) || new Date().toISOString().split('T')[0])
+    setInvoiceDate(resolvedDate)
+    setInvoiceNumber(inv.invoiceNumber || genAdmissionNo(invoices, resolvedDate))
 
     const invName = String(inv.partyName || '').trim().toLowerCase()
     const invPhone = String(inv.phone || '').replace(/\D/g, '')
@@ -178,6 +230,8 @@ const Sales: React.FC = () => {
         return sameName || samePhone
       }) || null
     setEditingPartyId(inv.partyId || linkedStudent?.id || '')
+    const linkedStudentAddress = String(linkedStudent?.billingAddress?.street || linkedStudent?.address || '').trim()
+    const invoiceAddress = String(inv?.address || inv?.partyAddress?.street || inv?.billingAddress?.street || '').trim()
 
     if (linkedStudent) {
       setSelectedStudentId(linkedStudent.id)
@@ -192,6 +246,7 @@ const Sales: React.FC = () => {
       setPhone(inv.phone || '')
       setEmail(inv.email || '')
     }
+    setAddress(invoiceAddress || linkedStudentAddress || '')
 
     const mappedItems: AdmissionItem[] = Array.isArray(inv.items)
       ? inv.items.map((it: any, idx: number) => {
@@ -213,6 +268,7 @@ const Sales: React.FC = () => {
     setItems(mappedItems.length > 0 ? mappedItems : [newLine()])
     setNotes(inv.notes || '')
     setPaidAmount(String(Number(inv.paidAmount || 0)))
+    setFocusedFeeLineId(null)
     setShowForm(true)
   }
 
@@ -249,7 +305,7 @@ const Sales: React.FC = () => {
             phone: phone.trim(),
             email: email.trim(),
             contacts: [],
-            billingAddress: { street: '', city: '', state: '', pinCode: '', country: 'India' },
+            billingAddress: { street: address.trim(), city: '', state: '', pinCode: '', country: 'India' },
             sameAsShipping: true,
             openingBalance: 0,
             currentBalance: 0,
@@ -271,9 +327,9 @@ const Sales: React.FC = () => {
 
     const cleanItems = items
       .map(recalcLine)
-      .filter((l) => l.itemName.trim().length > 0 && l.quantity > 0)
-      .map((l) => ({ ...l, itemId: l.itemId || 'address', unit: l.unit || 'Address' }))
-    if (cleanItems.length === 0) return toast.error('Please enter address')
+      .filter((l) => l.itemId && l.itemName.trim().length > 0 && l.quantity > 0)
+      .map((l) => ({ ...l, unit: l.unit || 'Course' }))
+    if (cleanItems.length === 0) return toast.error('Please add at least 1 course')
 
     setSaving(true)
     try {
@@ -282,6 +338,8 @@ const Sales: React.FC = () => {
       const linkedStudentId = admissionStudentId || (formMode === 'edit' ? editingPartyId : '')
       if (formMode === 'edit' && linkedStudentId) {
         const studentNameForUpdate = typedStudentName || admissionStudent?.name || admissionStudent?.companyName || ''
+        const existingStudentRecord = students.find((s) => s.id === linkedStudentId)
+        const existingBillingAddress = existingStudentRecord?.billingAddress || {}
         if (studentNameForUpdate) {
           await updateParty(linkedStudentId, {
             name: studentNameForUpdate,
@@ -289,12 +347,29 @@ const Sales: React.FC = () => {
             displayName: studentNameForUpdate,
             phone: phone.trim(),
             email: email.trim(),
+            billingAddress: {
+              street: address.trim(),
+              city: existingBillingAddress.city || '',
+              state: existingBillingAddress.state || '',
+              pinCode: existingBillingAddress.pinCode || '',
+              country: existingBillingAddress.country || 'India',
+            },
             updatedAt: now,
           } as any)
           setStudents((prev) =>
             prev.map((s) =>
               s.id === linkedStudentId
-                ? { ...s, name: studentNameForUpdate, companyName: studentNameForUpdate, phone: phone.trim(), email: email.trim() }
+                ? {
+                    ...s,
+                    name: studentNameForUpdate,
+                    companyName: studentNameForUpdate,
+                    phone: phone.trim(),
+                    email: email.trim(),
+                    billingAddress: {
+                      ...(s.billingAddress || {}),
+                      street: address.trim(),
+                    },
+                  }
                 : s
             )
           )
@@ -303,12 +378,13 @@ const Sales: React.FC = () => {
 
       const payload: any = {
         type: 'sale',
-        invoiceNumber,
+        invoiceNumber: invoiceNumber.trim() || genAdmissionNo(invoices, invoiceDate),
         invoiceDate,
         partyId: linkedStudentId || admissionStudentId,
         partyName: admissionStudent?.name || admissionStudent?.companyName || typedStudentName || 'Student',
         phone: phone || admissionStudent?.phone || '',
         email: email || admissionStudent?.email || '',
+        address: address.trim(),
         items: cleanItems,
         subtotal: total,
         total,
@@ -370,9 +446,26 @@ const Sales: React.FC = () => {
     () => filteredInvoices.reduce((sum, inv) => sum + Number(inv.paidAmount || 0), 0),
     [filteredInvoices]
   )
+  const uniqueCourses = useMemo(() => {
+    const seenNames = new Set<string>()
+    return courses.filter((course) => {
+      const normalizedName = String(course.name || '').trim().toLowerCase()
+      if (!normalizedName) return true
+      if (seenNames.has(normalizedName)) return false
+      seenNames.add(normalizedName)
+      return true
+    })
+  }, [courses])
+
+  useEffect(() => {
+    if (!showForm || formMode !== 'create') return
+    setInvoiceNumber(genAdmissionNo(invoices, invoiceDate))
+  }, [showForm, formMode, invoices, invoiceDate])
 
   const inputClass = (mobile: boolean) =>
-    mobile ? 'mobile-control' : 'mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
+    mobile
+      ? 'mobile-control'
+      : 'mt-1 w-full px-3 py-2 rounded-xl border border-[#cfd9ea] bg-[#edf2f9] text-slate-800 shadow-[inset_2px_2px_4px_#cfd7e2,inset_-2px_-2px_4px_#ffffff] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
 
   const formFields = (mobile: boolean) => (
     <div className="space-y-4">
@@ -409,7 +502,7 @@ const Sales: React.FC = () => {
       <MobileFormSection title="Student">
         <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
           <div className="relative">
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Student</label>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Student Name</label>
             <input
               value={selectedStudent ? (selectedStudent.name || selectedStudent.companyName || '') : studentSearch}
               onChange={(e) => {
@@ -431,12 +524,12 @@ const Sales: React.FC = () => {
                   setShowStudentSuggestions(false)
                 }
               }}
-              placeholder="Search student..."
+              placeholder="Search student name..."
               disabled={isViewMode}
               className={inputClass(mobile)}
             />
             {!isViewMode && !selectedStudentId && showStudentSuggestions && studentSearch.trim().length > 0 && filteredStudents.length > 0 && (
-              <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl">
+              <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-[#cfd9ea] bg-[#edf2f9] shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff] dark:border-slate-700 dark:bg-slate-800 dark:shadow-none">
                 {filteredStudents.map((s) => (
                   <button
                     key={s.id}
@@ -447,6 +540,7 @@ const Sales: React.FC = () => {
                       setShowStudentSuggestions(false)
                       setPhone(s.phone || '')
                       setEmail(s.email || '')
+                      setAddress(s.billingAddress?.street || s.address || '')
                     }}
                     className={cn('w-full text-left px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/60', 'flex items-center justify-between gap-3')}
                   >
@@ -459,23 +553,36 @@ const Sales: React.FC = () => {
               </div>
             )}
           </div>
-          <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-2')}>
-            <div>
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone</label>
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                onFocus={() => setShowStudentSuggestions(false)}
-                disabled={isViewMode}
-                className={inputClass(mobile)}
-              />
+          <div className="space-y-3">
+            <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-2')}>
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone</label>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  onFocus={() => setShowStudentSuggestions(false)}
+                  disabled={isViewMode}
+                  className={inputClass(mobile)}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Email</label>
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onFocus={() => setShowStudentSuggestions(false)}
+                  disabled={isViewMode}
+                  className={inputClass(mobile)}
+                />
+              </div>
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Email</label>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Address</label>
               <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
                 onFocus={() => setShowStudentSuggestions(false)}
+                placeholder="Enter address"
                 disabled={isViewMode}
                 className={inputClass(mobile)}
               />
@@ -484,39 +591,64 @@ const Sales: React.FC = () => {
         </div>
       </MobileFormSection>
 
-      <MobileFormSection title="Address" subtitle="Enter your address">
+      <MobileFormSection>
         <div className="space-y-3">
-          {items.slice(0, 1).map((line) => (
+          {items.map((line) => (
             <div key={line.id} className={cn('grid gap-3 items-end', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12')}>
               <div className={mobile ? '' : 'md:col-span-8'}>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Address</label>
-                <input
-                  type="text"
-                  value={line.itemName}
-                  onChange={(e) =>
-                    setItems((prev) =>
-                      prev.map((l) =>
-                        l.id === line.id ? recalcLine({ ...l, itemId: 'address', itemName: e.target.value, unit: 'Address' }) : l
-                      )
-                    )
-                  }
-                  placeholder="Enter your address"
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Course</label>
+                <select
+                  value={line.itemId}
+                  onChange={(e) => handlePickCourse(line.id, e.target.value)}
                   disabled={isViewMode}
                   className={inputClass(mobile)}
-                />
+                >
+                  <option value="">Select course...</option>
+                  {uniqueCourses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className={mobile ? '' : 'md:col-span-4'}>
+              <div className={mobile ? '' : 'md:col-span-3'}>
                 <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Fee</label>
                 <input
                   type="number"
-                  value={line.rate}
-                  onChange={(e) => setItems((prev) => prev.map((l) => (l.id === line.id ? recalcLine({ ...l, rate: Number(e.target.value) }) : l)))}
+                  value={focusedFeeLineId === line.id && Number(line.rate || 0) === 0 ? '' : line.rate}
+                  onFocus={() => setFocusedFeeLineId(line.id)}
+                  onBlur={(e) => {
+                    if (e.target.value.trim() === '') {
+                      setItems((prev) => prev.map((l) => (l.id === line.id ? recalcLine({ ...l, rate: 0 }) : l)))
+                    }
+                    setFocusedFeeLineId((prev) => (prev === line.id ? null : prev))
+                  }}
+                  onChange={(e) => setItems((prev) => prev.map((l) => (l.id === line.id ? recalcLine({ ...l, rate: Number(e.target.value || 0) }) : l)))}
                   disabled={isViewMode}
                   className={inputClass(mobile)}
                 />
               </div>
+              {!isViewMode && (
+                <div className={mobile ? '' : 'md:col-span-1 flex justify-end'}>
+                  <button
+                    type="button"
+                    onClick={() => setItems((prev) => prev.filter((l) => l.id !== line.id))}
+                    className="mobile-secondary-btn text-red-600"
+                    title="Remove"
+                  >
+                    <Trash size={16} />
+                    Remove
+                  </button>
+                </div>
+              )}
             </div>
           ))}
+
+          {!isViewMode && (
+            <button type="button" onClick={() => setItems((prev) => [...prev, newLine()])} className="mobile-secondary-btn">
+              + Add Course
+            </button>
+          )}
 
           <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-700 pt-2">
             <div className="text-sm text-slate-600 dark:text-slate-300">Total</div>
@@ -545,7 +677,7 @@ const Sales: React.FC = () => {
   )
 
   return (
-    <div className="erp-module-page p-3 md:p-6">
+    <div className="erp-module-page p-3 md:p-6 md:bg-[#e4ebf5]">
       <MobilePageScaffold
         title="Admissions"
         subtitle="Create and manage admissions"
@@ -557,12 +689,14 @@ const Sales: React.FC = () => {
           </button>
         }
       >
-        <MobileStatCards
-          items={[
-            { id: 'count', title: 'Admissions', value: `${filteredInvoices.length}`, subtitle: 'Records', icon: <Users size={18} weight="bold" className="text-blue-600" />, tone: 'primary' },
-            { id: 'value', title: 'Total Amount', value: `Rs ${totalAdmissionsAmount.toLocaleString('en-IN')}`, subtitle: `Paid Rs ${totalPaidAmount.toLocaleString('en-IN')}`, icon: <CurrencyInr size={18} weight="bold" className="text-emerald-600" />, tone: 'success' },
-          ]}
-        />
+        <div className="admissions-mobile-stats">
+          <MobileStatCards
+            items={[
+              { id: 'count', title: 'Admissions', value: `${filteredInvoices.length}`, subtitle: 'Records', icon: <Users size={18} weight="bold" className="text-blue-600" />, tone: 'primary' },
+              { id: 'value', title: 'Total Amount', value: `Rs ${totalAdmissionsAmount.toLocaleString('en-IN')}`, valueClassName: 'text-[0.95rem] leading-tight whitespace-nowrap', subtitle: `Paid Rs ${totalPaidAmount.toLocaleString('en-IN')}`, icon: <Wallet size={18} weight="bold" className="text-emerald-600" />, tone: 'success' },
+            ]}
+          />
+        </div>
         <MobileSearchBar value={admissionSearch} onChange={setAdmissionSearch} placeholder="Search by admission, student or phone" />
         <div className="space-y-3">
           {loading && <p className="text-sm text-slate-500">Loading admissions...</p>}
@@ -598,7 +732,7 @@ const Sales: React.FC = () => {
         </div>
       </MobilePageScaffold>
 
-      <div className="hidden md:block w-full space-y-6">
+      <div className="hidden md:block w-full space-y-6 rounded-[24px] border border-[#d2dcec] bg-[#dfe7f2] p-5 shadow-[inset_4px_4px_8px_#cbd3de,inset_-4px_-4px_8px_#eef3fb]">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Admissions</h1>
@@ -610,14 +744,14 @@ const Sales: React.FC = () => {
           </button>
         </div>
 
-        <div className="erp-module-panel overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <div className="erp-module-panel overflow-hidden border-[#cfd9ea] bg-[#e4ebf5] shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff] dark:border-slate-700 dark:bg-slate-900 dark:shadow-none">
+          <div className="px-4 py-3 border-b border-[#d1dbea] bg-[#e1e9f3] dark:border-slate-700 dark:bg-slate-900/70 flex items-center justify-between">
             <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Recent Admissions</div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{loading ? 'Loading...' : `${invoices.length} record(s)`}</div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="erp-module-table-header bg-slate-50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300">
+              <thead className="erp-module-table-header bg-[#dbe5f2] dark:bg-slate-900/40 text-slate-600 dark:text-slate-300">
                 <tr>
                   <th className="text-left px-4 py-2 font-semibold">Admission No</th>
                   <th className="text-left px-4 py-2 font-semibold">Date</th>
@@ -629,7 +763,7 @@ const Sales: React.FC = () => {
               </thead>
               <tbody>
                 {invoices.slice(0, 20).map((inv) => (
-                  <tr key={inv.id} className="border-t border-slate-100 dark:border-slate-700/60">
+                  <tr key={inv.id} className="border-t border-[#d3ddeb] dark:border-slate-700/60">
                     <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">{inv.invoiceNumber || inv.id}</td>
                     <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{(inv.invoiceDate || inv.createdAt || '').slice(0, 10)}</td>
                     <td className="px-4 py-2 text-slate-700 dark:text-slate-200">{inv.partyName || 'Student'}</td>
@@ -657,14 +791,14 @@ const Sales: React.FC = () => {
 
       {showForm && !isMobileViewport && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700">
+          <div className="w-full max-w-3xl rounded-2xl border border-[#d0dae9] bg-[#e4ebf5] shadow-[10px_10px_24px_#bac3cf,-10px_-10px_24px_#f6f8fc] dark:border-slate-700 dark:bg-slate-900 dark:shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#d1dbea] dark:border-slate-700">
               <div className="font-bold text-slate-800 dark:text-slate-100">{modalTitle}</div>
               <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X size={18} /></button>
             </div>
-            <div className="p-5 max-h-[68vh] overflow-auto">{formFields(false)}</div>
-            <div className="px-5 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-3">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">{isViewMode ? 'Close' : 'Cancel'}</button>
+            <div className="p-5 max-h-[68vh] overflow-auto bg-[#dfe7f2] dark:bg-transparent">{formFields(false)}</div>
+            <div className="px-5 py-4 border-t border-[#d1dbea] dark:border-slate-700 flex items-center justify-end gap-3">
+              <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl border border-[#ccd7e7] bg-[#edf2f9] text-slate-700 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none">{isViewMode ? 'Close' : 'Cancel'}</button>
               {!isViewMode && (
                 <button disabled={saving} onClick={handleSave} className={cn('px-5 py-2 rounded-xl font-semibold text-white', saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700')}>
                   {saving ? (formMode === 'edit' ? 'Updating...' : 'Saving...') : (formMode === 'edit' ? 'Update Admission' : 'Save Admission')}

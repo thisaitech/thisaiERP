@@ -17,7 +17,8 @@ import {
   Bank,
   Briefcase,
   FunnelSimple,
-  Spinner
+  Spinner,
+  X
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -43,6 +44,9 @@ const Expenses = () => {
   }, [location.search])
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedPeriod, setSelectedPeriod] = useState('all')
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false)
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -120,7 +124,48 @@ const Expenses = () => {
     }
   }, [expenses])
 
-  const filteredExpenses = expenses.filter(expense =>
+  const periodFilteredExpenses = expenses.filter((expense) => {
+    if (selectedPeriod === 'all') return true
+
+    const expenseDate = new Date(expense.date)
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+
+    if (selectedPeriod === 'today') {
+      return expenseDate >= startOfToday
+    }
+
+    if (selectedPeriod === 'week') {
+      const weekAgo = new Date(startOfToday)
+      weekAgo.setDate(weekAgo.getDate() - 7)
+      return expenseDate >= weekAgo
+    }
+
+    if (selectedPeriod === 'month') {
+      const monthAgo = new Date(startOfToday)
+      monthAgo.setMonth(monthAgo.getMonth() - 1)
+      return expenseDate >= monthAgo
+    }
+
+    if (selectedPeriod === 'year') {
+      const yearAgo = new Date(startOfToday)
+      yearAgo.setFullYear(yearAgo.getFullYear() - 1)
+      return expenseDate >= yearAgo
+    }
+
+    if (selectedPeriod === 'custom') {
+      if (!customStartDate || !customEndDate) return true
+      const from = new Date(customStartDate)
+      from.setHours(0, 0, 0, 0)
+      const to = new Date(customEndDate)
+      to.setHours(23, 59, 59, 999)
+      return expenseDate >= from && expenseDate <= to
+    }
+
+    return true
+  })
+
+  const filteredExpenses = periodFilteredExpenses.filter(expense =>
     (selectedCategory === 'all' || expense.category === selectedCategory) &&
     (searchQuery === '' ||
       (expense.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -305,7 +350,7 @@ const Expenses = () => {
           </div>
 
           {/* Right Side: Date Filters + Action Buttons */}
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <div className="flex flex-col items-end gap-2 flex-shrink-0 w-full md:w-auto">
             {/* Action Button */}
             <button
               onClick={() => setShowNewExpense(true)}
@@ -316,25 +361,80 @@ const Expenses = () => {
             </button>
 
             {/* Date Filter Tabs */}
-            <div className="erp-module-filter-wrap">
-              {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
-                <button
-                  key={period}
-                  onClick={() => setSelectedPeriod(period)}
-                  className={cn('erp-module-filter-chip', selectedPeriod === period && 'is-active')}
-                >
-                  {period.charAt(0).toUpperCase() + period.slice(1)}
-                </button>
-              ))}
+            <div className="relative erp-module-filter-wrap w-full md:w-auto inventory-date-filter-wrap">
+              <div className="inventory-date-filter-row">
+                {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => {
+                      setSelectedPeriod(period)
+                      if (period === 'custom') {
+                        setShowCustomDatePicker(true)
+                      } else {
+                        setShowCustomDatePicker(false)
+                      }
+                    }}
+                    className={cn('erp-module-filter-chip inventory-date-filter-chip', selectedPeriod === period && 'is-active')}
+                  >
+                    {period.charAt(0).toUpperCase() + period.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              {showCustomDatePicker && (
+                <div className="absolute top-full left-0 md:left-auto md:right-0 mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-full md:min-w-[280px]">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Select Date Range</span>
+                    <button
+                      onClick={() => setShowCustomDatePicker(false)}
+                      className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                    >
+                      <X size={16} className="text-slate-500" />
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">From Date</label>
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">To Date</label>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setShowCustomDatePicker(false)}
+                      disabled={!customStartDate || !customEndDate}
+                      className={cn(
+                        "w-full py-2 rounded-lg text-sm font-semibold transition-all",
+                        customStartDate && customEndDate
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                      )}
+                    >
+                      Apply Filter
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         <div className="space-y-2">
           {/* Search Bar & Category Filter Tabs Row */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
             {/* Search Bar */}
-            <div className="erp-module-panel flex-1 p-3">
+            <div className="erp-module-panel w-full md:flex-1 p-3">
               <div className="flex items-center gap-2">
                 <MagnifyingGlass size={16} weight="bold" className="text-slate-400" />
                 <input
@@ -348,14 +448,14 @@ const Expenses = () => {
             </div>
 
             {/* Category Filter Tabs */}
-            <div className="flex-shrink-0">
-              <div className="erp-module-filter-wrap">
+            <div className="w-full md:w-auto md:flex-shrink-0">
+              <div className="erp-module-filter-wrap w-full md:w-auto overflow-x-auto whitespace-nowrap !items-center !justify-center">
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
                     className={cn(
-                      "erp-module-filter-chip flex items-center gap-1",
+                      "erp-module-filter-chip flex items-center justify-center gap-1 text-center",
                       selectedCategory === cat.id
                         ? "is-active"
                         : "border border-slate-200 dark:border-slate-600"

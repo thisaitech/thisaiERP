@@ -27,7 +27,6 @@ import { useAuth } from '../contexts/AuthContext'
 import useIsMobileViewport from '../hooks/useIsMobileViewport'
 import MobilePageScaffold from '../components/mobile/MobilePageScaffold'
 import MobileStatCards from '../components/mobile/MobileStatCards'
-import MobileFilterChips from '../components/mobile/MobileFilterChips'
 import {
   getSalesSummaryReport,
   getPurchaseSummaryReport,
@@ -608,23 +607,39 @@ const ReportsNew = () => {
             ]}
           />
 
-          <MobileFilterChips
-            items={[
-              { id: 'today', label: t.common.today },
-              { id: 'this-week', label: t.common.week },
-              { id: 'this-month', label: t.common.month },
-              { id: 'this-year', label: t.common.year },
-              { id: 'all-time', label: t.reports.all || 'All' },
-            ]}
-            activeId={selectedPeriod}
-            onSelect={(id) => setSelectedPeriod(id)}
-          />
+          <div className="erp-module-filter-wrap w-full inventory-date-filter-wrap">
+            <div className="inventory-date-filter-row justify-center">
+              {[
+                { id: 'today', label: t.common.today },
+                { id: 'this-week', label: t.common.week },
+                { id: 'this-month', label: t.common.month },
+                { id: 'this-year', label: t.common.year },
+                { id: 'all-time', label: t.reports.all || 'All' },
+              ].map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setSelectedPeriod(option.id)}
+                  className={cn('erp-module-filter-chip inventory-date-filter-chip whitespace-nowrap', selectedPeriod === option.id && 'is-active')}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          <MobileFilterChips
-            items={tabs.map((tab) => ({ id: tab.id, label: tab.label }))}
-            activeId={selectedTab}
-            onSelect={(id) => setSelectedTab(id)}
-          />
+          <div className="erp-module-filter-wrap w-full inventory-date-filter-wrap">
+            <div className="inventory-date-filter-row">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedTab(tab.id)}
+                  className={cn('erp-module-filter-chip inventory-date-filter-chip whitespace-nowrap', selectedTab === tab.id && 'is-active')}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </MobilePageScaffold>
       )}
 

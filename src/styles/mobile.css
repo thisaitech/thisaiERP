@@ -113,11 +113,23 @@
 }
 
 .mobile-stat-card-primary {
-  border-color: rgba(38, 95, 230, 0.35);
+  border-color: rgba(38, 95, 230, 0.55);
+  background: linear-gradient(160deg, rgba(59, 130, 246, 0.1) 0%, rgba(255, 255, 255, 0.98) 68%);
+}
+
+.mobile-stat-card-primary .mobile-stat-icon {
+  background: rgba(59, 130, 246, 0.14);
+  border: 1px solid rgba(59, 130, 246, 0.28);
 }
 
 .mobile-stat-card-success {
-  border-color: rgba(15, 159, 110, 0.35);
+  border-color: rgba(15, 159, 110, 0.55);
+  background: linear-gradient(160deg, rgba(16, 185, 129, 0.1) 0%, rgba(255, 255, 255, 0.98) 68%);
+}
+
+.mobile-stat-card-success .mobile-stat-icon {
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.28);
 }
 
 .mobile-stat-card-warning {
@@ -130,6 +142,30 @@
 
 .mobile-stat-card-neutral {
   border-color: var(--mobile-border);
+}
+
+.admissions-mobile-stats .mobile-stat-card {
+  box-shadow: none;
+}
+
+.admissions-mobile-stats .mobile-stat-card-primary {
+  border-color: #7aa9ff;
+  background: #eaf2ff;
+}
+
+.admissions-mobile-stats .mobile-stat-card-primary .mobile-stat-icon {
+  background: #dbe9ff;
+  border-color: #9fc0ff;
+}
+
+.admissions-mobile-stats .mobile-stat-card-success {
+  border-color: #71d1a8;
+  background: #e9f9f1;
+}
+
+.admissions-mobile-stats .mobile-stat-card-success .mobile-stat-icon {
+  background: #d5f3e4;
+  border-color: #95dfbe;
 }
 
 .mobile-filter-chip-row {
@@ -161,8 +197,8 @@
 }
 
 .mobile-filter-chip.is-active {
-  background: var(--mobile-primary);
-  border-color: var(--mobile-primary);
+  background: var(--module-accent, var(--mobile-primary));
+  border-color: var(--module-accent, var(--mobile-primary));
   color: #fff;
 }
 
@@ -441,7 +477,11 @@
   font-size: 0.9rem;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, var(--mobile-primary), var(--mobile-primary-strong));
+  background: linear-gradient(
+    135deg,
+    var(--module-accent, var(--mobile-primary)),
+    var(--module-accent-strong, var(--mobile-primary-strong))
+  );
 }
 
 .mobile-secondary-btn {

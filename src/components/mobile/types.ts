@@ -12,6 +12,7 @@ export interface MobileStatCardItem {
   id: string
   title: string
   value: string
+  valueClassName?: string
   subtitle?: string
   icon?: ReactNode
   tone?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral'
@@ -37,4 +38,3 @@ export interface MobileActionItem {
   onClick: () => void
   tone?: 'default' | 'danger'
 }
-

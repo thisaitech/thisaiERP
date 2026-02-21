@@ -11,7 +11,6 @@ import { cn } from '../lib/utils'
 import useIsMobileViewport from '../hooks/useIsMobileViewport'
 import MobilePageScaffold from '../components/mobile/MobilePageScaffold'
 import MobileStatCards from '../components/mobile/MobileStatCards'
-import MobileFilterChips from '../components/mobile/MobileFilterChips'
 import MobileSearchBar from '../components/mobile/MobileSearchBar'
 import MobileListCard from '../components/mobile/MobileListCard'
 import MobileActionMenu from '../components/mobile/MobileActionMenu'
@@ -435,6 +434,12 @@ const Quotations: React.FC = () => {
     { key: 'returned', label: 'Returned' }
   ] as const
 
+  const courseLikeFilterStyle = {
+    '--module-accent': '#f59e0b',
+    '--module-accent-strong': '#ea580c',
+    '--module-panel-border': '#f5c16c'
+  } as React.CSSProperties
+
   const formatCurrency = (value: number) =>
     `₹${Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -607,11 +612,19 @@ const Quotations: React.FC = () => {
             placeholder="Search invoice, customer, mobile..."
           />
 
-          <MobileFilterChips
-            items={periodOptions.map((option) => ({ id: option.id, label: option.label }))}
-            activeId={periodFilter}
-            onSelect={(id) => setPeriodFilter(id as typeof periodFilter)}
-          />
+          <div className="erp-module-filter-wrap w-full inventory-date-filter-wrap" style={courseLikeFilterStyle}>
+            <div className="inventory-date-filter-row">
+              {periodOptions.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => setPeriodFilter(option.id)}
+                  className={cn('erp-module-filter-chip inventory-date-filter-chip whitespace-nowrap', periodFilter === option.id && 'is-active')}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {periodFilter === 'custom' && (
             <input
@@ -622,15 +635,19 @@ const Quotations: React.FC = () => {
             />
           )}
 
-          <MobileFilterChips
-            items={statusOptions.map((option) => ({
-              id: option.key,
-              label: option.label,
-              count: statusCounts[option.key]
-            }))}
-            activeId={statusFilter}
-            onSelect={(id) => setStatusFilter(id as typeof statusFilter)}
-          />
+          <div className="erp-module-filter-wrap w-full inventory-date-filter-wrap" style={courseLikeFilterStyle}>
+            <div className="inventory-date-filter-row">
+              {statusOptions.map((option) => (
+                <button
+                  key={option.key}
+                  onClick={() => setStatusFilter(option.key)}
+                  className={cn('erp-module-filter-chip inventory-date-filter-chip whitespace-nowrap', statusFilter === option.key && 'is-active')}
+                >
+                  {option.label} {statusCounts[option.key]}
+                </button>
+              ))}
+            </div>
+          </div>
         </MobilePageScaffold>
       )}
 
@@ -685,23 +702,25 @@ const Quotations: React.FC = () => {
                 Add
               </button>
             </div>
-            <div className="erp-module-filter-wrap justify-end">
-              {periodOptions.map((period) => (
-                <button
-                  key={period.id}
-                  onClick={() => setPeriodFilter(period.id)}
-                  className={cn('erp-module-filter-chip', periodFilter === period.id && 'is-active')}
-                >
-                  {period.label}
-                </button>
-              ))}
+            <div className="erp-module-filter-wrap w-full inventory-date-filter-wrap" style={courseLikeFilterStyle}>
+              <div className="inventory-date-filter-row">
+                {periodOptions.map((period) => (
+                  <button
+                    key={period.id}
+                    onClick={() => setPeriodFilter(period.id)}
+                    className={cn('erp-module-filter-chip inventory-date-filter-chip whitespace-nowrap', periodFilter === period.id && 'is-active')}
+                  >
+                    {period.label}
+                  </button>
+                ))}
+              </div>
             </div>
             {periodFilter === 'custom' && (
               <input
                 type="date"
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
-                className="ml-auto w-44 erp-module-search-input"
+                className="w-full md:w-44 md:ml-auto erp-module-search-input"
               />
             )}
           </div>
@@ -717,17 +736,19 @@ const Quotations: React.FC = () => {
               className="erp-module-search-input pl-10 pr-3"
             />
           </div>
-          <div className="flex items-center gap-2 flex-wrap xl:justify-end">
-            {statusOptions.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setStatusFilter(tab.key)}
-                className={cn('erp-module-filter-chip rounded-full', statusFilter === tab.key ? 'is-active' : 'border border-slate-200 dark:border-slate-600')}
-                title={`${statusCounts[tab.key]} records`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="erp-module-filter-wrap w-full xl:w-auto inventory-date-filter-wrap" style={courseLikeFilterStyle}>
+            <div className="inventory-date-filter-row">
+              {statusOptions.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setStatusFilter(tab.key)}
+                  className={cn('erp-module-filter-chip inventory-date-filter-chip whitespace-nowrap', statusFilter === tab.key ? 'is-active' : 'border border-slate-200 dark:border-slate-600')}
+                  title={`${statusCounts[tab.key]} records`}
+                >
+                  {tab.label} {statusCounts[tab.key]}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

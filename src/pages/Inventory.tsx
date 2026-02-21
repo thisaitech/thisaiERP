@@ -813,14 +813,84 @@ const Inventory = () => {
     return () => document.removeEventListener('click', closeMenu)
   }, [openActionMenu])
 
+  const getItemDate = (item: any): Date | null => {
+    const candidates = [item?.createdAt, item?.updatedAt, item?.date, item?.created_at, item?.updated_at]
+    for (const candidate of candidates) {
+      if (candidate === null || candidate === undefined || candidate === '') continue
+      if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+        const dt = new Date(candidate)
+        if (!Number.isNaN(dt.getTime())) return dt
+        continue
+      }
+
+      const raw = String(candidate).trim()
+      if (!raw) continue
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+        const [y, m, d] = raw.split('-').map(Number)
+        const dt = new Date(y, m - 1, d, 12, 0, 0, 0)
+        if (!Number.isNaN(dt.getTime())) return dt
+      }
+
+      const parsed = new Date(raw)
+      if (!Number.isNaN(parsed.getTime())) return parsed
+    }
+    return null
+  }
+
+  const matchesSelectedPeriod = (item: any) => {
+    if (selectedPeriod === 'all') return true
+
+    const itemDate = getItemDate(item)
+    if (!itemDate) return false
+
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+
+    if (selectedPeriod === 'today') {
+      return itemDate >= startOfToday
+    }
+
+    if (selectedPeriod === 'week') {
+      const weekAgo = new Date(startOfToday)
+      weekAgo.setDate(weekAgo.getDate() - 6)
+      return itemDate >= weekAgo
+    }
+
+    if (selectedPeriod === 'month') {
+      const monthAgo = new Date(startOfToday)
+      monthAgo.setMonth(monthAgo.getMonth() - 1)
+      return itemDate >= monthAgo
+    }
+
+    if (selectedPeriod === 'year') {
+      const yearAgo = new Date(startOfToday)
+      yearAgo.setFullYear(yearAgo.getFullYear() - 1)
+      return itemDate >= yearAgo
+    }
+
+    if (selectedPeriod === 'custom') {
+      if (!customStartDate || !customEndDate) return true
+      const from = new Date(customStartDate)
+      from.setHours(0, 0, 0, 0)
+      const to = new Date(customEndDate)
+      to.setHours(23, 59, 59, 999)
+      return itemDate >= from && itemDate <= to
+    }
+
+    return true
+  }
+
+  const periodFilteredItems = items.filter(matchesSelectedPeriod)
+
   // Inventory Summary - Calculate from real items data
   const inventorySummary = (() => {
-    const totalItems = items.length
-    const totalValue = items.reduce((sum, item) => sum + ((item.stock || 0) * (item.sellingPrice || 0)), 0)
-    const lowStockItemsList = getLowStockItems(items)
+    const totalItems = periodFilteredItems.length
+    const totalValue = periodFilteredItems.reduce((sum, item) => sum + ((item.stock || 0) * (item.sellingPrice || 0)), 0)
+    const lowStockItemsList = getLowStockItems(periodFilteredItems)
     const lowStockItems = lowStockItemsList.length
-    const outOfStockItems = items.filter(item => (item.stock || 0) === 0).length
-    const uniqueCategories = new Set(items.map(item => item.category)).size
+    const outOfStockItems = periodFilteredItems.filter(item => (item.stock || 0) === 0).length
+    const uniqueCategories = new Set(periodFilteredItems.map(item => item.category)).size
     const avgStockValue = totalItems > 0 ? totalValue / totalItems : 0
 
     return {
@@ -836,13 +906,13 @@ const Inventory = () => {
   // Categories - Calculate from real items data
   const categories = (() => {
     const categoryCounts: Record<string, number> = {}
-    items.forEach(item => {
+    periodFilteredItems.forEach(item => {
       const cat = item.category || 'Other'
       categoryCounts[cat] = (categoryCounts[cat] || 0) + 1
     })
 
     const categoryList = [
-      { id: 'all', name: t.inventory.allItems, count: items.length }
+      { id: 'all', name: t.inventory.allItems, count: periodFilteredItems.length }
     ]
 
     Object.entries(categoryCounts).forEach(([id, count]) => {
@@ -1002,7 +1072,7 @@ const Inventory = () => {
     return Math.min((current / max) * 100, 100)
   }
 
-  const filteredItems = items.filter(item => {
+  const filteredItems = periodFilteredItems.filter(item => {
     const matchesSearch = item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.itemCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.barcode?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -1093,7 +1163,7 @@ const Inventory = () => {
           </div>
 
           {/* Right Side: Date Filters + Action Buttons */}
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <div className="flex flex-col items-end gap-2 flex-shrink-0 w-full md:w-auto">
             {/* Action Button */}
             <button
               onClick={() => {
@@ -1108,29 +1178,29 @@ const Inventory = () => {
             </button>
 
             {/* Date Filter Tabs */}
-            <div className="relative erp-module-filter-wrap">
-              {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
-                <button
-                  key={period}
-                  onClick={() => {
-                    setSelectedPeriod(period)
-                    if (period === 'custom') {
-                      setShowCustomDatePicker(true)
-                    } else {
-                      setShowCustomDatePicker(false)
-                    }
-                  }}
-                  className={cn('erp-module-filter-chip', selectedPeriod === period && 'is-active')}
-                >
-                  {period === 'custom' && customStartDate && customEndDate
-                    ? `${new Date(customStartDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} - ${new Date(customEndDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`
-                    : period.charAt(0).toUpperCase() + period.slice(1)}
-                </button>
-              ))}
+            <div className="relative erp-module-filter-wrap w-full md:w-auto inventory-date-filter-wrap">
+              <div className="inventory-date-filter-row">
+                {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => {
+                      setSelectedPeriod(period)
+                      if (period === 'custom') {
+                        setShowCustomDatePicker(true)
+                      } else {
+                        setShowCustomDatePicker(false)
+                      }
+                    }}
+                    className={cn('erp-module-filter-chip inventory-date-filter-chip', selectedPeriod === period && 'is-active')}
+                  >
+                    {period.charAt(0).toUpperCase() + period.slice(1)}
+                  </button>
+                ))}
+              </div>
 
               {/* Custom Date Picker Dropdown */}
               {showCustomDatePicker && (
-                <div className="absolute top-full right-0 mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 min-w-[280px]">
+                <div className="absolute top-full left-0 md:left-auto md:right-0 mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-full md:min-w-[280px]">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Select Date Range</span>
                     <button
@@ -1187,7 +1257,7 @@ const Inventory = () => {
         transition={{ delay: 0.1 }}
         className="mb-3"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
           {/* Search Bar */}
           <div className="flex-1 relative">
             <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
@@ -1201,7 +1271,7 @@ const Inventory = () => {
           </div>
 
           {/* Category Filter Pills - Right Side */}
-          <div className="flex-shrink-0">
+          <div className="hidden md:block flex-shrink-0">
             <div className="erp-module-filter-wrap">
               {categories.slice(0, 6).map((cat) => (
                 <button
@@ -1225,22 +1295,22 @@ const Inventory = () => {
       {/* Tab Filters */}
       <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 flex-shrink-0">
         {[
-          { id: 'all', label: t.inventory.allItems, count: items.length },
+          { id: 'all', label: t.inventory.allItems, count: periodFilteredItems.length },
           {
-            id: 'normal', label: t.inventory.inStock, count: items.filter(item => {
+            id: 'normal', label: t.inventory.inStock, count: periodFilteredItems.filter(item => {
               const stock = item.stock || 0
               const reorderPoint = item.reorderPoint || 0
               return stock > reorderPoint
             }).length
           },
           {
-            id: 'low', label: t.inventory.lowStock, count: items.filter(item => {
+            id: 'low', label: t.inventory.lowStock, count: periodFilteredItems.filter(item => {
               const stock = item.stock || 0
               const reorderPoint = item.reorderPoint || 0
               return stock > 0 && stock <= reorderPoint
             }).length
           },
-          { id: 'out', label: t.inventory.outOfStock, count: items.filter(item => (item.stock || 0) === 0).length }
+          { id: 'out', label: t.inventory.outOfStock, count: periodFilteredItems.filter(item => (item.stock || 0) === 0).length }
         ].map(tab => (
           <button
             key={tab.id}
@@ -1270,7 +1340,7 @@ const Inventory = () => {
       </div>
 
       {/* Items List */}
-      <div className="flex-1 overflow-y-auto space-y-1 pb-2">
+      <div className="flex-1 overflow-y-auto space-y-1 pb-2 inventory-mobile-list-scroll">
         {isLoadingItems ? (
           <div className="flex items-center justify-center py-20">
             <ArrowsClockwise size={32} weight="duotone" className="text-blue-600 animate-spin" />

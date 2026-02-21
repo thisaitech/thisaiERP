@@ -50,7 +50,6 @@ import { useErrorHandler } from '../hooks/useErrorHandler'
 import useIsMobileViewport from '../hooks/useIsMobileViewport'
 import MobilePageScaffold from '../components/mobile/MobilePageScaffold'
 import MobileStatCards from '../components/mobile/MobileStatCards'
-import MobileFilterChips from '../components/mobile/MobileFilterChips'
 
 const Banking = () => {
   const { handleError } = useErrorHandler()
@@ -785,30 +784,46 @@ const Banking = () => {
             ]}
           />
 
-          <MobileFilterChips
-            items={[
-              { id: 'today', label: t.common.today },
-              { id: 'week', label: t.common.week },
-              { id: 'month', label: t.common.month },
-              { id: 'year', label: t.common.year },
-              { id: 'all', label: t.common.all },
-              { id: 'custom', label: t.common.custom },
-            ]}
-            activeId={selectedPeriod}
-            onSelect={(id) => setSelectedPeriod(id)}
-          />
+          <div className="relative erp-module-filter-wrap w-full inventory-date-filter-wrap">
+            <div className="inventory-date-filter-row">
+              {[
+                { value: 'today', label: t.common.today },
+                { value: 'week', label: t.common.week },
+                { value: 'month', label: t.common.month },
+                { value: 'year', label: t.common.year },
+                { value: 'all', label: t.common.all },
+                { value: 'custom', label: t.common.custom },
+              ].map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() => setSelectedPeriod(filter.value)}
+                  className={cn('erp-module-filter-chip inventory-date-filter-chip', selectedPeriod === filter.value && 'is-active')}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          <MobileFilterChips
-            items={[
-              { id: 'overview', label: t.banking.overview },
-              { id: 'transactions', label: t.banking.transactions },
-              { id: 'razorpay', label: t.banking.razorpay },
-              { id: 'cheques', label: t.banking.cheques },
-              { id: 'loans', label: t.banking.loans },
-            ]}
-            activeId={selectedTab}
-            onSelect={(id) => setSelectedTab(id)}
-          />
+          <div className="erp-module-filter-wrap w-full inventory-date-filter-wrap">
+            <div className="inventory-date-filter-row">
+              {[
+                { id: 'overview', label: t.banking.overview },
+                { id: 'transactions', label: t.banking.transactions },
+                { id: 'razorpay', label: t.banking.razorpay },
+                { id: 'cheques', label: t.banking.cheques },
+                { id: 'loans', label: t.banking.loans },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedTab(tab.id)}
+                  className={cn('erp-module-filter-chip inventory-date-filter-chip whitespace-nowrap', selectedTab === tab.id && 'is-active')}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </MobilePageScaffold>
       )}
 

@@ -45,6 +45,37 @@ function scheduleIdle(callback: () => void, timeoutMs: number = 1200): { cancel:
   return { cancel: () => window.clearTimeout(t) }
 }
 
+type ModulePalette = {
+  accent: string
+  accentStrong: string
+  soft: string
+  pageBg: string
+  panelBg: string
+  border: string
+}
+
+const MODULE_PALETTES: Array<{ path: string; palette: ModulePalette }> = [
+  { path: '/sales', palette: { accent: '#a855f7', accentStrong: '#9333ea', soft: '#f3e8ff', pageBg: '#f2ebfb', panelBg: '#faf5ff', border: '#d8b4fe' } },
+  { path: '/inventory', palette: { accent: '#f59e0b', accentStrong: '#ea580c', soft: '#ffedd5', pageBg: '#fdf1e6', panelBg: '#fff8f1', border: '#fdba74' } },
+  { path: '/parties', palette: { accent: '#0ea5e9', accentStrong: '#0284c7', soft: '#e0f2fe', pageBg: '#e8f6fd', panelBg: '#f0f9ff', border: '#7dd3fc' } },
+  { path: '/reports', palette: { accent: '#ec4899', accentStrong: '#db2777', soft: '#fce7f3', pageBg: '#fbebf4', panelBg: '#fdf2f8', border: '#f9a8d4' } },
+  { path: '/expenses', palette: { accent: '#f97316', accentStrong: '#ea580c', soft: '#ffedd5', pageBg: '#fdf0e8', panelBg: '#fff7ed', border: '#fdba74' } },
+  { path: '/quotations', palette: { accent: '#8b5cf6', accentStrong: '#7c3aed', soft: '#ede9fe', pageBg: '#eeeafd', panelBg: '#f5f3ff', border: '#c4b5fd' } },
+  { path: '/crm', palette: { accent: '#10b981', accentStrong: '#059669', soft: '#dcfce7', pageBg: '#e9f8ef', panelBg: '#f0fdf4', border: '#86efac' } },
+  { path: '/banking', palette: { accent: '#f43f5e', accentStrong: '#e11d48', soft: '#ffe4e6', pageBg: '#fcecee', panelBg: '#fff1f2', border: '#fda4af' } },
+  { path: '/settings', palette: { accent: '#64748b', accentStrong: '#475569', soft: '#e2e8f0', pageBg: '#edf2f7', panelBg: '#f8fafc', border: '#cbd5e1' } },
+  { path: '/company-info', palette: { accent: '#64748b', accentStrong: '#475569', soft: '#e2e8f0', pageBg: '#edf2f7', panelBg: '#f8fafc', border: '#cbd5e1' } },
+  { path: '/', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
+]
+
+const getModulePalette = (pathname: string): ModulePalette => {
+  for (const entry of MODULE_PALETTES) {
+    if (entry.path === '/' && pathname === '/') return entry.palette
+    if (entry.path !== '/' && (pathname === entry.path || pathname.startsWith(`${entry.path}/`))) return entry.palette
+  }
+  return MODULE_PALETTES[MODULE_PALETTES.length - 1].palette
+}
+
 const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false)
@@ -66,6 +97,11 @@ const Layout = () => {
     }
   }
 
+  const closeMobileDrawers = () => {
+    setIsMobileMenuOpen(false)
+    setIsMobileMoreOpen(false)
+  }
+
   useEffect(() => {
     document.body.dataset.mobileMenuOpen = isMobileMenuOpen ? 'true' : 'false'
     document.body.dataset.mobileMoreOpen = isMobileMoreOpen ? 'true' : 'false'
@@ -74,6 +110,22 @@ const Layout = () => {
       document.body.removeAttribute('data-mobile-more-open')
     }
   }, [isMobileMenuOpen, isMobileMoreOpen])
+
+  useEffect(() => {
+    const body = document.body
+    const hasVisibleSheet = document.querySelector('.mobile-sheet-root') !== null
+    if (!hasVisibleSheet && (body.dataset.mobileSheetLockCount || body.style.overflow === 'hidden')) {
+      body.style.overflow = body.dataset.mobileSheetOverflowPrev || ''
+      delete body.dataset.mobileSheetLockCount
+      delete body.dataset.mobileSheetOverflowPrev
+    }
+  }, [location.pathname])
+
+  // Always close mobile drawers when navigation changes.
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+    setIsMobileMoreOpen(false)
+  }, [location.pathname, location.search])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -212,6 +264,19 @@ const Layout = () => {
     mobileRouteLabels.find((item) => location.pathname.startsWith(item.path + '/'))?.label ||
     (userData?.companyName || t.nav.dashboard)
 
+  const isPathActive = (path: string) =>
+    path === '/' ? location.pathname === '/' : location.pathname === path || location.pathname.startsWith(`${path}/`)
+
+  const activeModulePalette = getModulePalette(location.pathname)
+  const moduleThemeVars = {
+    ['--module-accent' as any]: activeModulePalette.accent,
+    ['--module-accent-strong' as any]: activeModulePalette.accentStrong,
+    ['--module-soft' as any]: activeModulePalette.soft,
+    ['--module-page-bg' as any]: activeModulePalette.pageBg,
+    ['--module-panel-bg' as any]: activeModulePalette.panelBg,
+    ['--module-panel-border' as any]: activeModulePalette.border,
+  } as React.CSSProperties
+
   const desktopRailItems: Array<{
     id: string;
     path: string;
@@ -254,7 +319,7 @@ const Layout = () => {
   })()
 
   return (
-    <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+    <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900 text-slate-800 dark:text-slate-200" style={moduleThemeVars}>
       {/* Desktop Navigation - Neumorphic Style */}
       <header className="sticky top-0 z-50 hidden lg:block py-2 px-3 lg:pl-[112px] bg-[#e4ebf5] dark:bg-slate-900">
         <div className="w-full">
@@ -446,15 +511,22 @@ const Layout = () => {
           <h1 className="text-base font-bold text-slate-800 dark:text-white truncate max-w-[210px] text-center">
             {currentPageTitle}
           </h1>
-          <button
-            onClick={() => setIsMobileMoreOpen(true)}
-            className="p-2 rounded-lg bg-[#e4ebf5] dark:bg-slate-700
-              shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]
-              dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]"
-            aria-label="More"
-          >
-            <SquaresFour size={20} className="text-slate-600 dark:text-slate-300" />
-          </button>
+          {location.pathname === '/' && canAccessSettings ? (
+            <button
+              onClick={() => navigate('/settings')}
+              onMouseEnter={() => prefetchRoute('/settings')}
+              className="p-2 rounded-lg bg-[#e4ebf5] dark:bg-slate-700
+                shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]
+                dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]
+                active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]
+                transition-all duration-200"
+              aria-label="Settings"
+            >
+              <Gear size={20} className="text-slate-600 dark:text-slate-300" />
+            </button>
+          ) : (
+            <div className="w-10 h-10" aria-hidden="true" />
+          )}
         </div>
       </header>
 
@@ -466,7 +538,7 @@ const Layout = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={closeMobileDrawers}
               className="fixed inset-0 bg-black/60 z-50 lg:hidden"
             />
             <motion.div
@@ -503,77 +575,138 @@ const Layout = () => {
               {/* Navigation Items */}
               <nav className="flex-1 overflow-y-auto px-4 space-y-2">
                 {/* Main Navigation Items */}
-                {navigationItems.map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    onMouseEnter={() => prefetchRoute(item.path)}
-                    className={({ isActive }) => cn(
-                      "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200",
-                      isActive
-                        ? "text-blue-600 dark:text-blue-400 bg-[#e4ebf5] dark:bg-slate-800 shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]"
-                        : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]"
-                    )}
-                  >
-                    <item.icon size={20} weight="duotone" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
+                {navigationItems.map((item) => {
+                  const isActive = isPathActive(item.path)
+                  const palette = getModulePalette(item.path)
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      onClick={closeMobileDrawers}
+                      onMouseEnter={() => prefetchRoute(item.path)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 border",
+                        isActive
+                          ? "shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]"
+                          : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 border-[#d4ddea] dark:border-slate-700 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]"
+                      )}
+                      style={
+                        isActive
+                          ? {
+                              color: palette.accentStrong,
+                              borderColor: palette.border,
+                              background: `linear-gradient(135deg, ${palette.soft} 0%, #f7fbff 100%)`,
+                            }
+                          : undefined
+                      }
+                    >
+                      <span
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border"
+                        style={{
+                          borderColor: isActive ? palette.border : '#d4ddea',
+                          backgroundColor: isActive ? palette.soft : '#edf2fa',
+                        }}
+                      >
+                        <item.icon size={16} weight="duotone" style={{ color: palette.accentStrong }} />
+                      </span>
+                      <span>{item.label}</span>
+                    </NavLink>
+                  )
+                })}
 
                 {/* More Menu Items */}
-                {filteredMoreMenuItems.map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    onMouseEnter={() => prefetchRoute(item.path)}
-                    className={({ isActive }) => cn(
-                      "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200",
-                      isActive
-                        ? "text-blue-600 dark:text-blue-400 bg-[#e4ebf5] dark:bg-slate-800 shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]"
-                        : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]"
-                    )}
-                  >
-                    <item.icon size={20} weight="duotone" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
+                {filteredMoreMenuItems.map((item) => {
+                  const isActive = isPathActive(item.path)
+                  const palette = getModulePalette(item.path)
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      onClick={closeMobileDrawers}
+                      onMouseEnter={() => prefetchRoute(item.path)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 border",
+                        isActive
+                          ? "shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]"
+                          : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 border-[#d4ddea] dark:border-slate-700 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]"
+                      )}
+                      style={
+                        isActive
+                          ? {
+                              color: palette.accentStrong,
+                              borderColor: palette.border,
+                              background: `linear-gradient(135deg, ${palette.soft} 0%, #f7fbff 100%)`,
+                            }
+                          : undefined
+                      }
+                    >
+                      <span
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border"
+                        style={{
+                          borderColor: isActive ? palette.border : '#d4ddea',
+                          backgroundColor: isActive ? palette.soft : '#edf2fa',
+                        }}
+                      >
+                        <item.icon size={16} weight="duotone" style={{ color: palette.accentStrong }} />
+                      </span>
+                      <span>{item.label}</span>
+                    </NavLink>
+                  )
+                })}
 
                 {/* Settings */}
                 {canAccessSettings && (
-                  <NavLink
-                    to={settingsItem.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    onMouseEnter={() => prefetchRoute(settingsItem.path)}
-                    className={({ isActive }) => cn(
-                      "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200",
-                      isActive
-                        ? "text-blue-600 dark:text-blue-400 bg-[#e4ebf5] dark:bg-slate-800 shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]"
-                        : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]"
-                    )}
-                  >
-                    <settingsItem.icon size={20} weight="duotone" />
-                    <span>{settingsItem.label}</span>
-                  </NavLink>
+                  (() => {
+                    const isActive = isPathActive(settingsItem.path)
+                    const palette = getModulePalette(settingsItem.path)
+                    return (
+                      <NavLink
+                        to={settingsItem.path}
+                        onClick={closeMobileDrawers}
+                        onMouseEnter={() => prefetchRoute(settingsItem.path)}
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 border",
+                          isActive
+                            ? "shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]"
+                            : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 border-[#d4ddea] dark:border-slate-700 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]"
+                        )}
+                        style={
+                          isActive
+                            ? {
+                                color: palette.accentStrong,
+                                borderColor: palette.border,
+                                background: `linear-gradient(135deg, ${palette.soft} 0%, #f7fbff 100%)`,
+                              }
+                            : undefined
+                        }
+                      >
+                        <span
+                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border"
+                          style={{
+                            borderColor: isActive ? palette.border : '#d4ddea',
+                            backgroundColor: isActive ? palette.soft : '#edf2fa',
+                          }}
+                        >
+                          <settingsItem.icon size={16} weight="duotone" style={{ color: palette.accentStrong }} />
+                        </span>
+                        <span>{settingsItem.label}</span>
+                      </NavLink>
+                    )
+                  })()
                 )}
               </nav>
 
               {/* Bottom Actions */}
               <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[#e4ebf5] dark:bg-slate-800
-                  shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-                  dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">Dark Mode</span>
+                <div className="flex items-center justify-between p-3 rounded-xl border border-slate-900 bg-black shadow-none">
+                  <span className="text-sm text-white">Dark Mode</span>
                   <button
                     onClick={toggleDarkMode}
-                    className="p-2.5 rounded-xl bg-[#e4ebf5] dark:bg-slate-700
-                      shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]
-                      dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]
-                      active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]
+                    className="p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white shadow-none
+                      active:brightness-110
                       transition-all duration-200"
                   >
-                    {isDarkMode ? <Sun size={18} className="text-amber-500" /> : <Moon size={18} className="text-slate-600" />}
+                    {isDarkMode ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-white" />}
                   </button>
                 </div>
                 <button
@@ -626,36 +759,62 @@ const Layout = () => {
                 </button>
               </div>
               <div className="px-3 py-3 max-h-[65vh] overflow-auto space-y-2">
-                {mobileOverflowItems.map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setIsMobileMoreOpen(false)}
-                    className={({ isActive }) => cn(
-                      'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-700/80'
-                    )}
-                  >
-                    <item.icon size={18} weight="bold" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
+                {mobileOverflowItems.map((item) => {
+                  const isActive = isPathActive(item.path)
+                  const palette = getModulePalette(item.path)
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      onClick={closeMobileDrawers}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors border',
+                        isActive
+                          ? 'text-white'
+                          : 'text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-700/80 border-slate-200 dark:border-slate-600'
+                      )}
+                      style={
+                        isActive
+                          ? {
+                              borderColor: palette.border,
+                              background: `linear-gradient(135deg, ${palette.accent} 0%, ${palette.accentStrong} 100%)`,
+                            }
+                          : undefined
+                      }
+                    >
+                      <item.icon size={18} weight="bold" />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  )
+                })}
                 {canAccessSettings && (
-                  <NavLink
-                    to={settingsItem.path}
-                    onClick={() => setIsMobileMoreOpen(false)}
-                    className={({ isActive }) => cn(
-                      'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-700/80'
-                    )}
-                  >
-                    <settingsItem.icon size={18} weight="bold" />
-                    <span>{settingsItem.label}</span>
-                  </NavLink>
+                  (() => {
+                    const isActive = isPathActive(settingsItem.path)
+                    const palette = getModulePalette(settingsItem.path)
+                    return (
+                      <NavLink
+                        to={settingsItem.path}
+                        onClick={closeMobileDrawers}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors border',
+                          isActive
+                            ? 'text-white'
+                            : 'text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-700/80 border-slate-200 dark:border-slate-600'
+                        )}
+                        style={
+                          isActive
+                            ? {
+                                borderColor: palette.border,
+                                background: `linear-gradient(135deg, ${palette.accent} 0%, ${palette.accentStrong} 100%)`,
+                              }
+                            : undefined
+                        }
+                      >
+                        <settingsItem.icon size={18} weight="bold" />
+                        <span>{settingsItem.label}</span>
+                      </NavLink>
+                    )
+                  })()
                 )}
               </div>
             </motion.div>
@@ -663,7 +822,7 @@ const Layout = () => {
         )}
       </AnimatePresence>
 
-      <main className="w-full px-3 py-2 pb-safe lg:pl-[112px]">
+      <main className="w-full px-3 py-2 pb-safe overflow-y-auto max-h-[calc(100svh-76px)] lg:pl-[112px] lg:max-h-none lg:overflow-visible">
         <Outlet />
       </main>
 
@@ -677,37 +836,43 @@ const Layout = () => {
             className={({ isActive }) => cn(
               "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
               isActive
-                ? "text-blue-600 dark:text-blue-400 shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]"
+                ? "shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]"
                 : "text-slate-500 dark:text-slate-400"
             )}
+            style={({ isActive }) => (isActive ? { color: getModulePalette('/').accentStrong } : undefined)}
           >
             <House size={22} weight="regular" />
             <span className="text-[10px] font-semibold">{t.nav.dashboard}</span>
           </NavLink>
 
-          {mobilePrimaryItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onMouseEnter={() => prefetchRoute(item.path)}
-              className={({ isActive }) => cn(
-                "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
-                isActive
-                  ? "text-blue-600 dark:text-blue-400 shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]"
-                  : "text-slate-500 dark:text-slate-400"
-              )}
-            >
-              <item.icon size={22} weight={"regular"} />
-              <span className="text-[10px] font-semibold">{item.label}</span>
-            </NavLink>
-          ))}
+          {mobilePrimaryItems.map((item) => {
+            const palette = getModulePalette(item.path)
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onMouseEnter={() => prefetchRoute(item.path)}
+                className={({ isActive }) => cn(
+                  "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
+                  isActive
+                    ? "shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]"
+                    : "text-slate-500 dark:text-slate-400"
+                )}
+                style={({ isActive }) => (isActive ? { color: palette.accentStrong } : undefined)}
+              >
+                <item.icon size={22} weight={"regular"} />
+                <span className="text-[10px] font-semibold">{item.label}</span>
+              </NavLink>
+            )
+          })}
           <button
             type="button"
             onClick={() => setIsMobileMoreOpen(true)}
             className={cn(
               "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
-              isMobileMoreOpen ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"
+              isMobileMoreOpen ? "" : "text-slate-500 dark:text-slate-400"
             )}
+            style={isMobileMoreOpen ? { color: activeModulePalette.accentStrong } : undefined}
           >
             <SquaresFour size={22} weight="regular" />
             <span className="text-[10px] font-semibold">More</span>

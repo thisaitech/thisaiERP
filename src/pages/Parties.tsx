@@ -22,6 +22,7 @@ import {
   Printer,
   Pencil,
   Trash,
+  X,
   Eye,
   FileText,
   ArrowsClockwise,
@@ -1040,38 +1041,88 @@ const Parties = () => {
             </div>
           </div>
 
-          {/* Controls Row (below KPI cards): + and date filters in one line */}
-          <div className="flex items-center gap-1 whitespace-nowrap pb-1">
-            {[
-              { value: 'today', label: t.common.today },
-              { value: 'week', label: t.common.week },
-              { value: 'month', label: t.common.month },
-              { value: 'year', label: t.common.year },
-              { value: 'all', label: t.common.all },
-              { value: 'custom', label: t.common.custom },
-            ].map((filter) => (
-              <button
-                key={filter.value}
-                onClick={() => {
-                  setStatsFilter(filter.value as any)
-                  if (filter.value === 'custom') {
-                    setShowCustomDatePicker(true)
-                  } else {
-                    setShowCustomDatePicker(false)
-                  }
-                }}
-                className={cn('erp-module-filter-chip !px-1.5 !py-1 !text-[10px] !leading-none shrink-0', statsFilter === filter.value && 'is-active')}
-              >
-                {filter.label}
-              </button>
-            ))}
-
+          {/* Controls Row (below KPI cards): + top-right and date filters in boxed row */}
+          <div className="flex flex-col items-end gap-2 w-full">
             <button
               onClick={() => setShowAddModal(true)}
               className="erp-module-primary-btn !w-12 !h-12 !p-0 !rounded-xl justify-center shrink-0"
             >
               <Plus size={18} weight="bold" />
             </button>
+
+            <div className="relative erp-module-filter-wrap w-full inventory-date-filter-wrap">
+              <div className="inventory-date-filter-row">
+                {[
+                  { value: 'today', label: t.common.today },
+                  { value: 'week', label: t.common.week },
+                  { value: 'month', label: t.common.month },
+                  { value: 'year', label: t.common.year },
+                  { value: 'all', label: t.common.all },
+                  { value: 'custom', label: t.common.custom },
+                ].map((filter) => (
+                  <button
+                    key={filter.value}
+                    onClick={() => {
+                      setStatsFilter(filter.value as any)
+                      if (filter.value === 'custom') {
+                        setShowCustomDatePicker(true)
+                      } else {
+                        setShowCustomDatePicker(false)
+                      }
+                    }}
+                    className={cn('erp-module-filter-chip inventory-date-filter-chip', statsFilter === filter.value && 'is-active')}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+
+              {showCustomDatePicker && (
+                <div className="mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 w-full">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Select Date Range</span>
+                    <button
+                      onClick={() => setShowCustomDatePicker(false)}
+                      className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                    >
+                      <X size={16} className="text-slate-500" />
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">From Date</label>
+                      <input
+                        type="date"
+                        value={customDateFrom}
+                        onChange={(e) => setCustomDateFrom(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">To Date</label>
+                      <input
+                        type="date"
+                        value={customDateTo}
+                        onChange={(e) => setCustomDateTo(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setShowCustomDatePicker(false)}
+                      disabled={!customDateFrom || !customDateTo}
+                      className={cn(
+                        "w-full py-2 rounded-lg text-sm font-semibold transition-all",
+                        customDateFrom && customDateTo
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                      )}
+                    >
+                      Apply Filter
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>
@@ -1096,9 +1147,9 @@ const Parties = () => {
       </motion.div>
 
       {/* Tab Filters */}
-      <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
+      <div className="grid grid-cols-3 gap-2 mb-3 md:flex md:items-center md:gap-2 md:overflow-x-auto md:pb-1">
         {[
-          { id: 'all', label: language === 'ta' ? 'à®…à®©à¯ˆà®¤à¯à®¤à¯ à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯' : 'All Students & Clients', count: parties.length },
+          { id: 'all', label: language === 'ta' ? 'à®…à®©à¯ˆà®¤à¯à®¤à¯ à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯' : 'All', count: parties.length },
           { id: 'customers', label: language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯à®•à®³à¯' : 'Students', count: parties.filter(p => p.type === 'customer').length },
           { id: 'suppliers', label: language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯à®•à®³à¯' : 'Clients', count: parties.filter(p => p.type === 'supplier').length }
         ].map(tab => (
@@ -1106,7 +1157,7 @@ const Parties = () => {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "erp-module-filter-chip",
+              "erp-module-filter-chip w-full md:w-auto justify-center text-center",
               activeTab === tab.id
                 ? "is-active"
                 : "border border-slate-200 dark:border-slate-600"
@@ -2362,5 +2413,6 @@ const Parties = () => {
 }
 
 export default Parties
+
 
 

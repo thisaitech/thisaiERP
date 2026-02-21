@@ -30,7 +30,7 @@ const MobileStatCards = ({ items, compact = true }: Props) => {
             {item.icon && <div className="mobile-stat-icon">{item.icon}</div>}
             <div className="mobile-stat-body">
               <p className="mobile-stat-title">{item.title}</p>
-              <p className="mobile-stat-value">{item.value}</p>
+              <p className={cn('mobile-stat-value', item.valueClassName)}>{item.value}</p>
               {item.subtitle && <p className="mobile-stat-subtitle">{item.subtitle}</p>}
             </div>
           </Wrapper>
@@ -41,4 +41,3 @@ const MobileStatCards = ({ items, compact = true }: Props) => {
 }
 
 export default MobileStatCards
-

@@ -104,7 +104,7 @@ const CRMPageInner: React.FC = () => {
     <div className="erp-module-page">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* KPI row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-5">
           <KPI
             title="Total Leads"
             value={metrics.totalLeads}
@@ -140,7 +140,7 @@ const CRMPageInner: React.FC = () => {
 
           <button
             onClick={handleCreateLead}
-            className="erp-module-primary-btn h-full justify-center text-base"
+            className="erp-module-primary-btn h-full justify-center text-base col-span-2 xl:col-span-1"
           >
             <Plus size={24} weight="bold" />
             New Lead

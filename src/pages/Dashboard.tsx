@@ -31,7 +31,6 @@ import {
   Fire,
   Clock,
   ArrowsClockwise,
-  Gear,
   Bank,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -743,14 +742,11 @@ const Dashboard = () => {
     return (
       <div className="p-4 pb-28 bg-[#e4ebf5] dark:bg-slate-900 min-h-screen">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{greeting}, {userData?.firstName || 'User'}!</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">Welcome back.</p>
           </div>
-          <button onClick={() => navigate('/settings')} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
-            <span>Settings</span>
-          </button>
         </div>
         {/* Period Filter - Neumorphic */}
         <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-2">
@@ -771,7 +767,7 @@ const Dashboard = () => {
         </div>
 
         <motion.div
-          className="grid grid-cols-2 gap-5"
+          className="grid grid-cols-3 gap-3"
           initial="hidden"
           animate="visible"
           variants={{
@@ -795,7 +791,7 @@ const Dashboard = () => {
               }}
               onClick={() => navigate(stat.route)}
               className={cn(
-                "relative p-5 rounded-3xl cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]",
+                "relative p-2.5 rounded-2xl cursor-pointer overflow-hidden text-center flex flex-col items-center justify-center gap-1.5 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]",
                 "border-2 border-white/20 backdrop-blur-sm",
                 "shadow-[8px_8px_24px_rgba(0,0,0,0.3)]",
                 "hover:shadow-[12px_12px_32px_rgba(0,0,0,0.4)]"
@@ -809,22 +805,15 @@ const Dashboard = () => {
                 })`
               }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-medium text-white/90">{stat.label}</p>
-                <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
-                  <stat.icon size={20} weight="bold" className="text-white" />
+              <div className="flex flex-col items-center justify-center gap-1">
+                <div className="w-6 h-6 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <stat.icon size={12} weight="bold" className="text-white" />
                 </div>
+                <p className="text-[11px] font-semibold leading-none text-white/95 text-center whitespace-nowrap">{stat.label}</p>
               </div>
-              <p className="text-3xl font-bold text-white mb-1">
+              <p className="text-xl font-bold text-white text-center leading-none">
                 {`\u20B9${formatExactAmount(stat.value)}`}
               </p>
-              {stat.growth !== null ? (
-                <p className="text-xs text-white/80">
-                  {stat.growth >= 0 ? `+${stat.growth.toFixed(1)}%` : `${stat.growth.toFixed(1)}%`} vs yesterday
-                </p>
-              ) : (
-                <p className="text-xs text-white/80">This period</p>
-              )}
             </motion.div>
           ))}
         </motion.div>

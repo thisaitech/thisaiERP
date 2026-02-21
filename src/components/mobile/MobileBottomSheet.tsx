@@ -14,6 +14,12 @@ type Props = {
   fullHeight?: boolean
 }
 
+const clearBodyScrollLock = (body: HTMLBodyElement) => {
+  body.style.overflow = body.dataset.mobileSheetOverflowPrev || ''
+  delete body.dataset.mobileSheetLockCount
+  delete body.dataset.mobileSheetOverflowPrev
+}
+
 const MobileBottomSheet = ({
   open,
   title,
@@ -24,6 +30,18 @@ const MobileBottomSheet = ({
   className,
   fullHeight = true,
 }: Props) => {
+  useEffect(() => {
+    if (open) return
+
+    const body = document.body
+    const hasVisibleSheet = document.querySelector('.mobile-sheet-root') !== null
+
+    // Recover from stale locks left behind by abrupt unmounts/hot reloads.
+    if (!hasVisibleSheet && (body.dataset.mobileSheetLockCount || body.style.overflow === 'hidden')) {
+      clearBodyScrollLock(body)
+    }
+  }, [open])
+
   useEffect(() => {
     if (!open) return
     const body = document.body
@@ -40,9 +58,7 @@ const MobileBottomSheet = ({
       const nextLockCount = Math.max(0, currentLockCount - 1)
 
       if (nextLockCount === 0) {
-        body.style.overflow = body.dataset.mobileSheetOverflowPrev || ''
-        delete body.dataset.mobileSheetLockCount
-        delete body.dataset.mobileSheetOverflowPrev
+        clearBodyScrollLock(body)
       } else {
         body.dataset.mobileSheetLockCount = String(nextLockCount)
       }
