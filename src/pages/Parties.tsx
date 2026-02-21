@@ -1041,14 +1041,7 @@ const Parties = () => {
           </div>
 
           {/* Controls Row (below KPI cards): + and date filters in one line */}
-          <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap pb-1">
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="erp-module-primary-btn !w-10 !h-10 !p-0 !rounded-lg justify-center shrink-0"
-            >
-              <Plus size={14} weight="bold" />
-            </button>
-
+          <div className="flex items-center gap-1 whitespace-nowrap pb-1">
             {[
               { value: 'today', label: t.common.today },
               { value: 'week', label: t.common.week },
@@ -1067,11 +1060,18 @@ const Parties = () => {
                     setShowCustomDatePicker(false)
                   }
                 }}
-                className={cn('erp-module-filter-chip !px-2 !py-1 !text-[11px] !leading-none shrink-0', statsFilter === filter.value && 'is-active')}
+                className={cn('erp-module-filter-chip !px-1.5 !py-1 !text-[10px] !leading-none shrink-0', statsFilter === filter.value && 'is-active')}
               >
                 {filter.label}
               </button>
             ))}
+
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="erp-module-primary-btn !w-12 !h-12 !p-0 !rounded-xl justify-center shrink-0"
+            >
+              <Plus size={18} weight="bold" />
+            </button>
           </div>
         </div>
       </motion.div>
