@@ -786,7 +786,7 @@ const Parties = () => {
         </div>
         <div class="balance ${outstanding > 0 ? 'positive' : outstanding < 0 ? 'negative' : 'zero'}">
           <h2>Balance Summary</h2>
-          <p style="font-size: 28px; font-weight: bold; margin: 10px 0;">₹${Math.abs(outstanding).toLocaleString('en-IN')}</p>
+          <p style="font-size: 28px; font-weight: bold; margin: 10px 0;">â‚¹${Math.abs(outstanding).toLocaleString('en-IN')}</p>
           <p>(${balanceLabel})</p>
         </div>
         <div class="footer">
@@ -830,9 +830,9 @@ const Parties = () => {
         <td>${entry.type === 'invoice' ? 'Invoice' : 'Payment'}</td>
         <td>${entry.referenceNumber}</td>
         <td>${entry.description || '-'}</td>
-        <td style="text-align: right">${entry.debit > 0 ? '₹' + entry.debit.toLocaleString('en-IN') : '-'}</td>
-        <td style="text-align: right">${entry.credit > 0 ? '₹' + entry.credit.toLocaleString('en-IN') : '-'}</td>
-        <td style="text-align: right; font-weight: bold">₹${entry.balance.toLocaleString('en-IN')}</td>
+        <td style="text-align: right">${entry.debit > 0 ? 'â‚¹' + entry.debit.toLocaleString('en-IN') : '-'}</td>
+        <td style="text-align: right">${entry.credit > 0 ? 'â‚¹' + entry.credit.toLocaleString('en-IN') : '-'}</td>
+        <td style="text-align: right; font-weight: bold">â‚¹${entry.balance.toLocaleString('en-IN')}</td>
       </tr>
     `).join('')
 
@@ -870,15 +870,15 @@ const Parties = () => {
         <div class="summary">
           <div class="summary-item">
             <label>Total Debit</label>
-            <value>₹${totalDebit.toLocaleString('en-IN')}</value>
+            <value>â‚¹${totalDebit.toLocaleString('en-IN')}</value>
           </div>
           <div class="summary-item">
             <label>Total Credit</label>
-            <value>₹${totalCredit.toLocaleString('en-IN')}</value>
+            <value>â‚¹${totalCredit.toLocaleString('en-IN')}</value>
           </div>
           <div class="summary-item">
             <label>Balance (${balanceLabel})</label>
-            <value style="color: ${outstanding > 0 ? '#16a34a' : outstanding < 0 ? '#dc2626' : '#374151'}">₹${Math.abs(outstanding).toLocaleString('en-IN')}</value>
+            <value style="color: ${outstanding > 0 ? '#16a34a' : outstanding < 0 ? '#dc2626' : '#374151'}">â‚¹${Math.abs(outstanding).toLocaleString('en-IN')}</value>
           </div>
         </div>
         <table>
@@ -899,9 +899,9 @@ const Parties = () => {
           <tfoot>
             <tr>
               <td colspan="4" style="text-align: right">Totals:</td>
-              <td style="text-align: right">₹${totalDebit.toLocaleString('en-IN')}</td>
-              <td style="text-align: right">₹${totalCredit.toLocaleString('en-IN')}</td>
-              <td style="text-align: right">₹${finalBalance.toLocaleString('en-IN')}</td>
+              <td style="text-align: right">â‚¹${totalDebit.toLocaleString('en-IN')}</td>
+              <td style="text-align: right">â‚¹${totalCredit.toLocaleString('en-IN')}</td>
+              <td style="text-align: right">â‚¹${finalBalance.toLocaleString('en-IN')}</td>
             </tr>
           </tfoot>
         </table>
@@ -961,7 +961,7 @@ const Parties = () => {
         className="mb-3"
       >
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
-        <div className="flex items-start justify-between gap-1.5 md:gap-4 mb-3">
+        <div className="flex flex-col gap-2 md:gap-3 mb-3">
           {/* Left Side: KPI Cards - Rectangular filling space */}
           <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-3">
             {/* Parties Card - Blue Theme */}
@@ -974,7 +974,7 @@ const Parties = () => {
                   <Users size={20} weight="duotone" className="text-blue-500" />
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'தரப்பினர்' : 'Students & Clients'}</span>
+                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯' : 'Students & Clients'}</span>
                   <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{partiesSummary.totalParties}</span>
                 </div>
               </button>
@@ -992,9 +992,9 @@ const Parties = () => {
                   </svg>
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'பெற வேண்டியது' : 'Total Due'}</span>
+                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®ªà¯†à®± à®µà¯‡à®£à¯à®Ÿà®¿à®¯à®¤à¯' : 'Total Due'}</span>
                   <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                    ₹{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
+                    â‚¹{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
                   </span>
                 </div>
               </button>
@@ -1012,9 +1012,9 @@ const Parties = () => {
                   </svg>
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'Advance/Credit'}</span>
+                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®šà¯†à®²à¯à®¤à¯à®¤ à®µà¯‡à®£à¯à®Ÿà®¿à®¯à®¤à¯' : 'Advance/Credit'}</span>
                   <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
-                    ₹{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
+                    â‚¹{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
                   </span>
                 </div>
               </button>
@@ -1031,55 +1031,47 @@ const Parties = () => {
                   </svg>
                 </div>
                 <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'நிகர இருப்பு' : 'Net Balance'}</span>
+                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®¨à®¿à®•à®° à®‡à®°à¯à®ªà¯à®ªà¯' : 'Net Balance'}</span>
                   <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
-                    ₹{Math.abs(partiesSummary.netBalance) >= 10000000 ? (partiesSummary.netBalance / 10000000).toFixed(1) + ' Cr' : Math.abs(partiesSummary.netBalance) >= 100000 ? (partiesSummary.netBalance / 100000).toFixed(1) + ' L' : Math.abs(partiesSummary.netBalance) >= 1000 ? (partiesSummary.netBalance / 1000).toFixed(1) + ' K' : partiesSummary.netBalance.toLocaleString('en-IN')}
+                    â‚¹{Math.abs(partiesSummary.netBalance) >= 10000000 ? (partiesSummary.netBalance / 10000000).toFixed(1) + ' Cr' : Math.abs(partiesSummary.netBalance) >= 100000 ? (partiesSummary.netBalance / 100000).toFixed(1) + ' L' : Math.abs(partiesSummary.netBalance) >= 1000 ? (partiesSummary.netBalance / 1000).toFixed(1) + ' K' : partiesSummary.netBalance.toLocaleString('en-IN')}
                   </span>
                 </div>
               </button>
             </div>
           </div>
 
-          {/* Right Side: Date Filters + Action Buttons */}
-          <div className="flex flex-col items-end gap-1 md:gap-2 flex-shrink-0 w-[94px] md:w-auto">
-            {/* Action Buttons Row */}
-            <div className="flex w-full md:w-auto items-center justify-end gap-2">
-              {/* Add Student/Client Button */}
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="erp-module-primary-btn !w-10 !h-10 !p-0 !rounded-lg justify-center sm:!w-11 sm:!h-11 md:!w-auto md:!h-auto md:!rounded-xl md:!px-4 md:!py-2.5"
-              >
-                <Plus size={14} weight="bold" />
-                <span className="hidden sm:inline">{language === 'ta' ? 'தரப்பினர் சேர்' : 'Add Student/Client'}</span>
-              </button>
-            </div>
+          {/* Controls Row (below KPI cards): + and date filters in one line */}
+          <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap pb-1">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="erp-module-primary-btn !w-10 !h-10 !p-0 !rounded-lg justify-center shrink-0"
+            >
+              <Plus size={14} weight="bold" />
+            </button>
 
-            {/* Date Filter Tabs */}
-            <div className="erp-module-filter-wrap ml-auto w-full md:w-fit max-w-full !p-1 !justify-end !grid !grid-cols-2 md:!flex !items-stretch md:!items-center gap-1">
-              {[
-                { value: 'today', label: t.common.today },
-                { value: 'week', label: t.common.week },
-                { value: 'month', label: t.common.month },
-                { value: 'year', label: t.common.year },
-                { value: 'all', label: t.common.all },
-                { value: 'custom', label: t.common.custom },
-              ].map((filter) => (
-                <button
-                  key={filter.value}
-                  onClick={() => {
-                    setStatsFilter(filter.value as any)
-                    if (filter.value === 'custom') {
-                      setShowCustomDatePicker(true)
-                    } else {
-                      setShowCustomDatePicker(false)
-                    }
-                  }}
-                  className={cn('erp-module-filter-chip !w-full md:!w-auto !min-w-0 !px-0.5 !py-1 !text-[9px] sm:!text-[10px] md:!text-sm !leading-none text-center', statsFilter === filter.value && 'is-active')}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
+            {[
+              { value: 'today', label: t.common.today },
+              { value: 'week', label: t.common.week },
+              { value: 'month', label: t.common.month },
+              { value: 'year', label: t.common.year },
+              { value: 'all', label: t.common.all },
+              { value: 'custom', label: t.common.custom },
+            ].map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => {
+                  setStatsFilter(filter.value as any)
+                  if (filter.value === 'custom') {
+                    setShowCustomDatePicker(true)
+                  } else {
+                    setShowCustomDatePicker(false)
+                  }
+                }}
+                className={cn('erp-module-filter-chip !px-2 !py-1 !text-[11px] !leading-none shrink-0', statsFilter === filter.value && 'is-active')}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
         </div>
       </motion.div>
@@ -1095,7 +1087,7 @@ const Parties = () => {
           <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder={language === 'ta' ? 'பெயர், தொலைபேசி அல்லது மின்னஞ்சலால் தேடு...' : 'Search by name, phone, or email...'}
+            placeholder={language === 'ta' ? 'à®ªà¯†à®¯à®°à¯, à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®…à®²à¯à®²à®¤à¯ à®®à®¿à®©à¯à®©à®žà¯à®šà®²à®¾à®²à¯ à®¤à¯‡à®Ÿà¯...' : 'Search by name, phone, or email...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="erp-module-search-input pl-9 pr-3"
@@ -1106,9 +1098,9 @@ const Parties = () => {
       {/* Tab Filters */}
       <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
         {[
-          { id: 'all', label: language === 'ta' ? 'அனைத்து தரப்பினர்' : 'All Students & Clients', count: parties.length },
-          { id: 'customers', label: language === 'ta' ? 'வாடிக்கையாளர்கள்' : 'Students', count: parties.filter(p => p.type === 'customer').length },
-          { id: 'suppliers', label: language === 'ta' ? 'சப்ளையர்கள்' : 'Clients', count: parties.filter(p => p.type === 'supplier').length }
+          { id: 'all', label: language === 'ta' ? 'à®…à®©à¯ˆà®¤à¯à®¤à¯ à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯' : 'All Students & Clients', count: parties.length },
+          { id: 'customers', label: language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯à®•à®³à¯' : 'Students', count: parties.filter(p => p.type === 'customer').length },
+          { id: 'suppliers', label: language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯à®•à®³à¯' : 'Clients', count: parties.filter(p => p.type === 'supplier').length }
         ].map(tab => (
           <button
             key={tab.id}
@@ -1145,7 +1137,7 @@ const Parties = () => {
         ) : filteredParties.length === 0 ? (
           <div className="text-center py-20">
             <Users size={48} weight="duotone" className="text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm">{language === 'ta' ? 'தரப்பினர் எதுவும் இல்லை' : 'No students or clients found'}</p>
+            <p className="text-slate-500 text-sm">{language === 'ta' ? 'à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯ à®Žà®¤à¯à®µà¯à®®à¯ à®‡à®²à¯à®²à¯ˆ' : 'No students or clients found'}</p>
           </div>
         ) : (
           filteredParties.map((party, index) => {
@@ -1161,7 +1153,7 @@ const Parties = () => {
               return outstanding > 0 ? 'green' : 'red'
             }
             const outstandingColor = getProperColor()
-            const outstandingFormatted = `₹${Math.abs(outstanding).toLocaleString('en-IN')}`
+            const outstandingFormatted = `â‚¹${Math.abs(outstanding).toLocaleString('en-IN')}`
 
             return (
               <motion.div
@@ -1200,7 +1192,7 @@ const Parties = () => {
                       "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium",
                       party.type === 'customer' ? "bg-blue-50 text-blue-700" : "bg-orange-50 text-orange-700"
                     )}>
-                      {party.type === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Student') : (language === 'ta' ? 'சப்ளையர்' : 'Client')}
+                      {party.type === 'customer' ? (language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'Student') : (language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯' : 'Client')}
                     </span>
                   </div>
 
@@ -1219,7 +1211,7 @@ const Parties = () => {
 
                   {/* Total Sales/Purchases */}
                   <div style={{ width: '12%' }} className="text-right text-xs text-slate-600">
-                    ₹{((party.type === 'customer' ? (party.totalSales || 0) : (party.totalPurchases || 0))).toLocaleString('en-IN')}
+                    â‚¹{((party.type === 'customer' ? (party.totalSales || 0) : (party.totalPurchases || 0))).toLocaleString('en-IN')}
                   </div>
 
                   {/* Status Badge */}
@@ -1322,10 +1314,10 @@ const Parties = () => {
                   )}>
                     <span className="text-xs text-slate-600">
                       {outstanding > 0
-                        ? (language === 'ta' ? 'பெற வேண்டியது' : 'Due')
+                        ? (language === 'ta' ? 'à®ªà¯†à®± à®µà¯‡à®£à¯à®Ÿà®¿à®¯à®¤à¯' : 'Due')
                         : outstanding < 0
-                          ? (language === 'ta' ? 'முன்பணம்' : 'Advance/Credit')
-                          : (language === 'ta' ? 'இருப்பு' : 'Balance')}
+                          ? (language === 'ta' ? 'à®®à¯à®©à¯à®ªà®£à®®à¯' : 'Advance/Credit')
+                          : (language === 'ta' ? 'à®‡à®°à¯à®ªà¯à®ªà¯' : 'Balance')}
                     </span>
                     <span className={cn(
                       "font-bold text-sm",
@@ -1434,12 +1426,12 @@ const Parties = () => {
               >
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">
-                  {isEditMode ? (language === 'ta' ? 'திருத்து' : 'Edit') : (language === 'ta' ? 'புதிதாக சேர்' : 'Add New')} {partyType === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Student') : (language === 'ta' ? 'சப்ளையர்' : 'Client')}
+                  {isEditMode ? (language === 'ta' ? 'à®¤à®¿à®°à¯à®¤à¯à®¤à¯' : 'Edit') : (language === 'ta' ? 'à®ªà¯à®¤à®¿à®¤à®¾à®• à®šà¯‡à®°à¯' : 'Add New')} {partyType === 'customer' ? (language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'Student') : (language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯' : 'Client')}
                 </h2>
 
                 {/* Record Type */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">{language === 'ta' ? 'தரப்பினர் வகை' : 'Record Type'}</label>
+                  <label className="text-sm font-medium mb-2 block">{language === 'ta' ? 'à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯ à®µà®•à¯ˆ' : 'Record Type'}</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -1452,7 +1444,7 @@ const Parties = () => {
                       )}
                     >
                       <UserCircle size={20} weight="duotone" className={partyType === 'customer' ? "text-success" : ""} />
-                      <span className="font-medium text-sm">{language === 'ta' ? 'வாடிக்கையாளர்' : 'Student'}</span>
+                      <span className="font-medium text-sm">{language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'Student'}</span>
                     </button>
                     <button
                       type="button"
@@ -1465,7 +1457,7 @@ const Parties = () => {
                       )}
                     >
                       <Storefront size={20} weight="duotone" className={partyType === 'supplier' ? "text-warning" : ""} />
-                      <span className="font-medium text-sm">{language === 'ta' ? 'சப்ளையர்' : 'Client'}</span>
+                      <span className="font-medium text-sm">{language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯' : 'Client'}</span>
                     </button>
                   </div>
                 </div>
@@ -1474,20 +1466,20 @@ const Parties = () => {
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">
-                      {partyType === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Student') : (language === 'ta' ? 'சப்ளையர்' : 'Client')} {language === 'ta' ? 'பெயர்' : 'Name'} <span className="text-destructive">*</span>
+                      {partyType === 'customer' ? (language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'Student') : (language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯' : 'Client')} {language === 'ta' ? 'à®ªà¯†à®¯à®°à¯' : 'Name'} <span className="text-destructive">*</span>
                     </label>
                     <input
                       type="text"
                       value={partyName}
                       onChange={(e) => setPartyName(validateCustomerName(e.target.value))}
-                      placeholder={language === 'ta' ? `${partyType === 'customer' ? 'வாடிக்கையாளர்' : 'சப்ளையர்'} பெயர் உள்ளிடவும்` : `Enter ${partyType === 'customer' ? 'student' : 'client'} name (letters only)`}
+                      placeholder={language === 'ta' ? `${partyType === 'customer' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯'} à®ªà¯†à®¯à®°à¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯` : `Enter ${partyType === 'customer' ? 'student' : 'client'} name (letters only)`}
                       className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                     />
                   </div>
 
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">
-                      {language === 'ta' ? 'தொலைபேசி எண்' : 'Phone Number'} <span className="text-destructive">*</span>
+                      {language === 'ta' ? 'à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®Žà®£à¯' : 'Phone Number'} <span className="text-destructive">*</span>
                     </label>
                     <div className="flex">
                       {/* Fixed 91 prefix */}
@@ -1502,20 +1494,20 @@ const Parties = () => {
                           const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
                           setPartyPhone(digits)
                         }}
-                        placeholder={language === 'ta' ? '10 இலக்க எண்' : '10 digit number'}
+                        placeholder={language === 'ta' ? '10 à®‡à®²à®•à¯à®• à®Žà®£à¯' : '10 digit number'}
                         maxLength={10}
                         className="flex-1 px-3 py-2.5 bg-background border border-border rounded-r-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                       />
                     </div>
                     {partyPhone && partyPhone.length > 0 && partyPhone.length < 10 && (
-                      <p className="text-xs text-destructive mt-1">{language === 'ta' ? 'தொலைபேசி எண் 10 இலக்கங்களாக இருக்க வேண்டும்' : `Phone number must be 10 digits (${partyPhone.length}/10)`}</p>
+                      <p className="text-xs text-destructive mt-1">{language === 'ta' ? 'à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®Žà®£à¯ 10 à®‡à®²à®•à¯à®•à®™à¯à®•à®³à®¾à®• à®‡à®°à¯à®•à¯à®• à®µà¯‡à®£à¯à®Ÿà¯à®®à¯' : `Phone number must be 10 digits (${partyPhone.length}/10)`}</p>
                     )}
                   </div>
                 </div>
 
                 {/* Optional Fields - Expandable */}
                 <div className="space-y-2 pt-2 border-t border-border">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{language === 'ta' ? 'விருப்ப தகவல்' : 'Optional Information'}</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{language === 'ta' ? 'à®µà®¿à®°à¯à®ªà¯à®ª à®¤à®•à®µà®²à¯' : 'Optional Information'}</p>
 
                   {/* Address */}
                   <div>
@@ -1525,7 +1517,7 @@ const Parties = () => {
                         className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                       >
                         <Plus size={14} weight="bold" />
-                        {language === 'ta' ? 'பில்லிங் முகவரி' : 'Address'}
+                        {language === 'ta' ? 'à®ªà®¿à®²à¯à®²à®¿à®™à¯ à®®à¯à®•à®µà®°à®¿' : 'Address'}
                       </button>
                     ) : (
                       <motion.div
@@ -1533,12 +1525,12 @@ const Parties = () => {
                         animate={{ opacity: 1, height: 'auto' }}
                         className="space-y-2"
                       >
-                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'பில்லிங் முகவரி' : 'Address'}</label>
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®ªà®¿à®²à¯à®²à®¿à®™à¯ à®®à¯à®•à®µà®°à®¿' : 'Address'}</label>
                         <textarea
                           rows={2}
                           value={partyAddress}
                           onChange={(e) => setPartyAddress(e.target.value)}
-                          placeholder={language === 'ta' ? 'பில்லிங் முகவரி உள்ளிடவும்' : 'Enter address'}
+                          placeholder={language === 'ta' ? 'à®ªà®¿à®²à¯à®²à®¿à®™à¯ à®®à¯à®•à®µà®°à®¿ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯' : 'Enter address'}
                           className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
                         ></textarea>
                       </motion.div>
@@ -1555,7 +1547,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'மாநிலம்' : 'State'}
+                            {language === 'ta' ? 'à®®à®¾à®¨à®¿à®²à®®à¯' : 'State'}
                           </button>
                         ) : (
                           <motion.div
@@ -1563,13 +1555,13 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'மாநிலம்' : 'State'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®®à®¾à®¨à®¿à®²à®®à¯' : 'State'}</label>
                             <select
                               value={partyState}
                               onChange={(e) => setPartyState(e.target.value)}
                               className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             >
-                              <option value="">{language === 'ta' ? 'மாநிலம் தேர்ந்தெடு' : 'Select State'}</option>
+                              <option value="">{language === 'ta' ? 'à®®à®¾à®¨à®¿à®²à®®à¯ à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯' : 'Select State'}</option>
                               {INDIAN_STATES.map((state) => (
                                 <option key={state} value={state}>
                                   {state}
@@ -1592,7 +1584,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'GST எண்' : 'Tax ID / GST'}
+                            {language === 'ta' ? 'GST à®Žà®£à¯' : 'Tax ID / GST'}
                           </button>
                         ) : (
                           <motion.div
@@ -1601,14 +1593,14 @@ const Parties = () => {
                             className="space-y-2"
                           >
                             <label className="text-sm font-medium mb-1.5 block">
-                              {language === 'ta' ? 'GST எண்' : 'Tax ID / GST'}
+                              {language === 'ta' ? 'GST à®Žà®£à¯' : 'Tax ID / GST'}
                               {partySettings.requireGSTIN && <span className="text-destructive ml-1">*</span>}
                             </label>
                             <input
                               type="text"
                               value={partyGst}
                               onChange={(e) => setPartyGst(e.target.value.toUpperCase())}
-                              placeholder={language === 'ta' ? 'GST எண் உள்ளிடவும் (எ.கா: 33AAAAA0000A1Z5)' : 'Enter GST / Tax ID (e.g., 33AAAAA0000A1Z5)'}
+                              placeholder={language === 'ta' ? 'GST à®Žà®£à¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯ (à®Ž.à®•à®¾: 33AAAAA0000A1Z5)' : 'Enter GST / Tax ID (e.g., 33AAAAA0000A1Z5)'}
                               maxLength={15}
                               className={cn(
                                 "w-full px-3 py-2 bg-background border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all",
@@ -1616,7 +1608,7 @@ const Parties = () => {
                               )}
                             />
                             {partySettings.requireGSTIN && !partyGst?.trim() && (
-                              <p className="text-xs text-destructive">{language === 'ta' ? 'GSTIN கட்டாயமாகும்' : 'GSTIN is required'}</p>
+                              <p className="text-xs text-destructive">{language === 'ta' ? 'GSTIN à®•à®Ÿà¯à®Ÿà®¾à®¯à®®à®¾à®•à¯à®®à¯' : 'GSTIN is required'}</p>
                             )}
                           </motion.div>
                         )}
@@ -1632,7 +1624,7 @@ const Parties = () => {
                         className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                       >
                         <Plus size={14} weight="bold" />
-                        {language === 'ta' ? 'மின்னஞ்சல் முகவரி' : 'Email Address'}
+                        {language === 'ta' ? 'à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯ à®®à¯à®•à®µà®°à®¿' : 'Email Address'}
                       </button>
                     ) : (
                       <motion.div
@@ -1640,12 +1632,12 @@ const Parties = () => {
                         animate={{ opacity: 1, height: 'auto' }}
                         className="space-y-2"
                       >
-                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'மின்னஞ்சல் முகவரி' : 'Email Address'}</label>
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯ à®®à¯à®•à®µà®°à®¿' : 'Email Address'}</label>
                         <input
                           type="email"
                           value={partyEmail}
                           onChange={(e) => setPartyEmail(e.target.value)}
-                          placeholder={language === 'ta' ? 'மின்னஞ்சல் முகவரி உள்ளிடவும்' : 'Enter email address'}
+                          placeholder={language === 'ta' ? 'à®®à®¿à®©à¯à®©à®žà¯à®šà®²à¯ à®®à¯à®•à®µà®°à®¿ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯' : 'Enter email address'}
                           className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                         />
                       </motion.div>
@@ -1662,7 +1654,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'பிறந்ததின் தேதி' : 'Date of Birth'}
+                            {language === 'ta' ? 'à®ªà®¿à®±à®¨à¯à®¤à®¤à®¿à®©à¯ à®¤à¯‡à®¤à®¿' : 'Date of Birth'}
                           </button>
                         ) : (
                           <motion.div
@@ -1670,7 +1662,7 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'பிறந்ததின் தேதி' : 'Date of Birth'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®ªà®¿à®±à®¨à¯à®¤à®¤à®¿à®©à¯ à®¤à¯‡à®¤à®¿' : 'Date of Birth'}</label>
                             <input
                               type="date"
                               value={studentDob}
@@ -1689,7 +1681,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'பால்' : 'Gender'}
+                            {language === 'ta' ? 'à®ªà®¾à®²à¯' : 'Gender'}
                           </button>
                         ) : (
                           <motion.div
@@ -1697,16 +1689,16 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'பால்' : 'Gender'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®ªà®¾à®²à¯' : 'Gender'}</label>
                             <select
                               value={studentGender}
                               onChange={(e) => setStudentGender(e.target.value)}
                               className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             >
-                              <option value="">{language === 'ta' ? 'தேர்ந்தெடு' : 'Select Gender'}</option>
-                              <option value="male">{language === 'ta' ? 'ஆண்' : 'Male'}</option>
-                              <option value="female">{language === 'ta' ? 'பெண்' : 'Female'}</option>
-                              <option value="other">{language === 'ta' ? 'மற்றவர்' : 'Other'}</option>
+                              <option value="">{language === 'ta' ? 'à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯' : 'Select Gender'}</option>
+                              <option value="male">{language === 'ta' ? 'à®†à®£à¯' : 'Male'}</option>
+                              <option value="female">{language === 'ta' ? 'à®ªà¯†à®£à¯' : 'Female'}</option>
+                              <option value="other">{language === 'ta' ? 'à®®à®±à¯à®±à®µà®°à¯' : 'Other'}</option>
                             </select>
                           </motion.div>
                         )}
@@ -1720,7 +1712,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'அடையாள ஆவணங்கள்' : 'ID Proof'}
+                            {language === 'ta' ? 'à®…à®Ÿà¯ˆà®¯à®¾à®³ à®†à®µà®£à®™à¯à®•à®³à¯' : 'ID Proof'}
                           </button>
                         ) : (
                           <motion.div
@@ -1728,13 +1720,13 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'அடையாள ஆவணங்கள்' : 'ID Proof'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®…à®Ÿà¯ˆà®¯à®¾à®³ à®†à®µà®£à®™à¯à®•à®³à¯' : 'ID Proof'}</label>
                             <select
                               value={studentIdProofType}
                               onChange={(e) => setStudentIdProofType(e.target.value)}
                               className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             >
-                              <option value="">{language === 'ta' ? 'தேர்ந்தெடு' : 'Select ID Proof'}</option>
+                              <option value="">{language === 'ta' ? 'à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯' : 'Select ID Proof'}</option>
                               <option value="Aadhaar">Aadhaar</option>
                               <option value="PAN">PAN</option>
                               <option value="Driving License">Driving License</option>
@@ -1746,7 +1738,7 @@ const Parties = () => {
                               type="text"
                               value={studentIdProofNumber}
                               onChange={(e) => setStudentIdProofNumber(e.target.value)}
-                              placeholder={language === 'ta' ? 'அடையாள எண்' : 'Enter ID number'}
+                              placeholder={language === 'ta' ? 'à®…à®Ÿà¯ˆà®¯à®¾à®³ à®Žà®£à¯' : 'Enter ID number'}
                               className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             />
                           </motion.div>
@@ -1761,7 +1753,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'ஆபத்து தொடர்பு' : 'Emergency Contact'}
+                            {language === 'ta' ? 'à®†à®ªà®¤à¯à®¤à¯ à®¤à¯Šà®Ÿà®°à¯à®ªà¯' : 'Emergency Contact'}
                           </button>
                         ) : (
                           <motion.div
@@ -1769,12 +1761,12 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'ஆபத்து தொடர்பு' : 'Emergency Contact'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®†à®ªà®¤à¯à®¤à¯ à®¤à¯Šà®Ÿà®°à¯à®ªà¯' : 'Emergency Contact'}</label>
                             <input
                               type="text"
                               value={studentEmergencyName}
                               onChange={(e) => setStudentEmergencyName(e.target.value)}
-                              placeholder={language === 'ta' ? 'பெயர்' : 'Contact name'}
+                              placeholder={language === 'ta' ? 'à®ªà¯†à®¯à®°à¯' : 'Contact name'}
                               className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             />
                             <input
@@ -1784,7 +1776,7 @@ const Parties = () => {
                                 const digits = e.target.value.replace(/\\D/g, '').slice(0, 10)
                                 setStudentEmergencyPhone(digits)
                               }}
-                              placeholder={language === 'ta' ? 'தொலைபேசி எண்' : 'Phone number'}
+                              placeholder={language === 'ta' ? 'à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®Žà®£à¯' : 'Phone number'}
                               maxLength={10}
                               className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             />
@@ -1800,7 +1792,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'சேர்க்கை தேதி' : 'Admission Date'}
+                            {language === 'ta' ? 'à®šà¯‡à®°à¯à®•à¯à®•à¯ˆ à®¤à¯‡à®¤à®¿' : 'Admission Date'}
                           </button>
                         ) : (
                           <motion.div
@@ -1808,7 +1800,7 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'சேர்க்கை தேதி' : 'Admission Date'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®šà¯‡à®°à¯à®•à¯à®•à¯ˆ à®¤à¯‡à®¤à®¿' : 'Admission Date'}</label>
                             <input
                               type="date"
                               value={studentAdmissionDate}
@@ -1827,7 +1819,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'கவன்' : 'Focus'}
+                            {language === 'ta' ? 'à®•à®µà®©à¯' : 'Focus'}
                           </button>
                         ) : (
                           <motion.div
@@ -1835,16 +1827,16 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'கவன்' : 'Focus'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®•à®µà®©à¯' : 'Focus'}</label>
                             <select
                               value={studentFocus}
                               onChange={(e) => setStudentFocus(e.target.value)}
                               className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             >
-                              <option value="">{language === 'ta' ? 'தேர்ந்தெடு' : 'Select focus'}</option>
-                              <option value="Career">{language === 'ta' ? 'கரியர்' : 'Career'}</option>
-                              <option value="Education">{language === 'ta' ? 'கல்வி' : 'Education'}</option>
-                              <option value="Other">{language === 'ta' ? 'மற்றவர்' : 'Other'}</option>
+                              <option value="">{language === 'ta' ? 'à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯' : 'Select focus'}</option>
+                              <option value="Career">{language === 'ta' ? 'à®•à®°à®¿à®¯à®°à¯' : 'Career'}</option>
+                              <option value="Education">{language === 'ta' ? 'à®•à®²à¯à®µà®¿' : 'Education'}</option>
+                              <option value="Other">{language === 'ta' ? 'à®®à®±à¯à®±à®µà®°à¯' : 'Other'}</option>
                             </select>
                           </motion.div>
                         )}
@@ -1858,7 +1850,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'எங்களை குறித்து எப்படி தெரிந்தது?' : 'How did you hear about us?'}
+                            {language === 'ta' ? 'à®Žà®™à¯à®•à®³à¯ˆ à®•à¯à®±à®¿à®¤à¯à®¤à¯ à®Žà®ªà¯à®ªà®Ÿà®¿ à®¤à¯†à®°à®¿à®¨à¯à®¤à®¤à¯?' : 'How did you hear about us?'}
                           </button>
                         ) : (
                           <motion.div
@@ -1866,13 +1858,13 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'எங்களை குறித்து எப்படி தெரிந்தது?' : 'How did you hear about us?'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®Žà®™à¯à®•à®³à¯ˆ à®•à¯à®±à®¿à®¤à¯à®¤à¯ à®Žà®ªà¯à®ªà®Ÿà®¿ à®¤à¯†à®°à®¿à®¨à¯à®¤à®¤à¯?' : 'How did you hear about us?'}</label>
                             <select
                               value={studentSource}
                               onChange={(e) => setStudentSource(e.target.value)}
                               className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             >
-                              <option value="">{language === 'ta' ? 'தேர்ந்தெடு' : 'Select source'}</option>
+                              <option value="">{language === 'ta' ? 'à®¤à¯‡à®°à¯à®¨à¯à®¤à¯†à®Ÿà¯' : 'Select source'}</option>
                               <option value="Google">Google</option>
                               <option value="Instagram">Instagram</option>
                               <option value="Friend">Friend</option>
@@ -1884,7 +1876,7 @@ const Parties = () => {
                                 type="text"
                                 value={studentSourceOther}
                                 onChange={(e) => setStudentSourceOther(e.target.value)}
-                                placeholder={language === 'ta' ? 'பெர் உள்ளிடவும்' : 'Enter source'}
+                                placeholder={language === 'ta' ? 'à®ªà¯†à®°à¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯' : 'Enter source'}
                                 className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                               />
                             )}
@@ -1904,7 +1896,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'வாடிக்கையாளர் வகை' : 'Category'}
+                            {language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®µà®•à¯ˆ' : 'Category'}
                           </button>
                         ) : (
                           <motion.div
@@ -1912,7 +1904,7 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'வாடிக்கையாளர் வகை' : 'Category'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯ à®µà®•à¯ˆ' : 'Category'}</label>
                             <select
                               value={partyCustomerType}
                               onChange={(e) => setPartyCustomerType(e.target.value)}
@@ -1936,7 +1928,7 @@ const Parties = () => {
                           className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                         >
                           <Plus size={14} weight="bold" />
-                          {language === 'ta' ? 'கடன் வரம்பு' : 'Credit Limit'}
+                          {language === 'ta' ? 'à®•à®Ÿà®©à¯ à®µà®°à®®à¯à®ªà¯' : 'Credit Limit'}
                         </button>
                       ) : (
                         <motion.div
@@ -1944,10 +1936,10 @@ const Parties = () => {
                           animate={{ opacity: 1, height: 'auto' }}
                           className="space-y-2"
                         >
-                          <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'கடன் வரம்பு' : 'Credit Limit'}</label>
+                          <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®•à®Ÿà®©à¯ à®µà®°à®®à¯à®ªà¯' : 'Credit Limit'}</label>
                           <div className="flex">
                             <span className="inline-flex items-center px-3 py-2 bg-muted border border-r-0 border-border rounded-l-lg text-sm font-medium text-muted-foreground">
-                              ₹
+                              â‚¹
                             </span>
                             <input
                               type="number"
@@ -1955,12 +1947,12 @@ const Parties = () => {
                               step="1000"
                               value={partyCreditLimit}
                               onChange={(e) => setPartyCreditLimit(Number(e.target.value) || 0)}
-                              placeholder={language === 'ta' ? 'கடன் வரம்பு உள்ளிடவும்' : 'Enter credit limit'}
+                              placeholder={language === 'ta' ? 'à®•à®Ÿà®©à¯ à®µà®°à®®à¯à®ªà¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯' : 'Enter credit limit'}
                               className="flex-1 px-3 py-2 bg-background border border-border rounded-r-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             />
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {language === 'ta' ? 'இந்த வரம்புக்கு மேல் கடன் விற்பனை அனுமதிக்கப்படாது' : 'Credit sales above this limit will be restricted'}
+                            {language === 'ta' ? 'à®‡à®¨à¯à®¤ à®µà®°à®®à¯à®ªà¯à®•à¯à®•à¯ à®®à¯‡à®²à¯ à®•à®Ÿà®©à¯ à®µà®¿à®±à¯à®ªà®©à¯ˆ à®…à®©à¯à®®à®¤à®¿à®•à¯à®•à®ªà¯à®ªà®Ÿà®¾à®¤à¯' : 'Credit sales above this limit will be restricted'}
                           </p>
                         </motion.div>
                       )}
@@ -1976,18 +1968,18 @@ const Parties = () => {
                           animate={{ opacity: 1, height: 'auto' }}
                           className="space-y-2"
                         >
-                          <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'கடன் காலம் (நாட்கள்)' : 'Payment Due (Days)'}</label>
+                          <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®•à®Ÿà®©à¯ à®•à®¾à®²à®®à¯ (à®¨à®¾à®Ÿà¯à®•à®³à¯)' : 'Payment Due (Days)'}</label>
                           <input
                             type="number"
                             min="0"
                             max="365"
                             value={partyCreditDays}
                             onChange={(e) => setPartyCreditDays(Number(e.target.value) || 0)}
-                            placeholder={language === 'ta' ? 'கடன் காலம் நாட்கள்' : 'Payment due in days'}
+                            placeholder={language === 'ta' ? 'à®•à®Ÿà®©à¯ à®•à®¾à®²à®®à¯ à®¨à®¾à®Ÿà¯à®•à®³à¯' : 'Payment due in days'}
                             className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                           />
                           <p className="text-xs text-muted-foreground">
-                            {language === 'ta' ? `அடிப்படை: ${partySettings.defaultCreditPeriod} நாட்கள்` : `Default: ${partySettings.defaultCreditPeriod} days`}
+                            {language === 'ta' ? `à®…à®Ÿà®¿à®ªà¯à®ªà®Ÿà¯ˆ: ${partySettings.defaultCreditPeriod} à®¨à®¾à®Ÿà¯à®•à®³à¯` : `Default: ${partySettings.defaultCreditPeriod} days`}
                           </p>
                         </motion.div>
                       </div>
@@ -2004,7 +1996,7 @@ const Parties = () => {
                             className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                           >
                             <Plus size={14} weight="bold" />
-                            {language === 'ta' ? 'ஆரம்ப இருப்பு' : 'Opening Balance'}
+                            {language === 'ta' ? 'à®†à®°à®®à¯à®ª à®‡à®°à¯à®ªà¯à®ªà¯' : 'Opening Balance'}
                           </button>
                         ) : (
                           <motion.div
@@ -2012,17 +2004,17 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'ஆரம்ப இருப்பு (₹)' : 'Opening Balance (₹)'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®†à®°à®®à¯à®ª à®‡à®°à¯à®ªà¯à®ªà¯ (â‚¹)' : 'Opening Balance (â‚¹)'}</label>
                             <input
                               type="number"
                               step="0.01"
                               value={partyOpeningBalance}
                               onChange={(e) => setPartyOpeningBalance(e.target.value)}
-                              placeholder={language === 'ta' ? 'ஆரம்ப இருப்பு உள்ளிடவும் (எ.கா., 5000)' : 'Enter opening balance (e.g., 5000)'}
+                              placeholder={language === 'ta' ? 'à®†à®°à®®à¯à®ª à®‡à®°à¯à®ªà¯à®ªà¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯ (à®Ž.à®•à®¾., 5000)' : 'Enter opening balance (e.g., 5000)'}
                               className="w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             />
                             <p className="text-xs text-muted-foreground">
-                              {language === 'ta' ? 'நேர் = அவர்கள் கடன்பட்டுள்ளனர், எதிர் = நீங்கள் கடன்பட்டுள்ளீர்கள்' : 'Positive = They owe you, Negative = You owe them'}
+                              {language === 'ta' ? 'à®¨à¯‡à®°à¯ = à®…à®µà®°à¯à®•à®³à¯ à®•à®Ÿà®©à¯à®ªà®Ÿà¯à®Ÿà¯à®³à¯à®³à®©à®°à¯, à®Žà®¤à®¿à®°à¯ = à®¨à¯€à®™à¯à®•à®³à¯ à®•à®Ÿà®©à¯à®ªà®Ÿà¯à®Ÿà¯à®³à¯à®³à¯€à®°à¯à®•à®³à¯' : 'Positive = They owe you, Negative = You owe them'}
                             </p>
                           </motion.div>
                         )}
@@ -2038,7 +2030,7 @@ const Parties = () => {
                         className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                       >
                         <Plus size={14} weight="bold" />
-                        {language === 'ta' ? 'வாகன எண்' : partyType === 'customer' ? 'Course / Batch' : 'Project / Engagement'}
+                        {language === 'ta' ? 'à®µà®¾à®•à®© à®Žà®£à¯' : partyType === 'customer' ? 'Course / Batch' : 'Project / Engagement'}
                       </button>
                     ) : (
                       <motion.div
@@ -2046,12 +2038,12 @@ const Parties = () => {
                         animate={{ opacity: 1, height: 'auto' }}
                         className="space-y-2"
                       >
-                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'வாகன எண்' : partyType === 'customer' ? 'Course / Batch' : 'Project / Engagement'}</label>
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®µà®¾à®•à®© à®Žà®£à¯' : partyType === 'customer' ? 'Course / Batch' : 'Project / Engagement'}</label>
                         <input
                           type="text"
                           value={partyVehicleNo}
                           onChange={(e) => setPartyVehicleNo(e.target.value)}
-                          placeholder={language === 'ta' ? 'வாகன எண் உள்ளிடவும் (எ.கா., TN01AB1234)' : partyType === 'customer' ? 'Enter course or batch' : 'Enter project or engagement'}
+                          placeholder={language === 'ta' ? 'à®µà®¾à®•à®© à®Žà®£à¯ à®‰à®³à¯à®³à®¿à®Ÿà®µà¯à®®à¯ (à®Ž.à®•à®¾., TN01AB1234)' : partyType === 'customer' ? 'Enter course or batch' : 'Enter project or engagement'}
                           className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                         />
                       </motion.div>
@@ -2066,7 +2058,7 @@ const Parties = () => {
                         className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                       >
                         <Plus size={14} weight="bold" />
-                        {language === 'ta' ? 'குறிப்புகள்' : 'Notes'}
+                        {language === 'ta' ? 'à®•à¯à®±à®¿à®ªà¯à®ªà¯à®•à®³à¯' : 'Notes'}
                       </button>
                     ) : (
                       <motion.div
@@ -2074,12 +2066,12 @@ const Parties = () => {
                         animate={{ opacity: 1, height: 'auto' }}
                         className="space-y-2"
                       >
-                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'குறிப்புகள்' : 'Notes'}</label>
+                        <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®•à¯à®±à®¿à®ªà¯à®ªà¯à®•à®³à¯' : 'Notes'}</label>
                         <textarea
                           rows={2}
                           value={partyNotes}
                           onChange={(e) => setPartyNotes(e.target.value)}
-                          placeholder={language === 'ta' ? 'கூடுதல் குறிப்புகளைச் சேர்க்கவும்' : 'Add any additional notes'}
+                          placeholder={language === 'ta' ? 'à®•à¯‚à®Ÿà¯à®¤à®²à¯ à®•à¯à®±à®¿à®ªà¯à®ªà¯à®•à®³à¯ˆà®šà¯ à®šà¯‡à®°à¯à®•à¯à®•à®µà¯à®®à¯' : 'Add any additional notes'}
                           className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
                         ></textarea>
                       </motion.div>
@@ -2106,10 +2098,10 @@ const Parties = () => {
                     {isLoadingParties ? (
                       <>
                         <ArrowsClockwise size={18} weight="duotone" className="animate-spin" />
-                        {language === 'ta' ? 'சேமிக்கிறது...' : 'Saving...'}
+                        {language === 'ta' ? 'à®šà¯‡à®®à®¿à®•à¯à®•à®¿à®±à®¤à¯...' : 'Saving...'}
                       </>
                     ) : (
-                      `${isEditMode ? (language === 'ta' ? 'புதுப்பி' : 'Update') : (language === 'ta' ? 'சேர்' : 'Add')} ${partyType === 'customer' ? (language === 'ta' ? 'வாடிக்கையாளர்' : 'Student') : (language === 'ta' ? 'சப்ளையர்' : 'Client')}`
+                      `${isEditMode ? (language === 'ta' ? 'à®ªà¯à®¤à¯à®ªà¯à®ªà®¿' : 'Update') : (language === 'ta' ? 'à®šà¯‡à®°à¯' : 'Add')} ${partyType === 'customer' ? (language === 'ta' ? 'à®µà®¾à®Ÿà®¿à®•à¯à®•à¯ˆà®¯à®¾à®³à®°à¯' : 'Student') : (language === 'ta' ? 'à®šà®ªà¯à®³à¯ˆà®¯à®°à¯' : 'Client')}`
                     )}
                   </button>
                 </div>
@@ -2131,7 +2123,7 @@ const Parties = () => {
             <div className="p-3 sm:p-6 border-b border-border sticky top-0 bg-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold">{selectedParty.name} - {language === 'ta' ? 'லெட்ஜர்' : 'Ledger'}</h2>
+                  <h2 className="text-lg sm:text-xl font-bold">{selectedParty.name} - {language === 'ta' ? 'à®²à¯†à®Ÿà¯à®œà®°à¯' : 'Ledger'}</h2>
                   <p className={cn(
                     "text-xs sm:text-sm mt-1 font-medium",
                     selectedParty.currentBalance > 0 ? "text-emerald-600" : selectedParty.currentBalance < 0 ? "text-red-600" : "text-gray-500"
@@ -2206,16 +2198,16 @@ const Parties = () => {
                           <td className="px-4 py-3 text-sm font-medium">{entry.referenceNumber}</td>
                           <td className="px-4 py-3 text-sm text-muted-foreground">{entry.description}</td>
                           <td className="px-4 py-3 text-sm text-right font-medium">
-                            {entry.debit > 0 ? `₹${entry.debit.toLocaleString('en-IN')}` : '-'}
+                            {entry.debit > 0 ? `â‚¹${entry.debit.toLocaleString('en-IN')}` : '-'}
                           </td>
                           <td className="px-4 py-3 text-sm text-right font-medium text-success">
-                            {entry.credit > 0 ? `₹${entry.credit.toLocaleString('en-IN')}` : '-'}
+                            {entry.credit > 0 ? `â‚¹${entry.credit.toLocaleString('en-IN')}` : '-'}
                           </td>
                           <td className={cn(
                             "px-4 py-3 text-sm text-right font-semibold",
                             entry.balance > 0 ? "text-primary" : entry.balance < 0 ? "text-destructive" : ""
                           )}>
-                            ₹{entry.balance.toLocaleString('en-IN')}
+                            â‚¹{entry.balance.toLocaleString('en-IN')}
                           </td>
                         </motion.tr>
                       ))
@@ -2226,17 +2218,17 @@ const Parties = () => {
                       <tr>
                         <td colSpan={4} className="px-4 py-3 text-right">Final Balance:</td>
                         <td className="px-4 py-3 text-right">
-                          ₹{ledgerEntries.reduce((sum, e) => sum + e.debit, 0).toLocaleString('en-IN')}
+                          â‚¹{ledgerEntries.reduce((sum, e) => sum + e.debit, 0).toLocaleString('en-IN')}
                         </td>
                         <td className="px-4 py-3 text-right text-success">
-                          ₹{ledgerEntries.reduce((sum, e) => sum + e.credit, 0).toLocaleString('en-IN')}
+                          â‚¹{ledgerEntries.reduce((sum, e) => sum + e.credit, 0).toLocaleString('en-IN')}
                         </td>
                         <td className={cn(
                           "px-4 py-3 text-right",
                           ledgerEntries[ledgerEntries.length - 1]?.balance > 0 ? "text-primary" :
                           ledgerEntries[ledgerEntries.length - 1]?.balance < 0 ? "text-destructive" : ""
                         )}>
-                          ₹{(ledgerEntries[ledgerEntries.length - 1]?.balance || 0).toLocaleString('en-IN')}
+                          â‚¹{(ledgerEntries[ledgerEntries.length - 1]?.balance || 0).toLocaleString('en-IN')}
                         </td>
                       </tr>
                     </tfoot>
@@ -2274,9 +2266,9 @@ const Parties = () => {
                     <Trash size={24} weight="duotone" className="text-destructive" />
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-xl font-bold text-destructive">{language === 'ta' ? 'தரப்பினர் நீக்கு' : 'Delete Record'}</h2>
+                    <h2 className="text-xl font-bold text-destructive">{language === 'ta' ? 'à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯ à®¨à¯€à®•à¯à®•à¯' : 'Delete Record'}</h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {language === 'ta' ? 'இந்த செயலை செயல்தவிர்க்க முடியாது' : 'This action cannot be undone'}
+                      {language === 'ta' ? 'à®‡à®¨à¯à®¤ à®šà¯†à®¯à®²à¯ˆ à®šà¯†à®¯à®²à¯à®¤à®µà®¿à®°à¯à®•à¯à®• à®®à¯à®Ÿà®¿à®¯à®¾à®¤à¯' : 'This action cannot be undone'}
                     </p>
                   </div>
                 </div>
@@ -2285,14 +2277,14 @@ const Parties = () => {
               {/* Body */}
               <div className="p-6">
                 <p className="text-sm text-muted-foreground mb-4">
-                  {language === 'ta' ? 'இந்த தரப்பினரை நிச்சயமாக நீக்க விரும்புகிறீர்களா?' : 'Are you sure you want to delete this record?'}
+                  {language === 'ta' ? 'à®‡à®¨à¯à®¤ à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯ˆ à®¨à®¿à®šà¯à®šà®¯à®®à®¾à®• à®¨à¯€à®•à¯à®• à®µà®¿à®°à¯à®®à¯à®ªà¯à®•à®¿à®±à¯€à®°à¯à®•à®³à®¾?' : 'Are you sure you want to delete this record?'}
                 </p>
                 <div className="bg-muted/50 rounded-lg p-4 border border-border">
                   <p className="font-semibold text-foreground">
                     {getPartyName(partyToDelete)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {partyToDelete.phone} • {partyToDelete.email}
+                    {partyToDelete.phone} â€¢ {partyToDelete.email}
                   </p>
                   {(() => {
                     // Use outstanding field (from getPartiesWithOutstanding) or currentBalance as fallback
@@ -2324,7 +2316,7 @@ const Parties = () => {
                   return (
                     <div className="mt-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
                       <p className="text-xs text-destructive">
-                        {language === 'ta' ? '⚠️ எச்சரிக்கை: இந்த தரப்பினருக்கு நிலுவை இருப்பு உள்ளது. நீக்குவது அனைத்து பரிவர்த்தனை வரலாற்றையும் அகற்றும்.' : '⚠️ Warning: This record has a balance. Deleting will remove all transaction history.'}
+                        {language === 'ta' ? 'âš ï¸ à®Žà®šà¯à®šà®°à®¿à®•à¯à®•à¯ˆ: à®‡à®¨à¯à®¤ à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯à®•à¯à®•à¯ à®¨à®¿à®²à¯à®µà¯ˆ à®‡à®°à¯à®ªà¯à®ªà¯ à®‰à®³à¯à®³à®¤à¯. à®¨à¯€à®•à¯à®•à¯à®µà®¤à¯ à®…à®©à¯ˆà®¤à¯à®¤à¯ à®ªà®°à®¿à®µà®°à¯à®¤à¯à®¤à®©à¯ˆ à®µà®°à®²à®¾à®±à¯à®±à¯ˆà®¯à¯à®®à¯ à®…à®•à®±à¯à®±à¯à®®à¯.' : 'âš ï¸ Warning: This record has a balance. Deleting will remove all transaction history.'}
                       </p>
                     </div>
                   )
@@ -2351,12 +2343,12 @@ const Parties = () => {
                   {isLoadingParties ? (
                     <>
                       <ArrowsClockwise size={18} weight="duotone" className="animate-spin" />
-                      {language === 'ta' ? 'நீக்குகிறது...' : 'Deleting...'}
+                      {language === 'ta' ? 'à®¨à¯€à®•à¯à®•à¯à®•à®¿à®±à®¤à¯...' : 'Deleting...'}
                     </>
                   ) : (
                     <>
                       <Trash size={18} weight="duotone" />
-                      {language === 'ta' ? 'தரப்பினர் நீக்கு' : 'Delete Record'}
+                      {language === 'ta' ? 'à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯ à®¨à¯€à®•à¯à®•à¯' : 'Delete Record'}
                     </>
                   )}
                 </button>
