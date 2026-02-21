@@ -26,10 +26,26 @@ const MobileBottomSheet = ({
 }: Props) => {
   useEffect(() => {
     if (!open) return
-    const oldOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const body = document.body
+    const lockCount = Number(body.dataset.mobileSheetLockCount || '0')
+
+    if (lockCount === 0) {
+      body.dataset.mobileSheetOverflowPrev = body.style.overflow || ''
+      body.style.overflow = 'hidden'
+    }
+    body.dataset.mobileSheetLockCount = String(lockCount + 1)
+
     return () => {
-      document.body.style.overflow = oldOverflow
+      const currentLockCount = Number(body.dataset.mobileSheetLockCount || '0')
+      const nextLockCount = Math.max(0, currentLockCount - 1)
+
+      if (nextLockCount === 0) {
+        body.style.overflow = body.dataset.mobileSheetOverflowPrev || ''
+        delete body.dataset.mobileSheetLockCount
+        delete body.dataset.mobileSheetOverflowPrev
+      } else {
+        body.dataset.mobileSheetLockCount = String(nextLockCount)
+      }
     }
   }, [open])
 
@@ -56,4 +72,3 @@ const MobileBottomSheet = ({
 }
 
 export default MobileBottomSheet
-

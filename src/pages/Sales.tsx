@@ -30,10 +30,10 @@ type AdmissionItem = {
 
 const newLine = (): AdmissionItem => ({
   id: `line_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-  itemId: '',
+  itemId: 'address',
   itemName: '',
   quantity: 1,
-  unit: 'Course',
+  unit: 'Address',
   rate: 0,
   amount: 0,
 })
@@ -152,7 +152,7 @@ const Sales: React.FC = () => {
   }
 
   const recalcLine = (line: AdmissionItem): AdmissionItem => {
-    const qty = Number(line.quantity) || 0
+    const qty = 1
     const rate = Number(line.rate) || 0
     return { ...line, quantity: qty, rate, amount: qty * rate }
   }
@@ -216,23 +216,6 @@ const Sales: React.FC = () => {
     setShowForm(true)
   }
 
-  const handlePickCourse = (lineId: string, courseId: string) => {
-    const c = courses.find((x) => x.id === courseId)
-    setItems((prev) =>
-      prev.map((l) => {
-        if (l.id !== lineId) return l
-        const next = {
-          ...l,
-          itemId: c?.id || '',
-          itemName: c?.name || '',
-          unit: (c as any)?.unit || 'Course',
-          rate: Number(c?.sellingPrice ?? l.rate) || 0,
-        }
-        return recalcLine(next)
-      })
-    )
-  }
-
   const handleSave = async () => {
     if (isViewMode) {
       setShowForm(false)
@@ -286,8 +269,11 @@ const Sales: React.FC = () => {
       }
     }
 
-    const cleanItems = items.map(recalcLine).filter((l) => l.itemId && l.quantity > 0)
-    if (cleanItems.length === 0) return toast.error('Please add at least 1 course')
+    const cleanItems = items
+      .map(recalcLine)
+      .filter((l) => l.itemName.trim().length > 0 && l.quantity > 0)
+      .map((l) => ({ ...l, itemId: l.itemId || 'address', unit: l.unit || 'Address' }))
+    if (cleanItems.length === 0) return toast.error('Please enter address')
 
     setSaving(true)
     try {
@@ -498,32 +484,28 @@ const Sales: React.FC = () => {
         </div>
       </MobileFormSection>
 
-      <MobileFormSection title="Courses" subtitle="Add at least one course line">
+      <MobileFormSection title="Address" subtitle="Enter your address">
         <div className="space-y-3">
-          {items.map((line) => (
+          {items.slice(0, 1).map((line) => (
             <div key={line.id} className={cn('grid gap-3 items-end', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12')}>
-              <div className={mobile ? '' : 'md:col-span-6'}>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Course</label>
-                <select value={line.itemId} onChange={(e) => handlePickCourse(line.id, e.target.value)} disabled={isViewMode} className={inputClass(mobile)}>
-                  <option value="">Select course...</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={mobile ? '' : 'md:col-span-2'}>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Qty</label>
+              <div className={mobile ? '' : 'md:col-span-8'}>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Address</label>
                 <input
-                  type="number"
-                  value={line.quantity}
-                  onChange={(e) => setItems((prev) => prev.map((l) => (l.id === line.id ? recalcLine({ ...l, quantity: Number(e.target.value) }) : l)))}
+                  type="text"
+                  value={line.itemName}
+                  onChange={(e) =>
+                    setItems((prev) =>
+                      prev.map((l) =>
+                        l.id === line.id ? recalcLine({ ...l, itemId: 'address', itemName: e.target.value, unit: 'Address' }) : l
+                      )
+                    )
+                  }
+                  placeholder="Enter your address"
                   disabled={isViewMode}
                   className={inputClass(mobile)}
                 />
               </div>
-              <div className={mobile ? '' : 'md:col-span-3'}>
+              <div className={mobile ? '' : 'md:col-span-4'}>
                 <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Fee</label>
                 <input
                   type="number"
@@ -533,22 +515,8 @@ const Sales: React.FC = () => {
                   className={inputClass(mobile)}
                 />
               </div>
-              {!isViewMode && (
-                <div className={mobile ? '' : 'md:col-span-1 flex justify-end'}>
-                  <button type="button" onClick={() => setItems((prev) => prev.filter((l) => l.id !== line.id))} className="mobile-secondary-btn text-red-600" title="Remove">
-                    <Trash size={16} />
-                    Remove
-                  </button>
-                </div>
-              )}
             </div>
           ))}
-
-          {!isViewMode && (
-            <button type="button" onClick={() => setItems((prev) => [...prev, newLine()])} className="mobile-secondary-btn">
-              + Add Course
-            </button>
-          )}
 
           <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-700 pt-2">
             <div className="text-sm text-slate-600 dark:text-slate-300">Total</div>

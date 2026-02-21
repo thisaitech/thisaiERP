@@ -786,7 +786,7 @@ const Parties = () => {
         </div>
         <div class="balance ${outstanding > 0 ? 'positive' : outstanding < 0 ? 'negative' : 'zero'}">
           <h2>Balance Summary</h2>
-          <p style="font-size: 28px; font-weight: bold; margin: 10px 0;">\u20B9${Math.abs(outstanding).toLocaleString('en-IN')}</p>
+          <p style="font-size: 28px; font-weight: bold; margin: 10px 0;">Rs ${Math.abs(outstanding).toLocaleString('en-IN')}</p>
           <p>(${balanceLabel})</p>
         </div>
         <div class="footer">
@@ -830,9 +830,9 @@ const Parties = () => {
         <td>${entry.type === 'invoice' ? 'Invoice' : 'Payment'}</td>
         <td>${entry.referenceNumber}</td>
         <td>${entry.description || '-'}</td>
-        <td style="text-align: right">${entry.debit > 0 ? '\u20B9' + entry.debit.toLocaleString('en-IN') : '-'}</td>
-        <td style="text-align: right">${entry.credit > 0 ? '\u20B9' + entry.credit.toLocaleString('en-IN') : '-'}</td>
-        <td style="text-align: right; font-weight: bold">\u20B9${entry.balance.toLocaleString('en-IN')}</td>
+        <td style="text-align: right">${entry.debit > 0 ? 'Rs ' + entry.debit.toLocaleString('en-IN') : '-'}</td>
+        <td style="text-align: right">${entry.credit > 0 ? 'Rs ' + entry.credit.toLocaleString('en-IN') : '-'}</td>
+        <td style="text-align: right; font-weight: bold">Rs ${entry.balance.toLocaleString('en-IN')}</td>
       </tr>
     `).join('')
 
@@ -870,15 +870,15 @@ const Parties = () => {
         <div class="summary">
           <div class="summary-item">
             <label>Total Debit</label>
-            <value>\u20B9${totalDebit.toLocaleString('en-IN')}</value>
+            <value>Rs ${totalDebit.toLocaleString('en-IN')}</value>
           </div>
           <div class="summary-item">
             <label>Total Credit</label>
-            <value>\u20B9${totalCredit.toLocaleString('en-IN')}</value>
+            <value>Rs ${totalCredit.toLocaleString('en-IN')}</value>
           </div>
           <div class="summary-item">
             <label>Balance (${balanceLabel})</label>
-            <value style="color: ${outstanding > 0 ? '#16a34a' : outstanding < 0 ? '#dc2626' : '#374151'}">\u20B9${Math.abs(outstanding).toLocaleString('en-IN')}</value>
+            <value style="color: ${outstanding > 0 ? '#16a34a' : outstanding < 0 ? '#dc2626' : '#374151'}">Rs ${Math.abs(outstanding).toLocaleString('en-IN')}</value>
           </div>
         </div>
         <table>
@@ -899,9 +899,9 @@ const Parties = () => {
           <tfoot>
             <tr>
               <td colspan="4" style="text-align: right">Totals:</td>
-              <td style="text-align: right">\u20B9${totalDebit.toLocaleString('en-IN')}</td>
-              <td style="text-align: right">\u20B9${totalCredit.toLocaleString('en-IN')}</td>
-              <td style="text-align: right">\u20B9${finalBalance.toLocaleString('en-IN')}</td>
+              <td style="text-align: right">Rs ${totalDebit.toLocaleString('en-IN')}</td>
+              <td style="text-align: right">Rs ${totalCredit.toLocaleString('en-IN')}</td>
+              <td style="text-align: right">Rs ${finalBalance.toLocaleString('en-IN')}</td>
             </tr>
           </tfoot>
         </table>
@@ -994,7 +994,7 @@ const Parties = () => {
                 <div className="flex flex-col items-center md:items-start flex-1">
                   <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®ªà¯†à®± à®µà¯‡à®£à¯à®Ÿà®¿à®¯à®¤à¯' : 'Total Due'}</span>
                   <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                    {"\u20B9"}{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
+                    {"Rs "}{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
                   </span>
                 </div>
               </button>
@@ -1014,7 +1014,7 @@ const Parties = () => {
                 <div className="flex flex-col items-center md:items-start flex-1">
                   <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®šà¯†à®²à¯à®¤à¯à®¤ à®µà¯‡à®£à¯à®Ÿà®¿à®¯à®¤à¯' : 'Advance/Credit'}</span>
                   <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
-                    {"\u20B9"}{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
+                    {"Rs "}{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
                   </span>
                 </div>
               </button>
@@ -1033,7 +1033,7 @@ const Parties = () => {
                 <div className="flex flex-col items-center md:items-start flex-1">
                   <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®¨à®¿à®•à®° à®‡à®°à¯à®ªà¯à®ªà¯' : 'Net Balance'}</span>
                   <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
-                    {"\u20B9"}{Math.abs(partiesSummary.netBalance) >= 10000000 ? (partiesSummary.netBalance / 10000000).toFixed(1) + ' Cr' : Math.abs(partiesSummary.netBalance) >= 100000 ? (partiesSummary.netBalance / 100000).toFixed(1) + ' L' : Math.abs(partiesSummary.netBalance) >= 1000 ? (partiesSummary.netBalance / 1000).toFixed(1) + ' K' : partiesSummary.netBalance.toLocaleString('en-IN')}
+                    {"Rs "}{Math.abs(partiesSummary.netBalance) >= 10000000 ? (partiesSummary.netBalance / 10000000).toFixed(1) + ' Cr' : Math.abs(partiesSummary.netBalance) >= 100000 ? (partiesSummary.netBalance / 100000).toFixed(1) + ' L' : Math.abs(partiesSummary.netBalance) >= 1000 ? (partiesSummary.netBalance / 1000).toFixed(1) + ' K' : partiesSummary.netBalance.toLocaleString('en-IN')}
                   </span>
                 </div>
               </button>
@@ -1153,7 +1153,7 @@ const Parties = () => {
               return outstanding > 0 ? 'green' : 'red'
             }
             const outstandingColor = getProperColor()
-            const outstandingFormatted = `\u20B9${Math.abs(outstanding).toLocaleString('en-IN')}`
+            const outstandingFormatted = `Rs ${Math.abs(outstanding).toLocaleString('en-IN')}`
 
             return (
               <motion.div
@@ -1211,7 +1211,7 @@ const Parties = () => {
 
                   {/* Total Sales/Purchases */}
                   <div style={{ width: '12%' }} className="text-right text-xs text-slate-600">
-                    {"\u20B9"}{((party.type === 'customer' ? (party.totalSales || 0) : (party.totalPurchases || 0))).toLocaleString('en-IN')}
+                    {"Rs "}{((party.type === 'customer' ? (party.totalSales || 0) : (party.totalPurchases || 0))).toLocaleString('en-IN')}
                   </div>
 
                   {/* Status Badge */}
@@ -1939,7 +1939,7 @@ const Parties = () => {
                           <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®•à®Ÿà®©à¯ à®µà®°à®®à¯à®ªà¯' : 'Credit Limit'}</label>
                           <div className="flex">
                             <span className="inline-flex items-center px-3 py-2 bg-muted border border-r-0 border-border rounded-l-lg text-sm font-medium text-muted-foreground">
-                              {"\u20B9"}
+                              {"Rs "}
                             </span>
                             <input
                               type="number"
@@ -2004,7 +2004,7 @@ const Parties = () => {
                             animate={{ opacity: 1, height: 'auto' }}
                             className="space-y-2"
                           >
-                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®†à®°à®®à¯à®ª à®‡à®°à¯à®ªà¯à®ªà¯ (\u20B9)' : 'Opening Balance (\u20B9)'}</label>
+                            <label className="text-sm font-medium mb-1.5 block">{language === 'ta' ? 'à®†à®°à®®à¯à®ª à®‡à®°à¯à®ªà¯à®ªà¯ (Rs )' : 'Opening Balance (Rs )'}</label>
                             <input
                               type="number"
                               step="0.01"
@@ -2198,16 +2198,16 @@ const Parties = () => {
                           <td className="px-4 py-3 text-sm font-medium">{entry.referenceNumber}</td>
                           <td className="px-4 py-3 text-sm text-muted-foreground">{entry.description}</td>
                           <td className="px-4 py-3 text-sm text-right font-medium">
-                            {entry.debit > 0 ? `\u20B9${entry.debit.toLocaleString('en-IN')}` : '-'}
+                            {entry.debit > 0 ? `Rs ${entry.debit.toLocaleString('en-IN')}` : '-'}
                           </td>
                           <td className="px-4 py-3 text-sm text-right font-medium text-success">
-                            {entry.credit > 0 ? `\u20B9${entry.credit.toLocaleString('en-IN')}` : '-'}
+                            {entry.credit > 0 ? `Rs ${entry.credit.toLocaleString('en-IN')}` : '-'}
                           </td>
                           <td className={cn(
                             "px-4 py-3 text-sm text-right font-semibold",
                             entry.balance > 0 ? "text-primary" : entry.balance < 0 ? "text-destructive" : ""
                           )}>
-                            {"\u20B9"}{entry.balance.toLocaleString('en-IN')}
+                            {"Rs "}{entry.balance.toLocaleString('en-IN')}
                           </td>
                         </motion.tr>
                       ))
@@ -2218,17 +2218,17 @@ const Parties = () => {
                       <tr>
                         <td colSpan={4} className="px-4 py-3 text-right">Final Balance:</td>
                         <td className="px-4 py-3 text-right">
-                          {"\u20B9"}{ledgerEntries.reduce((sum, e) => sum + e.debit, 0).toLocaleString('en-IN')}
+                          {"Rs "}{ledgerEntries.reduce((sum, e) => sum + e.debit, 0).toLocaleString('en-IN')}
                         </td>
                         <td className="px-4 py-3 text-right text-success">
-                          {"\u20B9"}{ledgerEntries.reduce((sum, e) => sum + e.credit, 0).toLocaleString('en-IN')}
+                          {"Rs "}{ledgerEntries.reduce((sum, e) => sum + e.credit, 0).toLocaleString('en-IN')}
                         </td>
                         <td className={cn(
                           "px-4 py-3 text-right",
                           ledgerEntries[ledgerEntries.length - 1]?.balance > 0 ? "text-primary" :
                           ledgerEntries[ledgerEntries.length - 1]?.balance < 0 ? "text-destructive" : ""
                         )}>
-                          {"\u20B9"}{(ledgerEntries[ledgerEntries.length - 1]?.balance || 0).toLocaleString('en-IN')}
+                          {"Rs "}{(ledgerEntries[ledgerEntries.length - 1]?.balance || 0).toLocaleString('en-IN')}
                         </td>
                       </tr>
                     </tfoot>

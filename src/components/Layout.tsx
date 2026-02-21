@@ -663,7 +663,7 @@ const Layout = () => {
         )}
       </AnimatePresence>
 
-      <main className="w-full px-3 py-2 lg:pl-[112px]">
+      <main className="w-full px-3 py-2 pb-safe lg:pl-[112px]">
         <Outlet />
       </main>
 
