@@ -1,7 +1,7 @@
 {
   "projects": {
-    "default": "thisai-crm-silver",
-    "billing": "thisai-crm-silver"
+    "default": "loan-app-pro-f2e92",
+    "billing": "loan-app-pro-f2e92"
   },
   "targets": {},
   "etags": {}

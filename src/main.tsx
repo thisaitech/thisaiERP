@@ -5,13 +5,14 @@ import './main.css'
 import './styles/tokens.css'
 import './styles/mobile.css'
 import { initializeTheme } from './services/themeService'
+import './services/firebase'
 
 // If a PWA service worker was previously registered on this origin, it can keep serving
 // stale cached assets even during local development. Ensure dev always uses the latest
 // bundle from Vite.
 const appEnv = (import.meta as any).env || {}
 
-if (appEnv.DEV && 'serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(async (registrations) => {
     if (registrations.length === 0) return
 
@@ -25,12 +26,12 @@ if (appEnv.DEV && 'serviceWorker' in navigator) {
       }
 
       // Avoid infinite reload loops.
-      if (!sessionStorage.getItem('dev-sw-cleaned')) {
-        sessionStorage.setItem('dev-sw-cleaned', '1')
+      if (!sessionStorage.getItem('sw-cleaned')) {
+        sessionStorage.setItem('sw-cleaned', '1')
         window.location.reload()
       }
     } catch {
-      // Non-fatal; dev still works without unregistering.
+      // Non-fatal; the app still works without unregistering.
     }
   })
 }
