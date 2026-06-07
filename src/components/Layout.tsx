@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   House, Receipt, Users, Package, ChartLine, List, X,
-  Moon, Sun, Wallet, Bank, Gear, FileText, SignOut,
-  Buildings, SquaresFour
+  Moon, Sun, Wallet, Bank, FileText, SignOut,
+  Buildings, SquaresFour, UserList
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -17,6 +17,7 @@ import { getInvoices } from '../services/invoiceService'
 import { getExpenses } from '../services/expenseService'
 import { getQuotations } from '../services/quotationService'
 import { getLeads } from '../services/leadService'
+import { getVisitors } from '../services/visitorService'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -30,6 +31,7 @@ const routePrefetchers: Record<string, () => Promise<unknown>> = {
   '/quotations': () => import('../pages/Quotations'),
   '/banking': () => import('../pages/Banking'),
   '/crm': () => import('../pages/CRM'),
+  '/visitors': () => import('../pages/Visitors'),
   '/settings': () => import('../pages/Settings'),
   '/reports': () => import('../pages/ReportsNew'),
   '/company-info': () => import('../pages/CompanyInfo'),
@@ -63,6 +65,7 @@ const MODULE_PALETTES: Array<{ path: string; palette: ModulePalette }> = [
   { path: '/quotations', palette: { accent: '#8b5cf6', accentStrong: '#7c3aed', soft: '#ede9fe', pageBg: '#eeeafd', panelBg: '#f5f3ff', border: '#c4b5fd' } },
   { path: '/crm', palette: { accent: '#10b981', accentStrong: '#059669', soft: '#dcfce7', pageBg: '#e9f8ef', panelBg: '#f0fdf4', border: '#86efac' } },
   { path: '/banking', palette: { accent: '#f43f5e', accentStrong: '#e11d48', soft: '#ffe4e6', pageBg: '#fcecee', panelBg: '#fff1f2', border: '#fda4af' } },
+  { path: '/visitors', palette: { accent: '#14b8a6', accentStrong: '#0d9488', soft: '#ccfbf1', pageBg: '#e6faf6', panelBg: '#f0fdfa', border: '#5eead4' } },
   { path: '/settings', palette: { accent: '#64748b', accentStrong: '#475569', soft: '#e2e8f0', pageBg: '#edf2f7', panelBg: '#f8fafc', border: '#cbd5e1' } },
   { path: '/company-info', palette: { accent: '#64748b', accentStrong: '#475569', soft: '#e2e8f0', pageBg: '#edf2f7', panelBg: '#f8fafc', border: '#cbd5e1' } },
   { path: '/', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
@@ -169,7 +172,7 @@ const Layout = () => {
       if (cancelled) return
 
       // Prefetch common modules to make first navigation feel instant.
-      ;['/sales', '/inventory', '/parties', '/expenses', '/quotations', '/banking', '/crm'].forEach(prefetchRoute)
+      ;['/sales', '/inventory', '/parties', '/expenses', '/quotations', '/banking', '/crm', '/visitors'].forEach(prefetchRoute)
 
       // Warm API caches so modules render without extra spinners.
       Promise.allSettled([
@@ -179,6 +182,7 @@ const Layout = () => {
         getExpenses(),
         getQuotations(),
         getLeads(),
+        getVisitors(),
       ]).catch(() => {
         // ignore
       })
@@ -237,8 +241,8 @@ const Layout = () => {
     { path: '/banking', label: t.nav.banking, icon: Bank, allowedRoles: ['admin', 'manager'], pageKey: 'banking' },
   ]
 
-  // Settings item (shown separately)
-  const settingsItem = { path: '/settings', label: t.nav.settings, icon: Gear, allowedRoles: ['admin'], pageKey: 'settings' as keyof PagePermissions }
+  // Visitor item (shown separately, replaces Settings in nav)
+  const visitorItem = { path: '/visitors', label: t.nav.visitors, icon: UserList, pageKey: 'visitors' as keyof PagePermissions }
 
   const canAccessNavItem = (item: { pageKey?: keyof PagePermissions; allowedRoles?: string[] }) => {
     if (!item.pageKey && !item.allowedRoles) return true
@@ -250,14 +254,14 @@ const Layout = () => {
 
   const navigationItems = allNavigationItems.filter(canAccessNavItem)
   const filteredMoreMenuItems = moreMenuItems.filter(canAccessNavItem)
-  const canAccessSettings = userData?.role === 'admin' || (userData?.uid && userData?.role && settingsItem.pageKey && canAccessPage(userData.uid, userData.role, settingsItem.pageKey))
+  const canAccessVisitors = userData?.uid && userData?.role && canAccessPage(userData.uid, userData.role, visitorItem.pageKey)
   const mobilePrimaryItems = navigationItems.slice(0, 3)
   const mobileOverflowItems = [...navigationItems.slice(3), ...filteredMoreMenuItems]
   const mobileRouteLabels = [
     { path: '/', label: t.nav.dashboard },
     ...navigationItems.map((item) => ({ path: item.path, label: item.label })),
     ...filteredMoreMenuItems.map((item) => ({ path: item.path, label: item.label })),
-    ...(canAccessSettings ? [{ path: settingsItem.path, label: settingsItem.label }] : []),
+    ...(canAccessVisitors ? [{ path: visitorItem.path, label: visitorItem.label }] : []),
   ]
   const currentPageTitle =
     mobileRouteLabels.find((item) => location.pathname === item.path)?.label ||
@@ -295,7 +299,7 @@ const Layout = () => {
     { id: 'quote', path: '/quotations', label: 'QUOTE', gradient: 'from-indigo-500 to-violet-600', pageKey: 'quotations' },
     { id: 'crm', path: '/crm', label: 'CRM', gradient: 'from-emerald-500 to-green-600', pageKey: 'crm', allowedRoles: ['admin', 'manager', 'sales'] },
     { id: 'bank', path: '/banking', label: 'BANK', gradient: 'from-pink-500 to-rose-600', pageKey: 'banking', allowedRoles: ['admin', 'manager'] },
-    { id: 'setup', path: '/settings', label: 'SETUP', gradient: 'from-slate-500 to-slate-700', pageKey: 'settings', allowedRoles: ['admin'] },
+    { id: 'visitor', path: '/visitors', label: 'VISITOR', gradient: 'from-teal-500 to-cyan-600', pageKey: 'visitors' },
   ]
   const filteredDesktopRailItems = desktopRailItems.filter(canAccessNavItem)
   const topNavGradientByPath = desktopRailItems.reduce((acc, item) => {
@@ -380,21 +384,21 @@ const Layout = () => {
                   </NavLink>
                 ))}
 
-                {/* Settings (matches left SETUP button) */}
-                {canAccessSettings && (
+                {/* Visitor (replaces Settings in nav) */}
+                {canAccessVisitors && (
                   <NavLink
-                    key="__settings"
-                    to={settingsItem.path}
-                    onMouseEnter={() => prefetchRoute(settingsItem.path)}
+                    key="__visitors"
+                    to={visitorItem.path}
+                    onMouseEnter={() => prefetchRoute(visitorItem.path)}
                     className={({ isActive }) => cn(
                       "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
-                        ? getTopNavActiveClass(settingsItem.path)
+                        ? getTopNavActiveClass(visitorItem.path)
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
                     )}
                   >
-                    <settingsItem.icon size={16} weight="bold" />
-                    <span>{settingsItem.label}</span>
+                    <visitorItem.icon size={16} weight="bold" />
+                    <span>{visitorItem.label}</span>
                   </NavLink>
                 )}
 
@@ -480,7 +484,7 @@ const Layout = () => {
         <button
           type="button"
           onClick={() => {
-            if (canAccessSettings) navigate('/settings')
+            if (canAccessVisitors) navigate('/visitors')
           }}
           className="mb-2 w-[66px] h-[66px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-800 flex items-center justify-center
             shadow-[5px_5px_10px_#c5ccd6,-5px_-5px_10px_#ffffff] dark:shadow-[5px_5px_10px_#1e293b,-5px_-5px_10px_#334155]
@@ -511,18 +515,18 @@ const Layout = () => {
           <h1 className="text-base font-bold text-slate-800 dark:text-white truncate max-w-[210px] text-center">
             {currentPageTitle}
           </h1>
-          {location.pathname === '/' && canAccessSettings ? (
+          {location.pathname === '/' && canAccessVisitors ? (
             <button
-              onClick={() => navigate('/settings')}
-              onMouseEnter={() => prefetchRoute('/settings')}
+              onClick={() => navigate('/visitors')}
+              onMouseEnter={() => prefetchRoute('/visitors')}
               className="p-2 rounded-lg bg-[#e4ebf5] dark:bg-slate-700
                 shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]
                 dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]
                 active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]
                 transition-all duration-200"
-              aria-label="Settings"
+              aria-label="Visitors"
             >
-              <Gear size={20} className="text-slate-600 dark:text-slate-300" />
+              <UserList size={20} className="text-slate-600 dark:text-slate-300" />
             </button>
           ) : (
             <div className="w-10 h-10" aria-hidden="true" />
@@ -654,16 +658,16 @@ const Layout = () => {
                   )
                 })}
 
-                {/* Settings */}
-                {canAccessSettings && (
+                {/* Visitors */}
+                {canAccessVisitors && (
                   (() => {
-                    const isActive = isPathActive(settingsItem.path)
-                    const palette = getModulePalette(settingsItem.path)
+                    const isActive = isPathActive(visitorItem.path)
+                    const palette = getModulePalette(visitorItem.path)
                     return (
                       <NavLink
-                        to={settingsItem.path}
+                        to={visitorItem.path}
                         onClick={closeMobileDrawers}
-                        onMouseEnter={() => prefetchRoute(settingsItem.path)}
+                        onMouseEnter={() => prefetchRoute(visitorItem.path)}
                         className={cn(
                           "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 border",
                           isActive
@@ -687,9 +691,9 @@ const Layout = () => {
                             backgroundColor: isActive ? palette.soft : '#edf2fa',
                           }}
                         >
-                          <settingsItem.icon size={16} weight="duotone" style={{ color: palette.accentStrong }} />
+                          <visitorItem.icon size={16} weight="duotone" style={{ color: palette.accentStrong }} />
                         </span>
-                        <span>{settingsItem.label}</span>
+                        <span>{visitorItem.label}</span>
                       </NavLink>
                     )
                   })()
@@ -787,13 +791,13 @@ const Layout = () => {
                     </NavLink>
                   )
                 })}
-                {canAccessSettings && (
+                {canAccessVisitors && (
                   (() => {
-                    const isActive = isPathActive(settingsItem.path)
-                    const palette = getModulePalette(settingsItem.path)
+                    const isActive = isPathActive(visitorItem.path)
+                    const palette = getModulePalette(visitorItem.path)
                     return (
                       <NavLink
-                        to={settingsItem.path}
+                        to={visitorItem.path}
                         onClick={closeMobileDrawers}
                         className={cn(
                           'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors border',
@@ -810,8 +814,8 @@ const Layout = () => {
                             : undefined
                         }
                       >
-                        <settingsItem.icon size={18} weight="bold" />
-                        <span>{settingsItem.label}</span>
+                        <visitorItem.icon size={18} weight="bold" />
+                        <span>{visitorItem.label}</span>
                       </NavLink>
                     )
                   })()

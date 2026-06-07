@@ -11,6 +11,7 @@ export interface PagePermissions {
   reports: boolean
   banking: boolean
   crm: boolean
+  visitors: boolean
   settings: boolean
 }
 
@@ -32,6 +33,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PagePermissions> = {
     reports: true,
     banking: true,
     crm: true,
+    visitors: true,
     settings: true,
   },
   manager: {
@@ -44,6 +46,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PagePermissions> = {
     reports: true,
     banking: true,
     crm: true,
+    visitors: true,
     settings: false,
   },
   cashier: {
@@ -56,6 +59,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PagePermissions> = {
     reports: false,
     banking: false,
     crm: false,
+    visitors: true,
     settings: false,
   },
 }

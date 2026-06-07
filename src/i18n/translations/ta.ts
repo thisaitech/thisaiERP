@@ -92,6 +92,7 @@ export const ta = {
     others: 'மற்றவை',
     userManagement: 'பயனர் மேலாண்மை',
     settings: 'அமைப்புகள்',
+    visitors: 'வருகையாளர்',
     companyInfo: 'கம்பெனி தகவல்',
     logout: 'வெளியேறு',
     billing: 'பில்லிங்',

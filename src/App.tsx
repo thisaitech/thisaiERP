@@ -17,6 +17,7 @@ const ReportsNew = React.lazy(() => import('./pages/ReportsNew'))
 const Expenses = React.lazy(() => import('./pages/Expenses'))
 const Banking = React.lazy(() => import('./pages/Banking'))
 const Settings = React.lazy(() => import('./pages/Settings'))
+const Visitors = React.lazy(() => import('./pages/Visitors'))
 const Quotations = React.lazy(() => import('./pages/Quotations'))
 const CompanyInfo = React.lazy(() => import('./pages/CompanyInfo'))
 const CRM = React.lazy(() => import('./pages/CRM'))
@@ -73,7 +74,9 @@ function App() {
                     <Route path="banking" element={<ProtectedRoute pageKey="banking"><Banking /></ProtectedRoute>} />
                     <Route path="crm" element={<ProtectedRoute pageKey="crm"><CRM /></ProtectedRoute>} />
 
-                    {/* Admin only */}
+                    <Route path="visitors" element={<ProtectedRoute pageKey="visitors"><Visitors /></ProtectedRoute>} />
+
+                    {/* Admin only (direct URL; hidden from main nav) */}
                     <Route path="settings" element={<ProtectedRoute pageKey="settings"><Settings /></ProtectedRoute>} />
                     <Route path="company-info" element={<ProtectedRoute pageKey="settings"><CompanyInfo /></ProtectedRoute>} />
 

@@ -54,7 +54,7 @@ type AuthedRequest = express.Request & {
 const jwtSecret = process.env.JWT_SECRET || functions.config().api?.jwt_secret || 'thisai-erp-production-secret-2026';
 const usersCollection = 'api_users';
 const recordsCollection = 'api_records';
-const entityTypes = ['items', 'parties', 'invoices', 'expenses', 'quotations', 'leads', 'banking', 'settings', 'permissions'];
+const entityTypes = ['items', 'parties', 'invoices', 'expenses', 'quotations', 'leads', 'visitors', 'banking', 'settings', 'permissions'];
 
 const defaultAdmins = [
   {

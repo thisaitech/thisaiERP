@@ -92,6 +92,7 @@ export const en = {
     others: 'Others',
     userManagement: 'User Management',
     settings: 'Settings',
+    visitors: 'Visitor',
     companyInfo: 'Company Info',
     logout: 'Logout',
     billing: 'Billing',
