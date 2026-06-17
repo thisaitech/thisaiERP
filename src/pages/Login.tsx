@@ -242,11 +242,11 @@ const Login = () => {
   }, [])
 
   return (
-    <div className="erp-module-page min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="erp-module-page min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-400/20 to-purple-400/20 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]" />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[100px]" />
       </div>
 
       <motion.div
@@ -263,11 +263,11 @@ const Login = () => {
           >
             <Sparkle size={32} weight="duotone" className="text-primary" />
           </motion.div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">
             ThisAI ERP
           </h1>
-          <p className="text-slate-600">
-            {mode === 'login' && 'ThisAI ERP - Sign in to continue'}
+          <p className="text-slate-500 dark:text-slate-400 font-medium">
+            {mode === 'login' && 'Sign in to continue'}
             {mode === 'register' && 'Create your business account'}
             {mode === 'forgot' && 'Reset your password'}
           </p>
@@ -276,7 +276,7 @@ const Login = () => {
         {/* Auth Card */}
         <motion.div
           layout
-          className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-8 overflow-hidden text-slate-900"
+          className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[2rem] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] border border-slate-200/50 dark:border-slate-800/50 p-8 overflow-hidden text-slate-900 dark:text-slate-100"
         >
           <AnimatePresence mode="wait">
             {/* Login Form */}
