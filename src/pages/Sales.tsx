@@ -731,7 +731,6 @@ const Sales: React.FC = () => {
     <div className="erp-module-page p-3 md:p-6 md:bg-slate-50 dark:bg-slate-900">
       <MobilePageScaffold
         title="Admissions"
-        subtitle="Create and manage admissions"
         className="md:hidden"
         actions={
           <button onClick={openNew} className="mobile-primary-btn">
@@ -787,7 +786,6 @@ const Sales: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Admissions</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Create and manage admissions</p>
           </div>
           <button onClick={openNew} className="erp-module-primary-btn">
             <Plus size={18} weight="bold" />
