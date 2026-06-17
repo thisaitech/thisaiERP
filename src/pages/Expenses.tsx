@@ -270,82 +270,91 @@ const Expenses = () => {
     <div className="erp-module-page overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3 min-h-screen">
       {/* Header - Clean & Simple like Parties */}
       <div className="flex-shrink-0">
+        {/* Financial Modules Tabs */}
+        <div className="flex justify-start mb-4">
+          <div className="erp-module-filter-wrap">
+            <button className="erp-module-filter-btn erp-module-filter-btn-active">
+              <Wallet size={16} weight="bold" />
+              Spending
+            </button>
+            <button 
+              className="erp-module-filter-btn text-slate-500 hover:text-slate-700" 
+              onClick={() => navigate('/banking')}
+            >
+              <Bank size={16} weight="bold" />
+              Banking
+            </button>
+          </div>
+        </div>
+
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
           {/* Left Side: KPI Cards - Rectangular filling space */}
-          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-4 gap-1.5 md:gap-3">
-            {/* Total Expenses Card - Red Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3">
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <Wallet size={20} weight="duotone" className="text-red-500" />
+          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Total Expenses Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/20">
+                  <Wallet size={22} className="text-red-600 dark:text-red-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{t.expenses?.totalExpenses || 'Total'}</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
-                    ₹{stats.totalExpenses >= 10000000 ? (stats.totalExpenses / 10000000).toFixed(1) + ' Cr' : stats.totalExpenses >= 100000 ? (stats.totalExpenses / 100000).toFixed(1) + ' L' : stats.totalExpenses >= 1000 ? (stats.totalExpenses / 1000).toFixed(1) + ' K' : stats.totalExpenses.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.totalExpenses || 'Total'}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                  ₹{stats.totalExpenses >= 10000000 ? (stats.totalExpenses / 10000000).toFixed(1) + ' Cr' : stats.totalExpenses >= 100000 ? (stats.totalExpenses / 100000).toFixed(1) + ' L' : stats.totalExpenses >= 1000 ? (stats.totalExpenses / 1000).toFixed(1) + ' K' : stats.totalExpenses.toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
 
-            {/* This Month Card - Blue Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3">
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <Calendar size={20} weight="duotone" className="text-blue-500" />
+            {/* This Month Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                  <Calendar size={22} className="text-blue-600 dark:text-blue-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{t.expenses?.thisMonth || 'This Month'}</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                    ₹{stats.thisMonth >= 10000000 ? (stats.thisMonth / 10000000).toFixed(1) + ' Cr' : stats.thisMonth >= 100000 ? (stats.thisMonth / 100000).toFixed(1) + ' L' : stats.thisMonth >= 1000 ? (stats.thisMonth / 1000).toFixed(1) + ' K' : stats.thisMonth.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.thisMonth || 'This Month'}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                  ₹{stats.thisMonth >= 10000000 ? (stats.thisMonth / 10000000).toFixed(1) + ' Cr' : stats.thisMonth >= 100000 ? (stats.thisMonth / 100000).toFixed(1) + ' L' : stats.thisMonth >= 1000 ? (stats.thisMonth / 1000).toFixed(1) + ' K' : stats.thisMonth.toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
 
-            {/* Pending Card - Amber Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 shadow-[6px_6px_12px_rgba(245,158,11,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(245,158,11,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3">
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <Receipt size={20} weight="duotone" className="text-amber-500" />
+            {/* Pending Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-900/20">
+                  <Receipt size={22} className="text-amber-600 dark:text-amber-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent font-semibold">{t.common?.pending || 'Pending'}</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                    ₹{stats.pending >= 10000000 ? (stats.pending / 10000000).toFixed(1) + ' Cr' : stats.pending >= 100000 ? (stats.pending / 100000).toFixed(1) + ' L' : stats.pending >= 1000 ? (stats.pending / 1000).toFixed(1) + ' K' : stats.pending.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.common?.pending || 'Pending'}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                  ₹{stats.pending >= 10000000 ? (stats.pending / 10000000).toFixed(1) + ' Cr' : stats.pending >= 100000 ? (stats.pending / 100000).toFixed(1) + ' L' : stats.pending >= 1000 ? (stats.pending / 1000).toFixed(1) + ' K' : stats.pending.toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
 
-            {/* Change Card - Green Theme */}
-            <div className={cn(
-              "erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl transition-all",
-              stats.percentChange >= 0
-                ? "bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff]"
-                : "bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff]"
-            )}>
-              <button className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3">
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
+            {/* Change Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center",
+                  stats.percentChange >= 0 ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"
+                )}>
                   {stats.percentChange >= 0 ?
-                    <TrendUp size={20} weight="duotone" className="text-green-500" /> :
-                    <TrendDown size={20} weight="duotone" className="text-red-500" />
+                    <TrendUp size={22} className="text-green-600 dark:text-green-400" /> :
+                    <TrendDown size={22} className="text-red-600 dark:text-red-400" />
                   }
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className={cn(
-                    "text-[8px] md:text-xs font-semibold bg-clip-text text-transparent",
-                    stats.percentChange >= 0 ? "bg-gradient-to-r from-green-600 to-emerald-600" : "bg-gradient-to-r from-red-600 to-rose-600"
-                  )}>{t.expenses?.change || 'Change'}</span>
-                  <span className={cn(
-                    "text-xs md:text-xl font-bold bg-clip-text text-transparent",
-                    stats.percentChange >= 0 ? "bg-gradient-to-r from-green-600 to-emerald-600" : "bg-gradient-to-r from-red-600 to-rose-600"
-                  )}>
-                    {stats.percentChange >= 0 ? '+' : ''}{stats.percentChange.toFixed(1)}%
-                  </span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.change || 'Change'}</h3>
+                <p className={cn("text-2xl font-bold mt-1", stats.percentChange >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+                  {stats.percentChange >= 0 ? '+' : ''}{stats.percentChange.toFixed(1)}%
+                </p>
+              </div>
             </div>
           </div>
 

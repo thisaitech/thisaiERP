@@ -554,7 +554,7 @@ const CompanyInfo = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowFeatures(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg font-medium text-sm shadow-lg"
+            className="flex items-center gap-2 px-4 py-2  text-white rounded-lg font-medium text-sm shadow-lg"
           >
             <Lightning size={18} weight="fill" />
             View Features
@@ -1286,7 +1286,7 @@ const CompanyInfo = () => {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div className="sticky top-0 bg-gradient-to-r from-violet-600 to-purple-600 p-6 text-white">
+              <div className="sticky top-0  p-6 text-white">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-bold flex items-center gap-2">

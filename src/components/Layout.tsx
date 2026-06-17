@@ -28,8 +28,6 @@ const routePrefetchers: Record<string, () => Promise<unknown>> = {
   '/parties': () => import('../pages/Parties'),
   '/expenses': () => import('../pages/Expenses'),
   '/quotations': () => import('../pages/Quotations'),
-  '/banking': () => import('../pages/Banking'),
-  '/crm': () => import('../pages/CRM'),
   '/settings': () => import('../pages/Settings'),
   '/reports': () => import('../pages/ReportsNew'),
   '/company-info': () => import('../pages/CompanyInfo'),
@@ -55,16 +53,16 @@ type ModulePalette = {
 }
 
 const MODULE_PALETTES: Array<{ path: string; palette: ModulePalette }> = [
-  { path: '/sales', palette: { accent: '#a855f7', accentStrong: '#9333ea', soft: '#f3e8ff', pageBg: '#f2ebfb', panelBg: '#faf5ff', border: '#d8b4fe' } },
-  { path: '/inventory', palette: { accent: '#f59e0b', accentStrong: '#ea580c', soft: '#ffedd5', pageBg: '#fdf1e6', panelBg: '#fff8f1', border: '#fdba74' } },
-  { path: '/parties', palette: { accent: '#0ea5e9', accentStrong: '#0284c7', soft: '#e0f2fe', pageBg: '#e8f6fd', panelBg: '#f0f9ff', border: '#7dd3fc' } },
-  { path: '/reports', palette: { accent: '#ec4899', accentStrong: '#db2777', soft: '#fce7f3', pageBg: '#fbebf4', panelBg: '#fdf2f8', border: '#f9a8d4' } },
-  { path: '/expenses', palette: { accent: '#f97316', accentStrong: '#ea580c', soft: '#ffedd5', pageBg: '#fdf0e8', panelBg: '#fff7ed', border: '#fdba74' } },
-  { path: '/quotations', palette: { accent: '#8b5cf6', accentStrong: '#7c3aed', soft: '#ede9fe', pageBg: '#eeeafd', panelBg: '#f5f3ff', border: '#c4b5fd' } },
-  { path: '/crm', palette: { accent: '#10b981', accentStrong: '#059669', soft: '#dcfce7', pageBg: '#e9f8ef', panelBg: '#f0fdf4', border: '#86efac' } },
-  { path: '/banking', palette: { accent: '#f43f5e', accentStrong: '#e11d48', soft: '#ffe4e6', pageBg: '#fcecee', panelBg: '#fff1f2', border: '#fda4af' } },
-  { path: '/settings', palette: { accent: '#64748b', accentStrong: '#475569', soft: '#e2e8f0', pageBg: '#edf2f7', panelBg: '#f8fafc', border: '#cbd5e1' } },
-  { path: '/company-info', palette: { accent: '#64748b', accentStrong: '#475569', soft: '#e2e8f0', pageBg: '#edf2f7', panelBg: '#f8fafc', border: '#cbd5e1' } },
+  { path: '/sales', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
+  { path: '/inventory', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
+  { path: '/parties', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
+  { path: '/reports', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
+  { path: '/expenses', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
+  { path: '/quotations', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
+  { path: '/crm', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
+  { path: '/banking', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
+  { path: '/settings', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
+  { path: '/company-info', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
   { path: '/', palette: { accent: '#2563eb', accentStrong: '#1d4ed8', soft: '#dbeafe', pageBg: '#eaf1fb', panelBg: '#f6f9ff', border: '#bfdbfe' } },
 ]
 
@@ -218,10 +216,8 @@ const Layout = () => {
     allowedRoles?: string[];
   }> = [
     { path: '/sales', label: t.nav.sales, icon: Receipt, pageKey: 'sales' },
-    { path: '/inventory', label: t.nav.inventory, icon: Package, allowedRoles: ['admin', 'manager'], pageKey: 'inventory' },
     { path: '/parties', label: t.nav.parties, icon: Users, allowedRoles: ['admin', 'manager'], pageKey: 'parties' },
-    { path: '/reports', label: t.nav.reports, icon: ChartLine, allowedRoles: ['admin', 'manager'], pageKey: 'reports' },
-    { path: '/expenses', label: t.nav.expenses, icon: Wallet, allowedRoles: ['admin', 'manager'], pageKey: 'expenses' },
+    { path: '/expenses', label: t.nav.expenses, icon: Bank, allowedRoles: ['admin', 'manager'], pageKey: 'expenses' },
   ]
 
   // Items inside "More" dropdown
@@ -231,14 +227,10 @@ const Layout = () => {
     icon: React.ElementType;
     pageKey?: keyof PagePermissions;
     allowedRoles?: string[];
-  }> = [
-    { path: '/quotations', label: t.nav.quotations, icon: FileText, pageKey: 'quotations' },
-    { path: '/crm', label: 'CRM', icon: Buildings, allowedRoles: ['admin', 'manager', 'sales'], pageKey: 'crm' },
-    { path: '/banking', label: t.nav.banking, icon: Bank, allowedRoles: ['admin', 'manager'], pageKey: 'banking' },
-  ]
+  }> = []
 
   // Settings item (shown separately)
-  const settingsItem = { path: '/settings', label: t.nav.settings, icon: Gear, allowedRoles: ['admin'], pageKey: 'settings' as keyof PagePermissions }
+  const settingsItem = { path: '/settings', label: t.nav.settings, icon: Users, allowedRoles: ['admin'], pageKey: 'settings' as keyof PagePermissions }
 
   const canAccessNavItem = (item: { pageKey?: keyof PagePermissions; allowedRoles?: string[] }) => {
     if (!item.pageKey && !item.allowedRoles) return true
@@ -285,17 +277,13 @@ const Layout = () => {
     pageKey?: keyof PagePermissions;
     allowedRoles?: string[];
     end?: boolean;
+    icon: React.ElementType;
   }> = [
-    { id: 'dash', path: '/', label: 'DASH', gradient: 'from-blue-500 to-blue-700', end: true },
-    { id: 'admis', path: '/sales', label: 'ADMIS', gradient: 'from-violet-500 to-fuchsia-600', pageKey: 'sales' },
-    { id: 'course', path: '/inventory', label: 'COURSE', gradient: 'from-amber-500 to-orange-600', pageKey: 'inventory', allowedRoles: ['admin', 'manager'] },
-    { id: 'student', path: '/parties', label: 'STUDENT', gradient: 'from-sky-500 to-cyan-600', pageKey: 'parties', allowedRoles: ['admin', 'manager'] },
-    { id: 'report', path: '/reports', label: 'REPORT', gradient: 'from-rose-500 to-pink-600', pageKey: 'reports', allowedRoles: ['admin', 'manager'] },
-    { id: 'spend', path: '/expenses', label: 'SPEND', gradient: 'from-orange-400 to-red-500', pageKey: 'expenses', allowedRoles: ['admin', 'manager'] },
-    { id: 'quote', path: '/quotations', label: 'QUOTE', gradient: 'from-indigo-500 to-violet-600', pageKey: 'quotations' },
-    { id: 'crm', path: '/crm', label: 'CRM', gradient: 'from-emerald-500 to-green-600', pageKey: 'crm', allowedRoles: ['admin', 'manager', 'sales'] },
-    { id: 'bank', path: '/banking', label: 'BANK', gradient: 'from-pink-500 to-rose-600', pageKey: 'banking', allowedRoles: ['admin', 'manager'] },
-    { id: 'setup', path: '/settings', label: 'SETUP', gradient: 'from-slate-500 to-slate-700', pageKey: 'settings', allowedRoles: ['admin'] },
+    { id: 'dash', path: '/', label: 'DASH', gradient: 'from-blue-500 to-blue-700', end: true, icon: House },
+    { id: 'admis', path: '/sales', label: 'ADMIS', gradient: 'from-violet-500 to-fuchsia-600', pageKey: 'sales', icon: Receipt },
+    { id: 'student', path: '/parties', label: 'STUDENT', gradient: 'from-sky-500 to-cyan-600', pageKey: 'parties', allowedRoles: ['admin', 'manager'], icon: Users },
+    { id: 'finance', path: '/expenses', label: 'FINANCE', gradient: 'from-orange-400 to-red-500', pageKey: 'expenses', allowedRoles: ['admin', 'manager'], icon: Bank },
+    { id: 'setup', path: '/settings', label: 'VISITOR', gradient: 'from-slate-500 to-slate-700', pageKey: 'settings', allowedRoles: ['admin'], icon: Users },
   ]
   const filteredDesktopRailItems = desktopRailItems.filter(canAccessNavItem)
   const topNavGradientByPath = desktopRailItems.reduce((acc, item) => {
@@ -303,8 +291,7 @@ const Layout = () => {
     return acc
   }, {} as Record<string, string>)
   const getTopNavActiveClass = (path: string) => cn(
-    "bg-gradient-to-br text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]",
-    topNavGradientByPath[path] || "from-blue-500 to-blue-700"
+    "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-semibold"
   )
 
   const companyInitials = (() => {
@@ -319,13 +306,11 @@ const Layout = () => {
   })()
 
   return (
-    <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900 text-slate-800 dark:text-slate-200" style={moduleThemeVars}>
-      {/* Desktop Navigation - Neumorphic Style */}
-      <header className="sticky top-0 z-50 hidden lg:block py-2 px-3 lg:pl-[112px] bg-[#e4ebf5] dark:bg-slate-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200" style={moduleThemeVars}>
+      {/* Desktop Navigation - Minimalist Style */}
+      <header className="sticky top-0 z-50 hidden lg:block py-3 px-4 lg:px-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
         <div className="w-full">
-          <div className="flex items-center justify-between h-11 px-3 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
-            shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
-            dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
+          <div className="flex items-center justify-between h-12 px-4 bg-white dark:bg-slate-900">
             <div className="flex items-center gap-2">
               <nav className="flex items-center gap-0.5">
                 {/* Dashboard (matches left HOME button) */}
@@ -361,6 +346,36 @@ const Layout = () => {
                     <span>{item.label}</span>
                   </NavLink>
                 ))}
+
+      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe">
+        <div className="flex items-center justify-around h-16 px-2">
+          {navigationItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) => cn(
+                "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors duration-200",
+                isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"
+              )}
+            >
+              {({ isActive }) => (
+                <>
+                  <item.icon size={24} weight={isActive ? "fill" : "regular"} />
+                  <span className="text-[10px] font-medium">{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+          {/* Menu Toggle Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="flex flex-col items-center justify-center w-full h-full gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-600 transition-colors duration-200"
+          >
+            <List size={24} />
+            <span className="text-[10px] font-medium">Menu</span>
+          </button>
+        </div>
+      </nav>
 
                 {/* More Menu Items - shown directly in top nav */}
                 {filteredMoreMenuItems.map((item) => (
@@ -406,12 +421,12 @@ const Layout = () => {
                     className={cn(
                       "flex items-center justify-center p-1.5 rounded-lg transition-all duration-200",
                       isUserDropdownOpen
-                        ? "bg-blue-600 text-white shadow-[2px_2px_4px_#c5ccd6,-2px_-2px_4px_#ffffff]"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                     )}
                     title={userData?.companyName || 'Company'}
                   >
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-[11px] font-bold text-white shadow-sm">
+                    <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-[12px] font-bold text-blue-700 dark:text-blue-300">
                       {companyInitials}
                     </div>
                   </button>
@@ -453,396 +468,70 @@ const Layout = () => {
         </div>
       </header>
 
-      {/* Desktop Vertical Menu Bar (keeps top horizontal menu intact) */}
-      <aside className="fixed left-0 top-0 bottom-0 z-[55] hidden lg:flex w-[102px] flex-col items-center py-2 bg-[#dfe7f2] dark:bg-slate-900/90 border-r border-white/50 dark:border-slate-700">
-        <div className="flex-1 flex flex-col items-center gap-3 overflow-y-auto px-2 pt-1 pb-2">
-          {filteredDesktopRailItems.map((item) => (
-            <NavLink
-              key={item.id}
-              to={item.path}
-              end={item.end}
-              onMouseEnter={() => prefetchRoute(item.path)}
-              className={({ isActive }) => cn(
-                "w-[78px] h-[78px] rounded-2xl bg-gradient-to-br text-white text-[14px] font-extrabold tracking-wide leading-none",
-                "flex items-center justify-center text-center px-1 transition-all duration-200 shadow-[0_10px_20px_rgba(30,64,175,0.25)]",
-                item.gradient,
-                isActive
-                  ? "ring-2 ring-white/90 scale-[1.02]"
-                  : "opacity-95 hover:opacity-100 hover:-translate-y-0.5"
-              )}
-              title={item.label}
-            >
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            if (canAccessSettings) navigate('/settings')
-          }}
-          className="mb-2 w-[66px] h-[66px] rounded-2xl bg-[#e4ebf5] dark:bg-slate-800 flex items-center justify-center
-            shadow-[5px_5px_10px_#c5ccd6,-5px_-5px_10px_#ffffff] dark:shadow-[5px_5px_10px_#1e293b,-5px_-5px_10px_#334155]
-            transition-transform duration-200 hover:-translate-y-0.5"
-          title={userData?.companyName || 'Company'}
-        >
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-base font-bold text-white">
-            {companyInitials}
-          </div>
-        </button>
-      </aside>
 
-      {/* Mobile Header - Neumorphic */}
-      <header className="sticky top-0 z-40 lg:hidden px-3 py-2 bg-[#e4ebf5] dark:bg-slate-900">
-        <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#e4ebf5] dark:bg-slate-800
-          shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-          dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]">
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 rounded-lg bg-[#e4ebf5] dark:bg-slate-700
-              shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]
-              dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]
-              active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]
-              transition-all duration-200"
-          >
-            <List size={20} className="text-slate-600 dark:text-slate-300" />
-          </button>
-          <h1 className="text-base font-bold text-slate-800 dark:text-white truncate max-w-[210px] text-center">
+      {/* Mobile Header - Premium Glassmorphism */}
+      <header className="sticky top-0 z-40 lg:hidden px-4 py-3 bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="w-[84px]" aria-hidden="true" />
+          
+          <h1 className="text-lg font-extrabold tracking-tight text-slate-800 dark:text-white truncate max-w-[200px] text-center flex-1">
             {currentPageTitle}
           </h1>
-          {location.pathname === '/' && canAccessSettings ? (
+          
+          <div className="flex items-center justify-end w-[84px] gap-2">
             <button
-              onClick={() => navigate('/settings')}
-              onMouseEnter={() => prefetchRoute('/settings')}
-              className="p-2 rounded-lg bg-[#e4ebf5] dark:bg-slate-700
-                shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]
-                dark:shadow-[3px_3px_6px_#1e293b,-3px_-3px_6px_#334155]
-                active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]
-                transition-all duration-200"
-              aria-label="Settings"
+              onClick={toggleDarkMode}
+              className="p-2 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200
+                shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none border border-slate-100 dark:border-slate-700
+                active:scale-95
+                transition-all duration-300"
+              aria-label="Toggle Dark Mode"
             >
-              <Gear size={20} className="text-slate-600 dark:text-slate-300" />
+              {isDarkMode ? <Sun size={18} weight="bold" className="text-amber-500" /> : <Moon size={18} weight="bold" />}
             </button>
-          ) : (
-            <div className="w-10 h-10" aria-hidden="true" />
-          )}
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-xl bg-white dark:bg-slate-800 text-red-500 dark:text-red-400
+                shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none border border-slate-100 dark:border-slate-700
+                active:scale-95
+                transition-all duration-300"
+              aria-label="Logout"
+            >
+              <SignOut size={18} weight="bold" />
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Mobile Navigation Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeMobileDrawers}
-              className="fixed inset-0 bg-black/60 z-50 lg:hidden"
-            />
-            <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed left-0 top-0 h-full w-72 bg-[#e4ebf5] dark:bg-slate-900 z-50 lg:hidden flex flex-col"
-            >
-              {/* Header with User Info */}
-              <div className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center font-bold text-white
-                    shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]">
-                    {userData?.displayName?.charAt(0).toUpperCase() || 'A'}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-slate-700 dark:text-slate-200">{userData?.displayName || 'User'}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{userData?.role || 'Guest'}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 rounded-xl bg-[#e4ebf5] dark:bg-slate-800
-                    shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                    active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-                    transition-all duration-200"
-                >
-                  <X size={20} className="text-slate-500" />
-                </button>
-              </div>
-
-              {/* Navigation Items */}
-              <nav className="flex-1 overflow-y-auto px-4 space-y-2">
-                {/* Main Navigation Items */}
-                {navigationItems.map((item) => {
-                  const isActive = isPathActive(item.path)
-                  const palette = getModulePalette(item.path)
-                  return (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      onClick={closeMobileDrawers}
-                      onMouseEnter={() => prefetchRoute(item.path)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 border",
-                        isActive
-                          ? "shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]"
-                          : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 border-[#d4ddea] dark:border-slate-700 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]"
-                      )}
-                      style={
-                        isActive
-                          ? {
-                              color: palette.accentStrong,
-                              borderColor: palette.border,
-                              background: `linear-gradient(135deg, ${palette.soft} 0%, #f7fbff 100%)`,
-                            }
-                          : undefined
-                      }
-                    >
-                      <span
-                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border"
-                        style={{
-                          borderColor: isActive ? palette.border : '#d4ddea',
-                          backgroundColor: isActive ? palette.soft : '#edf2fa',
-                        }}
-                      >
-                        <item.icon size={16} weight="duotone" style={{ color: palette.accentStrong }} />
-                      </span>
-                      <span>{item.label}</span>
-                    </NavLink>
-                  )
-                })}
-
-                {/* More Menu Items */}
-                {filteredMoreMenuItems.map((item) => {
-                  const isActive = isPathActive(item.path)
-                  const palette = getModulePalette(item.path)
-                  return (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      onClick={closeMobileDrawers}
-                      onMouseEnter={() => prefetchRoute(item.path)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 border",
-                        isActive
-                          ? "shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]"
-                          : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 border-[#d4ddea] dark:border-slate-700 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]"
-                      )}
-                      style={
-                        isActive
-                          ? {
-                              color: palette.accentStrong,
-                              borderColor: palette.border,
-                              background: `linear-gradient(135deg, ${palette.soft} 0%, #f7fbff 100%)`,
-                            }
-                          : undefined
-                      }
-                    >
-                      <span
-                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border"
-                        style={{
-                          borderColor: isActive ? palette.border : '#d4ddea',
-                          backgroundColor: isActive ? palette.soft : '#edf2fa',
-                        }}
-                      >
-                        <item.icon size={16} weight="duotone" style={{ color: palette.accentStrong }} />
-                      </span>
-                      <span>{item.label}</span>
-                    </NavLink>
-                  )
-                })}
-
-                {/* Settings */}
-                {canAccessSettings && (
-                  (() => {
-                    const isActive = isPathActive(settingsItem.path)
-                    const palette = getModulePalette(settingsItem.path)
-                    return (
-                      <NavLink
-                        to={settingsItem.path}
-                        onClick={closeMobileDrawers}
-                        onMouseEnter={() => prefetchRoute(settingsItem.path)}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 border",
-                          isActive
-                            ? "shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff] dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]"
-                            : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 border-[#d4ddea] dark:border-slate-700 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155] active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]"
-                        )}
-                        style={
-                          isActive
-                            ? {
-                                color: palette.accentStrong,
-                                borderColor: palette.border,
-                                background: `linear-gradient(135deg, ${palette.soft} 0%, #f7fbff 100%)`,
-                              }
-                            : undefined
-                        }
-                      >
-                        <span
-                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border"
-                          style={{
-                            borderColor: isActive ? palette.border : '#d4ddea',
-                            backgroundColor: isActive ? palette.soft : '#edf2fa',
-                          }}
-                        >
-                          <settingsItem.icon size={16} weight="duotone" style={{ color: palette.accentStrong }} />
-                        </span>
-                        <span>{settingsItem.label}</span>
-                      </NavLink>
-                    )
-                  })()
-                )}
-              </nav>
-
-              {/* Bottom Actions */}
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-xl border border-slate-900 bg-black shadow-none">
-                  <span className="text-sm text-white">Dark Mode</span>
-                  <button
-                    onClick={toggleDarkMode}
-                    className="p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white shadow-none
-                      active:brightness-110
-                      transition-all duration-200"
-                  >
-                    {isDarkMode ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-white" />}
-                  </button>
-                </div>
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false)
-                    handleLogout()
-                  }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-red-600 dark:text-red-400 rounded-xl
-                    bg-[#e4ebf5] dark:bg-slate-800
-                    shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]
-                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                    active:shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-                    transition-all duration-200"
-                >
-                  <SignOut size={18} />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Mobile More Sheet */}
-      <AnimatePresence>
-        {isMobileMoreOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-[55] lg:hidden"
-              onClick={() => setIsMobileMoreOpen(false)}
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-              className="fixed left-0 right-0 bottom-0 z-[56] lg:hidden rounded-t-2xl bg-[#e4ebf5] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl"
-            >
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-100">More Modules</h3>
-                <button
-                  type="button"
-                  className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                  onClick={() => setIsMobileMoreOpen(false)}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              <div className="px-3 py-3 max-h-[65vh] overflow-auto space-y-2">
-                {mobileOverflowItems.map((item) => {
-                  const isActive = isPathActive(item.path)
-                  const palette = getModulePalette(item.path)
-                  return (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      onClick={closeMobileDrawers}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors border',
-                        isActive
-                          ? 'text-white'
-                          : 'text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-700/80 border-slate-200 dark:border-slate-600'
-                      )}
-                      style={
-                        isActive
-                          ? {
-                              borderColor: palette.border,
-                              background: `linear-gradient(135deg, ${palette.accent} 0%, ${palette.accentStrong} 100%)`,
-                            }
-                          : undefined
-                      }
-                    >
-                      <item.icon size={18} weight="bold" />
-                      <span>{item.label}</span>
-                    </NavLink>
-                  )
-                })}
-                {canAccessSettings && (
-                  (() => {
-                    const isActive = isPathActive(settingsItem.path)
-                    const palette = getModulePalette(settingsItem.path)
-                    return (
-                      <NavLink
-                        to={settingsItem.path}
-                        onClick={closeMobileDrawers}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors border',
-                          isActive
-                            ? 'text-white'
-                            : 'text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-700/80 border-slate-200 dark:border-slate-600'
-                        )}
-                        style={
-                          isActive
-                            ? {
-                                borderColor: palette.border,
-                                background: `linear-gradient(135deg, ${palette.accent} 0%, ${palette.accentStrong} 100%)`,
-                              }
-                            : undefined
-                        }
-                      >
-                        <settingsItem.icon size={18} weight="bold" />
-                        <span>{settingsItem.label}</span>
-                      </NavLink>
-                    )
-                  })()
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      <main className="w-full px-3 py-2 pb-safe overflow-y-auto max-h-[calc(100svh-76px)] lg:pl-[112px] lg:max-h-none lg:overflow-visible">
+      <main className="w-full px-3 py-2 pb-safe overflow-y-auto max-h-[calc(100svh-76px)] lg:px-6 lg:max-h-none lg:overflow-visible">
         <Outlet />
       </main>
 
-      {/* Mobile Bottom Navigation - Neumorphic */}
-      <nav className="fixed bottom-0 left-0 right-0 lg:hidden z-40 p-3 bg-[#e4ebf5] dark:bg-slate-900">
-        <div className="flex justify-around items-center h-16 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
-          shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
-          dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
+      {/* Mobile Bottom Navigation - Floating Dock */}
+      <nav className="fixed bottom-4 left-4 right-4 lg:hidden z-40">
+        <div className="flex justify-around items-center h-[72px] rounded-[2rem] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl
+          shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)]
+          border border-white/50 dark:border-white/5 px-2">
           <NavLink
             to="/"
             className={({ isActive }) => cn(
-              "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
+              "relative flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-2xl transition-all duration-300",
               isActive
-                ? "shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]"
-                : "text-slate-500 dark:text-slate-400"
+                ? "bg-gradient-to-tr from-blue-500/10 to-indigo-500/10 -translate-y-1"
+                : "text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
             )}
             style={({ isActive }) => (isActive ? { color: getModulePalette('/').accentStrong } : undefined)}
           >
-            <House size={22} weight="regular" />
-            <span className="text-[10px] font-semibold">{t.nav.dashboard}</span>
+            {({ isActive }) => (
+              <>
+                <House size={24} weight={isActive ? "duotone" : "regular"} />
+                <span className="text-[10px] font-bold tracking-wide">{t.nav.dashboard}</span>
+                {isActive && (
+                  <span className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-current" />
+                )}
+              </>
+            )}
           </NavLink>
 
           {mobilePrimaryItems.map((item) => {
@@ -853,30 +542,54 @@ const Layout = () => {
                 to={item.path}
                 onMouseEnter={() => prefetchRoute(item.path)}
                 className={({ isActive }) => cn(
-                  "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
+                  "relative flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-2xl transition-all duration-300",
                   isActive
-                    ? "shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff] dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]"
-                    : "text-slate-500 dark:text-slate-400"
+                    ? "bg-gradient-to-tr -translate-y-1"
+                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
                 )}
-                style={({ isActive }) => (isActive ? { color: palette.accentStrong } : undefined)}
+                style={({ isActive }) => (isActive ? { 
+                  color: palette.accentStrong,
+                  backgroundImage: `linear-gradient(to top right, ${palette.soft}, transparent)`
+                } : undefined)}
               >
-                <item.icon size={22} weight={"regular"} />
-                <span className="text-[10px] font-semibold">{item.label}</span>
+                {({ isActive }) => (
+                  <>
+                    <item.icon size={24} weight={isActive ? "duotone" : "regular"} />
+                    <span className="text-[10px] font-bold tracking-wide">{item.label}</span>
+                    {isActive && (
+                      <span className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-current" />
+                    )}
+                  </>
+                )}
               </NavLink>
             )
           })}
-          <button
-            type="button"
-            onClick={() => setIsMobileMoreOpen(true)}
-            className={cn(
-              "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all duration-200",
-              isMobileMoreOpen ? "" : "text-slate-500 dark:text-slate-400"
-            )}
-            style={isMobileMoreOpen ? { color: activeModulePalette.accentStrong } : undefined}
-          >
-            <SquaresFour size={22} weight="regular" />
-            <span className="text-[10px] font-semibold">More</span>
-          </button>
+          {canAccessSettings && (
+            <NavLink
+              to={settingsItem.path}
+              onMouseEnter={() => prefetchRoute(settingsItem.path)}
+              className={({ isActive }) => cn(
+                "relative flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-2xl transition-all duration-300",
+                isActive
+                  ? "bg-gradient-to-tr -translate-y-1"
+                  : "text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
+              )}
+              style={({ isActive }) => (isActive ? { 
+                color: getModulePalette(settingsItem.path).accentStrong,
+                backgroundImage: `linear-gradient(to top right, ${getModulePalette(settingsItem.path).soft}, transparent)`
+              } : undefined)}
+            >
+              {({ isActive }) => (
+                <>
+                  <settingsItem.icon size={24} weight={isActive ? "duotone" : "regular"} />
+                  <span className="text-[10px] font-bold tracking-wide">{settingsItem.label}</span>
+                  {isActive && (
+                    <span className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-current" />
+                  )}
+                </>
+              )}
+            </NavLink>
+          )}
         </div>
       </nav>
     </div>

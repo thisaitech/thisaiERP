@@ -833,6 +833,23 @@ const Banking = () => {
         animate={{ opacity: 1, y: 0 }}
         className={cn('mb-3', isMobileViewport && 'hidden md:block')}
       >
+        {/* Financial Modules Tabs */}
+        <div className="flex justify-start mb-4">
+          <div className="erp-module-filter-wrap">
+            <button 
+              className="erp-module-filter-btn text-slate-500 hover:text-slate-700" 
+              onClick={() => navigate('/expenses')}
+            >
+              <Wallet size={16} weight="bold" />
+              Spending
+            </button>
+            <button className="erp-module-filter-btn erp-module-filter-btn-active">
+              <Bank size={16} weight="bold" />
+              Banking
+            </button>
+          </div>
+        </div>
+
         {/* Top Row: Date Filter + Action Button (Right Aligned) */}
         <div className="flex items-center justify-end mb-3">
           <div className="flex items-center gap-2">
@@ -861,48 +878,66 @@ const Banking = () => {
         </div>
 
                 {/* Stats Cards - Second Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-3">
-          <button className="erp-module-stat-card border-blue-400 text-left">
-            <div className="erp-module-stat-icon text-blue-600">
-              <Bank size={20} weight="duotone" />
-            </div>
-            <div className="min-w-0">
-              <div className="erp-module-stat-title text-blue-600">{t.banking.availableBalance}</div>
-              <div className="erp-module-stat-value text-blue-700">₹{(availableBalance / 100000).toFixed(2)}L</div>
-            </div>
-          </button>
-
-          <button className="erp-module-stat-card border-emerald-400 text-left">
-            <div className="erp-module-stat-icon text-emerald-600">
-              <Wallet size={20} weight="duotone" />
-            </div>
-            <div className="min-w-0">
-              <div className="erp-module-stat-title text-emerald-600">{t.banking.cashInHand}</div>
-              <div className="erp-module-stat-value text-emerald-700">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</div>
-            </div>
-          </button>
-
-          <button className="erp-module-stat-card border-amber-400 text-left">
-            <div className="erp-module-stat-icon text-amber-600">
-              <Receipt size={20} weight="duotone" />
-            </div>
-            <div className="min-w-0">
-              <div className="erp-module-stat-title text-amber-600">{t.banking.pendingCheques}</div>
-              <div className="erp-module-stat-value text-amber-700">{accounts.cheques.filter(ch => ch.status === 'pending').length}</div>
-            </div>
-          </button>
-
-          <button className={cn("erp-module-stat-card text-left", netWorth >= 0 ? "border-emerald-400" : "border-rose-400")}>
-            <div className={cn("erp-module-stat-icon", netWorth >= 0 ? "text-emerald-600" : "text-rose-600")}>
-              {netWorth >= 0 ? <TrendUp size={20} weight="duotone" /> : <TrendDown size={20} weight="duotone" />}
-            </div>
-            <div className="min-w-0">
-              <div className={cn("erp-module-stat-title", netWorth >= 0 ? "text-emerald-600" : "text-rose-600")}>{t.banking.netWorth}</div>
-              <div className={cn("erp-module-stat-value", netWorth >= 0 ? "text-emerald-700" : "text-rose-700")}>
-                {netWorth >= 0 ? '+' : '-'}₹{(Math.abs(netWorth) / 100000).toFixed(1)}L
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+          {/* Available Balance Card */}
+          <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+            <div className="flex justify-between items-start mb-2">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                <Bank size={22} className="text-blue-600 dark:text-blue-400" />
               </div>
             </div>
-          </button>
+            <div>
+              <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.banking.availableBalance}</h3>
+              <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">₹{(availableBalance / 100000).toFixed(2)}L</p>
+            </div>
+          </div>
+
+          {/* Cash In Hand Card */}
+          <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+            <div className="flex justify-between items-start mb-2">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20">
+                <Wallet size={22} className="text-emerald-600 dark:text-emerald-400" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.banking.cashInHand}</h3>
+              <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">₹{(accounts.cashInHand.balance / 1000).toFixed(1)}K</p>
+            </div>
+          </div>
+
+          {/* Pending Cheques Card */}
+          <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+            <div className="flex justify-between items-start mb-2">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-900/20">
+                <Receipt size={22} className="text-amber-600 dark:text-amber-400" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.banking.pendingCheques}</h3>
+              <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{accounts.cheques.filter(ch => ch.status === 'pending').length}</p>
+            </div>
+          </div>
+
+          {/* Net Worth Card */}
+          <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+            <div className="flex justify-between items-start mb-2">
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center",
+                netWorth >= 0 ? "bg-emerald-50 dark:bg-emerald-900/20" : "bg-rose-50 dark:bg-rose-900/20"
+              )}>
+                {netWorth >= 0 ? <TrendUp size={22} className="text-emerald-600 dark:text-emerald-400" /> : <TrendDown size={22} className="text-rose-600 dark:text-rose-400" />}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.banking.netWorth}</h3>
+              <p className={cn(
+                "text-2xl font-bold mt-1",
+                netWorth >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+              )}>
+                {netWorth >= 0 ? '+' : '-'}₹{(Math.abs(netWorth) / 100000).toFixed(1)}L
+              </p>
+            </div>
+          </div>
         </div>
       </motion.div>
 
@@ -1162,7 +1197,7 @@ const Banking = () => {
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 text-white"
+                className=" rounded-xl p-6 text-white"
               >
                 <h3 className="text-xl font-bold mb-2">{t.banking.setupRazorpay}</h3>
                 <p className="text-white/80 mb-4">{t.banking.acceptPaymentsOnline}</p>

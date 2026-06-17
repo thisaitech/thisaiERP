@@ -92,7 +92,7 @@ const CompanyProfilePopup: React.FC<CompanyProfilePopupProps> = ({ onDismiss }) 
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header with gradient */}
-          <div className="relative bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-6 text-white overflow-hidden">
+          <div className="relative bg-blue-600 p-6 text-white overflow-hidden">
             {/* Decorative elements */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
@@ -174,7 +174,7 @@ const CompanyProfilePopup: React.FC<CompanyProfilePopupProps> = ({ onDismiss }) 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleComplete}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-shadow"
               >
                 <Lightning size={18} weight="fill" />
                 Complete Now

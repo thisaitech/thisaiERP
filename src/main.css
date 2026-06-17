@@ -3604,7 +3604,7 @@
     align-items: center;
     gap: 8px;
     border-radius: 12px;
-    background: linear-gradient(135deg, var(--module-accent, #2563eb), var(--module-accent-strong, #1d4ed8));
+    background-color: #2563eb;
     color: #ffffff;
     padding: 10px 16px;
     font-size: 0.9rem;

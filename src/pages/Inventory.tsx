@@ -1095,70 +1095,59 @@ const Inventory = () => {
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
           {/* Left Side: KPI Cards - Rectangular filling space */}
-          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-4 gap-1.5 md:gap-3">
-            {/* Total Items Card - Blue Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button
-                onClick={() => setActiveTab('all')}
-                className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
-              >
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <Package size={20} weight="duotone" className="text-blue-500" />
+          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Total Items Card */}
+            <div onClick={() => setActiveTab('all')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                  <Package size={22} className="text-blue-600 dark:text-blue-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{t.inventory.totalItems}</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{inventorySummary.totalItems}</span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.inventory.totalItems}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{inventorySummary.totalItems}</p>
+              </div>
             </div>
 
-            {/* Low Stock Card - Amber Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 shadow-[6px_6px_12px_rgba(245,158,11,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(245,158,11,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button
-                onClick={() => setActiveTab('low')}
-                className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
-              >
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <WarningCircle size={20} weight="duotone" className="text-amber-500" />
+            {/* Low Stock Card */}
+            <div onClick={() => setActiveTab('low')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-900/20">
+                  <WarningCircle size={22} className="text-amber-600 dark:text-amber-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent font-semibold">{t.inventory.lowStock}</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{inventorySummary.lowStockItems}</span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.inventory.lowStock}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{inventorySummary.lowStockItems}</p>
+              </div>
             </div>
 
-            {/* Out of Stock Card - Red Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button
-                onClick={() => setActiveTab('out')}
-                className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
-              >
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <X size={20} weight="bold" className="text-red-500" />
+            {/* Out of Stock Card */}
+            <div onClick={() => setActiveTab('out')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/20">
+                  <X size={22} weight="bold" className="text-red-600 dark:text-red-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{t.inventory.outOfStock}</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">{inventorySummary.outOfStockItems}</span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.inventory.outOfStock}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{inventorySummary.outOfStockItems}</p>
+              </div>
             </div>
 
-            {/* Stock Value Card - Green Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button
-                className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
-              >
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <CurrencyInr size={20} weight="duotone" className="text-green-500" />
+            {/* Stock Value Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
+                  <CurrencyInr size={22} className="text-green-600 dark:text-green-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{t.inventory.stockValue}</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                    ₹{inventorySummary.totalValue >= 10000000 ? (inventorySummary.totalValue / 10000000).toFixed(1) + ' Cr' : inventorySummary.totalValue >= 100000 ? (inventorySummary.totalValue / 100000).toFixed(1) + ' L' : inventorySummary.totalValue >= 1000 ? (inventorySummary.totalValue / 1000).toFixed(1) + ' K' : inventorySummary.totalValue.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.inventory.stockValue}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                  ₹{inventorySummary.totalValue >= 10000000 ? (inventorySummary.totalValue / 10000000).toFixed(1) + ' Cr' : inventorySummary.totalValue >= 100000 ? (inventorySummary.totalValue / 100000).toFixed(1) + ' L' : inventorySummary.totalValue >= 1000 ? (inventorySummary.totalValue / 1000).toFixed(1) + ' K' : inventorySummary.totalValue.toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -1565,10 +1554,10 @@ const Inventory = () => {
                 className="bg-card text-card-foreground rounded-xl shadow-2xl border border-border w-full max-w-3xl max-h-[98vh] overflow-hidden flex flex-col"
               >
                 {/* Header */}
-                <div className="px-4 py-2 border-b border-border bg-gradient-to-r from-blue-50 to-purple-50">
+                <div className="px-4 py-2 border-b border-border ">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-base font-bold flex items-center gap-2">
-                      <Package size={20} weight="duotone" className="text-primary" />
+                    <h2 className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                      <Package size={22} weight="duotone" className="text-blue-600" />
                       {t.inventory.addNewItem}
                     </h2>
                     <button
@@ -1593,16 +1582,16 @@ const Inventory = () => {
                   <div className="space-y-2">
                     {/* Section 1: Basic Info */}
                     <div className="space-y-2">
-                      <h3 className="text-xs font-semibold text-primary flex items-center gap-1.5">
-                        <Cube size={14} weight="duotone" />
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+                        <Cube size={16} weight="duotone" className="text-slate-500" />
                         {t.inventory.basicInfo}
                       </h3>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {/* Item Name with Magic Autocomplete */}
                         <div className="sm:col-span-2 relative">
-                          <label className="text-xs font-medium mb-1 block flex items-center gap-2">
-                            {t.inventory.itemName} <span className="text-destructive">*</span>
+                          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block flex items-center gap-2">
+                            {t.inventory.itemName} <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -1612,7 +1601,7 @@ const Inventory = () => {
                             onFocus={dismissSuggestionDropdowns}
                             onBlur={() => setTimeout(dismissSuggestionDropdowns, 200)}
                             placeholder={t.inventory.startTyping}
-                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow text-slate-800 dark:text-white"
                           />
 
                           {/* Autocomplete Suggestions Dropdown */}
@@ -1662,14 +1651,14 @@ const Inventory = () => {
 
                         {/* Category - Auto-fills Unit Conversion */}
                         <div>
-                          <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
-                            <Tag size={14} weight="duotone" />
+                          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block flex items-center gap-2">
+                            <Tag size={16} weight="duotone" className="text-slate-400" />
                             {t.inventory.category}
                           </label>
                           <select
                             value={itemCategory}
                             onChange={(e) => setItemCategory(e.target.value)}
-                            className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
+                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"
                           >
                             {/* Hide "Your Categories" list. If this item already has a custom category, keep it selectable. */}
                             {(() => {
@@ -1703,37 +1692,37 @@ const Inventory = () => {
 
                         {/* Description with {t.inventory.aiSuggestions} */}
                         <div className="sm:col-span-2">
-                          <label className="text-xs font-medium mb-1.5 block">{t.inventory.description}</label>
+                          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">{t.inventory.description}</label>
                           <textarea
                             value={itemDescription}
                             onChange={(e) => setItemDescription(e.target.value)}
                             rows={2}
                             placeholder={t.inventory.briefDescription}
-                            className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none resize-none"
+                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none text-slate-800 dark:text-white"
                           />
                         </div>
                       </div>
                     </div>
 
                     {/* Section 2: Pricing */}
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
-                        <CurrencyInr size={16} weight="duotone" />
+                    <div className="space-y-4 pt-2">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <CurrencyInr size={16} weight="duotone" className="text-slate-500" />
                         {t.inventory.pricing}
                       </h3>
 
-                      {/* Side-by-Side Pricing Layout */}
+                      {/* Pricing Layout */}
                       <div className="grid grid-cols-1 gap-6">
 
-                        {/* LEFT: Retail Selling Price (Blue) */}
-                        <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg space-y-3">
-                          <label className="text-xs font-semibold mb-1.5 block text-blue-900">
-                            {t.inventory.retailSellingPrice} <span className="text-destructive">*</span>
+                        {/* Retail Selling Price Block */}
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-4">
+                          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
+                            {t.inventory.retailSellingPrice} <span className="text-red-500">*</span>
                           </label>
 
                           {/* Price Input */}
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 text-sm font-semibold">₹</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold">₹</span>
                             <input
                               type="number"
                               value={retailPrice}
@@ -1749,47 +1738,35 @@ const Inventory = () => {
                                 }
                               }}
                               placeholder="0.00"
-                              className="w-full pl-8 pr-3 py-2.5 bg-white border-2 border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold"
+                              className="w-full pl-8 pr-3 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-semibold text-slate-800 dark:text-white transition-shadow"
                             />
                           </div>
 
                           {/* Tax Mode Toggle */}
-                          <div className="flex gap-2">
+                          <div className="flex bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl">
                             <button
                               type="button"
                               onClick={() => setTaxMode('exclusive')}
                               className={cn(
-                                "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all border-2 flex items-center justify-center gap-1.5",
+                                "flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200",
                                 taxMode === 'exclusive'
-                                  ? "bg-blue-600 border-blue-600 text-white"
-                                  : "bg-white border-blue-300 text-blue-700 hover:border-blue-400"
+                                  ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
+                                  : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                               )}
                             >
-                              <div className={cn(
-                                "w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center",
-                                taxMode === 'exclusive' ? "border-white" : "border-blue-400"
-                              )}>
-                                {taxMode === 'exclusive' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
-                              </div>
-                              <span className="font-bold">{t.inventory.withoutGst}</span>
+                              {t.inventory.withoutGst}
                             </button>
                             <button
                               type="button"
                               onClick={() => setTaxMode('inclusive')}
                               className={cn(
-                                "flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all border-2 flex items-center justify-center gap-1.5",
+                                "flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200",
                                 taxMode === 'inclusive'
-                                  ? "bg-green-600 border-green-600 text-white"
-                                  : "bg-white border-green-300 text-green-700 hover:border-green-400"
+                                  ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
+                                  : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                               )}
                             >
-                              <div className={cn(
-                                "w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center",
-                                taxMode === 'inclusive' ? "border-white" : "border-green-400"
-                              )}>
-                                {taxMode === 'inclusive' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
-                              </div>
-                              <span className="font-bold">{t.inventory.withGst}</span>
+                              {t.inventory.withGst}
                             </button>
                           </div>
 
@@ -1944,300 +1921,6 @@ const Inventory = () => {
                           </div>
                         </motion.div>
                       )}
-
-                      {/* Expandable: {t.inventory.wholesalePrice} */}
-                      <div className="mt-3">
-                        {!showWholesalePrice ? (
-                          <button
-                            type="button"
-                            onClick={() => setShowWholesalePrice(true)}
-                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                          >
-                            <Plus size={14} weight="bold" />
-                            {t.inventory.wholesalePrice}
-                          </button>
-                        ) : (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                          >
-                            <label className="text-xs font-medium mb-1.5 block">
-                              {t.inventory.wholesalePrice}
-                              <span className="ml-1.5 text-[10px] text-emerald-600 font-normal">(Auto-filled: 30% of MRP)</span>
-                            </label>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
-                              <input
-                                type="number"
-                                value={wholesalePrice}
-                                onChange={(e) => setWholesalePrice(e.target.value)}
-                                placeholder="0.00"
-                                className="w-full pl-8 pr-3 py-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-800 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-                              />
-                            </div>
-                          </motion.div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Section 3: Tax & Category */}
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
-                        <Percent size={16} weight="duotone" />
-                        {t.inventory.taxCompliance}
-                      </h3>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        {/* CGST% */}
-                        <div>
-                          <label className="text-xs font-medium mb-1.5 block text-emerald-600">CGST%</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.1"
-                            value={cgstRate}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              setCgstRate(value)
-                              // Auto-sync SGST to match CGST for intrastate
-                              setSgstRate(value)
-                              // Update total GST rate
-                              setGstRate((parseFloat(value) * 2).toString())
-                              // Clear IGST when using CGST+SGST
-                              setIgstRate('0')
-                            }}
-                            className="w-full px-3 py-2.5 bg-emerald-50 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-semibold"
-                            placeholder="9"
-                          />
-                        </div>
-
-                        {/* SGST% */}
-                        <div>
-                          <label className="text-xs font-medium mb-1.5 block text-emerald-600">SGST%</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.1"
-                            value={sgstRate}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              setSgstRate(value)
-                              // Auto-sync CGST to match SGST for intrastate
-                              setCgstRate(value)
-                              // Update total GST rate
-                              setGstRate((parseFloat(value) * 2).toString())
-                              // Clear IGST when using CGST+SGST
-                              setIgstRate('0')
-                            }}
-                            className="w-full px-3 py-2.5 bg-emerald-50 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-semibold"
-                            placeholder="9"
-                          />
-                        </div>
-
-                        {/* IGST% */}
-                        <div>
-                          <label className="text-xs font-medium mb-1.5 block text-blue-600">IGST%</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.1"
-                            value={igstRate}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              setIgstRate(value)
-                              // Update total GST rate
-                              setGstRate(value)
-                              // Clear CGST+SGST when using IGST
-                              setCgstRate('0')
-                              setSgstRate('0')
-                            }}
-                            className="w-full px-3 py-2.5 bg-blue-50 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none text-center font-semibold"
-                            placeholder="0"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="sm:col-span-3">
-                        <p className="text-[10px] text-muted-foreground px-3">
-                          💡 <strong>{t.inventory.intrastate}:</strong> CGST + SGST | <strong>{t.inventory.interstate}:</strong> IGST only
-                        </p>
-                      </div>
-
-                      {false && <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-                        {/* Expandable: {t.inventory.hsnCode} */}
-                        <div>
-                          {!showHSN ? (
-                            <div>
-                              <button
-                                type="button"
-                                onClick={() => setShowHSN(true)}
-                                className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1 mt-6"
-                              >
-                                <Plus size={14} weight="bold" />
-                                {t.inventory.hsnCode}
-                              </button>
-
-                              {/* AI HSN Suggestions Badge */}
-                              {hsnSuggestions.length > 0 && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: -10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg"
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <Star size={16} weight="fill" className="text-emerald-600 flex-shrink-0 mt-0.5" />
-                                    <div className="flex-1">
-                                      <p className="text-xs font-semibold text-emerald-800 mb-1">
-                                        AI suggested HSN codes for "{itemName.substring(0, 20)}{itemName.length > 20 ? '...' : ''}"
-                                      </p>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setShowHSN(true)
-                                          setShowHSNSuggestions(true)
-                                        }}
-                                        className="text-xs text-emerald-700 font-medium hover:text-emerald-900 underline"
-                                      >
-                                        View {hsnSuggestions.length} suggestion{hsnSuggestions.length > 1 ? 's' : ''}
-                                      </button>
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </div>
-                          ) : (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              className="space-y-2"
-                            >
-                              <label className="text-xs font-medium mb-1.5 block">
-                                {t.inventory.hsnCode} (Optional)
-                                <span className="ml-1.5 text-[10px] text-blue-600 font-normal">(Auto-filled from Category)</span>
-                              </label>
-                              <input
-                                type="text"
-                                value={hsnCode}
-                                onChange={(e) => setHsnCode(e.target.value)}
-                                placeholder="e.g., 9609 for pens"
-                                className="w-full px-3 py-2.5 bg-blue-50 dark:bg-blue-950/20 border border-blue-300 dark:border-blue-800 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                              />
-
-                              {/* AI HSN Suggestions Dropdown */}
-                              {showHSNSuggestions && hsnSuggestions.length > 0 && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: -10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className="bg-white border-2 border-emerald-200 rounded-lg shadow-lg overflow-hidden"
-                                >
-                                  <div className="px-3 py-2 bg-emerald-50 border-b border-emerald-200 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                      <Star size={14} weight="fill" className="text-emerald-600" />
-                                      <span className="text-xs font-semibold text-emerald-800">{t.inventory.aiSuggestions}</span>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => setShowHSNSuggestions(false)}
-                                      className="text-emerald-600 hover:text-emerald-800"
-                                    >
-                                      <X size={14} weight="bold" />
-                                    </button>
-                                  </div>
-                                  <div className="max-h-48 overflow-y-auto">
-                                    {hsnSuggestions.map((suggestion, index) => (
-                                      <button
-                                        key={index}
-                                        type="button"
-                                        onClick={() => {
-                                          setHsnCode(suggestion.code)
-                                          setGstRate(suggestion.gstRate.toString())
-                                          setShowHSNSuggestions(false)
-                                          toast.success(`{t.inventory.hsnCode} ${suggestion.code} applied with ${suggestion.gstRate}% GST`)
-                                        }}
-                                        className="w-full px-3 py-2.5 text-left hover:bg-emerald-50 border-b border-gray-100 last:border-b-0 transition-colors"
-                                      >
-                                        <div className="flex items-start justify-between gap-3">
-                                          <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                              <span className="text-sm font-bold text-primary">{suggestion.code}</span>
-                                              <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded">
-                                                {suggestion.gstRate}% GST
-                                              </span>
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">{suggestion.description}</p>
-                                          </div>
-                                          <ArrowRight size={14} className="text-muted-foreground flex-shrink-0 mt-1" />
-                                        </div>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </motion.div>
-                              )}
-                            </motion.div>
-                          )}
-                        </div>
-                      </div>}
-                    </div>
-
-                    {/* Section 4: Stock Management */}
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
-                        <Package size={16} weight="duotone" />
-                        {t.inventory.stockManagement}
-                      </h3>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Stock Quantity with Unit Selector */}
-                        <div>
-                          <label className="text-xs font-medium mb-1.5 block">{t.inventory.openingStock}</label>
-                          <input
-                            type="number"
-                            value={stockQuantity}
-                            onChange={(e) => setStockQuantity(e.target.value)}
-                            placeholder="0"
-                            className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                          />
-                        </div>
-
-                        {/* Expandable: {t.inventory.lowStockAlert} */}
-                        <div>
-                          {!showLowStockAlert ? (
-                            <button
-                              type="button"
-                              onClick={() => setShowLowStockAlert(true)}
-                              className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1 mt-6"
-                            >
-                              <Bell size={14} weight="duotone" />
-                              {t.inventory.lowStockAlert}
-                            </button>
-                          ) : (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                            >
-                              <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
-                                <Bell size={12} weight="duotone" />
-                                {t.inventory.lowStockAlertQty}
-                              </label>
-                              <input
-                                type="number"
-                                value={lowStockAlert}
-                                onChange={(e) => setLowStockAlert(e.target.value)}
-                                placeholder="e.g., 5"
-                                className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                              />
-                              <p className="text-[10px] text-muted-foreground mt-1">
-                                {t.inventory.alertBelowQty}
-                              </p>
-                            </motion.div>
-                          )}
-                        </div>
-                      </div>
-
                     </div>
 
                     {/* Section 5: {t.inventory.multiUnitConversion} */}
@@ -2532,7 +2215,7 @@ const Inventory = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="px-4 py-2 border-t border-border flex gap-3">
+                <div className="px-5 py-4 border-t border-slate-200 dark:border-slate-800 flex gap-3 bg-slate-50 dark:bg-slate-900 rounded-b-xl">
                   <button
                     onClick={() => {
                       setShowAddModal(false)
@@ -2543,14 +2226,14 @@ const Inventory = () => {
                         setReturnToUrl(null)
                       }
                     }}
-                    className="flex-1 px-4 py-2 bg-muted hover:bg-muted/80 rounded-lg font-medium transition-colors text-sm"
+                    className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors text-sm text-slate-700 dark:text-slate-300 shadow-sm"
                   >
                     {t.inventory.cancel}
                   </button>
                   <button
                     onClick={handleAddItem}
                     disabled={isLoading}
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-primary to-accent text-white rounded-lg font-medium hover:shadow-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold hover:shadow-md transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                   >
                     {isLoading ? (
                       <>
@@ -2595,7 +2278,7 @@ const Inventory = () => {
                 className="bg-card text-card-foreground rounded-xl shadow-2xl border border-border w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col"
               >
                 {/* Header */}
-                <div className="px-4 sm:px-6 py-4 border-b border-border bg-gradient-to-r from-amber-50 to-orange-50">
+                <div className="px-4 sm:px-6 py-4 border-b border-border ">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
                       <Pencil size={24} weight="duotone" className="text-amber-600" />
@@ -3318,7 +3001,7 @@ const Inventory = () => {
                   <button
                     onClick={saveEditedItem}
                     disabled={isLoading}
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg font-medium hover:shadow-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2.5  text-white rounded-lg font-medium hover:shadow-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <>

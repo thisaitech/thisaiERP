@@ -964,80 +964,69 @@ const Parties = () => {
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col gap-2 md:gap-3 mb-3">
           {/* Left Side: KPI Cards - Rectangular filling space */}
-          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-3">
-            {/* Parties Card - Blue Theme */}
-            <div className="erp-legacy-kpi-shell !min-h-[66px] sm:!min-h-[84px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button
-                onClick={() => setActiveTab('all')}
-                className="erp-legacy-kpi-button !min-h-[62px] sm:!min-h-[78px] md:!min-h-[104px] !px-1 !py-1 sm:!px-2.5 sm:!py-2 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
-              >
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <Users size={20} weight="duotone" className="text-blue-500" />
+          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Parties Card */}
+            <div onClick={() => setActiveTab('all')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                  <Users size={22} className="text-blue-600 dark:text-blue-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®¤à®°à®ªà¯à®ªà®¿à®©à®°à¯' : 'Students & Clients'}</span>
-                  <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{partiesSummary.totalParties}</span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'தரப்பினர்' : 'Students & Clients'}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{partiesSummary.totalParties}</p>
+              </div>
             </div>
 
-            {/* Total Due Card - Green Theme */}
-            <div className="erp-legacy-kpi-shell !min-h-[66px] sm:!min-h-[84px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button
-                onClick={() => setActiveTab('customers')}
-                className="erp-legacy-kpi-button !min-h-[62px] sm:!min-h-[78px] md:!min-h-[104px] !px-1 !py-1 sm:!px-2.5 sm:!py-2 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
-              >
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* Total Due Card */}
+            <div onClick={() => setActiveTab('customers')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
+                  <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®ªà¯†à®± à®µà¯‡à®£à¯à®Ÿà®¿à®¯à®¤à¯' : 'Total Due'}</span>
-                  <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                    {"Rs "}{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'பெற வேண்டியது' : 'Total Due'}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                  {"Rs "}{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
 
-            {/* Advance/Credit Card - Red Theme */}
-            <div className="erp-legacy-kpi-shell !min-h-[66px] sm:!min-h-[84px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-red-400 to-rose-500 shadow-[6px_6px_12px_rgba(239,68,68,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(239,68,68,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button
-                onClick={() => setActiveTab('suppliers')}
-                className="erp-legacy-kpi-button !min-h-[62px] sm:!min-h-[78px] md:!min-h-[104px] !px-1 !py-1 sm:!px-2.5 sm:!py-2 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
-              >
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* Advance/Credit Card */}
+            <div onClick={() => setActiveTab('suppliers')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/20">
+                  <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®šà¯†à®²à¯à®¤à¯à®¤ à®µà¯‡à®£à¯à®Ÿà®¿à®¯à®¤à¯' : 'Advance/Credit'}</span>
-                  <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
-                    {"Rs "}{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'Advance/Credit'}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                  {"Rs "}{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
 
-            {/* Net Balance Card - Purple Theme */}
-            <div className="erp-legacy-kpi-shell !min-h-[66px] sm:!min-h-[84px] md:!min-h-[108px] p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-purple-400 to-violet-500 shadow-[6px_6px_12px_rgba(139,92,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(139,92,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button
-                className="erp-legacy-kpi-button !min-h-[62px] sm:!min-h-[78px] md:!min-h-[104px] !px-1 !py-1 sm:!px-2.5 sm:!py-2 md:!px-4 md:!py-3 w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3"
-              >
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* Net Balance Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-50 dark:bg-purple-900/20">
+                  <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">{language === 'ta' ? 'à®¨à®¿à®•à®° à®‡à®°à¯à®ªà¯à®ªà¯' : 'Net Balance'}</span>
-                  <span className="text-sm sm:text-lg md:text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
-                    {"Rs "}{Math.abs(partiesSummary.netBalance) >= 10000000 ? (partiesSummary.netBalance / 10000000).toFixed(1) + ' Cr' : Math.abs(partiesSummary.netBalance) >= 100000 ? (partiesSummary.netBalance / 100000).toFixed(1) + ' L' : Math.abs(partiesSummary.netBalance) >= 1000 ? (partiesSummary.netBalance / 1000).toFixed(1) + ' K' : partiesSummary.netBalance.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'நிகர இருப்பு' : 'Net Balance'}</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                  {"Rs "}{Math.abs(partiesSummary.netBalance) >= 10000000 ? (partiesSummary.netBalance / 10000000).toFixed(1) + ' Cr' : Math.abs(partiesSummary.netBalance) >= 100000 ? (partiesSummary.netBalance / 100000).toFixed(1) + ' L' : Math.abs(partiesSummary.netBalance) >= 1000 ? (partiesSummary.netBalance / 1000).toFixed(1) + ' K' : partiesSummary.netBalance.toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
           </div>
 

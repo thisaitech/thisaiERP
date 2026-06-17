@@ -648,57 +648,57 @@ const ReportsNew = () => {
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
           {/* Left Side: KPI Cards - Rectangular filling space */}
-          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-4 gap-1.5 md:gap-3">
-            {/* Reports Available Card - Blue Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 shadow-[6px_6px_12px_rgba(59,130,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(59,130,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3">
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <ChartBar size={20} weight="duotone" className="text-blue-500" />
+          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Reports Available Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                  <ChartBar size={22} className="text-blue-600 dark:text-blue-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-semibold">Reports</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">12</span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">Reports</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">12</p>
+              </div>
             </div>
 
-            {/* Downloaded Card - Green Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 shadow-[6px_6px_12px_rgba(34,197,94,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(34,197,94,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3">
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <Download size={20} weight="duotone" className="text-green-500" />
+            {/* Downloaded Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
+                  <Download size={22} className="text-green-600 dark:text-green-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-semibold">Downloaded</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">0</span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">Downloaded</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">0</p>
+              </div>
             </div>
 
-            {/* Views Card - Amber Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 shadow-[6px_6px_12px_rgba(245,158,11,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(245,158,11,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3">
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <Eye size={20} weight="duotone" className="text-amber-500" />
+            {/* Views Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-900/20">
+                  <Eye size={22} className="text-amber-600 dark:text-amber-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent font-semibold">Views</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">{currentReportType ? 1 : 0}</span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">Views</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{currentReportType ? 1 : 0}</p>
+              </div>
             </div>
 
-            {/* Categories Card - Purple Theme */}
-            <div className="erp-legacy-kpi-shell p-[1px] md:p-[2px] rounded-lg md:rounded-2xl bg-gradient-to-r from-purple-400 to-violet-500 shadow-[6px_6px_12px_rgba(139,92,246,0.12),-6px_-6px_12px_#ffffff] hover:shadow-[8px_8px_16px_rgba(139,92,246,0.18),-8px_-8px_16px_#ffffff] transition-all">
-              <button className="erp-legacy-kpi-button w-full h-full bg-[#e4ebf5] rounded-[6px] md:rounded-[14px] px-1.5 md:px-4 py-1.5 md:py-3 transition-all active:scale-[0.98] flex flex-col md:flex-row items-center md:gap-3">
-                <div className="hidden md:flex w-10 h-10 rounded-xl bg-[#e4ebf5] items-center justify-center shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]">
-                  <FolderOpen size={20} weight="duotone" className="text-purple-500" />
+            {/* Categories Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div className="flex justify-between items-start mb-2">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-50 dark:bg-purple-900/20">
+                  <FolderOpen size={22} className="text-purple-600 dark:text-purple-400" />
                 </div>
-                <div className="flex flex-col items-center md:items-start flex-1">
-                  <span className="text-[8px] md:text-xs bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent font-semibold">Categories</span>
-                  <span className="text-xs md:text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">4</span>
-                </div>
-              </button>
+              </div>
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">Categories</h3>
+                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">4</p>
+              </div>
             </div>
           </div>
 
@@ -709,11 +709,11 @@ const ReportsNew = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleExportJSON}
-                  className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-yellow-600 font-semibold flex items-center gap-1.5
-                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                    active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
+                  className="h-9 px-4 rounded-xl bg-white dark:bg-slate-800 dark:bg-slate-800 text-xs text-yellow-600 font-semibold flex items-center gap-1.5
+                    shadow-sm
+                    dark:shadow-sm
+                    hover:shadow-sm
+                    active:shadow-sm
                     transition-all duration-200"
                 >
                   <FileJs size={14} weight="bold" />
@@ -721,11 +721,11 @@ const ReportsNew = () => {
                 </button>
                 <button
                   onClick={handleExportExcel}
-                  className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-green-600 font-semibold flex items-center gap-1.5
-                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                    active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
+                  className="h-9 px-4 rounded-xl bg-white dark:bg-slate-800 dark:bg-slate-800 text-xs text-green-600 font-semibold flex items-center gap-1.5
+                    shadow-sm
+                    dark:shadow-sm
+                    hover:shadow-sm
+                    active:shadow-sm
                     transition-all duration-200"
                 >
                   <Download size={14} weight="bold" />
@@ -733,11 +733,11 @@ const ReportsNew = () => {
                 </button>
                 <button
                   onClick={handleExportPDF}
-                  className="h-9 px-4 rounded-xl bg-[#f5f7fa] dark:bg-slate-800 text-xs text-red-600 font-semibold flex items-center gap-1.5
-                    shadow-[4px_4px_8px_#e0e3e7,-4px_-4px_8px_#ffffff]
-                    dark:shadow-[4px_4px_8px_#1e293b,-4px_-4px_8px_#334155]
-                    hover:shadow-[6px_6px_12px_#e0e3e7,-6px_-6px_12px_#ffffff]
-                    active:shadow-[inset_3px_3px_6px_#e0e3e7,inset_-3px_-3px_6px_#ffffff]
+                  className="h-9 px-4 rounded-xl bg-white dark:bg-slate-800 dark:bg-slate-800 text-xs text-red-600 font-semibold flex items-center gap-1.5
+                    shadow-sm
+                    dark:shadow-sm
+                    hover:shadow-sm
+                    active:shadow-sm
                     transition-all duration-200"
                 >
                   <Download size={14} weight="bold" />

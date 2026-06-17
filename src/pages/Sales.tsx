@@ -4,7 +4,6 @@ import { toast } from 'sonner'
 import { cn } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
 import { createParty, getParties, updateParty } from '../services/partyService'
-import { getItems } from '../services/itemService'
 import { createInvoice, deleteInvoice, getInvoices, updateInvoice } from '../services/invoiceService'
 import MobilePageScaffold from '../components/mobile/MobilePageScaffold'
 import MobileStatCards from '../components/mobile/MobileStatCards'
@@ -14,6 +13,21 @@ import MobileActionMenu from '../components/mobile/MobileActionMenu'
 import MobileBottomSheet from '../components/mobile/MobileBottomSheet'
 import MobileFormSection from '../components/mobile/MobileFormSection'
 import MobileStickyCTA from '../components/mobile/MobileStickyCTA'
+
+const HARDCODED_COURSES = [
+  { id: '1', name: 'Fullstack AI', sellingPrice: 35000 },
+  { id: '2', name: 'AI ENGINEER', sellingPrice: 25000 },
+  { id: '3', name: 'UI/UX design AI', sellingPrice: 10000 },
+  { id: '4', name: 'Spoken English AI', sellingPrice: 10000 },
+  { id: '5', name: 'Vibe coding', sellingPrice: 15000 },
+  { id: '6', name: 'AI & GEN AI', sellingPrice: 6000 },
+  { id: '7', name: 'AI & GEN AI & Prompt Engineering', sellingPrice: 10000 },
+  { id: '8', name: 'AI Automations', sellingPrice: 15000 },
+  { id: '9', name: 'python with ML(AI)', sellingPrice: 15000 },
+  { id: '10', name: 'Basic Computer Course', sellingPrice: 10000 },
+  { id: '11', name: 'INTERNSHIP - 2 weeks', sellingPrice: 3000 },
+  { id: '12', name: 'INTERNSHIP - 1 Month', sellingPrice: 4000 },
+]
 
 type Student = {
   id: string
@@ -118,10 +132,10 @@ const Sales: React.FC = () => {
   const load = async () => {
     setLoading(true)
     try {
-      const [inv, st, co] = await Promise.all([getInvoices('sale'), getParties('both'), getItems()])
+      const [inv, st] = await Promise.all([getInvoices('sale'), getParties('both')])
       setInvoices(inv || [])
       setStudents(st as any)
-      setCourses(co as any)
+      setCourses(HARDCODED_COURSES as any)
     } catch (e: any) {
       toast.error(e?.message || 'Failed to load admissions data')
     } finally {
@@ -465,7 +479,7 @@ const Sales: React.FC = () => {
   const inputClass = (mobile: boolean) =>
     mobile
       ? 'mobile-control'
-      : 'mt-1 w-full px-3 py-2 rounded-xl border border-[#cfd9ea] bg-[#edf2f9] text-slate-800 shadow-[inset_2px_2px_4px_#cfd7e2,inset_-2px_-2px_4px_#ffffff] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+      : 'mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
 
   const formFields = (mobile: boolean) => (
     <div className="space-y-4">
@@ -529,7 +543,7 @@ const Sales: React.FC = () => {
               className={inputClass(mobile)}
             />
             {!isViewMode && !selectedStudentId && showStudentSuggestions && studentSearch.trim().length > 0 && filteredStudents.length > 0 && (
-              <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-[#cfd9ea] bg-[#edf2f9] shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff] dark:border-slate-700 dark:bg-slate-800 dark:shadow-none">
+              <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-800 ">
                 {filteredStudents.map((s) => (
                   <button
                     key={s.id}
@@ -677,7 +691,7 @@ const Sales: React.FC = () => {
   )
 
   return (
-    <div className="erp-module-page p-3 md:p-6 md:bg-[#e4ebf5]">
+    <div className="erp-module-page p-3 md:p-6 md:bg-slate-50 dark:bg-slate-900">
       <MobilePageScaffold
         title="Admissions"
         subtitle="Create and manage admissions"
@@ -732,7 +746,7 @@ const Sales: React.FC = () => {
         </div>
       </MobilePageScaffold>
 
-      <div className="hidden md:block w-full space-y-6 rounded-[24px] border border-[#d2dcec] bg-[#dfe7f2] p-5 shadow-[inset_4px_4px_8px_#cbd3de,inset_-4px_-4px_8px_#eef3fb]">
+      <div className="hidden md:block w-full space-y-6 rounded-[24px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Admissions</h1>
@@ -744,14 +758,14 @@ const Sales: React.FC = () => {
           </button>
         </div>
 
-        <div className="erp-module-panel overflow-hidden border-[#cfd9ea] bg-[#e4ebf5] shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff] dark:border-slate-700 dark:bg-slate-900 dark:shadow-none">
-          <div className="px-4 py-3 border-b border-[#d1dbea] bg-[#e1e9f3] dark:border-slate-700 dark:bg-slate-900/70 flex items-center justify-between">
+        <div className="erp-module-panel overflow-hidden border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900 ">
+          <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/70 dark:border-slate-700 dark:bg-slate-900/70 flex items-center justify-between">
             <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Recent Admissions</div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{loading ? 'Loading...' : `${invoices.length} record(s)`}</div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="erp-module-table-header bg-[#dbe5f2] dark:bg-slate-900/40 text-slate-600 dark:text-slate-300">
+              <thead className="erp-module-table-header bg-slate-100 dark:bg-slate-800/50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300">
                 <tr>
                   <th className="text-left px-4 py-2 font-semibold">Admission No</th>
                   <th className="text-left px-4 py-2 font-semibold">Date</th>
@@ -763,7 +777,7 @@ const Sales: React.FC = () => {
               </thead>
               <tbody>
                 {invoices.slice(0, 20).map((inv) => (
-                  <tr key={inv.id} className="border-t border-[#d3ddeb] dark:border-slate-700/60">
+                  <tr key={inv.id} className="border-t border-slate-200 dark:border-slate-700 dark:border-slate-700/60">
                     <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">{inv.invoiceNumber || inv.id}</td>
                     <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{(inv.invoiceDate || inv.createdAt || '').slice(0, 10)}</td>
                     <td className="px-4 py-2 text-slate-700 dark:text-slate-200">{inv.partyName || 'Student'}</td>
@@ -791,14 +805,14 @@ const Sales: React.FC = () => {
 
       {showForm && !isMobileViewport && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="w-full max-w-3xl rounded-2xl border border-[#d0dae9] bg-[#e4ebf5] shadow-[10px_10px_24px_#bac3cf,-10px_-10px_24px_#f6f8fc] dark:border-slate-700 dark:bg-slate-900 dark:shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#d1dbea] dark:border-slate-700">
+          <div className="w-full max-w-3xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
               <div className="font-bold text-slate-800 dark:text-slate-100">{modalTitle}</div>
               <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X size={18} /></button>
             </div>
-            <div className="p-5 max-h-[68vh] overflow-auto bg-[#dfe7f2] dark:bg-transparent">{formFields(false)}</div>
-            <div className="px-5 py-4 border-t border-[#d1dbea] dark:border-slate-700 flex items-center justify-end gap-3">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl border border-[#ccd7e7] bg-[#edf2f9] text-slate-700 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:shadow-none">{isViewMode ? 'Close' : 'Cancel'}</button>
+            <div className="p-5 max-h-[68vh] overflow-auto bg-white dark:bg-slate-800 dark:bg-transparent">{formFields(false)}</div>
+            <div className="px-5 py-4 border-t border-slate-200 dark:border-slate-700 dark:border-slate-700 flex items-center justify-end gap-3">
+              <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 shadow-sm hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 ">{isViewMode ? 'Close' : 'Cancel'}</button>
               {!isViewMode && (
                 <button disabled={saving} onClick={handleSave} className={cn('px-5 py-2 rounded-xl font-semibold text-white', saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700')}>
                   {saving ? (formMode === 'edit' ? 'Updating...' : 'Saving...') : (formMode === 'edit' ? 'Update Admission' : 'Save Admission')}

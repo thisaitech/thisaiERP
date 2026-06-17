@@ -737,10 +737,10 @@ const Dashboard = () => {
     return () => clearInterval(interval)
   }, [smartAlerts.length])
 
-  // ==================== MOBILE DASHBOARD (Neumorphic Soft UI Design) ====================
+  // ==================== MOBILE DASHBOARD (Minimalist UI) ====================
   const MobileDashboard = () => {
     return (
-      <div className="p-4 pb-28 bg-[#e4ebf5] dark:bg-slate-900 min-h-screen">
+      <div className="p-4 pb-28 bg-slate-50 dark:bg-slate-900 min-h-screen">
         {/* Header */}
         <div className="mb-4">
           <div>
@@ -757,8 +757,8 @@ const Dashboard = () => {
                 className={cn(
                   "px-4 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-200",
                   selectedPeriod === period.id
-                    ? "bg-blue-600 text-white shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]"
-                    : "text-slate-600 dark:text-slate-300 bg-[#e4ebf5] dark:bg-slate-800 shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_#c5ccd6,inset_-2px_-2px_4px_#ffffff]"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/50"
                 )}
               >
                 {period.label}
@@ -779,9 +779,9 @@ const Dashboard = () => {
           }}
         >
           {[
-            { label: 'Admissions', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, gradient: 'from-emerald-600 to-emerald-800', bgGradient: 'from-emerald-700/90 to-emerald-900/90' },
-            { label: 'Spending', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, gradient: 'from-blue-600 to-blue-800', bgGradient: 'from-blue-700/90 to-blue-900/90' },
-            { label: 'Profit', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, gradient: 'from-amber-500 to-yellow-700', bgGradient: 'from-amber-600/90 to-yellow-700/90' },
+            { label: 'Admissions', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, color: 'text-blue-600' },
+            { label: 'Spending', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, color: 'text-slate-700' },
+            { label: 'Profit', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, color: 'text-green-600' },
           ].map((stat, i) => (
             <motion.div
               key={i}
@@ -791,37 +791,25 @@ const Dashboard = () => {
               }}
               onClick={() => navigate(stat.route)}
               className={cn(
-                "relative p-2.5 rounded-2xl cursor-pointer overflow-hidden text-center flex flex-col items-center justify-center gap-1.5 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]",
-                "border-2 border-white/20 backdrop-blur-sm",
-                "shadow-[8px_8px_24px_rgba(0,0,0,0.3)]",
-                "hover:shadow-[12px_12px_32px_rgba(0,0,0,0.4)]"
+                "relative p-3 rounded-2xl cursor-pointer overflow-hidden text-center flex flex-col items-center justify-center gap-1.5 transition-all duration-200 hover:scale-[1.02]",
+                "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm"
               )}
-              style={{
-                background: `linear-gradient(135deg, ${
-                  stat.gradient.includes('emerald') ? '#047857, #065f46' :
-                  stat.gradient.includes('rose') ? '#be123c, #881337' :
-                  stat.gradient.includes('blue') ? '#1d4ed8, #1e3a8a' :
-                  '#d97706, #a16207'
-                })`
-              }}
             >
               <div className="flex flex-col items-center justify-center gap-1">
-                <div className="w-6 h-6 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <stat.icon size={12} weight="bold" className="text-white" />
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                  <stat.icon size={16} weight="bold" className={stat.color} />
                 </div>
-                <p className="text-[11px] font-semibold leading-none text-white/95 text-center whitespace-nowrap">{stat.label}</p>
+                <p className="text-[11px] font-semibold leading-none text-slate-500 dark:text-slate-400 text-center whitespace-nowrap mt-1">{stat.label}</p>
               </div>
-              <p className="text-xl font-bold text-white text-center leading-none">
+              <p className="text-lg font-bold text-slate-800 dark:text-slate-100 text-center leading-none mt-0.5">
                 {`\u20B9${formatExactAmount(stat.value)}`}
               </p>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Weekly Chart - Neumorphic */}
-        <div className="p-5 rounded-3xl bg-[#e4ebf5] dark:bg-slate-800 mt-5
-          shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
-          dark:shadow-[8px_8px_16px_#1e293b,-8px_-8px_16px_#334155]">
+        {/* Weekly Chart - Minimalist */}
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mt-5 shadow-sm">
           <div className="flex justify-between items-center mb-3">
             <p className="text-base font-semibold text-slate-800 dark:text-slate-100">Weekly Overview</p>
             <div className="flex items-center gap-3 text-xs">
@@ -891,24 +879,23 @@ const Dashboard = () => {
               visible: { transition: { staggerChildren: 0.1 } },
             }}
           >
-            {recentTransactions.slice(0, 4).map((tx) => (
+            {recentTransactions.slice(0, 4).map((tx) => {
+              const Icon = tx.icon;
+              return (
               <motion.div
                 key={tx.id}
                 variants={{
                   hidden: { opacity: 0, y: 20 },
                   visible: { opacity: 1, y: 0 },
                 }}
-                className="flex items-center gap-3 p-4 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
-                  shadow-[inset_3px_3px_6px_#c5ccd6,inset_-3px_-3px_6px_#ffffff]
-                  dark:shadow-[inset_3px_3px_6px_#1e293b,inset_-3px_-3px_6px_#334155]
-                  transition-all duration-200"
+                className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-200"
               >
-                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shadow-[3px_3px_6px_#c5ccd6,-3px_-3px_6px_#ffffff]',
+                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shadow-sm',
                     tx.type === 'sale' ? 'bg-green-100/80 dark:bg-green-900/50' :
                     tx.type === 'purchase' ? 'bg-red-100/80 dark:bg-red-900/50' :
                     'bg-yellow-100/80 dark:bg-yellow-900/50'
                 )}>
-                   <tx.icon size={20} className={cn(
+                   <Icon size={20} className={cn(
                       tx.type === 'sale' ? 'text-green-600 dark:text-green-400' :
                       tx.type === 'purchase' ? 'text-red-600 dark:text-red-400' :
                       'text-yellow-600 dark:text-yellow-400'
@@ -927,55 +914,45 @@ const Dashboard = () => {
                   </p>
                 </div>
               </motion.div>
-            ))}
+            )})}
           </motion.div>
         </div>
       </div>
     )
   }
 
-  // ==================== DESKTOP DASHBOARD (Neumorphic Soft UI Design) ====================
+  // ==================== DESKTOP DASHBOARD (Minimalist UI Design) ====================
     const DesktopDashboard = () => (
-      <div className="min-h-screen bg-[#e4ebf5] dark:bg-slate-900 p-8">
-        <div className="w-full space-y-8">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
+        <div className="w-full space-y-4">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-700 dark:text-slate-100">{greeting}, {userData?.firstName || 'User'}!</h1>
-              <p className="text-base text-slate-500 dark:text-slate-400 mt-1">Here's your business overview for {getPeriodLabel()}.</p>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* Minimalist Period Filter */}
+            <div className="flex items-center gap-1 p-1 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                {periods.map((period) => (
+                  <button
+                    key={period.id}
+                    onClick={() => setSelectedPeriod(period.id)}
+                    className={cn(
+                      "px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200",
+                      selectedPeriod === period.id
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    )}
+                  >
+                    {period.label}
+                  </button>
+                ))}
             </div>
-            <div className="flex items-center gap-4">
-              {/* Neumorphic Period Filter */}
-              <div className="flex items-center gap-1 p-1.5 rounded-2xl bg-[#e4ebf5] dark:bg-slate-800
-                shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff] dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]">
-                  {periods.map((period) => (
-                    <button
-                      key={period.id}
-                      onClick={() => setSelectedPeriod(period.id)}
-                      className={cn(
-                        "px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300",
-                        selectedPeriod === period.id
-                          ? "bg-blue-600 text-white shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff,inset_2px_2px_4px_rgba(0,0,0,0.1)] dark:shadow-[4px_4px_8px_#1e293b]"
-                          : "text-slate-600 dark:text-slate-300 hover:bg-[#dce3ed] dark:hover:bg-slate-700"
-                      )}
-                    >
-                      {period.label}
-                    </button>
-                  ))}
-              </div>
-              {/* Neumorphic Create Button */}
-              <button
-                  onClick={() => { localStorage.setItem('sales_viewMode', 'create'); navigate('/sales') }}
-                  className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 text-white font-semibold rounded-2xl
-                    shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff,inset_0_1px_0_rgba(255,255,255,0.2)]
-                    hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff,inset_0_1px_0_rgba(255,255,255,0.3)]
-                    active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)]
-                    transition-all duration-200"
-                >
-                  <Plus size={20} weight="bold" />
-                  <span>New Admission</span>
-                </button>
-            </div>
+            {/* Minimalist Create Button */}
+            <button
+                onClick={() => { localStorage.setItem('sales_viewMode', 'create'); navigate('/sales') }}
+                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl
+                  shadow-sm transition-all duration-200 text-sm"
+              >
+                <Plus size={18} weight="bold" />
+                <span>New Admission</span>
+              </button>
           </div>
 
           {/* Stats Cards - Professional Neutral Style (6 Cards in a row) */}
@@ -1016,8 +993,8 @@ const Dashboard = () => {
                   "bg-white dark:bg-slate-800",
                   "border border-slate-200 dark:border-slate-700",
                   "shadow-[4px_4px_12px_rgba(0,0,0,0.06),-2px_-2px_8px_rgba(255,255,255,0.8)]",
-                  "hover:shadow-[6px_6px_16px_rgba(0,0,0,0.1),-3px_-3px_12px_rgba(255,255,255,0.9)]",
-                  "dark:shadow-[4px_4px_12px_#1e293b,-2px_-2px_8px_#334155]",
+                  "hover:shadow",
+                  "dark:shadow-sm",
                   stat.isBalance && isNegative && "border-l-4 border-l-red-500"
                 )}
               >
@@ -1070,26 +1047,19 @@ const Dashboard = () => {
             )})}
           </motion.div>
 
-          {/* Quick Shortcuts - Neumorphic Panel */}
+          {/* Quick Shortcuts - Minimalist Panel */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="p-5 rounded-3xl bg-[#e4ebf5] dark:bg-slate-800
-              shadow-[12px_12px_24px_#c5ccd6,-12px_-12px_24px_#ffffff]
-              dark:shadow-[12px_12px_24px_#1e293b,-12px_-12px_24px_#334155]"
+            className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm"
           >
             <div className="flex flex-wrap gap-4">
               {/* Create Invoice - Primary Action */}
               <button
                 onClick={() => { localStorage.setItem('sales_viewMode', 'create'); navigate('/sales') }}
                 className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-white
-                  bg-blue-600
-                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
-                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
-                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
-                  hover:bg-blue-700
-                  active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)]
+                  bg-blue-600 hover:bg-blue-700 shadow-sm
                   transition-all duration-200"
               >
                 <Receipt size={18} weight="bold" />
@@ -1098,13 +1068,9 @@ const Dashboard = () => {
               {/* Scan QR Code */}
               <button
                 onClick={() => toast('QR Scanner coming soon!', { icon: '📱' })}
-                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-white
-                  bg-violet-600
-                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
-                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
-                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
-                  hover:bg-violet-700
-                  active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.2)]
+                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-200
+                  bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600
+                  border border-slate-200 dark:border-slate-600 shadow-sm
                   transition-all duration-200"
               >
                 <Scan size={18} weight="bold" />
@@ -1113,12 +1079,9 @@ const Dashboard = () => {
               {/* Add Expense */}
               <button
                 onClick={() => navigate('/expenses')}
-                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-200
-                  bg-[#e4ebf5] dark:bg-slate-700
-                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
-                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
-                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
-                  active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
+                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-200
+                  bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600
+                  border border-slate-200 dark:border-slate-600 shadow-sm
                   transition-all duration-200"
               >
                 <Wallet size={18} className="text-amber-500" />
@@ -1127,12 +1090,9 @@ const Dashboard = () => {
               {/* Add Student */}
               <button
                 onClick={() => navigate('/parties')}
-                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-200
-                  bg-[#e4ebf5] dark:bg-slate-700
-                  shadow-[6px_6px_12px_#c5ccd6,-6px_-6px_12px_#ffffff]
-                  dark:shadow-[6px_6px_12px_#1e293b,-6px_-6px_12px_#334155]
-                  hover:shadow-[8px_8px_16px_#c5ccd6,-8px_-8px_16px_#ffffff]
-                  active:shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
+                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-200
+                  bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600
+                  border border-slate-200 dark:border-slate-600 shadow-sm
                   transition-all duration-200"
               >
                 <UserPlus size={18} className="text-slate-500" />
@@ -1145,10 +1105,8 @@ const Dashboard = () => {
         <div className="grid grid-cols-3 gap-8">
           {/* Left Column */}
           <div className="col-span-3 lg:col-span-2 space-y-8">
-            {/* Weekly Chart - Neumorphic */}
-            <div className="p-7 rounded-3xl bg-[#e4ebf5] dark:bg-slate-800
-              shadow-[12px_12px_24px_#c5ccd6,-12px_-12px_24px_#ffffff]
-              dark:shadow-[12px_12px_24px_#1e293b,-12px_-12px_24px_#334155]">
+            {/* Weekly Chart - Minimalist */}
+            <div className="p-7 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Weekly Overview</h2>
                 <div className="flex items-center gap-4 text-sm">
@@ -1207,9 +1165,7 @@ const Dashboard = () => {
 
           {/* Right Column */}
           <div className="col-span-3 lg:col-span-1 space-y-8">
-            <div className="p-7 rounded-3xl bg-[#e4ebf5] dark:bg-slate-800
-              shadow-[12px_12px_24px_#c5ccd6,-12px_-12px_24px_#ffffff]
-              dark:shadow-[12px_12px_24px_#1e293b,-12px_-12px_24px_#334155]">
+            <div className="p-7 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
               <div className="flex justify-between items-center mb-5">
                 <h2 className="text-xl font-bold text-slate-700 dark:text-slate-100">Recent Activity</h2>
                 <button onClick={() => navigate('/reports')} className="text-sm text-blue-600 dark:text-blue-400 font-semibold hover:underline">View All</button>
@@ -1229,13 +1185,11 @@ const Dashboard = () => {
                         hidden: { opacity: 0, x: -20 },
                         visible: { opacity: 1, x: 0 },
                       }}
-                      className="flex items-center gap-4 p-4 rounded-2xl bg-[#e4ebf5] dark:bg-slate-700
-                        shadow-[inset_4px_4px_8px_#c5ccd6,inset_-4px_-4px_8px_#ffffff]
-                        dark:shadow-[inset_4px_4px_8px_#1e293b,inset_-4px_-4px_8px_#334155]
-                        transition-all duration-200"
+                      className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800
+                        border border-slate-200 dark:border-slate-700
+                        shadow-sm hover:shadow-md transition-all duration-200"
                     >
-                      <div className={cn('p-3 rounded-xl',
-                        'shadow-[4px_4px_8px_#c5ccd6,-4px_-4px_8px_#ffffff]',
+                      <div className={cn('p-3 rounded-xl shadow-sm',
                           transaction.type === 'sale' ? 'bg-green-100/80 dark:bg-green-900/50' :
                           transaction.type === 'purchase' ? 'bg-red-100/80 dark:bg-red-900/50' :
                           'bg-yellow-100/80 dark:bg-yellow-900/50'
@@ -1267,7 +1221,7 @@ const Dashboard = () => {
     )
 
     return (
-      <div className="erp-module-page p-0 bg-[#e4ebf5] dark:bg-slate-900">
+      <div className="erp-module-page p-0 bg-slate-50 dark:bg-slate-900">
         {/* Mobile Dashboard */}
         <div className="md:hidden">
           <MobileDashboard />
