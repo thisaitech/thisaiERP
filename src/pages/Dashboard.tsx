@@ -726,7 +726,8 @@ const Dashboard = () => {
     { id: 'today', label: t.common.today },
     { id: 'week', label: t.common.week },
     { id: 'month', label: t.common.month },
-    { id: 'year', label: t.common.year }
+    { id: 'year', label: t.common.year },
+    { id: 'all', label: 'All' }
   ]
 
   // Auto-rotate alerts
