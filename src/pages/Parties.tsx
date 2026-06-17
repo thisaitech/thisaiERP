@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import {
   Users,
@@ -82,6 +82,7 @@ const INDIAN_STATES = [
 ]
 
 const Parties = () => {
+  const navigate = useNavigate()
   // Language support
   const { t, language } = useLanguage()
 
@@ -1270,6 +1271,13 @@ const Parties = () => {
                   {/* Actions */}
                   <div style={{ width: '24%' }} className="flex items-center justify-center gap-0.5">
                     <button
+                      onClick={() => navigate('/sales', { state: { preselectPartyId: party.id } })}
+                      className="w-7 h-7 flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                      title="Add Admission"
+                    >
+                      <Plus size={16} weight="bold" className="text-emerald-600" />
+                    </button>
+                    <button
                       onClick={() => viewLedger(party)}
                       className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                       title="View Ledger"
@@ -1372,6 +1380,13 @@ const Parties = () => {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 pt-2 border-t border-slate-100">
+                    <button
+                      onClick={() => navigate('/sales', { state: { preselectPartyId: party.id } })}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                    >
+                      <Plus size={14} weight="bold" className="text-emerald-600" />
+                      <span className="text-[11px] font-medium text-emerald-700">Admission</span>
+                    </button>
                     <button
                       onClick={() => viewLedger(party)}
                       className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"

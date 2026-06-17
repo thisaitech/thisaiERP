@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { CalendarBlank, Eye, Pencil, Plus, Trash, Users, Wallet, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { useLocation } from 'react-router-dom'
 import { cn } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
 import { createParty, getParties, updateParty } from '../services/partyService'
@@ -89,6 +90,7 @@ const genAdmissionNo = (existingInvoices: any[] = [], dateValue?: string) => {
 }
 
 const Sales: React.FC = () => {
+  const location = useLocation()
   const todayISO = new Date().toISOString().split('T')[0]
   const { userData } = useAuth()
   const [loading, setLoading] = useState(false)
@@ -114,6 +116,22 @@ const Sales: React.FC = () => {
   const [paidAmount, setPaidAmount] = useState<string>('0')
   const [focusedFeeLineId, setFocusedFeeLineId] = useState<string | null>(null)
   const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth < 768)
+
+  useEffect(() => {
+    if (location.state?.preselectPartyId && students.length > 0 && !selectedStudentId) {
+      const p = students.find(s => String(s.id) === String(location.state.preselectPartyId))
+      if (p) {
+        setShowForm(true)
+        setFormMode('create')
+        setSelectedStudentId(p.id)
+        setStudentSearch(p.name || p.companyName || '')
+        setPhone(p.phone || '')
+        setAddress(p.address || p.billingAddress?.street || '')
+        // Clean up state so we don't re-trigger on refresh
+        window.history.replaceState({}, '')
+      }
+    }
+  }, [location.state, students, selectedStudentId])
 
   useEffect(() => {
     const onResize = () => setIsMobileViewport(window.innerWidth < 768)
