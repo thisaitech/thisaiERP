@@ -388,12 +388,12 @@ const Visitors = () => {
               {ENQUIRY_TYPE_LABELS[visitor.enquiryType]}
             </span>
           </div>
-          <div className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-300">
-            <p className="flex items-center gap-2"><Phone size={14} /> {visitor.phone}</p>
-            {visitor.address && <p className="flex items-center gap-2"><MapPin size={14} /> {visitor.address}</p>}
-            {visitor.course && <p className="flex items-center gap-2"><GraduationCap size={14} /> {visitor.course}</p>}
-            {visitor.profession && <p className="flex items-center gap-2"><Briefcase size={14} /> {visitor.profession}</p>}
-            <p className="text-xs text-slate-500">
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-slate-600 dark:text-slate-300">
+            <p className="flex items-center gap-1"><Phone size={14} /> {visitor.phone}</p>
+            {visitor.address && <p className="flex items-center gap-1"><MapPin size={14} /> {visitor.address}</p>}
+            {visitor.course && <p className="flex items-center gap-1"><GraduationCap size={14} /> {visitor.course}</p>}
+            {visitor.profession && <p className="flex items-center gap-1"><Briefcase size={14} /> {visitor.profession}</p>}
+            <p className="w-full text-xs text-slate-500 pt-1">
               {SOURCE_LABELS[visitor.source]}
               {visitor.sourceDetail ? ` · ${visitor.sourceDetail}` : ''}
               {' · '}
