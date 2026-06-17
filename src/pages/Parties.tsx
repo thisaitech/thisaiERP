@@ -706,6 +706,7 @@ const Parties = () => {
   const partiesSummary = useMemo(() => {
     let totalReceivables = 0
     let totalPayables = 0
+    let totalPaid = 0
 
     filteredParties.forEach(party => {
       const outstanding = party.outstanding ?? party.currentBalance ?? 0
@@ -717,17 +718,24 @@ const Parties = () => {
       }
     })
 
+    allInvoices.forEach(inv => {
+      if (inv.type === 'sales') {
+        totalPaid += Number(inv.paidAmount) || Number(inv.payment?.paidAmount) || 0;
+      }
+    });
+
     return {
       totalParties: filteredParties.length,
       customers: filteredParties.filter(p => p.type === 'customer').length,
       suppliers: filteredParties.filter(p => p.type === 'supplier').length,
       totalReceivables,
       totalPayables,
+      totalPaid,
       netBalance: totalReceivables - totalPayables,
       activeParties: filteredParties.filter(p => p.isActive !== false).length,
       overdueCustomers: 0
     }
-  }, [filteredParties])
+  }, [filteredParties, allInvoices])
 
   const viewLedger = (party: typeof parties[0]) => {
     setSelectedParty(party)
@@ -964,9 +972,9 @@ const Parties = () => {
       >
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col gap-2 md:gap-3 mb-3">
-          {/* Left Side: KPI Cards - Rectangular filling space */}
-          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Parties Card */}
+          {/* Top KPI Cards */}
+          <div className="grid grid-cols-2 gap-3 mb-4 md:grid-cols-3 md:gap-6">
+            {/* Students Card */}
             <div onClick={() => setActiveTab('all')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div className="flex justify-between items-start mb-2">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
@@ -974,58 +982,41 @@ const Parties = () => {
                 </div>
               </div>
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'தரப்பினர்' : 'Students & Clients'}</h3>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'மாணவர்கள்' : 'Students'}</h3>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{partiesSummary.totalParties}</p>
               </div>
             </div>
 
-            {/* Total Due Card */}
+            {/* Pending Amount Card */}
             <div onClick={() => setActiveTab('customers')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
-                  <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 8h6m-5 0a3 3 0 110 6H9l3 3m-3-6h6m6 1a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-900/20">
+                  <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               </div>
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'பெற வேண்டியது' : 'Total Due'}</h3>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'நிலுவை தொகை' : 'Pending Amount'}</h3>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
                   {"Rs "}{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
 
-            {/* Advance/Credit Card */}
-            <div onClick={() => setActiveTab('suppliers')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+            {/* Paid Amount Card */}
+            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md col-span-2 md:col-span-1">
               <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/20">
-                  <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
+                  <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               </div>
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'செலுத்த வேண்டியது' : 'Advance/Credit'}</h3>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'செலுத்திய தொகை' : 'Paid Amount'}</h3>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
-                  {"Rs "}{partiesSummary.totalPayables >= 10000000 ? (partiesSummary.totalPayables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPayables >= 100000 ? (partiesSummary.totalPayables / 100000).toFixed(1) + ' L' : partiesSummary.totalPayables >= 1000 ? (partiesSummary.totalPayables / 1000).toFixed(1) + ' K' : partiesSummary.totalPayables.toLocaleString('en-IN')}
-                </p>
-              </div>
-            </div>
-
-            {/* Net Balance Card */}
-            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-50 dark:bg-purple-900/20">
-                  <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'நிகர இருப்பு' : 'Net Balance'}</h3>
-                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
-                  {"Rs "}{Math.abs(partiesSummary.netBalance) >= 10000000 ? (partiesSummary.netBalance / 10000000).toFixed(1) + ' Cr' : Math.abs(partiesSummary.netBalance) >= 100000 ? (partiesSummary.netBalance / 100000).toFixed(1) + ' L' : Math.abs(partiesSummary.netBalance) >= 1000 ? (partiesSummary.netBalance / 1000).toFixed(1) + ' K' : partiesSummary.netBalance.toLocaleString('en-IN')}
+                  {"Rs "}{partiesSummary.totalPaid >= 10000000 ? (partiesSummary.totalPaid / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPaid >= 100000 ? (partiesSummary.totalPaid / 100000).toFixed(1) + ' L' : partiesSummary.totalPaid >= 1000 ? (partiesSummary.totalPaid / 1000).toFixed(1) + ' K' : partiesSummary.totalPaid.toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
@@ -1040,79 +1031,7 @@ const Parties = () => {
               <Plus size={18} weight="bold" />
             </button>
 
-            <div className="relative erp-module-filter-wrap w-full inventory-date-filter-wrap">
-              <div className="inventory-date-filter-row">
-                {[
-                  { value: 'today', label: t.common.today },
-                  { value: 'week', label: t.common.week },
-                  { value: 'month', label: t.common.month },
-                  { value: 'year', label: t.common.year },
-                  { value: 'all', label: t.common.all },
-                  { value: 'custom', label: t.common.custom },
-                ].map((filter) => (
-                  <button
-                    key={filter.value}
-                    onClick={() => {
-                      setStatsFilter(filter.value as any)
-                      if (filter.value === 'custom') {
-                        setShowCustomDatePicker(true)
-                      } else {
-                        setShowCustomDatePicker(false)
-                      }
-                    }}
-                    className={cn('erp-module-filter-chip inventory-date-filter-chip', statsFilter === filter.value && 'is-active')}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
 
-              {showCustomDatePicker && (
-                <div className="mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 w-full">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Select Date Range</span>
-                    <button
-                      onClick={() => setShowCustomDatePicker(false)}
-                      className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
-                    >
-                      <X size={16} className="text-slate-500" />
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">From Date</label>
-                      <input
-                        type="date"
-                        value={customDateFrom}
-                        onChange={(e) => setCustomDateFrom(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">To Date</label>
-                      <input
-                        type="date"
-                        value={customDateTo}
-                        onChange={(e) => setCustomDateTo(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                    </div>
-                    <button
-                      onClick={() => setShowCustomDatePicker(false)}
-                      disabled={!customDateFrom || !customDateTo}
-                      className={cn(
-                        "w-full py-2 rounded-lg text-sm font-semibold transition-all",
-                        customDateFrom && customDateTo
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "bg-slate-200 text-slate-400 cursor-not-allowed"
-                      )}
-                    >
-                      Apply Filter
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </motion.div>
