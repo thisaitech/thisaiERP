@@ -990,8 +990,8 @@ const Parties = () => {
             {/* Pending Amount Card */}
             <div onClick={() => setActiveTab('customers')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-900/20">
-                  <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -1007,8 +1007,8 @@ const Parties = () => {
             {/* Paid Amount Card */}
             <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md col-span-2 md:col-span-1">
               <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
-                  <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -1178,9 +1178,9 @@ const Parties = () => {
                   <div style={{ width: '10%' }} className="flex justify-center">
                     <span className={cn(
                       "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium",
-                      status.color === 'success' && "bg-emerald-50 text-emerald-700",
-                      status.color === 'warning' && "bg-amber-50 text-amber-700",
-                      status.color === 'destructive' && "bg-red-50 text-red-700"
+                      status.color === 'success' && "bg-blue-50 text-emerald-700",
+                      status.color === 'warning' && "bg-blue-50 text-amber-700",
+                      status.color === 'destructive' && "bg-blue-50 text-red-700"
                     )}>
                       <status.icon size={10} weight="fill" />
                       <span>{status.label}</span>
@@ -1191,10 +1191,10 @@ const Parties = () => {
                   <div style={{ width: '24%' }} className="flex items-center justify-center gap-0.5">
                     <button
                       onClick={() => navigate('/sales', { state: { preselectPartyId: party.id } })}
-                      className="w-7 h-7 flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-emerald-100 rounded-lg transition-colors"
                       title="Add Admission"
                     >
-                      <Plus size={16} weight="bold" className="text-emerald-600" />
+                      <Plus size={16} weight="bold" className="text-blue-600" />
                     </button>
                     <button
                       onClick={() => viewLedger(party)}
@@ -1212,17 +1212,17 @@ const Parties = () => {
                     </button>
                     <button
                       onClick={() => handleEditParty(party)}
-                      className="w-7 h-7 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-amber-100 rounded-lg transition-colors"
                       title="Edit"
                     >
-                      <Pencil size={16} weight="duotone" className="text-amber-600" />
+                      <Pencil size={16} weight="duotone" className="text-blue-600" />
                     </button>
                     <button
                       onClick={() => handleDeleteParty(party)}
-                      className="w-7 h-7 flex items-center justify-center bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-red-100 rounded-lg transition-colors"
                       title="Delete"
                     >
-                      <Trash size={16} weight="duotone" className="text-red-600" />
+                      <Trash size={16} weight="duotone" className="text-blue-600" />
                     </button>
 
                     {/* More Actions Dropdown */}
@@ -1264,9 +1264,9 @@ const Parties = () => {
                     </div>
                     <span className={cn(
                       "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ml-2",
-                      status.color === 'success' && "bg-emerald-50 text-emerald-700",
-                      status.color === 'warning' && "bg-amber-50 text-amber-700",
-                      status.color === 'destructive' && "bg-red-50 text-red-700"
+                      status.color === 'success' && "bg-blue-50 text-emerald-700",
+                      status.color === 'warning' && "bg-blue-50 text-amber-700",
+                      status.color === 'destructive' && "bg-blue-50 text-red-700"
                     )}>
                       <status.icon size={10} weight="fill" />
                     </span>
@@ -1275,8 +1275,8 @@ const Parties = () => {
                   {/* Outstanding */}
                   <div className={cn(
                     "flex items-center justify-between p-2 rounded-lg mb-2",
-                    outstandingColor === 'green' && "bg-emerald-50",
-                    outstandingColor === 'red' && "bg-red-50",
+                    outstandingColor === 'green' && "bg-blue-50",
+                    outstandingColor === 'red' && "bg-blue-50",
                     outstandingColor === 'grey' && "bg-slate-50"
                   )}>
                     <span className="text-xs text-slate-600">
@@ -1301,9 +1301,9 @@ const Parties = () => {
                   <div className="flex items-center gap-1 pt-2 border-t border-slate-100">
                     <button
                       onClick={() => navigate('/sales', { state: { preselectPartyId: party.id } })}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-blue-50 hover:bg-emerald-100 rounded-lg transition-colors"
                     >
-                      <Plus size={14} weight="bold" className="text-emerald-600" />
+                      <Plus size={14} weight="bold" className="text-blue-600" />
                       <span className="text-[11px] font-medium text-emerald-700">Admission</span>
                     </button>
                     <button
@@ -1315,9 +1315,9 @@ const Parties = () => {
                     </button>
                     <button
                       onClick={() => handleEditParty(party)}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-blue-50 hover:bg-amber-100 rounded-lg transition-colors"
                     >
-                      <Pencil size={14} weight="duotone" className="text-amber-600" />
+                      <Pencil size={14} weight="duotone" className="text-blue-600" />
                       <span className="text-xs font-medium text-amber-700">Edit</span>
                     </button>
                     <button
@@ -1361,7 +1361,7 @@ const Parties = () => {
               if (party) handleDeleteParty(party)
               setOpenActionMenu(null)
             }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-xs text-red-600"
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-blue-50 text-xs text-blue-600"
           >
             <Trash size={14} weight="duotone" />
             <span>Delete Record</span>

@@ -1113,8 +1113,8 @@ const Inventory = () => {
             {/* Low Stock Card */}
             <div onClick={() => setActiveTab('low')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-900/20">
-                  <WarningCircle size={22} className="text-amber-600 dark:text-amber-400" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                  <WarningCircle size={22} className="text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
               <div>
@@ -1126,8 +1126,8 @@ const Inventory = () => {
             {/* Out of Stock Card */}
             <div onClick={() => setActiveTab('out')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/20">
-                  <X size={22} weight="bold" className="text-red-600 dark:text-red-400" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                  <X size={22} weight="bold" className="text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
               <div>
@@ -1139,8 +1139,8 @@ const Inventory = () => {
             {/* Stock Value Card */}
             <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-50 dark:bg-green-900/20">
-                  <CurrencyInr size={22} className="text-green-600 dark:text-green-400" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+                  <CurrencyInr size={22} className="text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
               <div>
@@ -1403,9 +1403,9 @@ const Inventory = () => {
                   <div style={{ width: '10%' }} className="flex justify-center">
                     <span className={cn(
                       "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium",
-                      status.color === 'success' && "bg-emerald-50 text-emerald-700",
-                      status.color === 'warning' && "bg-amber-50 text-amber-700",
-                      status.color === 'destructive' && "bg-red-50 text-red-700"
+                      status.color === 'success' && "bg-blue-50 text-emerald-700",
+                      status.color === 'warning' && "bg-blue-50 text-amber-700",
+                      status.color === 'destructive' && "bg-blue-50 text-red-700"
                     )}>
                       <status.icon size={10} weight="fill" />
                       <span>{status.label}</span>
@@ -1423,17 +1423,17 @@ const Inventory = () => {
                     </button>
                     <button
                       onClick={() => handleEditItem(item)}
-                      className="w-7 h-7 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-amber-100 rounded-lg transition-colors"
                       title="Edit"
                     >
-                      <Pencil size={14} weight="duotone" className="text-amber-600" />
+                      <Pencil size={14} weight="duotone" className="text-blue-600" />
                     </button>
                     <button
                       onClick={() => handleDeleteItem(item)}
-                      className="w-7 h-7 flex items-center justify-center bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-red-100 rounded-lg transition-colors"
                       title="Delete"
                     >
-                      <Trash size={14} weight="duotone" className="text-red-600" />
+                      <Trash size={14} weight="duotone" className="text-blue-600" />
                     </button>
 
                     {/* More Actions Dropdown */}
@@ -1463,9 +1463,9 @@ const Inventory = () => {
                     </div>
                     <span className={cn(
                       "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ml-2",
-                      status.color === 'success' && "bg-emerald-50 text-emerald-700",
-                      status.color === 'warning' && "bg-amber-50 text-amber-700",
-                      status.color === 'destructive' && "bg-red-50 text-red-700"
+                      status.color === 'success' && "bg-blue-50 text-emerald-700",
+                      status.color === 'warning' && "bg-blue-50 text-amber-700",
+                      status.color === 'destructive' && "bg-blue-50 text-red-700"
                     )}>
                       <status.icon size={10} weight="fill" />
                       <span>{status.label}</span>
@@ -1510,15 +1510,15 @@ const Inventory = () => {
                     </button>
                     <button
                       onClick={() => handleEditItem(item)}
-                      className="w-7 h-7 flex items-center justify-center bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-amber-100 rounded-lg transition-colors"
                     >
-                      <Pencil size={16} weight="duotone" className="text-amber-600" />
+                      <Pencil size={16} weight="duotone" className="text-blue-600" />
                     </button>
                     <button
                       onClick={() => handleDeleteItem(item)}
-                      className="w-7 h-7 flex items-center justify-center bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-red-100 rounded-lg transition-colors"
                     >
-                      <Trash size={16} weight="duotone" className="text-red-600" />
+                      <Trash size={16} weight="duotone" className="text-blue-600" />
                     </button>
                   </div>
                 </div>
@@ -1907,7 +1907,7 @@ const Inventory = () => {
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
-                          className="mt-3 px-4 py-3 bg-emerald-50 border-2 border-emerald-300 rounded-lg"
+                          className="mt-3 px-4 py-3 bg-blue-50 border-2 border-emerald-300 rounded-lg"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold text-emerald-900">{t.inventory.profitMargin}:</span>
@@ -1915,7 +1915,7 @@ const Inventory = () => {
                               <div className="text-sm font-bold text-emerald-700">
                                 ₹{(parseFloat(retailPrice) - parseFloat(purchasePrice)).toFixed(2)}
                               </div>
-                              <div className="text-xs text-emerald-600">
+                              <div className="text-xs text-blue-600">
                                 ({((parseFloat(retailPrice) - parseFloat(purchasePrice)) / parseFloat(retailPrice) * 100).toFixed(1)}% margin)
                               </div>
                             </div>
@@ -2282,7 +2282,7 @@ const Inventory = () => {
                 <div className="px-4 sm:px-6 py-4 border-b border-border ">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
-                      <Pencil size={24} weight="duotone" className="text-amber-600" />
+                      <Pencil size={24} weight="duotone" className="text-blue-600" />
                       {t.inventory.editItem}
                     </h2>
                     <button
@@ -2570,7 +2570,7 @@ const Inventory = () => {
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
-                          className="mt-3 px-4 py-3 bg-emerald-50 border-2 border-emerald-300 rounded-lg"
+                          className="mt-3 px-4 py-3 bg-blue-50 border-2 border-emerald-300 rounded-lg"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold text-emerald-900">{t.inventory.profitMargin}:</span>
@@ -2578,7 +2578,7 @@ const Inventory = () => {
                               <div className="text-sm font-bold text-emerald-700">
                                 ₹{(parseFloat(retailPrice) - parseFloat(purchasePrice)).toFixed(2)}
                               </div>
-                              <div className="text-xs text-emerald-600">
+                              <div className="text-xs text-blue-600">
                                 ({((parseFloat(retailPrice) - parseFloat(purchasePrice)) / parseFloat(retailPrice) * 100).toFixed(1)}% margin)
                               </div>
                             </div>
@@ -2597,7 +2597,7 @@ const Inventory = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {/* CGST% */}
                         <div>
-                          <label className="text-xs font-medium mb-1.5 block text-emerald-600">CGST%</label>
+                          <label className="text-xs font-medium mb-1.5 block text-blue-600">CGST%</label>
                           <input
                             type="number"
                             min="0"
@@ -2614,14 +2614,14 @@ const Inventory = () => {
                               // Clear IGST when using CGST+SGST
                               setIgstRate('0')
                             }}
-                            className="w-full px-3 py-2.5 bg-emerald-50 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-semibold"
+                            className="w-full px-3 py-2.5 bg-blue-50 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-semibold"
                             placeholder="9"
                           />
                         </div>
 
                         {/* SGST% */}
                         <div>
-                          <label className="text-xs font-medium mb-1.5 block text-emerald-600">SGST%</label>
+                          <label className="text-xs font-medium mb-1.5 block text-blue-600">SGST%</label>
                           <input
                             type="number"
                             min="0"
@@ -2638,7 +2638,7 @@ const Inventory = () => {
                               // Clear IGST when using CGST+SGST
                               setIgstRate('0')
                             }}
-                            className="w-full px-3 py-2.5 bg-emerald-50 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-semibold"
+                            className="w-full px-3 py-2.5 bg-blue-50 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-center font-semibold"
                             placeholder="9"
                           />
                         </div>

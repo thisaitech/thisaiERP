@@ -1002,12 +1002,12 @@ const Dashboard = () => {
                 {/* Accent line at top */}
                 <div className={cn(
                   "absolute top-0 left-0 right-0 h-1 rounded-t-2xl opacity-70",
-                  stat.accentColor === 'green' && 'bg-green-500',
-                  stat.accentColor === 'red' && 'bg-red-500',
+                  stat.accentColor === 'green' && 'bg-blue-500',
+                  stat.accentColor === 'red' && 'bg-blue-500',
                   stat.accentColor === 'blue' && 'bg-blue-500',
-                  stat.accentColor === 'amber' && 'bg-amber-500',
+                  stat.accentColor === 'amber' && 'bg-blue-500',
                   stat.accentColor === 'slate' && 'bg-slate-400 dark:bg-slate-600',
-                  stat.isBalance && isNegative && 'bg-red-500 opacity-100'
+                  stat.isBalance && isNegative && 'bg-blue-500 opacity-100'
                 )} />
 
                 <div className="flex justify-between items-start mb-2 mt-1">

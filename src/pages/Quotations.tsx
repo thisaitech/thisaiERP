@@ -599,9 +599,9 @@ const Quotations: React.FC = () => {
         >
           <MobileStatCards
             items={[
-              { id: 'quotation-amount', title: 'Quotations', value: formatCurrency(summary.quotationAmount), tone: 'success', icon: <TrendUp size={16} /> },
-              { id: 'collected-amount', title: 'Collected', value: formatCurrency(summary.collectedAmount), tone: 'danger', icon: <CheckCircle size={16} /> },
-              { id: 'pending-amount', title: 'Pending', value: formatCurrency(summary.pendingAmount), tone: 'warning', icon: <Clock size={16} /> },
+              { id: 'quotation-amount', title: 'Quotations', value: formatCurrency(summary.quotationAmount), tone: 'primary', icon: <TrendUp size={16} /> },
+              { id: 'collected-amount', title: 'Collected', value: formatCurrency(summary.collectedAmount), tone: 'primary', icon: <CheckCircle size={16} /> },
+              { id: 'pending-amount', title: 'Pending', value: formatCurrency(summary.pendingAmount), tone: 'primary', icon: <Clock size={16} /> },
               { id: 'converted-amount', title: 'Converted', value: formatCurrency(summary.convertedToAdmissionAmount), tone: 'primary', icon: <ArrowRight size={16} /> },
             ]}
           />
@@ -655,11 +655,11 @@ const Quotations: React.FC = () => {
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] gap-3">
           <div className="min-w-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             <div className="erp-module-stat-card erp-module-stat-card-compact border-emerald-400 min-w-0">
-              <div className="erp-module-stat-icon text-emerald-600">
+              <div className="erp-module-stat-icon text-blue-600">
                 <TrendUp size={18} />
               </div>
               <div>
-                <div className="erp-module-stat-title text-emerald-600">Quotations</div>
+                <div className="erp-module-stat-title text-blue-600">Quotations</div>
                 <div className="erp-module-stat-value text-slate-900 dark:text-slate-100">{formatCurrency(summary.quotationAmount)}</div>
               </div>
             </div>
@@ -673,11 +673,11 @@ const Quotations: React.FC = () => {
               </div>
             </div>
             <div className="erp-module-stat-card erp-module-stat-card-compact border-amber-400 min-w-0">
-              <div className="erp-module-stat-icon text-amber-600">
+              <div className="erp-module-stat-icon text-blue-600">
                 <Clock size={18} />
               </div>
               <div>
-                <div className="erp-module-stat-title text-amber-600">Pending</div>
+                <div className="erp-module-stat-title text-blue-600">Pending</div>
                 <div className="erp-module-stat-value text-slate-900 dark:text-slate-100">{formatCurrency(summary.pendingAmount)}</div>
               </div>
             </div>
@@ -1144,7 +1144,7 @@ const Quotations: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))}
-                        className="mobile-secondary-btn text-red-600"
+                        className="mobile-secondary-btn text-blue-600"
                         title="Remove"
                       >
                         <Trash size={16} />

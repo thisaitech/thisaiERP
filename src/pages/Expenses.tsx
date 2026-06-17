@@ -484,7 +484,7 @@ const Expenses = () => {
                       {expense.paymentMode}
                     </span>
                     <button
-                      className="p-1.5 hover:bg-red-50 text-red-600 rounded transition-colors"
+                      className="p-1.5 hover:bg-blue-50 text-blue-600 rounded transition-colors"
                       onClick={() => handleDeleteExpense(expense.id)}
                     >
                       <Trash size={14} weight="duotone" />
@@ -549,7 +549,7 @@ const Expenses = () => {
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-end gap-1">
                               <button
-                                className="p-1.5 hover:bg-red-50 rounded transition-colors text-red-600"
+                                className="p-1.5 hover:bg-blue-50 rounded transition-colors text-blue-600"
                                 onClick={() => handleDeleteExpense(expense.id)}
                               >
                                 <Trash size={16} weight="duotone" />
