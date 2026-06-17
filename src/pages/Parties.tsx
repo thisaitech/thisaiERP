@@ -973,15 +973,7 @@ const Parties = () => {
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col gap-2 md:gap-3 mb-3">
           {/* Top KPI Cards */}
-          <div className="grid grid-cols-3 gap-2 mb-3 md:gap-6">
-            {/* Students Card */}
-            <div onClick={() => setActiveTab('all')} className="relative p-2.5 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">{language === 'ta' ? 'மாணவர்கள்' : 'Students'}</h3>
-                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{partiesSummary.totalParties}</p>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-2 gap-2 mb-3 md:gap-6">
             {/* Pending Amount Card */}
             <div onClick={() => setActiveTab('customers')} className="relative p-2.5 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div>

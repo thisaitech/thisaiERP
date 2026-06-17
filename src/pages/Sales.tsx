@@ -739,13 +739,22 @@ const Sales: React.FC = () => {
           </button>
         }
       >
-        <div className="admissions-mobile-stats">
-          <MobileStatCards
-            items={[
-              { id: 'count', title: 'Admissions', value: `${filteredInvoices.length}`, icon: <Users size={18} weight="bold" className="text-blue-600" />, tone: 'primary' },
-              { id: 'value', title: 'Amount', value: `₹${totalAdmissionsAmount.toLocaleString('en-IN')}`, valueClassName: '!text-[1rem] tracking-tight', icon: <Wallet size={18} weight="bold" className="text-blue-600" />, tone: 'primary' },
-            ]}
-          />
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="relative p-2.5 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+            <div>
+              <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">Admissions</h3>
+              <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{filteredInvoices.length}</p>
+            </div>
+          </div>
+
+          <div className="relative p-2.5 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+            <div>
+              <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">Amount</h3>
+              <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                ₹{totalAdmissionsAmount.toLocaleString('en-IN')}
+              </p>
+            </div>
+          </div>
         </div>
         <MobileSearchBar value={admissionSearch} onChange={setAdmissionSearch} placeholder="Search by admission, student or phone" />
         <div className="space-y-3">
