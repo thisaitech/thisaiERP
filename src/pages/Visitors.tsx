@@ -358,7 +358,7 @@ const Visitors = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                  className="flex-1 rounded-xl bg-gradient-to-br bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                 >
                   {saving ? 'Saving...' : editingId ? 'Update Visitor' : 'Save Visitor'}
                 </button>
@@ -382,8 +382,8 @@ const Visitors = () => {
             <span className={cn(
               'text-[11px] font-semibold px-2 py-0.5 rounded-full',
               visitor.enquiryType === 'training'
-                ? 'bg-violet-100 text-violet-700'
-                : 'bg-cyan-100 text-cyan-700'
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-blue-100 text-blue-700'
             )}>
               {ENQUIRY_TYPE_LABELS[visitor.enquiryType]}
             </span>
@@ -431,7 +431,7 @@ const Visitors = () => {
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 px-3 py-2 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-br bg-blue-600 px-3 py-2 text-sm font-semibold text-white"
             >
               <Plus size={16} weight="bold" />
               Add
@@ -445,7 +445,7 @@ const Visitors = () => {
             </div>
             <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3">
               <p className="text-xs text-slate-500">Today</p>
-              <p className="text-xl font-bold text-teal-600">{stats.today}</p>
+              <p className="text-xl font-bold text-blue-600">{stats.today}</p>
             </div>
           </div>
 
@@ -460,7 +460,7 @@ const Visitors = () => {
                 className={cn(
                   'shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold border',
                   filterType === type
-                    ? 'bg-teal-600 text-white border-teal-600'
+                    ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-white dark:bg-slate-800 text-slate-600 border-slate-200 dark:border-slate-700'
                 )}
               >
@@ -492,7 +492,7 @@ const Visitors = () => {
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md"
         >
           <Plus size={18} weight="bold" />
           Register Visitor
@@ -502,9 +502,9 @@ const Visitors = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: 'Total Visitors', value: stats.total, color: 'text-slate-800 dark:text-slate-100' },
-          { label: 'Today', value: stats.today, color: 'text-teal-600' },
-          { label: 'Training', value: stats.training, color: 'text-violet-600' },
-          { label: 'IT Services', value: stats.it, color: 'text-cyan-600' },
+          { label: 'Today', value: stats.today, color: 'text-blue-600' },
+          { label: 'Training', value: stats.training, color: 'text-blue-600' },
+          { label: 'IT Services', value: stats.it, color: 'text-blue-600' },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -538,7 +538,7 @@ const Visitors = () => {
                 className={cn(
                   'rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors',
                   filterType === type
-                    ? 'bg-teal-600 text-white border-teal-600'
+                    ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-slate-50 dark:bg-slate-900 text-slate-600 border-slate-200 dark:border-slate-700'
                 )}
               >
@@ -557,7 +557,7 @@ const Visitors = () => {
           <div className="text-center py-16 text-slate-500">
             <UserList size={40} className="mx-auto mb-3 opacity-40" />
             <p>No visitor records yet</p>
-            <button type="button" onClick={openCreate} className="mt-3 text-teal-600 font-medium text-sm">
+            <button type="button" onClick={openCreate} className="mt-3 text-blue-600 font-medium text-sm">
               Register first visitor
             </button>
           </div>
@@ -586,7 +586,7 @@ const Visitors = () => {
                     <td className="px-3 py-3">
                       <span className={cn(
                         'text-xs font-semibold px-2 py-0.5 rounded-full',
-                        visitor.enquiryType === 'training' ? 'bg-violet-100 text-violet-700' : 'bg-cyan-100 text-cyan-700'
+                        visitor.enquiryType === 'training' ? 'bg-blue-100 text-blue-700' : 'bg-blue-100 text-blue-700'
                       )}>
                         {ENQUIRY_TYPE_LABELS[visitor.enquiryType]}
                       </span>
