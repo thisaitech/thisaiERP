@@ -97,19 +97,12 @@ const Expenses = () => {
 
     const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0)
 
-    const thisMonthExpenses = expenses
-      .filter(exp => new Date(exp.date) >= monthStart)
+    const salaryExpenses = expenses
+      .filter(exp => exp.category === 'salary')
       .reduce((sum, exp) => sum + (exp.amount || 0), 0)
 
-    const lastMonthExpenses = expenses
-      .filter(exp => {
-        const d = new Date(exp.date)
-        return d >= lastMonthStart && d <= lastMonthEnd
-      })
-      .reduce((sum, exp) => sum + (exp.amount || 0), 0)
-
-    const pendingExpenses = expenses
-      .filter(exp => exp.status === 'pending')
+    const rentExpenses = expenses
+      .filter(exp => exp.category === 'rent')
       .reduce((sum, exp) => sum + (exp.amount || 0), 0)
 
     const percentChange = lastMonthExpenses > 0
@@ -118,8 +111,8 @@ const Expenses = () => {
 
     return {
       totalExpenses,
-      thisMonth: thisMonthExpenses,
-      pending: pendingExpenses,
+      salary: salaryExpenses,
+      rent: rentExpenses,
       percentChange: Math.round(percentChange * 10) / 10
     }
   }, [expenses])
@@ -290,32 +283,32 @@ const Expenses = () => {
               </div>
             </div>
 
-            {/* This Month Card */}
+            {/* Salary Card */}
             <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div className="flex justify-between items-start mb-2">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
-                  <Calendar size={22} className="text-blue-600 dark:text-blue-400" />
+                  <Money size={22} className="text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.thisMonth || 'This Month'}</h3>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.salary || 'Salary'}</h3>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
-                  ₹{stats.thisMonth >= 10000000 ? (stats.thisMonth / 10000000).toFixed(1) + ' Cr' : stats.thisMonth >= 100000 ? (stats.thisMonth / 100000).toFixed(1) + ' L' : stats.thisMonth >= 1000 ? (stats.thisMonth / 1000).toFixed(1) + ' K' : stats.thisMonth.toLocaleString('en-IN')}
+                  ₹{stats.salary >= 10000000 ? (stats.salary / 10000000).toFixed(1) + ' Cr' : stats.salary >= 100000 ? (stats.salary / 100000).toFixed(1) + ' L' : stats.salary >= 1000 ? (stats.salary / 1000).toFixed(1) + ' K' : stats.salary.toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
 
-            {/* Pending Card */}
+            {/* Rent Card */}
             <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div className="flex justify-between items-start mb-2">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-900/20">
-                  <Receipt size={22} className="text-amber-600 dark:text-amber-400" />
+                  <Briefcase size={22} className="text-amber-600 dark:text-amber-400" />
                 </div>
               </div>
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.common?.pending || 'Pending'}</h3>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.rent || 'Rent'}</h3>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
-                  ₹{stats.pending >= 10000000 ? (stats.pending / 10000000).toFixed(1) + ' Cr' : stats.pending >= 100000 ? (stats.pending / 100000).toFixed(1) + ' L' : stats.pending >= 1000 ? (stats.pending / 1000).toFixed(1) + ' K' : stats.pending.toLocaleString('en-IN')}
+                  ₹{stats.rent >= 10000000 ? (stats.rent / 10000000).toFixed(1) + ' Cr' : stats.rent >= 100000 ? (stats.rent / 100000).toFixed(1) + ' L' : stats.rent >= 1000 ? (stats.rent / 1000).toFixed(1) + ' K' : stats.rent.toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
