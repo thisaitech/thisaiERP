@@ -233,6 +233,7 @@ const Layout = () => {
 
   // Settings item (shown separately)
   const settingsItem = { path: '/settings', label: t.nav.settings, icon: Users, allowedRoles: ['admin'], pageKey: 'settings' as keyof PagePermissions }
+  const visitorItem = { path: '/visitors', label: 'Visitors', icon: Users, allowedRoles: ['admin', 'manager'], pageKey: 'visitors' as keyof PagePermissions }
 
   const canAccessNavItem = (item: { pageKey?: keyof PagePermissions; allowedRoles?: string[] }) => {
     if (!item.pageKey && !item.allowedRoles) return true
@@ -566,10 +567,10 @@ const Layout = () => {
               </NavLink>
             )
           })}
-          {canAccessSettings && (
+          {canAccessVisitors && (
             <NavLink
-              to={settingsItem.path}
-              onMouseEnter={() => prefetchRoute(settingsItem.path)}
+              to={visitorItem.path}
+              onMouseEnter={() => prefetchRoute(visitorItem.path)}
               className={({ isActive }) => cn(
                 "relative flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-2xl transition-all duration-300",
                 isActive
@@ -577,14 +578,14 @@ const Layout = () => {
                   : "text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50"
               )}
               style={({ isActive }) => (isActive ? { 
-                color: getModulePalette(settingsItem.path).accentStrong,
-                backgroundImage: `linear-gradient(to top right, ${getModulePalette(settingsItem.path).soft}, transparent)`
+                color: getModulePalette(visitorItem.path).accentStrong,
+                backgroundImage: `linear-gradient(to top right, ${getModulePalette(visitorItem.path).soft}, transparent)`
               } : undefined)}
             >
               {({ isActive }) => (
                 <>
-                  <settingsItem.icon size={24} weight={isActive ? "duotone" : "regular"} />
-                  <span className="text-[10px] font-bold tracking-wide">{settingsItem.label}</span>
+                  <visitorItem.icon size={24} weight={isActive ? "duotone" : "regular"} />
+                  <span className="text-[10px] font-bold tracking-wide">{visitorItem.label}</span>
                   {isActive && (
                     <span className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-current" />
                   )}
