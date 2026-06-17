@@ -973,49 +973,30 @@ const Parties = () => {
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col gap-2 md:gap-3 mb-3">
           {/* Top KPI Cards */}
-          <div className="grid grid-cols-2 gap-3 mb-4 md:grid-cols-3 md:gap-6">
+          <div className="grid grid-cols-3 gap-2 mb-3 md:gap-6">
             {/* Students Card */}
-            <div onClick={() => setActiveTab('all')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
-                  <Users size={22} className="text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
+            <div onClick={() => setActiveTab('all')} className="relative p-2.5 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'மாணவர்கள்' : 'Students'}</h3>
-                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{partiesSummary.totalParties}</p>
+                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">{language === 'ta' ? 'மாணவர்கள்' : 'Students'}</h3>
+                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{partiesSummary.totalParties}</p>
               </div>
             </div>
 
             {/* Pending Amount Card */}
-            <div onClick={() => setActiveTab('customers')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
-                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
+            <div onClick={() => setActiveTab('customers')} className="relative p-2.5 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'நிலுவை தொகை' : 'Pending Amount'}</h3>
-                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">{language === 'ta' ? 'நிலுவை தொகை' : 'Pending Amount'}</h3>
+                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
                   {"₹"}{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
 
             {/* Paid Amount Card */}
-            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md col-span-2 md:col-span-1">
-              <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
-                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
+            <div className="relative p-2.5 sm:p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{language === 'ta' ? 'செலுத்திய தொகை' : 'Paid Amount'}</h3>
-                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">{language === 'ta' ? 'செலுத்திய தொகை' : 'Paid Amount'}</h3>
+                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
                   {"₹"}{partiesSummary.totalPaid >= 10000000 ? (partiesSummary.totalPaid / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPaid >= 100000 ? (partiesSummary.totalPaid / 100000).toFixed(1) + ' L' : partiesSummary.totalPaid >= 1000 ? (partiesSummary.totalPaid / 1000).toFixed(1) + ' K' : partiesSummary.totalPaid.toLocaleString('en-IN')}
                 </p>
               </div>
