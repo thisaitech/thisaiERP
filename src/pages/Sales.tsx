@@ -570,7 +570,7 @@ const Sales: React.FC = () => {
       </MobileFormSection>
 
       <MobileFormSection title="Student">
-        <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
+        <div className={cn('grid gap-2', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
           <div className="relative">
             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Student Name</label>
             <input
@@ -623,40 +623,16 @@ const Sales: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="space-y-3">
-            <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-2')}>
-              <div>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone</label>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  onFocus={() => setShowStudentSuggestions(false)}
-                  disabled={isViewMode}
-                  className={inputClass(mobile)}
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Email</label>
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => setShowStudentSuggestions(false)}
-                  disabled={isViewMode}
-                  className={inputClass(mobile)}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Address</label>
-              <input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                onFocus={() => setShowStudentSuggestions(false)}
-                placeholder="Enter address"
-                disabled={isViewMode}
-                className={inputClass(mobile)}
-              />
-            </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone</label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              onFocus={() => setShowStudentSuggestions(false)}
+              disabled={isViewMode}
+              className={inputClass(mobile)}
+              placeholder="Phone number"
+            />
           </div>
         </div>
       </MobileFormSection>
@@ -664,22 +640,27 @@ const Sales: React.FC = () => {
       <MobileFormSection>
         <div className="space-y-3">
           {items.map((line) => (
-            <div key={line.id} className={cn('grid gap-3 items-end', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12')}>
+            <div key={line.id} className={cn('grid gap-2 items-end', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12')}>
               <div className={mobile ? '' : 'md:col-span-8'}>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Course</label>
-                <select
-                  value={line.itemId}
-                  onChange={(e) => handlePickCourse(line.id, e.target.value)}
-                  disabled={isViewMode}
-                  className={inputClass(mobile)}
-                >
-                  <option value="">Select course...</option>
-                  {uniqueCourses.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.name}
-                    </option>
-                  ))}
-                </select>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 block">Course</label>
+                <div className="relative">
+                  <select
+                    value={line.itemId}
+                    onChange={(e) => handlePickCourse(line.id, e.target.value)}
+                    disabled={isViewMode}
+                    className={cn(inputClass(mobile), 'appearance-none pr-8 truncate')}
+                  >
+                    <option value="">Select course...</option>
+                    {uniqueCourses.map((course) => (
+                      <option key={course.id} value={course.id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
               </div>
               <div className={mobile ? '' : 'md:col-span-3'}>
                 <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Fee</label>
