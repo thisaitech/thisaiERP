@@ -743,7 +743,7 @@ const Sales: React.FC = () => {
           <MobileStatCards
             items={[
               { id: 'count', title: 'Admissions', value: `${filteredInvoices.length}`, subtitle: 'Records', icon: <Users size={18} weight="bold" className="text-blue-600" />, tone: 'primary' },
-              { id: 'value', title: 'Total Amount', value: `Rs ${totalAdmissionsAmount.toLocaleString('en-IN')}`, valueClassName: 'text-[0.95rem] leading-tight whitespace-nowrap', subtitle: `Paid Rs ${totalPaidAmount.toLocaleString('en-IN')}`, icon: <Wallet size={18} weight="bold" className="text-emerald-600" />, tone: 'success' },
+              { id: 'value', title: 'Total Amount', value: `Rs ${totalAdmissionsAmount.toLocaleString('en-IN')}`, valueClassName: '!text-[1rem] tracking-tight', subtitle: `Paid Rs ${totalPaidAmount.toLocaleString('en-IN')}`, icon: <Wallet size={18} weight="bold" className="text-emerald-600" />, tone: 'success' },
             ]}
           />
         </div>
