@@ -11,7 +11,7 @@
     ]
   },
   "hosting": {
-    "site": "bill-anna",
+    "site": "thisaitech007",
     "public": "dist",
     "ignore": [
       "firebase.json",
@@ -26,29 +26,11 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|ico)",
+        "source": "**",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "max-age=31536000"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(js|css)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "max-age=31536000"
-          }
-        ]
-      },
-      {
-        "source": "manifest.json",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "max-age=0"
+            "value": "no-cache, no-store, must-revalidate"
           }
         ]
       }

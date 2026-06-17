@@ -1,176 +1,106 @@
-type ApiErrorPayload = { error?: string; message?: string }
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
+import { firestoreDb } from './firebase'
 
-const configuredApiUrl = (
-  (import.meta as any).env?.VITE_API_URL ||
-  (import.meta as any).env?.VITE_API_BASE_URL ||
-  ''
-).trim()
+type ListResponse<T> = { data: T[] }
+type OneResponse<T> = { data: T }
 
-const isLocalHttpOrHttps = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(configuredApiUrl)
-const defaultApiBase =
-  typeof window !== 'undefined' && window.location?.hostname
-    ? `${window.location.protocol}//${window.location.hostname}:8787/api`
-    : 'http://localhost:8787/api'
-
-const API_BASE =
-  import.meta.env.DEV
-    ? configuredApiUrl || defaultApiBase
-    : configuredApiUrl && !isLocalHttpOrHttps
-      ? configuredApiUrl
-      : '/api'
-
-type GetCacheEntry = {
-  expiresAt: number
-  text: string
+function currentCompanyId(): string {
+  const raw = localStorage.getItem('user')
+  if (!raw) throw new Error('Not authenticated')
+  const user = JSON.parse(raw)
+  if (!user.companyId) throw new Error('Missing company profile')
+  return user.companyId
 }
 
-// Fast navigation: cache GET responses briefly to avoid refetching on every module switch.
-// Writes (POST/PUT/DELETE) still invalidate the cache immediately.
-const DEFAULT_GET_CACHE_TTL_MS = import.meta.env.DEV ? 5000 : 60000
-const GET_CACHE_TTL_MS = Number((import.meta as any).env?.VITE_API_GET_CACHE_TTL_MS || DEFAULT_GET_CACHE_TTL_MS)
-const getResponseCache = new Map<string, GetCacheEntry>()
-const inFlightGetRequests = new Map<string, Promise<unknown>>()
-
-function getToken(): string | null {
-  return localStorage.getItem('auth_token')
+function parsePath(path: string): { collectionName: string; id?: string } {
+  const [collectionName, id] = path.replace(/^\/+/, '').split('/').map(decodeURIComponent)
+  if (!collectionName) throw new Error(`Invalid API path: ${path}`)
+  return { collectionName, id }
 }
 
-function getCacheKey(url: string, token: string | null): string {
-  // Token-scoped cache avoids cross-user data leakage in shared browser sessions.
-  return `${token || 'anonymous'}::${url}`
+function makeId(collectionName: string): string {
+  return `${collectionName}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 }
 
-function invalidateGetCache() {
-  getResponseCache.clear()
-  inFlightGetRequests.clear()
-}
-
-function parseJsonText<T>(text: string, url: string): T {
-  if (!text) return undefined as unknown as T
-  try {
-    return JSON.parse(text) as T
-  } catch {
-    throw new Error(`Invalid JSON response from ${url}`)
-  }
-}
-
-async function request<T>(path: string, init: RequestInit): Promise<T> {
-  const method = (init.method || 'GET').toUpperCase()
-  const token = getToken()
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(init.headers as any),
-  }
-  if (token) headers.Authorization = `Bearer ${token}`
-
-  const url = `${API_BASE}${path}`
-
-  if (method === 'GET') {
-    const key = getCacheKey(url, token)
-    const cached = getResponseCache.get(key)
-    if (cached && cached.expiresAt > Date.now()) {
-      return parseJsonText<T>(cached.text, url)
-    }
-
-    const inFlight = inFlightGetRequests.get(key)
-    if (inFlight) {
-      return inFlight as Promise<T>
-    }
-
-    const pending = (async (): Promise<T> => {
-      let res: Response
-      try {
-        res = await fetch(url, { ...init, headers })
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        throw new Error(`Request failed for ${url}: ${message}`)
-      }
-
-      if (!res.ok) {
-        if (res.status === 401 && typeof window !== 'undefined') {
-          try {
-            localStorage.removeItem('auth_token')
-            localStorage.removeItem('user')
-            window.dispatchEvent(new Event('auth-changed'))
-          } catch {
-            // ignore
-          }
-        }
-
-        let payload: ApiErrorPayload | null = null
-        try {
-          payload = (await res.json()) as ApiErrorPayload
-        } catch {
-          // ignore
-        }
-        const msg = payload?.error || payload?.message || `Request failed (${res.status})`
-        throw new Error(`${msg} (${url}, status ${res.status})`)
-      }
-
-      const text = await res.text()
-      getResponseCache.set(key, {
-        text,
-        expiresAt: Date.now() + Math.max(0, GET_CACHE_TTL_MS),
-      })
-      return parseJsonText<T>(text, url)
-    })()
-
-    inFlightGetRequests.set(key, pending)
-    try {
-      return await pending
-    } finally {
-      inFlightGetRequests.delete(key)
-    }
+function removeUndefined(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(removeUndefined).filter((item) => item !== undefined)
   }
 
-  let res: Response
-  try {
-    res = await fetch(url, { ...init, headers })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`Request failed for ${url}: ${message}`)
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, entryValue]) => entryValue !== undefined)
+        .map(([key, entryValue]) => [key, removeUndefined(entryValue)])
+    )
   }
 
-  if (!res.ok) {
-    // If the token is missing/invalid, force a clean auth state so ProtectedRoute can redirect to /login.
-    if (res.status === 401 && typeof window !== 'undefined') {
-      try {
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('user')
-        window.dispatchEvent(new Event('auth-changed'))
-      } catch {
-        // ignore
-      }
-    }
+  return value
+}
 
-    let payload: ApiErrorPayload | null = null
-    try {
-      payload = (await res.json()) as ApiErrorPayload
-    } catch {
-      // ignore
-    }
-    const msg = payload?.error || payload?.message || `Request failed (${res.status})`
-    throw new Error(`${msg} (${url}, status ${res.status})`)
+export async function apiGet<T>(path: string): Promise<T> {
+  const { collectionName, id } = parsePath(path)
+  const companyId = currentCompanyId()
+
+  if (id) {
+    const snap = await getDoc(doc(firestoreDb, collectionName, id))
+    if (!snap.exists()) throw new Error('Not found')
+    return { data: snap.data() } as T
   }
 
-  // Some endpoints might return empty bodies.
-  const text = await res.text()
-  invalidateGetCache()
-  return parseJsonText<T>(text, url)
+  const q = query(collection(firestoreDb, collectionName), where('companyId', '==', companyId))
+  const snap = await getDocs(q)
+  const data = snap.docs
+    .map((d) => d.data())
+    .sort((a: any, b: any) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))
+  return { data } as ListResponse<unknown> as T
 }
 
-export function apiGet<T>(path: string): Promise<T> {
-  return request<T>(path, { method: 'GET' })
+export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  const { collectionName } = parsePath(path)
+  const companyId = currentCompanyId()
+  const now = new Date().toISOString()
+  const payload = typeof body === 'object' && body !== null ? { ...(body as any) } : {}
+  const id = typeof payload.id === 'string' && payload.id ? payload.id : makeId(collectionName)
+  const data = {
+    ...payload,
+    id,
+    companyId,
+    createdAt: payload.createdAt || now,
+    updatedAt: now,
+  }
+
+  const cleanData = removeUndefined(data)
+  await setDoc(doc(firestoreDb, collectionName, id), cleanData as Record<string, unknown>)
+  return { data: cleanData } as OneResponse<unknown> as T
 }
 
-export function apiPost<T>(path: string, body?: unknown): Promise<T> {
-  return request<T>(path, { method: 'POST', body: JSON.stringify(body ?? {}) })
+export async function apiPut<T>(path: string, body?: unknown): Promise<T> {
+  const { collectionName, id } = parsePath(path)
+  if (!id) throw new Error(`Missing record id for ${path}`)
+  const companyId = currentCompanyId()
+  const ref = doc(firestoreDb, collectionName, id)
+  const existing = await getDoc(ref)
+  const existingData = existing.exists() ? existing.data() : {}
+  const now = new Date().toISOString()
+  const payload = typeof body === 'object' && body !== null ? { ...(body as any) } : {}
+  const data = {
+    ...existingData,
+    ...payload,
+    id,
+    companyId,
+    createdAt: existingData.createdAt || payload.createdAt || now,
+    updatedAt: now,
+  }
+
+  const cleanData = removeUndefined(data)
+  await setDoc(ref, cleanData as Record<string, unknown>)
+  return { data: cleanData } as OneResponse<unknown> as T
 }
 
-export function apiPut<T>(path: string, body?: unknown): Promise<T> {
-  return request<T>(path, { method: 'PUT', body: JSON.stringify(body ?? {}) })
-}
-
-export function apiDelete<T>(path: string): Promise<T> {
-  return request<T>(path, { method: 'DELETE' })
+export async function apiDelete<T>(path: string): Promise<T> {
+  const { collectionName, id } = parsePath(path)
+  if (!id) throw new Error(`Missing record id for ${path}`)
+  await deleteDoc(doc(firestoreDb, collectionName, id))
+  return { ok: true } as T
 }

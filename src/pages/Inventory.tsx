@@ -605,7 +605,8 @@ const Inventory = () => {
       }
     } catch (error) {
       console.error('Error adding item:', error)
-      toast.error('Failed to add course. Please try again.')
+      const message = error instanceof Error ? error.message : 'Please try again.'
+      toast.error(`Failed to add course: ${message}`)
     } finally {
       setIsLoading(false)
     }

@@ -14,11 +14,290 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as crypto from 'crypto';
+import express from 'express';
+import cors from 'cors';
+import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
 
 // Initialize Firebase Admin
 admin.initializeApp();
 
 const db = admin.firestore();
+const apiApp = express();
+
+type UserRole = 'admin' | 'manager' | 'cashier';
+
+type ApiUser = {
+  uid: string;
+  email: string;
+  passwordHash: string;
+  displayName: string;
+  companyName: string;
+  companyId: string;
+  role: UserRole;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  lastLogin: string;
+};
+
+type JwtPayload = {
+  sub: string;
+  email: string;
+  companyId: string;
+  role: UserRole;
+};
+
+type AuthedRequest = express.Request & {
+  user?: JwtPayload;
+};
+
+const jwtSecret = process.env.JWT_SECRET || functions.config().api?.jwt_secret || 'thisai-erp-production-secret-2026';
+const usersCollection = 'api_users';
+const recordsCollection = 'api_records';
+const entityTypes = ['items', 'parties', 'invoices', 'expenses', 'quotations', 'leads', 'visitors', 'banking', 'settings', 'permissions'];
+
+const defaultAdmins = [
+  {
+    email: 'admin@thisaitech.com',
+    password: 'ThisAI@2024!',
+    displayName: 'ThisAI Admin',
+    companyName: 'Thisai Technology',
+  },
+  {
+    email: 'admin@sandrasoftware.com',
+    password: 'Sandra@2024!',
+    displayName: 'Sandra Admin',
+    companyName: 'Sandra Software',
+  },
+];
+
+function deriveCompanyId(email: string, companyName: string): string {
+  const source = companyName.trim() || email.split('@')[1] || 'default-company';
+  return source.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'default-company';
+}
+
+function publicUser(user: ApiUser) {
+  return {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    companyName: user.companyName,
+    companyId: user.companyId,
+    role: user.role,
+    status: user.status,
+    createdAt: user.createdAt,
+    lastLogin: user.lastLogin,
+  };
+}
+
+function signToken(payload: JwtPayload): string {
+  return jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
+}
+
+async function getUserByEmail(email: string): Promise<ApiUser | null> {
+  const snapshot = await db.collection(usersCollection).where('email', '==', email.toLowerCase()).limit(1).get();
+  if (snapshot.empty) return null;
+  return snapshot.docs[0].data() as ApiUser;
+}
+
+async function ensureDefaultAdmins(): Promise<void> {
+  for (const adminUser of defaultAdmins) {
+    const email = adminUser.email.toLowerCase();
+    const existing = await getUserByEmail(email);
+    if (existing) continue;
+
+    const now = new Date().toISOString();
+    const uid = crypto.randomUUID();
+    const user: ApiUser = {
+      uid,
+      email,
+      passwordHash: await bcrypt.hash(adminUser.password, 10),
+      displayName: adminUser.displayName,
+      companyName: adminUser.companyName,
+      companyId: deriveCompanyId(email, adminUser.companyName),
+      role: 'admin',
+      status: 'active',
+      createdAt: now,
+      lastLogin: now,
+    };
+
+    await db.collection(usersCollection).doc(uid).set(user);
+  }
+}
+
+function requireAuth(req: AuthedRequest, res: express.Response, next: express.NextFunction): void {
+  const header = req.headers.authorization || '';
+  const [kind, token] = header.split(' ');
+  if (kind !== 'Bearer' || !token) {
+    res.status(401).json({ error: 'Missing Authorization header' });
+    return;
+  }
+
+  try {
+    req.user = jwt.verify(token, jwtSecret) as JwtPayload;
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+apiApp.use(express.json({ limit: '5mb' }));
+apiApp.use(cors({ origin: true, credentials: true }));
+
+apiApp.get('/api/health', async (_req: express.Request, res: express.Response) => {
+  await ensureDefaultAdmins();
+  res.json({ ok: true });
+});
+
+apiApp.post('/api/auth/login', async (req: express.Request, res: express.Response) => {
+  await ensureDefaultAdmins();
+
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const password = String(req.body?.password || '');
+  if (!email || !password) {
+    res.status(400).json({ error: 'Email and password are required' });
+    return;
+  }
+
+  const user = await getUserByEmail(email);
+  if (!user || user.status !== 'active') {
+    res.status(401).json({ error: 'Invalid email or password' });
+    return;
+  }
+
+  const ok = await bcrypt.compare(password, user.passwordHash);
+  if (!ok) {
+    res.status(401).json({ error: 'Invalid email or password' });
+    return;
+  }
+
+  const lastLogin = new Date().toISOString();
+  await db.collection(usersCollection).doc(user.uid).update({ lastLogin });
+  const updatedUser = { ...user, lastLogin };
+
+  res.json({
+    token: signToken({ sub: user.uid, email: user.email, companyId: user.companyId, role: user.role }),
+    user: publicUser(updatedUser),
+  });
+});
+
+apiApp.post('/api/auth/register', async (req: express.Request, res: express.Response) => {
+  await ensureDefaultAdmins();
+
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const password = String(req.body?.password || '');
+  const displayName = String(req.body?.displayName || '').trim();
+  const companyName = String(req.body?.companyName || '').trim();
+  if (!email || !password || !displayName || !companyName) {
+    res.status(400).json({ error: 'Email, password, display name, and company name are required' });
+    return;
+  }
+
+  const existing = await getUserByEmail(email);
+  if (existing) {
+    res.status(409).json({ error: 'Email already registered' });
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const uid = crypto.randomUUID();
+  const user: ApiUser = {
+    uid,
+    email,
+    passwordHash: await bcrypt.hash(password, 10),
+    displayName,
+    companyName,
+    companyId: deriveCompanyId(email, companyName),
+    role: 'admin',
+    status: 'active',
+    createdAt: now,
+    lastLogin: now,
+  };
+
+  await db.collection(usersCollection).doc(uid).set(user);
+
+  res.status(201).json({
+    token: signToken({ sub: uid, email, companyId: user.companyId, role: user.role }),
+    user: publicUser(user),
+  });
+});
+
+for (const type of entityTypes) {
+  const router = express.Router();
+
+  router.get('/', async (req: AuthedRequest, res) => {
+    const companyId = req.user?.companyId;
+    const snapshot = await db.collection(recordsCollection)
+      .where('companyId', '==', companyId)
+      .where('type', '==', type)
+      .orderBy('updatedAt', 'desc')
+      .get();
+
+    res.json({ data: snapshot.docs.map((doc) => doc.data().data) });
+  });
+
+  router.get('/:id', async (req: AuthedRequest, res) => {
+    const companyId = req.user?.companyId;
+    const id = req.params.id;
+    const doc = await db.collection(recordsCollection).doc(`${companyId}_${type}_${id}`).get();
+    if (!doc.exists) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+    res.json({ data: doc.data()?.data });
+  });
+
+  router.post('/', async (req: AuthedRequest, res) => {
+    const companyId = req.user?.companyId || 'default-company';
+    const now = new Date().toISOString();
+    const body = typeof req.body === 'object' && req.body !== null ? req.body : {};
+    const id = typeof body.id === 'string' && body.id ? body.id : crypto.randomUUID();
+    const data = { ...body, id, companyId, createdAt: body.createdAt || now, updatedAt: now };
+
+    await db.collection(recordsCollection).doc(`${companyId}_${type}_${id}`).set({
+      id,
+      companyId,
+      type,
+      data,
+      createdAt: data.createdAt,
+      updatedAt: now,
+    });
+
+    res.status(201).json({ data });
+  });
+
+  router.put('/:id', async (req: AuthedRequest, res) => {
+    const companyId = req.user?.companyId || 'default-company';
+    const id = req.params.id;
+    const now = new Date().toISOString();
+    const ref = db.collection(recordsCollection).doc(`${companyId}_${type}_${id}`);
+    const existing = await ref.get();
+    const existingData = existing.exists ? existing.data()?.data || {} : {};
+    const body = typeof req.body === 'object' && req.body !== null ? req.body : {};
+    const data = { ...existingData, ...body, id, companyId, createdAt: existingData.createdAt || body.createdAt || now, updatedAt: now };
+
+    await ref.set({
+      id,
+      companyId,
+      type,
+      data,
+      createdAt: data.createdAt,
+      updatedAt: now,
+    });
+
+    res.json({ data });
+  });
+
+  router.delete('/:id', async (req: AuthedRequest, res) => {
+    const companyId = req.user?.companyId || 'default-company';
+    await db.collection(recordsCollection).doc(`${companyId}_${type}_${req.params.id}`).delete();
+    res.json({ ok: true });
+  });
+
+  apiApp.use(`/api/${type}`, requireAuth, router);
+}
+
+export const api = functions.https.onRequest(apiApp);
 
 // Razorpay webhook secret from Firebase config
 const getRazorpayWebhookSecret = (): string => {

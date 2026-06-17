@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   House, Receipt, Users, Package, ChartLine, List, X,
-  Moon, Sun, Wallet, Bank, Gear, FileText, SignOut,
-  Buildings, SquaresFour
+  Moon, Sun, Wallet, Bank, FileText, SignOut,
+  Buildings, SquaresFour, UserList
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -17,6 +17,7 @@ import { getInvoices } from '../services/invoiceService'
 import { getExpenses } from '../services/expenseService'
 import { getQuotations } from '../services/quotationService'
 import { getLeads } from '../services/leadService'
+import { getVisitors } from '../services/visitorService'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTheme } from '../contexts/ThemeContext'
@@ -167,7 +168,7 @@ const Layout = () => {
       if (cancelled) return
 
       // Prefetch common modules to make first navigation feel instant.
-      ;['/sales', '/inventory', '/parties', '/expenses', '/quotations', '/banking', '/crm'].forEach(prefetchRoute)
+      ;['/sales', '/inventory', '/parties', '/expenses', '/quotations', '/banking', '/crm', '/visitors'].forEach(prefetchRoute)
 
       // Warm API caches so modules render without extra spinners.
       Promise.allSettled([
@@ -177,6 +178,7 @@ const Layout = () => {
         getExpenses(),
         getQuotations(),
         getLeads(),
+        getVisitors(),
       ]).catch(() => {
         // ignore
       })
@@ -242,14 +244,14 @@ const Layout = () => {
 
   const navigationItems = allNavigationItems.filter(canAccessNavItem)
   const filteredMoreMenuItems = moreMenuItems.filter(canAccessNavItem)
-  const canAccessSettings = userData?.role === 'admin' || (userData?.uid && userData?.role && settingsItem.pageKey && canAccessPage(userData.uid, userData.role, settingsItem.pageKey))
+  const canAccessVisitors = userData?.uid && userData?.role && canAccessPage(userData.uid, userData.role, visitorItem.pageKey)
   const mobilePrimaryItems = navigationItems.slice(0, 3)
   const mobileOverflowItems = [...navigationItems.slice(3), ...filteredMoreMenuItems]
   const mobileRouteLabels = [
     { path: '/', label: t.nav.dashboard },
     ...navigationItems.map((item) => ({ path: item.path, label: item.label })),
     ...filteredMoreMenuItems.map((item) => ({ path: item.path, label: item.label })),
-    ...(canAccessSettings ? [{ path: settingsItem.path, label: settingsItem.label }] : []),
+    ...(canAccessVisitors ? [{ path: visitorItem.path, label: visitorItem.label }] : []),
   ]
   const currentPageTitle =
     mobileRouteLabels.find((item) => location.pathname === item.path)?.label ||
@@ -395,21 +397,21 @@ const Layout = () => {
                   </NavLink>
                 ))}
 
-                {/* Settings (matches left SETUP button) */}
-                {canAccessSettings && (
+                {/* Visitor (replaces Settings in nav) */}
+                {canAccessVisitors && (
                   <NavLink
-                    key="__settings"
-                    to={settingsItem.path}
-                    onMouseEnter={() => prefetchRoute(settingsItem.path)}
+                    key="__visitors"
+                    to={visitorItem.path}
+                    onMouseEnter={() => prefetchRoute(visitorItem.path)}
                     className={({ isActive }) => cn(
                       "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
                       isActive
-                        ? getTopNavActiveClass(settingsItem.path)
+                        ? getTopNavActiveClass(visitorItem.path)
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
                     )}
                   >
-                    <settingsItem.icon size={16} weight="bold" />
-                    <span>{settingsItem.label}</span>
+                    <visitorItem.icon size={16} weight="bold" />
+                    <span>{visitorItem.label}</span>
                   </NavLink>
                 )}
 

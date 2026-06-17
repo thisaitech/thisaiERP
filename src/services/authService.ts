@@ -1,4 +1,11 @@
-import { apiPost } from './apiClient'
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+} from 'firebase/auth'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { firebaseAuth, firestoreDb } from './firebase'
 
 export type UserRole = 'admin' | 'manager' | 'cashier'
 
@@ -15,23 +22,40 @@ export interface UserData {
   createdBy?: string
 }
 
-type AuthResponse = {
-  token: string
-  user: UserData
-}
-
 const AUTH_CHANGED_EVENT = 'auth-changed'
 
 function emitAuthChanged() {
   window.dispatchEvent(new Event(AUTH_CHANGED_EVENT))
 }
 
-export const signIn = async (email: string, password: string): Promise<UserData> => {
-  const res = await apiPost<AuthResponse>('/auth/login', { email, password })
-  localStorage.setItem('auth_token', res.token)
-  localStorage.setItem('user', JSON.stringify(res.user))
+function deriveCompanyId(email: string, companyName: string): string {
+  const source = companyName.trim() || email.split('@')[1] || 'default-company'
+  return source.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'default-company'
+}
+
+function saveSession(user: UserData, token: string) {
+  localStorage.setItem('auth_token', token)
+  localStorage.setItem('user', JSON.stringify(user))
   emitAuthChanged()
-  return res.user
+}
+
+async function getUserData(uid: string): Promise<UserData> {
+  const snap = await getDoc(doc(firestoreDb, 'users', uid))
+  if (!snap.exists()) {
+    throw new Error('User profile not found. Please register this account first.')
+  }
+  return snap.data() as UserData
+}
+
+export const signIn = async (email: string, password: string): Promise<UserData> => {
+  const credential = await signInWithEmailAndPassword(firebaseAuth, email, password)
+  const userData = await getUserData(credential.user.uid)
+  const lastLogin = new Date().toISOString()
+  const updatedUser = { ...userData, lastLogin }
+
+  await updateDoc(doc(firestoreDb, 'users', credential.user.uid), { lastLogin })
+  saveSession(updatedUser, await credential.user.getIdToken())
+  return updatedUser
 }
 
 export const createAdminAccount = async (
@@ -40,19 +64,27 @@ export const createAdminAccount = async (
   fullName: string,
   companyName: string
 ): Promise<UserData> => {
-  const res = await apiPost<AuthResponse>('/auth/register', {
-    email,
-    password,
+  const credential = await createUserWithEmailAndPassword(firebaseAuth, email, password)
+  const now = new Date().toISOString()
+  const userData: UserData = {
+    uid: credential.user.uid,
+    email: email.toLowerCase(),
     displayName: fullName,
     companyName,
-  })
-  localStorage.setItem('auth_token', res.token)
-  localStorage.setItem('user', JSON.stringify(res.user))
-  emitAuthChanged()
-  return res.user
+    companyId: deriveCompanyId(email, companyName),
+    role: 'admin',
+    status: 'active',
+    createdAt: now,
+    lastLogin: now,
+  }
+
+  await setDoc(doc(firestoreDb, 'users', credential.user.uid), userData)
+  saveSession(userData, await credential.user.getIdToken())
+  return userData
 }
 
 export const signOut = async (): Promise<void> => {
+  await firebaseSignOut(firebaseAuth)
   localStorage.removeItem('auth_token')
   localStorage.removeItem('user')
   emitAuthChanged()
@@ -63,16 +95,8 @@ export const getAuthToken = (): string | null => {
 }
 
 export const getCurrentUser = (): UserData | null => {
-  // Treat missing token as logged-out even if a stale `user` object exists.
-  // Otherwise pages can render while API calls fail with 401 (missing Authorization header).
-  const token = getAuthToken()
   const raw = localStorage.getItem('user')
-  if (!raw || !token) {
-    if (raw && !token) {
-      localStorage.removeItem('user')
-    }
-    return null
-  }
+  if (!raw) return null
   try {
     return JSON.parse(raw) as UserData
   } catch {
@@ -80,16 +104,32 @@ export const getCurrentUser = (): UserData | null => {
   }
 }
 
-// Keep the same hook-style API as before, but based on localStorage (and a custom event).
 export const onAuthChange = (callback: (user: UserData | null) => void) => {
-  const handler = () => callback(getCurrentUser())
+  const emitCurrent = () => callback(getCurrentUser())
+  const unsubscribeFirebase = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
+    if (!firebaseUser) {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user')
+      callback(null)
+      return
+    }
 
-  handler()
-  window.addEventListener(AUTH_CHANGED_EVENT, handler)
-  window.addEventListener('storage', handler)
+    try {
+      const userData = await getUserData(firebaseUser.uid)
+      saveSession(userData, await firebaseUser.getIdToken())
+      callback(userData)
+    } catch {
+      emitCurrent()
+    }
+  })
+
+  emitCurrent()
+  window.addEventListener(AUTH_CHANGED_EVENT, emitCurrent)
+  window.addEventListener('storage', emitCurrent)
 
   return () => {
-    window.removeEventListener(AUTH_CHANGED_EVENT, handler)
-    window.removeEventListener('storage', handler)
+    unsubscribeFirebase()
+    window.removeEventListener(AUTH_CHANGED_EVENT, emitCurrent)
+    window.removeEventListener('storage', emitCurrent)
   }
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Eye, Pencil, Plus, Trash, Users, Wallet, X } from '@phosphor-icons/react'
+import { CalendarBlank, Eye, Pencil, Plus, Trash, Users, Wallet, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { cn } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
@@ -481,6 +481,19 @@ const Sales: React.FC = () => {
       ? 'mobile-control'
       : 'mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
 
+  const showNativeDatePicker = (input: HTMLInputElement | null) => {
+    if (!input || isViewMode) return
+
+    const showPicker = (input as HTMLInputElement & { showPicker?: () => void }).showPicker
+    if (!showPicker) return
+
+    try {
+      showPicker.call(input)
+    } catch {
+      // Some browsers only allow showPicker from a direct user gesture.
+    }
+  }
+
   const formFields = (mobile: boolean) => (
     <div className="space-y-4">
       <MobileFormSection title="Admission Details">
@@ -491,7 +504,32 @@ const Sales: React.FC = () => {
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Date</label>
-            <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} disabled={isViewMode} className={inputClass(mobile)} />
+            <div className="relative">
+              <input
+                id="admission-date-input"
+                type="date"
+                value={invoiceDate}
+                onClick={(e) => showNativeDatePicker(e.currentTarget)}
+                onFocus={(e) => showNativeDatePicker(e.currentTarget)}
+                onChange={(e) => setInvoiceDate(e.target.value)}
+                disabled={isViewMode}
+                className={cn(inputClass(mobile), !isViewMode && 'cursor-pointer pr-11')}
+              />
+              {!isViewMode && (
+                <button
+                  type="button"
+                  aria-label="Open date picker"
+                  onClick={() => {
+                    const input = document.getElementById('admission-date-input') as HTMLInputElement | null
+                    input?.focus()
+                    showNativeDatePicker(input)
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-700 dark:text-slate-300 dark:hover:text-slate-100"
+                >
+                  <CalendarBlank size={18} weight="bold" />
+                </button>
+              )}
+            </div>
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Paid Amount</label>
