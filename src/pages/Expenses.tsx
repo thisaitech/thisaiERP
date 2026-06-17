@@ -418,26 +418,7 @@ const Expenses = () => {
               </div>
             </div>
 
-            {/* Category Filter Tabs */}
-            <div className="w-full md:w-auto md:flex-shrink-0">
-              <div className="erp-module-filter-wrap w-full md:w-auto overflow-x-auto whitespace-nowrap !items-center !justify-center">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={cn(
-                      "erp-module-filter-chip flex items-center justify-center gap-1 text-center",
-                      selectedCategory === cat.id
-                        ? "is-active"
-                        : "border border-slate-200 dark:border-slate-600"
-                    )}
-                  >
-                    <cat.icon size={12} weight="duotone" />
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+
           </div>
         </div>
       </div>
