@@ -281,11 +281,6 @@ const Expenses = () => {
           <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Total Expenses Card */}
             <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-50 dark:bg-red-900/20">
-                  <Wallet size={22} className="text-red-600 dark:text-red-400" />
-                </div>
-              </div>
               <div>
                 <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.totalExpenses || 'Total'}</h3>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
@@ -296,11 +291,6 @@ const Expenses = () => {
 
             {/* Salary Card */}
             <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
-                  <Money size={22} className="text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
               <div>
                 <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.salary || 'Salary'}</h3>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
@@ -311,11 +301,6 @@ const Expenses = () => {
 
             {/* Rent Card */}
             <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-900/20">
-                  <Briefcase size={22} className="text-amber-600 dark:text-amber-400" />
-                </div>
-              </div>
               <div>
                 <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.rent || 'Rent'}</h3>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
@@ -326,17 +311,6 @@ const Expenses = () => {
 
             {/* Change Card */}
             <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div className="flex justify-between items-start mb-2">
-                <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center",
-                  stats.percentChange >= 0 ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"
-                )}>
-                  {stats.percentChange >= 0 ?
-                    <TrendUp size={22} className="text-green-600 dark:text-green-400" /> :
-                    <TrendDown size={22} className="text-red-600 dark:text-red-400" />
-                  }
-                </div>
-              </div>
               <div>
                 <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.change || 'Change'}</h3>
                 <p className={cn("text-2xl font-bold mt-1", stats.percentChange >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
