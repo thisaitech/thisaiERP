@@ -105,6 +105,17 @@ const Expenses = () => {
       .filter(exp => exp.category === 'rent')
       .reduce((sum, exp) => sum + (exp.amount || 0), 0)
 
+    const thisMonthExpenses = expenses
+      .filter(exp => new Date(exp.date) >= monthStart)
+      .reduce((sum, exp) => sum + (exp.amount || 0), 0)
+
+    const lastMonthExpenses = expenses
+      .filter(exp => {
+        const d = new Date(exp.date)
+        return d >= lastMonthStart && d <= lastMonthEnd
+      })
+      .reduce((sum, exp) => sum + (exp.amount || 0), 0)
+
     const percentChange = lastMonthExpenses > 0
       ? ((thisMonthExpenses - lastMonthExpenses) / lastMonthExpenses * 100)
       : 0
