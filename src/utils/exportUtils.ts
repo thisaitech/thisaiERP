@@ -2391,7 +2391,7 @@ export function exportStockAlertPDF(reportData: any) {
       item.name,
       item.sku || 'N/A',
       (item.quantity ?? 0).toString(),
-      item.unitPrice ? `Rs ${item.unitPrice.toLocaleString('en-IN')}/unit` : 'Rs 0',
+      item.unitPrice ? `₹${item.unitPrice.toLocaleString('en-IN')}/unit` : '₹0',
       'Out of Stock'
     ])
 
@@ -2419,7 +2419,7 @@ export function exportStockAlertPDF(reportData: any) {
       item.name,
       item.sku || 'N/A',
       (item.quantity ?? 0).toString(),
-      `Rs ${(item.value || 0).toLocaleString('en-IN')}`,
+      `₹${(item.value || 0).toLocaleString('en-IN')}`,
       'Low Stock'
     ])
 
@@ -2447,7 +2447,7 @@ export function exportStockAlertPDF(reportData: any) {
       item.name,
       item.sku || 'N/A',
       (item.quantity ?? 0).toString(),
-      `Rs ${(item.value || 0).toLocaleString('en-IN')}`,
+      `₹${(item.value || 0).toLocaleString('en-IN')}`,
       'In Stock'
     ])
 

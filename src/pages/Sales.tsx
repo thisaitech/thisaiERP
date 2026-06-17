@@ -703,7 +703,7 @@ const Sales: React.FC = () => {
 
           <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-700 pt-2">
             <div className="text-sm text-slate-600 dark:text-slate-300">Total</div>
-            <div className="text-lg font-bold text-slate-800 dark:text-slate-100">Rs {Number(total).toLocaleString('en-IN')}</div>
+            <div className="text-lg font-bold text-slate-800 dark:text-slate-100">₹{Number(total).toLocaleString('en-IN')}</div>
           </div>
         </div>
       </MobileFormSection>
@@ -743,7 +743,7 @@ const Sales: React.FC = () => {
           <MobileStatCards
             items={[
               { id: 'count', title: 'Admissions', value: `${filteredInvoices.length}`, icon: <Users size={18} weight="bold" className="text-blue-600" />, tone: 'primary' },
-              { id: 'value', title: 'Amount', value: `Rs ${totalAdmissionsAmount.toLocaleString('en-IN')}`, valueClassName: '!text-[1rem] tracking-tight', icon: <Wallet size={18} weight="bold" className="text-emerald-600" />, tone: 'success' },
+              { id: 'value', title: 'Amount', value: `₹${totalAdmissionsAmount.toLocaleString('en-IN')}`, valueClassName: '!text-[1rem] tracking-tight', icon: <Wallet size={18} weight="bold" className="text-emerald-600" />, tone: 'success' },
             ]}
           />
         </div>
@@ -759,8 +759,8 @@ const Sales: React.FC = () => {
                 fields={[
                   { id: 'date', label: 'Date', value: (inv.invoiceDate || inv.createdAt || '').slice(0, 10) },
                   { id: 'phone', label: 'Phone', value: inv.phone || '-' },
-                  { id: 'total', label: 'Total', value: `Rs ${Number(inv.total || inv.grandTotal || 0).toLocaleString('en-IN')}` },
-                  { id: 'paid', label: 'Paid', value: `Rs ${Number(inv.paidAmount || 0).toLocaleString('en-IN')}` },
+                  { id: 'total', label: 'Total', value: `₹${Number(inv.total || inv.grandTotal || 0).toLocaleString('en-IN')}` },
+                  { id: 'paid', label: 'Paid', value: `₹${Number(inv.paidAmount || 0).toLocaleString('en-IN')}` },
                 ]}
                 status={
                   <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase', inv.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : inv.status === 'partial' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700')}>
@@ -816,8 +816,8 @@ const Sales: React.FC = () => {
                     <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">{inv.invoiceNumber || inv.id}</td>
                     <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{(inv.invoiceDate || inv.createdAt || '').slice(0, 10)}</td>
                     <td className="px-4 py-2 text-slate-700 dark:text-slate-200">{inv.partyName || 'Student'}</td>
-                    <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">Rs {Number(inv.total || inv.grandTotal || 0).toLocaleString('en-IN')}</td>
-                    <td className="px-4 py-2 text-right text-slate-600 dark:text-slate-300">Rs {Number(inv.paidAmount || 0).toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">₹{Number(inv.total || inv.grandTotal || 0).toLocaleString('en-IN')}</td>
+                    <td className="px-4 py-2 text-right text-slate-600 dark:text-slate-300">₹{Number(inv.paidAmount || 0).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-2 text-right">
                       <div className="inline-flex items-center justify-end gap-1">
                         <button onClick={() => openExisting(inv, 'view')} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" title="View"><Eye size={16} /></button>

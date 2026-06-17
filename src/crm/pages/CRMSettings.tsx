@@ -251,7 +251,7 @@ const CRMSettingsPage: React.FC = () => {
                 value={form.currencySymbol || ''}
                 onChange={(e) => setForm((prev) => ({ ...prev, currencySymbol: e.target.value }))}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700"
-                placeholder="e.g., Rs., $, EUR"
+                placeholder="e.g., ₹, $, EUR"
               />
             </div>
             <div className="text-sm text-slate-600 dark:text-slate-400 flex items-end">

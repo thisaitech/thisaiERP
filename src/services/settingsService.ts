@@ -643,7 +643,7 @@ function getDefaultSMSSettings(): SMSSettings {
     sendOnInvoiceCreation: true,
     sendPaymentReminders: true,
     sendDeliveryUpdates: false,
-    smsTemplate: 'Dear {customer}, Invoice {invoice_no} of Rs.{amount} has been generated. Pay via {link}. -ThisAI ERP'
+    smsTemplate: 'Dear {customer}, Invoice {invoice_no} of ₹{amount} has been generated. Pay via {link}. -ThisAI ERP'
   }
 }
 
