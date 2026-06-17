@@ -270,22 +270,6 @@ const Expenses = () => {
     <div className="erp-module-page overflow-x-hidden flex flex-col max-w-[100vw] w-full px-4 py-3 min-h-screen">
       {/* Header - Clean & Simple like Parties */}
       <div className="flex-shrink-0">
-        {/* Financial Modules Tabs */}
-        <div className="flex justify-start mb-4">
-          <div className="erp-module-filter-wrap">
-            <button className="erp-module-filter-btn erp-module-filter-btn-active">
-              <Wallet size={16} weight="bold" />
-              Spending
-            </button>
-            <button 
-              className="erp-module-filter-btn text-slate-500 hover:text-slate-700" 
-              onClick={() => navigate('/banking')}
-            >
-              <Bank size={16} weight="bold" />
-              Banking
-            </button>
-          </div>
-        </div>
 
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
