@@ -3,45 +3,72 @@
   --font-body: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --mobile-bg: #f4f7fb;
-  --mobile-surface: #ffffff;
-  --mobile-surface-2: #eef3fa;
-  --mobile-border: #d7e2f0;
-  --mobile-text: #0f1f35;
-  --mobile-text-muted: #5f718d;
+  /* Premium Light Mode Palette */
+  --mobile-bg: #F2F2F7;
+  --mobile-surface: #FFFFFF;
+  --mobile-surface-2: #F3F4F6;
+  --mobile-surface-glass: rgba(255, 255, 255, 0.85);
+  --mobile-border: rgba(60, 60, 67, 0.12);
+  --mobile-text: #000000;
+  --mobile-text-muted: #8E8E93;
 
-  --mobile-primary: #265fe6;
-  --mobile-primary-strong: #1b46b8;
-  --mobile-success: #0f9f6e;
-  --mobile-warning: #d97706;
-  --mobile-danger: #dc3545;
+  /* Vibrant Accents */
+  --mobile-primary: #007AFF; /* Apple Blue */
+  --mobile-primary-strong: #0056D6;
+  --mobile-primary-light: #E5F1FF;
+  
+  --mobile-success: #34C759;
+  --mobile-success-strong: #248A3D;
+  --mobile-success-light: #E8F8ED;
 
-  --mobile-radius-xs: 10px;
-  --mobile-radius-sm: 12px;
-  --mobile-radius-md: 16px;
-  --mobile-radius-lg: 20px;
+  --mobile-warning: #FF9500;
+  --mobile-danger: #FF3B30;
 
-  --mobile-shadow-sm: 0 2px 8px rgba(16, 33, 66, 0.08);
-  --mobile-shadow-md: 0 8px 24px rgba(16, 33, 66, 0.12);
+  /* Soft Geometry */
+  --mobile-radius-xs: 12px;
+  --mobile-radius-sm: 16px;
+  --mobile-radius-md: 20px;
+  --mobile-radius-lg: 28px;
+  --mobile-radius-full: 9999px;
 
-  --mobile-space-1: 4px;
-  --mobile-space-2: 8px;
-  --mobile-space-3: 12px;
-  --mobile-space-4: 16px;
-  --mobile-space-5: 20px;
-  --mobile-space-6: 24px;
+  /* Diffused layered shadows */
+  --mobile-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02);
+  --mobile-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06), 0 8px 32px rgba(0, 0, 0, 0.04);
+  --mobile-shadow-lg: 0 12px 32px rgba(0, 122, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  /* Spacing system */
+  --mobile-space-1: 6px;
+  --mobile-space-2: 10px;
+  --mobile-space-3: 16px;
+  --mobile-space-4: 20px;
+  --mobile-space-5: 24px;
+  --mobile-space-6: 32px;
 }
 
 .dark {
-  --mobile-bg: #0f172a;
-  --mobile-surface: #17233a;
-  --mobile-surface-2: #1f2f4d;
-  --mobile-border: #334765;
-  --mobile-text: #e5ecf7;
-  --mobile-text-muted: #a5b4cc;
+  /* Premium Dark Mode Palette */
+  --mobile-bg: #000000;
+  --mobile-surface: #1C1C1E;
+  --mobile-surface-2: #2C2C2E;
+  --mobile-surface-glass: rgba(28, 28, 30, 0.85);
+  --mobile-border: rgba(84, 84, 88, 0.4);
+  --mobile-text: #FFFFFF;
+  --mobile-text-muted: #EBEBF599;
 
-  --mobile-shadow-sm: 0 2px 8px rgba(2, 6, 23, 0.6);
-  --mobile-shadow-md: 0 8px 24px rgba(2, 6, 23, 0.65);
+  --mobile-primary: #0A84FF;
+  --mobile-primary-strong: #0066CC;
+  --mobile-primary-light: rgba(10, 132, 255, 0.15);
+
+  --mobile-success: #32D74B;
+  --mobile-success-strong: #28B03D;
+  --mobile-success-light: rgba(50, 215, 75, 0.15);
+
+  --mobile-warning: #FF9F0A;
+  --mobile-danger: #FF453A;
+
+  --mobile-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --mobile-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --mobile-shadow-lg: 0 12px 32px rgba(10, 132, 255, 0.2), 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
 html {
@@ -71,4 +98,3 @@ input[type='number'] {
   font-family: var(--font-mono);
   font-feature-settings: 'tnum', 'zero';
 }
-
