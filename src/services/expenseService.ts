@@ -1,6 +1,6 @@
 // Expense Service (REST backend)
 
-import { apiDelete, apiGet, apiPost } from './apiClient'
+import { apiDelete, apiGet, apiPost, apiPut } from './apiClient'
 
 export interface Expense {
   id: string
@@ -54,6 +54,11 @@ export async function createExpense(expense: Omit<Expense, 'id' | 'createdAt'>):
     createdAt: now,
   }
   const res = await apiPost<OneResponse<Expense>>('/expenses', payload)
+  return res.data
+}
+
+export async function updateExpense(id: string, expense: Partial<Omit<Expense, 'id' | 'createdAt'>>): Promise<Expense | null> {
+  const res = await apiPut<OneResponse<Expense>>(`/expenses/${encodeURIComponent(id)}`, expense)
   return res.data
 }
 

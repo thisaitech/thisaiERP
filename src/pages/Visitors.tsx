@@ -6,16 +6,17 @@ import {
   MagnifyingGlass,
   Trash,
   PencilSimple,
+  Eye,
   X,
   Phone,
   MapPin,
   GraduationCap,
   Briefcase,
-  FunnelSimple,
   Spinner,
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
+import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
 import { toast } from 'sonner'
 import MobilePageScaffold from '../components/mobile/MobilePageScaffold'
 import MobileSearchBar from '../components/mobile/MobileSearchBar'
@@ -56,9 +57,11 @@ const Visitors = () => {
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState<'all' | EnquiryType>('all')
+  const [visitorPeriod, setVisitorPeriod] = useState<PeriodFilterValue>('all')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
+  const [viewingVisitor, setViewingVisitor] = useState<Visitor | null>(null)
 
   const loadData = useCallback(async () => {
     try {
@@ -85,9 +88,32 @@ const Visitors = () => {
     if (params.get('action') === 'new') setShowForm(true)
   }, [location.search])
 
+  const periodVisitors = useMemo(() => {
+    if (visitorPeriod === 'all') return visitors
+    const now = new Date()
+    return visitors.filter((v) => {
+      const dateStr = String(v.visitDate || '').slice(0, 10)
+      if (!dateStr) return false
+      const d = new Date(dateStr)
+      if (isNaN(d.getTime())) return false
+      if (visitorPeriod === 'today') {
+        return dateStr === now.toISOString().slice(0, 10)
+      } else if (visitorPeriod === 'week') {
+        const weekAgo = new Date(now)
+        weekAgo.setDate(now.getDate() - 7)
+        return d >= weekAgo && d <= now
+      } else if (visitorPeriod === 'month') {
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+      } else if (visitorPeriod === 'year') {
+        return d.getFullYear() === now.getFullYear()
+      }
+      return true
+    })
+  }, [visitors, visitorPeriod])
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return visitors.filter((v) => {
+    return periodVisitors.filter((v) => {
       if (filterType !== 'all' && v.enquiryType !== filterType) return false
       if (!q) return true
       return (
@@ -98,17 +124,17 @@ const Visitors = () => {
         (v.profession || '').toLowerCase().includes(q)
       )
     })
-  }, [visitors, search, filterType])
+  }, [periodVisitors, search, filterType])
 
   const stats = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
     return {
-      total: visitors.length,
-      today: visitors.filter((v) => v.visitDate === today).length,
-      training: visitors.filter((v) => v.enquiryType === 'training').length,
-      it: visitors.filter((v) => v.enquiryType === 'it').length,
+      total: periodVisitors.length,
+      today: periodVisitors.filter((v) => v.visitDate === today).length,
+      training: periodVisitors.filter((v) => v.enquiryType === 'training').length,
+      it: periodVisitors.filter((v) => v.enquiryType === 'it').length,
     }
-  }, [visitors])
+  }, [periodVisitors])
 
   const openCreate = () => {
     setEditingId(null)
@@ -137,6 +163,10 @@ const Visitors = () => {
     setShowForm(false)
     setEditingId(null)
     setForm(EMPTY_FORM)
+  }
+
+  const openView = (visitor: Visitor) => {
+    setViewingVisitor(visitor)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -204,11 +234,12 @@ const Visitors = () => {
             className="fixed inset-0 bg-black/50 z-[70]"
             onClick={closeForm}
           />
+          <div className="fixed inset-0 z-[71] flex items-center justify-center p-3 pointer-events-none">
           <motion.div
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.98 }}
-            className="fixed inset-x-3 top-[5vh] bottom-[5vh] md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-2xl z-[71] overflow-hidden rounded-2xl bg-[#e4ebf5] dark:bg-slate-900 shadow-2xl flex flex-col"
+            className="pointer-events-auto w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-[#e4ebf5] dark:bg-slate-900 shadow-2xl flex flex-col"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/80 dark:border-slate-700">
               <div>
@@ -243,8 +274,10 @@ const Visitors = () => {
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Phone *</span>
                   <input
                     type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
                     value={form.phone}
-                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
                     className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm"
                     placeholder="10-digit mobile number"
                   />
@@ -365,6 +398,7 @@ const Visitors = () => {
               </div>
             </form>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
@@ -378,7 +412,14 @@ const Visitors = () => {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100">{visitor.name}</h3>
+            <button
+              type="button"
+              onClick={() => openView(visitor)}
+              title="View visitor details"
+              className="font-semibold text-slate-800 dark:text-slate-100 text-left cursor-pointer hover:text-blue-600 hover:underline transition-colors"
+            >
+              {visitor.name}
+            </button>
             <span className={cn(
               'text-[11px] font-semibold px-2 py-0.5 rounded-full',
               visitor.enquiryType === 'training'
@@ -404,17 +445,27 @@ const Visitors = () => {
         <div className="flex gap-1 shrink-0">
           <button
             type="button"
-            onClick={() => openEdit(visitor)}
-            className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
+            onClick={() => openView(visitor)}
+            title="View"
+            className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30"
           >
-            <PencilSimple size={18} />
+            <Eye size={18} weight="duotone" />
+          </button>
+          <button
+            type="button"
+            onClick={() => openEdit(visitor)}
+            title="Edit"
+            className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+          >
+            <PencilSimple size={18} weight="duotone" />
           </button>
           <button
             type="button"
             onClick={() => handleDelete(visitor.id, visitor.name)}
-            className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+            title="Delete"
+            className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
           >
-            <Trash size={18} />
+            <Trash size={18} weight="duotone" />
           </button>
         </div>
       </div>
@@ -427,16 +478,6 @@ const Visitors = () => {
         <MobilePageScaffold
           title="Visitors"
           subtitle="Track walk-in and enquiry visitors"
-          actions={
-            <button
-              type="button"
-              onClick={openCreate}
-              className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-br bg-blue-600 px-3 py-2 text-sm font-semibold text-white"
-            >
-              <Plus size={16} weight="bold" />
-              Add
-            </button>
-          }
         >
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3">
@@ -451,14 +492,14 @@ const Visitors = () => {
 
           <MobileSearchBar value={search} onChange={setSearch} placeholder="Search name, phone, course..." />
 
-          <div className="flex gap-2 mt-3 mb-3 overflow-x-auto">
+          <div className="flex items-center gap-1.5 mt-3 mb-3 overflow-x-auto flex-nowrap pb-0.5">
             {(['all', 'training', 'it'] as const).map((type) => (
               <button
                 key={type}
                 type="button"
                 onClick={() => setFilterType(type)}
                 className={cn(
-                  'shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold border',
+                  'shrink-0 rounded-full px-2.5 py-1.5 text-xs font-semibold border',
                   filterType === type
                     ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-white dark:bg-slate-800 text-slate-600 border-slate-200 dark:border-slate-700'
@@ -467,6 +508,17 @@ const Visitors = () => {
                 {type === 'all' ? 'All' : ENQUIRY_TYPE_LABELS[type]}
               </button>
             ))}
+            <div className="flex items-center gap-1.5 shrink-0 overflow-visible">
+              <PeriodFilterDropdown value={visitorPeriod} onChange={setVisitorPeriod} />
+              <button
+                type="button"
+                onClick={openCreate}
+                className="erp-module-primary-btn shrink-0 !py-2 !px-2.5 text-xs"
+              >
+                <Plus size={14} weight="bold" />
+                <span>Add</span>
+              </button>
+            </div>
           </div>
 
           {loading && <p className="text-sm text-slate-500 py-4">Loading visitors...</p>}
@@ -484,36 +536,21 @@ const Visitors = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Visitors</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Register and manage walk-in enquiries for Training & IT</p>
-        </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md"
-        >
-          <Plus size={18} weight="bold" />
-          Register Visitor
-        </button>
-      </div>
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: 'Total Visitors', value: stats.total, color: 'text-slate-800 dark:text-slate-100' },
-          { label: 'Today', value: stats.today, color: 'text-blue-600' },
-          { label: 'Training', value: stats.training, color: 'text-blue-600' },
-          { label: 'IT Services', value: stats.it, color: 'text-blue-600' },
-        ].map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm"
-          >
-            <p className="text-sm text-slate-500">{stat.label}</p>
-            <p className={cn('text-2xl font-bold mt-1', stat.color)}>{stat.value}</p>
-          </div>
-        ))}
+          {[
+            { label: 'Total Visitors', value: stats.total, color: 'text-slate-800 dark:text-slate-100' },
+            { label: 'Today', value: stats.today, color: 'text-blue-600' },
+            { label: 'Training', value: stats.training, color: 'text-blue-600' },
+            { label: 'IT Services', value: stats.it, color: 'text-blue-600' },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm"
+            >
+              <p className="text-sm text-slate-500">{stat.label}</p>
+              <p className={cn('text-2xl font-bold mt-1', stat.color)}>{stat.value}</p>
+            </div>
+          ))}
       </div>
 
       <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
@@ -528,15 +565,14 @@ const Visitors = () => {
               className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 pl-10 pr-3 py-2.5 text-sm"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <FunnelSimple size={18} className="text-slate-400" />
+          <div className="flex flex-nowrap items-center gap-2 shrink-0">
             {(['all', 'training', 'it'] as const).map((type) => (
               <button
                 key={type}
                 type="button"
                 onClick={() => setFilterType(type)}
                 className={cn(
-                  'rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors',
+                  'shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors',
                   filterType === type
                     ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-slate-50 dark:bg-slate-900 text-slate-600 border-slate-200 dark:border-slate-700'
@@ -545,6 +581,17 @@ const Visitors = () => {
                 {type === 'all' ? 'All' : ENQUIRY_TYPE_LABELS[type]}
               </button>
             ))}
+            <div className="flex items-center gap-1.5 shrink-0 overflow-visible">
+              <PeriodFilterDropdown value={visitorPeriod} onChange={setVisitorPeriod} />
+              <button
+                type="button"
+                onClick={openCreate}
+                className="erp-module-primary-btn shrink-0"
+              >
+                <Plus size={14} weight="bold" />
+                <span>Register Visitor</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -580,7 +627,16 @@ const Visitors = () => {
               <tbody>
                 {filtered.map((visitor) => (
                   <tr key={visitor.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-900/40">
-                    <td className="px-3 py-3 font-medium text-slate-800 dark:text-slate-100">{visitor.name}</td>
+                    <td className="px-3 py-3">
+                      <button
+                        type="button"
+                        onClick={() => openView(visitor)}
+                        title="View visitor details"
+                        className="font-medium text-blue-600 dark:text-blue-400 text-left cursor-pointer hover:underline transition-colors"
+                      >
+                        {visitor.name}
+                      </button>
+                    </td>
                     <td className="px-3 py-3">{visitor.phone}</td>
                     <td className="px-3 py-3 max-w-[180px] truncate">{visitor.address || '—'}</td>
                     <td className="px-3 py-3">
@@ -600,11 +656,14 @@ const Visitors = () => {
                     <td className="px-3 py-3">{visitor.visitDate}</td>
                     <td className="px-3 py-3">
                       <div className="flex justify-end gap-1">
-                        <button type="button" onClick={() => openEdit(visitor)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700">
-                          <PencilSimple size={16} />
+                        <button type="button" onClick={() => openView(visitor)} title="View" className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30">
+                          <Eye size={16} weight="duotone" />
                         </button>
-                        <button type="button" onClick={() => handleDelete(visitor.id, visitor.name)} className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30">
-                          <Trash size={16} />
+                        <button type="button" onClick={() => openEdit(visitor)} title="Edit" className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30">
+                          <PencilSimple size={16} weight="duotone" />
+                        </button>
+                        <button type="button" onClick={() => handleDelete(visitor.id, visitor.name)} title="Delete" className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30">
+                          <Trash size={16} weight="duotone" />
                         </button>
                       </div>
                     </td>
@@ -617,6 +676,65 @@ const Visitors = () => {
       </div>
 
       {formModal}
+
+      {/* View Visitor Modal */}
+      <AnimatePresence>
+        {viewingVisitor && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setViewingVisitor(null)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setViewingVisitor(null)}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-md overflow-hidden"
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Visitor Details</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{viewingVisitor.visitDate}</p>
+                  </div>
+                  <button onClick={() => setViewingVisitor(null)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500">
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="p-5 space-y-3 text-sm">
+                  {[
+                    { label: 'Name', value: viewingVisitor.name },
+                    { label: 'Phone', value: viewingVisitor.phone },
+                    { label: 'Address', value: viewingVisitor.address || '—' },
+                    { label: 'Enquiry Type', value: ENQUIRY_TYPE_LABELS[viewingVisitor.enquiryType] || viewingVisitor.enquiryType },
+                    { label: 'Course', value: viewingVisitor.course || '—' },
+                    { label: 'Profession', value: viewingVisitor.profession || '—' },
+                    { label: 'Source', value: SOURCE_LABELS[viewingVisitor.source] || viewingVisitor.source },
+                    { label: 'Notes', value: viewingVisitor.notes || '—' },
+                  ].map((row) => (
+                    <div key={row.label} className="flex items-start justify-between gap-4">
+                      <span className="text-slate-500 dark:text-slate-400">{row.label}</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-100 text-right">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2 px-5 py-4 border-t border-slate-200 dark:border-slate-700">
+                  <button
+                    onClick={() => { const v = viewingVisitor; setViewingVisitor(null); openEdit(v); }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700"
+                  >
+                    <PencilSimple size={16} weight="duotone" /> Edit
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

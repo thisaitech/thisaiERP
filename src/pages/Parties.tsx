@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { createPortal } from 'react-dom'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import {
   Users,
@@ -24,9 +23,7 @@ import {
   Trash,
   X,
   Eye,
-  FileText,
-  ArrowsClockwise,
-  DotsThreeVertical
+  ArrowsClockwise
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -37,6 +34,9 @@ import { getInvoices, updateInvoice } from '../services/invoiceService'
 import { toast } from 'sonner'
 import { validateCustomerName, validatePhoneNumber, validateGSTIN } from '../utils/inputValidation'
 import { getPartyName } from '../utils/partyUtils'
+import StudentDetailsModal from '../components/StudentDetailsModal'
+import AddAdmissionModal from '../components/AddAdmissionModal'
+import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
 
 // Indian States list with priority states first
 const INDIAN_STATES = [
@@ -82,7 +82,6 @@ const INDIAN_STATES = [
 ]
 
 const Parties = () => {
-  const navigate = useNavigate()
   // Language support
   const { t, language } = useLanguage()
 
@@ -90,17 +89,7 @@ const Parties = () => {
   const [activeTab, setActiveTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Time period filter (Today, Week, Month, Year, All, Custom)
-  const [statsFilter, setStatsFilter] = useState<'today' | 'week' | 'month' | 'year' | 'all' | 'custom'>('all')
-  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false)
-  const [customDateFrom, setCustomDateFrom] = useState<string>(() => {
-    const d = new Date()
-    d.setDate(d.getDate() - 7)
-    return d.toISOString().split('T')[0]
-  })
-  const [customDateTo, setCustomDateTo] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0]
-  })
+  const [statsFilter, setStatsFilter] = useState<PeriodFilterValue>('all')
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedParty, setSelectedParty] = useState<any>(null)
   const [showLedgerModal, setShowLedgerModal] = useState(false)
@@ -113,6 +102,8 @@ const Parties = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [partyToDelete, setPartyToDelete] = useState<any>(null)
   const [allInvoices, setAllInvoices] = useState<any[]>([])
+  const [viewingStudent, setViewingStudent] = useState<any>(null)
+  const [admissionForStudent, setAdmissionForStudent] = useState<any>(null)
 
   // Party settings from Settings page
   const [partySettings, setPartySettings] = useState<PartySettings>(() => getPartySettings())
@@ -161,8 +152,6 @@ const Parties = () => {
   const [studentSourceOther, setStudentSourceOther] = useState('')
 
   // Dropdown menu state
-  const [openActionMenu, setOpenActionMenu] = useState<string | null>(null)
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null)
 
   // Load parties from database with live outstanding balances
   const loadPartiesFromDatabase = async () => {
@@ -689,15 +678,13 @@ const Parties = () => {
       weekAgo.setDate(weekAgo.getDate() - 7)
       return invoiceDateStr >= weekAgo.toISOString().split('T')[0]
     } else if (statsFilter === 'month') {
-      const monthAgo = new Date()
-      monthAgo.setMonth(monthAgo.getMonth() - 1)
-      return invoiceDateStr >= monthAgo.toISOString().split('T')[0]
+      const monthStart = new Date()
+      monthStart.setDate(1)
+      return invoiceDateStr >= monthStart.toISOString().split('T')[0]
     } else if (statsFilter === 'year') {
       const yearAgo = new Date()
       yearAgo.setFullYear(yearAgo.getFullYear() - 1)
       return invoiceDateStr >= yearAgo.toISOString().split('T')[0]
-    } else if (statsFilter === 'custom') {
-      return invoiceDateStr >= customDateFrom && invoiceDateStr <= customDateTo
     }
     return true
   }
@@ -740,80 +727,6 @@ const Parties = () => {
   const viewLedger = (party: typeof parties[0]) => {
     setSelectedParty(party)
     setShowLedgerModal(true)
-  }
-
-  // Print party details
-  const printParty = (party: any) => {
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) {
-      toast.error('Please allow popups for printing')
-      return
-    }
-
-    const partyName = getPartyName(party)
-    const outstanding = party.outstanding ?? party.currentBalance ?? 0
-    // Positive = they owe us (Total Due), Negative = we owe them (Advance/Credit)
-    const balanceLabel = outstanding > 0 ? 'Due' : outstanding < 0 ? 'Advance/Credit' : 'Settled'
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${partyName} - Student/Client Details</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
-          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
-          .header h1 { margin: 0 0 5px 0; font-size: 24px; }
-          .header p { margin: 0; color: #666; }
-          .details { margin-bottom: 20px; }
-          .details-row { display: flex; padding: 8px 0; border-bottom: 1px solid #eee; }
-          .details-label { font-weight: bold; width: 150px; color: #555; }
-          .details-value { flex: 1; }
-          .balance { text-align: center; padding: 15px; margin-top: 20px; border-radius: 8px; }
-          .balance.positive { background: #dcfce7; color: #166534; }
-          .balance.negative { background: #fee2e2; color: #991b1b; }
-          .balance.zero { background: #f3f4f6; color: #374151; }
-          .balance h2 { margin: 0 0 5px 0; }
-          .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
-          @media print { body { padding: 0; } }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>${partyName}</h1>
-          <p>${party.type === 'customer' ? 'Student' : 'Client'}</p>
-        </div>
-        <div class="details">
-          <div class="details-row">
-            <span class="details-label">Phone:</span>
-            <span class="details-value">${party.phone || 'N/A'}</span>
-          </div>
-          ${party.email ? `<div class="details-row"><span class="details-label">Email:</span><span class="details-value">${party.email}</span></div>` : ''}
-          ${party.gstDetails?.gstin ? `<div class="details-row"><span class="details-label">GSTIN:</span><span class="details-value">${party.gstDetails.gstin}</span></div>` : ''}
-          ${party.billingAddress?.street ? `<div class="details-row"><span class="details-label">Address:</span><span class="details-value">${party.billingAddress.street}</span></div>` : ''}
-          ${party.billingAddress?.state ? `<div class="details-row"><span class="details-label">State:</span><span class="details-value">${party.billingAddress.state}</span></div>` : ''}
-          ${party.vehicleNo ? `<div class="details-row"><span class="details-label">Course / Batch:</span><span class="details-value">${party.vehicleNo}</span></div>` : ''}
-        </div>
-        <div class="balance ${outstanding > 0 ? 'positive' : outstanding < 0 ? 'negative' : 'zero'}">
-          <h2>Balance Summary</h2>
-          <p style="font-size: 28px; font-weight: bold; margin: 10px 0;">₹${Math.abs(outstanding).toLocaleString('en-IN')}</p>
-          <p>(${balanceLabel})</p>
-        </div>
-        <div class="footer">
-          <p>Printed on ${new Date().toLocaleString()}</p>
-        </div>
-        <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() { window.close(); };
-            // Fallback for browsers that don't support onafterprint
-            setTimeout(function() { window.close(); }, 1000);
-          }
-        </script>
-      </body>
-      </html>
-    `)
-    printWindow.document.close()
   }
 
   // Print ledger
@@ -932,36 +845,6 @@ const Parties = () => {
     printWindow.document.close()
   }
 
-  // Handle action menu click
-  const handleActionMenuClick = (e: React.MouseEvent, partyId: string) => {
-    e.stopPropagation()
-
-    if (openActionMenu === partyId) {
-      setOpenActionMenu(null)
-      setDropdownPosition(null)
-    } else {
-      const buttonRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-      setDropdownPosition({
-        top: buttonRect.bottom + 4,
-        right: window.innerWidth - buttonRect.right
-      })
-      setOpenActionMenu(partyId)
-    }
-  }
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const closeMenu = (e: MouseEvent) => {
-      if (openActionMenu) {
-        setOpenActionMenu(null)
-        setDropdownPosition(null)
-      }
-    }
-
-    document.addEventListener('click', closeMenu)
-    return () => document.removeEventListener('click', closeMenu)
-  }, [openActionMenu])
-
   return (
     <div className="erp-module-page p-3 sm:p-4 lg:p-4 pb-16 sm:pb-20 lg:pb-6">
       {/* Header */}
@@ -971,40 +854,50 @@ const Parties = () => {
         className="mb-3"
       >
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
-        <div className="flex flex-col gap-2 md:gap-3 mb-3">
-          {/* Top KPI Cards */}
-          <div className="grid grid-cols-2 gap-2 mb-3 md:gap-6">
-            {/* Pending Amount Card */}
-            <div onClick={() => setActiveTab('customers')} className="relative p-2.5 sm:p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+          {/* Left Side: KPI Cards */}
+          <div className="flex-1 min-w-0 grid grid-cols-3 gap-1.5 sm:gap-2">
+            {/* Total Students Card */}
+            <div onClick={() => setActiveTab('customers')} className="relative p-2 sm:p-2.5 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">{language === 'ta' ? 'நிலுவை தொகை' : 'Pending Amount'}</h3>
-                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
-                  {"₹"}{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
+                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{language === 'ta' ? 'மொத்த மாணவர்கள்' : 'Total Students'}</h3>
+                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200">
+                  {parties.filter(p => p.type === 'customer').length}
                 </p>
               </div>
             </div>
 
             {/* Paid Amount Card */}
-            <div className="relative p-2.5 sm:p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+            <div className="relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">{language === 'ta' ? 'செலுத்திய தொகை' : 'Paid Amount'}</h3>
-                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{language === 'ta' ? 'செலுத்திய தொகை' : 'Paid Amount'}</h3>
+                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200 truncate">
                   {"₹"}{partiesSummary.totalPaid >= 10000000 ? (partiesSummary.totalPaid / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPaid >= 100000 ? (partiesSummary.totalPaid / 100000).toFixed(1) + ' L' : partiesSummary.totalPaid >= 1000 ? (partiesSummary.totalPaid / 1000).toFixed(1) + ' K' : partiesSummary.totalPaid.toLocaleString('en-IN')}
+                </p>
+              </div>
+            </div>
+
+            {/* Pending Amount Card */}
+            <div onClick={() => setActiveTab('customers')} className="relative p-2 sm:p-2.5 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
+              <div>
+                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{language === 'ta' ? 'நிலுவை தொகை' : 'Pending Amount'}</h3>
+                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200 truncate">
+                  {"₹"}{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Controls Row (below KPI cards): + top-right and date filters in boxed row */}
-          <div className="flex flex-col items-end gap-2 w-full">
+          {/* Right Side: Date Filters + Action Button */}
+          <div className="flex flex-row items-center justify-end gap-1.5 flex-shrink-0 w-auto">
+            <PeriodFilterDropdown value={statsFilter} onChange={setStatsFilter} />
             <button
               onClick={() => setShowAddModal(true)}
-              className="erp-module-primary-btn !w-12 !h-12 !p-0 !rounded-xl justify-center shrink-0"
+              className="erp-module-primary-btn"
             >
-              <Plus size={18} weight="bold" />
+              <Plus size={14} weight="bold" />
+              <span>{language === 'ta' ? 'மாணவர்' : 'Student'}</span>
             </button>
-
-
           </div>
         </div>
       </motion.div>
@@ -1017,13 +910,13 @@ const Parties = () => {
         className="mb-3"
       >
         <div className="relative">
-          <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <MagnifyingGlass size={18} weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder={language === 'ta' ? 'à®ªà¯†à®¯à®°à¯, à®¤à¯Šà®²à¯ˆà®ªà¯‡à®šà®¿ à®…à®²à¯à®²à®¤à¯ à®®à®¿à®©à¯à®©à®žà¯à®šà®²à®¾à®²à¯ à®¤à¯‡à®Ÿà¯...' : 'Search by name, phone, or email...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="erp-module-search-input pl-9 pr-3"
+            className="w-full min-h-[44px] rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
           />
         </div>
       </motion.div>
@@ -1109,9 +1002,14 @@ const Parties = () => {
                         <Storefront size={16} weight="duotone" className="text-orange-600" />
                       )}
                     </div>
-                    <span className="font-medium text-xs text-slate-800 truncate">
+                    <button
+                      type="button"
+                      onClick={() => setViewingStudent(party)}
+                      title="View student details"
+                      className="font-medium text-xs text-slate-800 truncate text-left cursor-pointer hover:text-blue-600 hover:underline transition-colors"
+                    >
                       {getPartyName(party)}
-                    </span>
+                    </button>
                   </div>
 
                   {/* Phone */}
@@ -1161,50 +1059,41 @@ const Parties = () => {
                   </div>
 
                   {/* Actions */}
-                  <div style={{ width: '24%' }} className="flex items-center justify-center gap-0.5">
+                  <div style={{ width: '24%' }} className="flex items-center justify-end gap-1">
                     <button
-                      onClick={() => navigate('/sales', { state: { preselectPartyId: party.id } })}
-                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                      onClick={() => setAdmissionForStudent({
+                        id: party.id,
+                        name: getPartyName(party),
+                        phone: party.phone || '',
+                        email: party.email || '',
+                        address: party.billingAddress?.street || (party as any).address || '',
+                        admissionDetails: (party as any).admissionDetails,
+                      })}
+                      className="p-2 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                       title="Add Admission"
                     >
-                      <Plus size={16} weight="bold" className="text-blue-600" />
+                      <Plus size={16} weight="bold" />
                     </button>
                     <button
                       onClick={() => viewLedger(party)}
-                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                      title="View Ledger"
+                      className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                      title="View"
                     >
-                      <FileText size={16} weight="duotone" className="text-blue-600" />
-                    </button>
-                    <button
-                      onClick={() => printParty(party)}
-                      className="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
-                      title="Print"
-                    >
-                      <Printer size={16} weight="duotone" className="text-slate-600" />
+                      <Eye size={16} weight="duotone" />
                     </button>
                     <button
                       onClick={() => handleEditParty(party)}
-                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-amber-100 rounded-lg transition-colors"
+                      className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"
                       title="Edit"
                     >
-                      <Pencil size={16} weight="duotone" className="text-blue-600" />
+                      <Pencil size={16} weight="duotone" />
                     </button>
                     <button
                       onClick={() => handleDeleteParty(party)}
-                      className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-red-100 rounded-lg transition-colors"
+                      className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                       title="Delete"
                     >
-                      <Trash size={16} weight="duotone" className="text-blue-600" />
-                    </button>
-
-                    {/* More Actions Dropdown */}
-                    <button
-                      onClick={(e) => handleActionMenuClick(e, party.id)}
-                      className="w-7 h-7 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
-                      title="More"
-                    >
-                      <DotsThreeVertical size={16} weight="bold" className="text-slate-600" />
+                      <Trash size={16} weight="duotone" />
                     </button>
                   </div>
                 </div>
@@ -1224,9 +1113,13 @@ const Parties = () => {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm text-slate-800 truncate">
+                        <button
+                          type="button"
+                          onClick={() => setViewingStudent(party)}
+                          className="font-semibold text-sm text-slate-800 truncate text-left cursor-pointer hover:text-blue-600 hover:underline transition-colors"
+                        >
                           {getPartyName(party)}
-                        </h3>
+                        </button>
                         {party.phone && (
                           <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-500">
                             <Phone size={11} />
@@ -1273,31 +1166,39 @@ const Parties = () => {
                   {/* Actions */}
                   <div className="flex items-center gap-1 pt-2 border-t border-slate-100">
                     <button
-                      onClick={() => navigate('/sales', { state: { preselectPartyId: party.id } })}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-blue-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                      onClick={() => setAdmissionForStudent({
+                        id: party.id,
+                        name: getPartyName(party),
+                        phone: party.phone || '',
+                        email: party.email || '',
+                        address: party.billingAddress?.street || (party as any).address || '',
+                        admissionDetails: (party as any).admissionDetails,
+                      })}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
                     >
-                      <Plus size={14} weight="bold" className="text-blue-600" />
-                      <span className="text-[11px] font-medium text-emerald-700">Admission</span>
+                      <Plus size={14} weight="bold" className="text-emerald-600" />
+                      <span className="text-xs font-medium text-emerald-700">Admission</span>
                     </button>
                     <button
                       onClick={() => viewLedger(party)}
                       className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                     >
-                      <FileText size={14} weight="duotone" className="text-blue-600" />
-                      <span className="text-xs font-medium text-blue-700">Ledger</span>
+                      <Eye size={14} weight="duotone" className="text-blue-600" />
+                      <span className="text-xs font-medium text-blue-700">View</span>
                     </button>
                     <button
                       onClick={() => handleEditParty(party)}
-                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-blue-50 hover:bg-amber-100 rounded-lg transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
                     >
-                      <Pencil size={14} weight="duotone" className="text-blue-600" />
+                      <Pencil size={14} weight="duotone" className="text-amber-600" />
                       <span className="text-xs font-medium text-amber-700">Edit</span>
                     </button>
                     <button
-                      onClick={(e) => handleActionMenuClick(e, party.id)}
-                      className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
+                      onClick={() => handleDeleteParty(party)}
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
                     >
-                      <DotsThreeVertical size={16} weight="bold" className="text-slate-600" />
+                      <Trash size={14} weight="duotone" className="text-red-600" />
+                      <span className="text-xs font-medium text-red-700">Delete</span>
                     </button>
                   </div>
                 </div>
@@ -1306,42 +1207,6 @@ const Parties = () => {
           })
         )}
       </div>
-
-      {/* Dropdown Menu Portal */}
-      {openActionMenu && dropdownPosition && createPortal(
-        <div
-          className="fixed bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-[9999] min-w-[140px]"
-          style={{
-            top: `${dropdownPosition.top}px`,
-            right: `${dropdownPosition.right}px`
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            onClick={() => {
-              const party = parties.find(p => p.id === openActionMenu)
-              if (party) printParty(party)
-              setOpenActionMenu(null)
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 text-xs text-slate-700"
-          >
-            <Printer size={14} weight="duotone" />
-            <span>Print Details</span>
-          </button>
-          <button
-            onClick={() => {
-              const party = parties.find(p => p.id === openActionMenu)
-              if (party) handleDeleteParty(party)
-              setOpenActionMenu(null)
-            }}
-            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-blue-50 text-xs text-blue-600"
-          >
-            <Trash size={14} weight="duotone" />
-            <span>Delete Record</span>
-          </button>
-        </div>,
-        document.body
-      )}
 
       {/* Add Student/Client Modal */}
       <AnimatePresence>
@@ -2304,6 +2169,21 @@ const Parties = () => {
           </div>
         )}
       </AnimatePresence>
+
+      <StudentDetailsModal
+        open={!!viewingStudent}
+        onClose={() => setViewingStudent(null)}
+        student={viewingStudent}
+        invoices={allInvoices}
+      />
+
+      <AddAdmissionModal
+        open={!!admissionForStudent}
+        onClose={() => setAdmissionForStudent(null)}
+        student={admissionForStudent}
+        existingInvoices={allInvoices}
+        onSaved={() => loadPartiesFromDatabase()}
+      />
     </div>
   )
 }

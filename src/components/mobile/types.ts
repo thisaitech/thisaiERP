@@ -36,5 +36,5 @@ export interface MobileActionItem {
   label: string
   icon?: ReactNode
   onClick: () => void
-  tone?: 'default' | 'danger'
+  tone?: 'default' | 'danger' | 'primary'
 }

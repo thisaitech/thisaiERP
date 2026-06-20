@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
 import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -57,16 +58,161 @@ const buildDefaultWeeklyData = (): WeeklyOverviewEntry[] => {
   })
 }
 
+const toLocalDateKeyFromInput = (value: unknown): string => {
+  if (value === null || value === undefined || value === '') return ''
+  const raw = String(value).trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
+  const d = new Date(raw.includes('T') ? raw : `${raw}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const toLocalDateKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+const formatAxisValue = (value: number) => {
+  if (value >= 100000) return `${(value / 100000).toFixed(1)}L`
+  if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k`
+  return String(Math.round(value))
+}
+
+type WeeklyOverviewChartProps = {
+  data: WeeklyOverviewEntry[]
+  height?: number
+  compact?: boolean
+  onDayClick?: (entry: WeeklyOverviewEntry) => void
+}
+
+const WeeklyOverviewChart = ({ data, height = 256, compact = false, onDayClick }: WeeklyOverviewChartProps) => {
+  const chartId = compact ? 'compact' : 'desktop'
+  const padding = { top: 12, right: 12, bottom: 32, left: compact ? 40 : 52 }
+  const width = 700
+  const innerHeight = height - padding.top - padding.bottom
+  const innerWidth = width - padding.left - padding.right
+
+  const maxRaw = Math.max(1, ...data.flatMap((d) => [d.sales, d.purchases]))
+  const magnitude = Math.pow(10, Math.floor(Math.log10(maxRaw)))
+  const yMax = Math.max(magnitude, Math.ceil(maxRaw / magnitude) * magnitude)
+  const yTickCount = 4
+
+  const points = data.map((entry, i) => {
+    const x = padding.left + (data.length <= 1 ? innerWidth / 2 : (i / (data.length - 1)) * innerWidth)
+    const baseline = padding.top + innerHeight
+    const ySales = baseline - (entry.sales / yMax) * innerHeight
+    const yPurchases = baseline - (entry.purchases / yMax) * innerHeight
+    return { ...entry, x, ySales, yPurchases, baseline }
+  })
+
+  const salesLine = points.map((p) => `${p.x},${p.ySales}`).join(' ')
+  const spendingLine = points.map((p) => `${p.x},${p.yPurchases}`).join(' ')
+
+  const areaPath = (key: 'ySales' | 'yPurchases') => {
+    if (points.length === 0) return ''
+    const baseline = padding.top + innerHeight
+    return [
+      `M ${points[0].x} ${baseline}`,
+      ...points.map((p) => `L ${p.x} ${p[key]}`),
+      `L ${points[points.length - 1].x} ${baseline}`,
+      'Z',
+    ].join(' ')
+  }
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ height }} preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id={`weeklyBlueFill-${chartId}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.02" />
+        </linearGradient>
+        <linearGradient id={`weeklyAmberFill-${chartId}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+
+      {Array.from({ length: yTickCount + 1 }).map((_, i) => {
+        const y = padding.top + (i / yTickCount) * innerHeight
+        const value = yMax - (i / yTickCount) * yMax
+        return (
+          <g key={i}>
+            <line
+              x1={padding.left}
+              y1={y}
+              x2={width - padding.right}
+              y2={y}
+              stroke="currentColor"
+              className="text-slate-200 dark:text-slate-700/70"
+              strokeDasharray="5 5"
+            />
+            <text
+              x={padding.left - 6}
+              y={y + 4}
+              textAnchor="end"
+              className="fill-slate-400 dark:fill-slate-500"
+              fontSize={compact ? 9 : 10}
+            >
+              {formatAxisValue(value)}
+            </text>
+          </g>
+        )
+      })}
+
+      <line
+        x1={padding.left}
+        y1={padding.top + innerHeight}
+        x2={width - padding.right}
+        y2={padding.top + innerHeight}
+        stroke="currentColor"
+        className="text-slate-300 dark:text-slate-600"
+        strokeWidth={1}
+      />
+
+      <path d={areaPath('ySales')} fill={`url(#weeklyBlueFill-${chartId})`} />
+      <path d={areaPath('yPurchases')} fill={`url(#weeklyAmberFill-${chartId})`} />
+
+      <polyline
+        points={salesLine}
+        fill="none"
+        stroke="#2563eb"
+        strokeWidth={compact ? 2 : 2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <polyline
+        points={spendingLine}
+        fill="none"
+        stroke="#d97706"
+        strokeWidth={compact ? 2 : 2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      {points.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy={p.ySales} r={compact ? 3.5 : 4.5} fill="#2563eb" stroke="#ffffff" strokeWidth={1.5} />
+          <circle cx={p.x} cy={p.yPurchases} r={compact ? 3.5 : 4.5} fill="#d97706" stroke="#ffffff" strokeWidth={1.5} />
+          <text
+            x={p.x}
+            y={height - 10}
+            textAnchor="middle"
+            className="fill-slate-500 dark:fill-slate-400 cursor-pointer"
+            fontSize={compact ? 10 : 12}
+            fontWeight={500}
+            onClick={() => onDayClick?.(p)}
+          >
+            {p.day}
+          </text>
+        </g>
+      ))}
+    </svg>
+  )
+}
+
 const Dashboard = () => {
   const navigate = useNavigate()
   const { t, language } = useLanguage()
   const { userData } = useAuth()
-  const [selectedPeriod, setSelectedPeriod] = useState('today')
-  const [customDateRange, setCustomDateRange] = useState({
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0]
-  })
-  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false)
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilterValue>('today')
   const [currentAlertIndex, setCurrentAlertIndex] = useState(0)
   const [greeting, setGreeting] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -126,17 +272,12 @@ const Dashboard = () => {
       // Define weekStart for metrics (align with chartStart)
       const weekStart = new Date(chartStart)
 
-      // Robust date extraction helper - check multiple possible timestamp fields and normalize to YYYY-MM-DD
+      // Robust date extraction helper - normalize to local YYYY-MM-DD
       const getDateKeyFromRecord = (rec: any) => {
         const candidates = [rec.invoiceDate, rec.date, rec.billDate, rec.purchaseDate, rec.createdAt, rec.created_at]
         for (const c of candidates) {
-          if (!c) continue
-          const d = new Date(c)
-          if (!isNaN(d.getTime())) return d.toISOString().split('T')[0]
-          try {
-            const d2 = new Date(String(c).replace(' ', 'T'))
-            if (!isNaN(d2.getTime())) return d2.toISOString().split('T')[0]
-          } catch (_) {}
+          const key = toLocalDateKeyFromInput(c)
+          if (key) return key
         }
         return ''
       }
@@ -178,10 +319,10 @@ const Dashboard = () => {
         return Date.now()
       }
 
-      const todayStr = today.toISOString().split('T')[0]
-      const yesterdayStr = yesterday.toISOString().split('T')[0]
-      const weekStartStr = weekStart.toISOString().split('T')[0]
-      const monthStartStr = monthStart.toISOString().split('T')[0]
+      const todayStr = toLocalDateKey(today)
+      const yesterdayStr = toLocalDateKey(yesterday)
+      const weekStartStr = toLocalDateKey(weekStart)
+      const monthStartStr = toLocalDateKey(monthStart)
 
       // Fetch all data in parallel
       const [salesInvoices, purchaseInvoices, expenses, parties, items, bankingData] = await Promise.all([
@@ -279,16 +420,15 @@ const Dashboard = () => {
         return acc
       }, {})
 
-      // For training centers, the weekly comparison is more useful as Admissions vs Spending (Expenses)
       const spendingByDate = expenses.reduce<Record<string, number>>((acc, exp: any) => {
-        const expDate = (exp.date || exp.createdAt || '').split('T')[0]
+        const expDate = toLocalDateKeyFromInput(exp.date || exp.createdAt)
         if (!expDate) return acc
         acc[expDate] = (acc[expDate] || 0) + (exp.amount || 0)
         return acc
       }, {})
 
       setWeeklyOverviewData(chartDates.map((date) => {
-        const dateKey = date.toISOString().split('T')[0]
+        const dateKey = toLocalDateKey(date)
         return {
           day: date.toLocaleDateString('en-US', { weekday: 'short' }),
           sales: salesByDate[dateKey] || 0,
@@ -297,26 +437,23 @@ const Dashboard = () => {
       }))
 
       // Calculate expenses - use date string comparison for reliability
-      console.log('📊 Dashboard: Expenses fetched:', expenses.length, 'Today:', todayStr)
-      expenses.forEach((exp: any) => console.log('  - Expense:', exp.date, exp.amount))
-
       const todayExpenses = expenses
         .filter((exp: any) => {
-          const expDate = (exp.date || exp.createdAt || '').split('T')[0]
+          const expDate = toLocalDateKeyFromInput(exp.date || exp.createdAt)
           return expDate >= todayStr
         })
         .reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0)
 
       const weekExpenses = expenses
         .filter((exp: any) => {
-          const expDate = (exp.date || exp.createdAt || '').split('T')[0]
+          const expDate = toLocalDateKeyFromInput(exp.date || exp.createdAt)
           return expDate >= weekStartStr
         })
         .reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0)
 
       const monthExpenses = expenses
         .filter((exp: any) => {
-          const expDate = (exp.date || exp.createdAt || '').split('T')[0]
+          const expDate = toLocalDateKeyFromInput(exp.date || exp.createdAt)
           return expDate >= monthStartStr
         })
         .reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0)
@@ -606,18 +743,9 @@ const Dashboard = () => {
     })
   }
 
-  // Get period label for display
-  const getPeriodLabel = () => {
-    switch (selectedPeriod) {
-      case 'today': return 'Today'
-      case 'week': return 'This Week'
-      case 'month': return 'This Month'
-      case 'year': return 'This Year'
-      case 'all': return 'All Time'
-      case 'custom': return `${customDateRange.startDate} - ${customDateRange.endDate}`
-      default: return 'Today'
-    }
-  }
+  const periodFilter = (
+    <PeriodFilterDropdown value={selectedPeriod} onChange={setSelectedPeriod} />
+  )
 
   const metrics = {
     sales: {
@@ -665,11 +793,6 @@ const Dashboard = () => {
     payables: realMetrics.payables,
     inventory: realMetrics.inventory
   }
-
-  const weeklyMaxValue = Math.max(
-    1,
-    ...weeklyOverviewData.map(entry => Math.max(entry.sales, entry.purchases))
-  )
 
   const handleWeeklyOverviewDayClick = (entry: WeeklyOverviewEntry) => {
     setSelectedPeriod('week')
@@ -722,14 +845,6 @@ const Dashboard = () => {
     }
   ]
 
-  const periods = [
-    { id: 'today', label: t.common.today },
-    { id: 'week', label: t.common.week },
-    { id: 'month', label: t.common.month },
-    { id: 'year', label: t.common.year },
-    { id: 'all', label: 'All' }
-  ]
-
   // Auto-rotate alerts
   useEffect(() => {
     const interval = setInterval(() => {
@@ -749,22 +864,9 @@ const Dashboard = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400">Welcome back.</p>
           </div>
         </div>
-        {/* Period Filter - Segmented Control */}
-        <div className="flex items-center justify-between p-1 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white/50 dark:bg-slate-900/50 mb-5 overflow-x-auto hide-scrollbar">
-            {periods.map((period) => (
-              <button
-                key={period.id}
-                onClick={() => setSelectedPeriod(period.id)}
-                className={cn(
-                  "px-3 py-2 text-sm font-semibold rounded-xl whitespace-nowrap transition-all duration-200 flex-1 text-center",
-                  selectedPeriod === period.id
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                )}
-              >
-                {period.label === 'All Time' ? 'All' : period.label}
-              </button>
-            ))}
+        {/* Period Filter */}
+        <div className="mt-4 mb-5">
+          {periodFilter}
         </div>
 
         <motion.div
@@ -824,46 +926,12 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-          <motion.div
-            className="flex items-end justify-between gap-1 h-32"
-            initial="hidden"
-            animate="visible"
-            variants={{
-                visible: { transition: { staggerChildren: 0.05 } },
-            }}
-          >
-            {weeklyOverviewData.map((day, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-                <div className="w-full flex items-end justify-center gap-0.5 h-full">
-                  <motion.div
-                    variants={{
-                        hidden: { height: '4%', opacity: 0 },
-                        visible: { height: `${Math.max((day.sales / weeklyMaxValue) * 100, 4)}%`, opacity: 1 },
-                    }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                    className="w-3.5 bg-gradient-to-t from-blue-400 to-blue-600 rounded-t-md"
-                    title={`Admissions: ₹${day.sales.toLocaleString()}`}
-                  />
-                  <motion.div
-                    variants={{
-                        hidden: { height: '4%', opacity: 0 },
-                        visible: { height: `${Math.max((day.purchases / weeklyMaxValue) * 100, 4)}%`, opacity: 1 },
-                    }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.1 }}
-                    className="w-3.5 bg-gradient-to-t from-amber-300 to-amber-500 rounded-t-md"
-                    title={`Spending: ₹${day.purchases.toLocaleString()}`}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleWeeklyOverviewDayClick(day)}
-                  className="text-xs font-medium text-slate-500 hover:text-blue-600 active:text-blue-700 transition-colors"
-                >
-                  {day.day}
-                </button>
-              </div>
-            ))}
-          </motion.div>
+          <WeeklyOverviewChart
+            data={weeklyOverviewData}
+            height={128}
+            compact
+            onDayClick={handleWeeklyOverviewDayClick}
+          />
         </div>
 
         {/* Recent Transactions */}
@@ -925,40 +993,15 @@ const Dashboard = () => {
   // ==================== DESKTOP DASHBOARD (Minimalist UI Design) ====================
     const DesktopDashboard = () => (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
-        <div className="w-full space-y-4">
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            {/* Minimalist Period Filter */}
-            <div className="flex items-center gap-1 p-1 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-                {periods.map((period) => (
-                  <button
-                    key={period.id}
-                    onClick={() => setSelectedPeriod(period.id)}
-                    className={cn(
-                      "px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200",
-                      selectedPeriod === period.id
-                        ? "bg-blue-600 text-white shadow-sm"
-                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                    )}
-                  >
-                    {period.label}
-                  </button>
-                ))}
-            </div>
-            {/* Minimalist Create Button */}
-            <button
-                onClick={() => { localStorage.setItem('sales_viewMode', 'create'); navigate('/sales') }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl
-                  shadow-sm transition-all duration-200 text-sm"
-              >
-                <Plus size={18} weight="bold" />
-                <span>New Admission</span>
-              </button>
+        <div className="w-full space-y-6">
+          {/* Period Filter (above stats cards) */}
+          <div className="flex flex-col items-start gap-3">
+            {periodFilter}
           </div>
 
           {/* Stats Cards - Professional Neutral Style (6 Cards in a row) */}
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5"
             initial="hidden"
             animate="visible"
             variants={{
@@ -1048,60 +1091,6 @@ const Dashboard = () => {
             )})}
           </motion.div>
 
-          {/* Quick Shortcuts - Minimalist Panel */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm"
-          >
-            <div className="flex flex-wrap gap-4">
-              {/* Create Invoice - Primary Action */}
-              <button
-                onClick={() => { localStorage.setItem('sales_viewMode', 'create'); navigate('/sales') }}
-                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-white
-                  bg-blue-600 hover:bg-blue-700 shadow-sm
-                  transition-all duration-200"
-              >
-                <Receipt size={18} weight="bold" />
-                New Admission
-              </button>
-              {/* Scan QR Code */}
-              <button
-                onClick={() => toast('QR Scanner coming soon!', { icon: '📱' })}
-                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-200
-                  bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600
-                  border border-slate-200 dark:border-slate-600 shadow-sm
-                  transition-all duration-200"
-              >
-                <Scan size={18} weight="bold" />
-                Scan QR Code
-              </button>
-              {/* Add Expense */}
-              <button
-                onClick={() => navigate('/expenses')}
-                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-200
-                  bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600
-                  border border-slate-200 dark:border-slate-600 shadow-sm
-                  transition-all duration-200"
-              >
-                <Wallet size={18} className="text-amber-500" />
-                Add Expense
-              </button>
-              {/* Add Student */}
-              <button
-                onClick={() => navigate('/parties')}
-                className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-200
-                  bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600
-                  border border-slate-200 dark:border-slate-600 shadow-sm
-                  transition-all duration-200"
-              >
-                <UserPlus size={18} className="text-slate-500" />
-                Add Student
-              </button>
-            </div>
-          </motion.div>
-
         {/* Main Grid */}
         <div className="grid grid-cols-3 gap-8">
           {/* Left Column */}
@@ -1121,46 +1110,11 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <motion.div
-                className="flex items-end justify-between gap-2 h-64"
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  visible: { transition: { staggerChildren: 0.05 } },
-                }}
-              >
-                {weeklyOverviewData.map((day, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                    <div className="w-full flex items-end justify-center gap-1.5 h-full">
-                      <motion.div
-                        variants={{
-                          hidden: { height: '2%', opacity: 0 },
-                          visible: { height: `${Math.max((day.sales / weeklyMaxValue) * 100, 2)}%`, opacity: 1 },
-                        }}
-                        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                        className="w-8 bg-gradient-to-t from-blue-400 to-blue-600 rounded-t-lg transition-all duration-300 group-hover:from-blue-500 group-hover:to-blue-700"
-                        title={`Admissions: ₹${day.sales.toLocaleString()}`}
-                      />
-                      <motion.div
-                        variants={{
-                          hidden: { height: '2%', opacity: 0 },
-                          visible: { height: `${Math.max((day.purchases / weeklyMaxValue) * 100, 2)}%`, opacity: 1 },
-                        }}
-                        transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.1 }}
-                        className="w-8 bg-gradient-to-t from-amber-300 to-amber-500 rounded-t-lg transition-all duration-300 group-hover:from-amber-400 group-hover:to-amber-600"
-                        title={`Spending: ₹${day.purchases.toLocaleString()}`}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleWeeklyOverviewDayClick(day)}
-                      className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    >
-                      {day.day}
-                    </button>
-                  </div>
-                ))}
-              </motion.div>
+              <WeeklyOverviewChart
+                data={weeklyOverviewData}
+                height={256}
+                onDayClick={handleWeeklyOverviewDayClick}
+              />
             </div>
           </div>
 

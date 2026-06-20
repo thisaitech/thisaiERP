@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { CalendarBlank, Eye, Pencil, Plus, Trash, Users, Wallet, X } from '@phosphor-icons/react'
+import { CalendarBlank, Eye, Pencil, Plus, Printer, Trash, Users, Wallet, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useLocation } from 'react-router-dom'
 import { cn } from '../lib/utils'
@@ -14,20 +14,21 @@ import MobileActionMenu from '../components/mobile/MobileActionMenu'
 import MobileBottomSheet from '../components/mobile/MobileBottomSheet'
 import MobileFormSection from '../components/mobile/MobileFormSection'
 import MobileStickyCTA from '../components/mobile/MobileStickyCTA'
+import StudentDetailsModal from '../components/StudentDetailsModal'
+import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
 
 const HARDCODED_COURSES = [
-  { id: '1', name: 'Fullstack AI', sellingPrice: 35000 },
+  { id: '1', name: 'FULLSTACK AI', sellingPrice: 35000 },
   { id: '2', name: 'AI ENGINEER', sellingPrice: 25000 },
-  { id: '3', name: 'UI/UX design AI', sellingPrice: 10000 },
-  { id: '4', name: 'Spoken English AI', sellingPrice: 10000 },
-  { id: '5', name: 'Vibe coding', sellingPrice: 15000 },
+  { id: '3', name: 'UI/UX DESIGN AI', sellingPrice: 10000 },
+  { id: '4', name: 'SPOKEN ENGLISH AI', sellingPrice: 10000 },
+  { id: '5', name: 'VIBE CODING', sellingPrice: 15000 },
   { id: '6', name: 'AI & GEN AI', sellingPrice: 6000 },
-  { id: '7', name: 'AI & GEN AI & Prompt Engineering', sellingPrice: 10000 },
-  { id: '8', name: 'AI Automations', sellingPrice: 15000 },
-  { id: '9', name: 'python with ML(AI)', sellingPrice: 15000 },
-  { id: '10', name: 'Basic Computer Course', sellingPrice: 10000 },
-  { id: '11', name: 'INTERNSHIP - 2 weeks', sellingPrice: 3000 },
-  { id: '12', name: 'INTERNSHIP - 1 Month', sellingPrice: 4000 },
+  { id: '7', name: 'AI & GEN AI & PROMPT ENGINEERING', sellingPrice: 10000 },
+  { id: '8', name: 'AI AUTOMATIONS', sellingPrice: 15000 },
+  { id: '9', name: 'PYTHON WITH ML(AI)', sellingPrice: 15000 },
+  { id: '10', name: 'BASIC COMPUTER COURSE', sellingPrice: 10000 },
+  { id: '11', name: 'INTERNSHIP', sellingPrice: 4000 },
 ]
 
 type Student = {
@@ -44,6 +45,14 @@ type Student = {
     pinCode?: string
     country?: string
   }
+  admissionDetails?: {
+    gender?: string
+    dateOfBirth?: string
+    emergencyContact?: {
+      name?: string
+      phone?: string
+    }
+  }
 }
 type Course = { id: string; name: string; sellingPrice?: number; unit?: string }
 
@@ -55,7 +64,10 @@ type AdmissionItem = {
   unit: string
   rate: number
   amount: number
+  duration: string
 }
+
+const COURSE_DURATIONS = ['1 Week', '2 Weeks', '1 Month', '2 Months', '3 Months', '6 Months', '1 Year', '2 Years', '3 Years', 'Or More']
 
 const newLine = (): AdmissionItem => ({
   id: `line_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -65,6 +77,7 @@ const newLine = (): AdmissionItem => ({
   unit: 'Course',
   rate: 0,
   amount: 0,
+  duration: '1 Month',
 })
 
 const getSafeYear = (dateValue?: string) => {
@@ -97,10 +110,12 @@ const Sales: React.FC = () => {
   const [saving, setSaving] = useState(false)
   const [invoices, setInvoices] = useState<any[]>([])
   const [students, setStudents] = useState<Student[]>([])
+  const [viewingStudent, setViewingStudent] = useState<{ student: any; name: string; phone: string } | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
   const [showForm, setShowForm] = useState(false)
   const [formMode, setFormMode] = useState<'create' | 'edit' | 'view'>('create')
   const [admissionSearch, setAdmissionSearch] = useState('')
+  const [admissionPeriod, setAdmissionPeriod] = useState<PeriodFilterValue>('all')
   const [editingAdmissionId, setEditingAdmissionId] = useState('')
   const [editingPartyId, setEditingPartyId] = useState('')
   const [invoiceDate, setInvoiceDate] = useState(todayISO)
@@ -111,6 +126,10 @@ const Sales: React.FC = () => {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [address, setAddress] = useState('')
+  const [gender, setGender] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
+  const [parentName, setParentName] = useState('')
+  const [parentPhone, setParentPhone] = useState('')
   const [items, setItems] = useState<AdmissionItem[]>([newLine()])
   const [notes, setNotes] = useState('')
   const [paidAmount, setPaidAmount] = useState<string>('0')
@@ -127,6 +146,10 @@ const Sales: React.FC = () => {
         setStudentSearch(p.name || p.companyName || '')
         setPhone(p.phone || '')
         setAddress(p.address || p.billingAddress?.street || '')
+        setGender((p as any).admissionDetails?.gender || '')
+        setDateOfBirth((p as any).admissionDetails?.dateOfBirth || '')
+        setParentName((p as any).admissionDetails?.emergencyContact?.name || '')
+        setParentPhone(String((p as any).admissionDetails?.emergencyContact?.phone || '').replace(/\D/g, '').slice(-10))
         // Clean up state so we don't re-trigger on refresh
         window.history.replaceState({}, '')
       }
@@ -178,6 +201,10 @@ const Sales: React.FC = () => {
     setPhone('')
     setEmail('')
     setAddress('')
+    setGender('')
+    setDateOfBirth('')
+    setParentName('')
+    setParentPhone('')
     setItems([newLine()])
     setNotes('')
     setPaidAmount('0')
@@ -279,6 +306,10 @@ const Sales: React.FC = () => {
       setEmail(inv.email || '')
     }
     setAddress(invoiceAddress || linkedStudentAddress || '')
+    setGender(inv.gender || inv.admissionDetails?.gender || linkedStudent?.admissionDetails?.gender || '')
+    setDateOfBirth(inv.dateOfBirth || inv.admissionDetails?.dateOfBirth || linkedStudent?.admissionDetails?.dateOfBirth || '')
+    setParentName(inv.parentName || inv.admissionDetails?.emergencyContact?.name || linkedStudent?.admissionDetails?.emergencyContact?.name || '')
+    setParentPhone(String(inv.parentPhone || inv.admissionDetails?.emergencyContact?.phone || linkedStudent?.admissionDetails?.emergencyContact?.phone || '').replace(/\D/g, '').slice(-10))
 
     const mappedItems: AdmissionItem[] = Array.isArray(inv.items)
       ? inv.items.map((it: any, idx: number) => {
@@ -293,6 +324,7 @@ const Sales: React.FC = () => {
             unit: it.unit || match?.unit || 'Course',
             rate,
             amount: Number(it.amount ?? quantity * rate) || quantity * rate,
+            duration: it.duration || '1 Month',
           })
         })
       : []
@@ -308,6 +340,23 @@ const Sales: React.FC = () => {
     if (isViewMode) {
       setShowForm(false)
       return
+    }
+
+    // Validate all fields are filled before saving
+    const studentNameToValidate = (selectedStudent?.name || selectedStudent?.companyName || studentSearch || '').trim()
+    if (!invoiceNumber.trim()) return toast.error('Admission No is required')
+    if (!invoiceDate) return toast.error('Date is required')
+    if (paidAmount.trim() === '' || Number.isNaN(Number(paidAmount))) return toast.error('Paid Amount is required')
+    if (!studentNameToValidate) return toast.error('Student Name is required')
+    if (!/^\d{10}$/.test(phone.trim())) return toast.error('Enter a valid 10-digit phone number')
+
+    const validationLines = items.map(recalcLine)
+    if (!validationLines.some((l) => l.itemId && l.itemName.trim().length > 0)) {
+      return toast.error('Please select a course')
+    }
+    for (const line of validationLines) {
+      if (!line.itemId || !line.itemName.trim()) return toast.error('Please select a course for every row')
+      if (!(Number(line.amount) > 0)) return toast.error('Please enter a fee greater than 0 for every course')
     }
 
     const typedStudentName = (selectedStudent?.name || selectedStudent?.companyName || studentSearch || '').trim()
@@ -417,6 +466,10 @@ const Sales: React.FC = () => {
         phone: phone || admissionStudent?.phone || '',
         email: email || admissionStudent?.email || '',
         address: address.trim(),
+        gender: gender.trim(),
+        dateOfBirth: dateOfBirth.trim(),
+        parentName: parentName.trim(),
+        parentPhone: parentPhone.trim(),
         items: cleanItems,
         subtotal: total,
         total,
@@ -456,6 +509,70 @@ const Sales: React.FC = () => {
     }
   }
 
+  const openStudentDetails = (inv: any) => {
+    const targetPhone = String(inv?.phone || '').replace(/\D/g, '')
+    const targetName = String(inv?.partyName || '').toLowerCase().trim()
+    const match = students.find((s: any) => {
+      if (inv?.partyId && s.id) return s.id === inv.partyId
+      const sName = String(s.name || s.companyName || '').toLowerCase().trim()
+      const sPhone = String(s.phone || '').replace(/\D/g, '')
+      return (targetName && sName === targetName) || (targetPhone && sPhone === targetPhone)
+    })
+    setViewingStudent({ student: match || null, name: inv?.partyName || 'Student', phone: inv?.phone || '' })
+  }
+
+  const handlePrint = (inv: any) => {
+    const win = window.open('', '_blank', 'width=620,height=760')
+    if (!win) {
+      toast.error('Allow pop-ups to print')
+      return
+    }
+    const rupee = (n: any) => '₹' + Number(n || 0).toLocaleString('en-IN')
+    const lineRows = (Array.isArray(inv.items) ? inv.items : [])
+      .map((it: any) => `<tr><td>${it.itemName || it.name || 'Course'}</td><td>${it.duration || '-'}</td><td style="text-align:right">${rupee(it.amount ?? (Number(it.quantity || 1) * Number(it.rate || 0)))}</td></tr>`)
+      .join('')
+    win.document.write(`
+      <html>
+        <head>
+          <title>Admission ${inv.invoiceNumber || ''}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 32px; color: #1e293b; }
+            h1 { font-size: 20px; margin: 0 0 4px; }
+            .muted { color: #64748b; font-size: 13px; margin-bottom: 24px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+            td, th { padding: 9px 8px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+            td.label { color: #64748b; width: 40%; }
+            td.value { font-weight: 600; text-align: right; }
+            th { text-align: left; color: #64748b; font-size: 12px; text-transform: uppercase; }
+            .total { font-size: 16px; font-weight: 700; }
+          </style>
+        </head>
+        <body>
+          <h1>Admission Receipt</h1>
+          <div class="muted">${inv.invoiceNumber || inv.id || ''}</div>
+          <table>
+            <tr><td class="label">Date</td><td class="value">${(inv.invoiceDate || inv.createdAt || '').slice(0, 10)}</td></tr>
+            <tr><td class="label">Student</td><td class="value">${inv.partyName || 'Student'}</td></tr>
+            <tr><td class="label">Phone</td><td class="value">${inv.phone || '-'}</td></tr>
+            <tr><td class="label">Status</td><td class="value">${inv.status || 'pending'}</td></tr>
+          </table>
+          <table>
+            <thead><tr><th>Course</th><th>Duration</th><th style="text-align:right">Fee</th></tr></thead>
+            <tbody>${lineRows || '<tr><td colspan="3">-</td></tr>'}</tbody>
+          </table>
+          <table>
+            <tr><td class="label">Total</td><td class="value">${rupee(inv.total || inv.grandTotal || 0)}</td></tr>
+            <tr><td class="label">Paid</td><td class="value">${rupee(inv.paidAmount || 0)}</td></tr>
+            <tr><td class="label total">Balance</td><td class="value total">${rupee(Number(inv.total || inv.grandTotal || 0) - Number(inv.paidAmount || 0))}</td></tr>
+          </table>
+        </body>
+      </html>
+    `)
+    win.document.close()
+    win.focus()
+    win.print()
+  }
+
   const filteredStudents = useMemo(() => {
     const q = studentSearch.trim().toLowerCase()
     if (!q) return students.slice(0, 20)
@@ -464,11 +581,35 @@ const Sales: React.FC = () => {
 
   const filteredInvoices = useMemo(() => {
     const q = admissionSearch.trim().toLowerCase()
-    if (!q) return invoices
-    return invoices.filter((inv) =>
-      `${inv.invoiceNumber || ''} ${inv.partyName || ''} ${inv.phone || ''}`.toLowerCase().includes(q)
-    )
-  }, [invoices, admissionSearch])
+
+    const matchesPeriod = (inv: any) => {
+      if (admissionPeriod === 'all') return true
+      const raw = inv.invoiceDate || inv.createdAt || ''
+      const dateStr = String(raw).slice(0, 10)
+      if (!dateStr) return false
+      const d = new Date(dateStr)
+      if (isNaN(d.getTime())) return false
+      const now = new Date()
+      if (admissionPeriod === 'today') {
+        return dateStr === now.toISOString().slice(0, 10)
+      } else if (admissionPeriod === 'week') {
+        const weekAgo = new Date(now)
+        weekAgo.setDate(now.getDate() - 7)
+        return d >= weekAgo && d <= now
+      } else if (admissionPeriod === 'month') {
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+      } else if (admissionPeriod === 'year') {
+        return d.getFullYear() === now.getFullYear()
+      }
+      return true
+    }
+
+    return invoices.filter((inv) => {
+      if (!matchesPeriod(inv)) return false
+      if (!q) return true
+      return `${inv.invoiceNumber || ''} ${inv.partyName || ''} ${inv.phone || ''}`.toLowerCase().includes(q)
+    })
+  }, [invoices, admissionSearch, admissionPeriod])
 
   const totalAdmissionsAmount = useMemo(
     () => filteredInvoices.reduce((sum, inv) => sum + Number(inv.total || inv.grandTotal || 0), 0),
@@ -478,6 +619,16 @@ const Sales: React.FC = () => {
     () => filteredInvoices.reduce((sum, inv) => sum + Number(inv.paidAmount || 0), 0),
     [filteredInvoices]
   )
+
+  const recentInvoices = useMemo(() => {
+    return [...filteredInvoices]
+      .sort((a, b) => {
+        const dateA = String(a.invoiceDate || a.createdAt || '')
+        const dateB = String(b.invoiceDate || b.createdAt || '')
+        return dateB.localeCompare(dateA)
+      })
+      .slice(0, 40)
+  }, [filteredInvoices])
   const uniqueCourses = useMemo(() => {
     const seenNames = new Set<string>()
     return courses.filter((course) => {
@@ -611,6 +762,10 @@ const Sales: React.FC = () => {
                       setPhone(s.phone || '')
                       setEmail(s.email || '')
                       setAddress(s.billingAddress?.street || s.address || '')
+                      setGender((s as any).admissionDetails?.gender || '')
+                      setDateOfBirth((s as any).admissionDetails?.dateOfBirth || '')
+                      setParentName((s as any).admissionDetails?.emergencyContact?.name || '')
+                      setParentPhone(String((s as any).admissionDetails?.emergencyContact?.phone || '').replace(/\D/g, '').slice(-10))
                     }}
                     className={cn('w-full text-left px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/60', 'flex items-center justify-between gap-3')}
                   >
@@ -627,11 +782,59 @@ const Sales: React.FC = () => {
             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone</label>
             <input
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
               onFocus={() => setShowStudentSuggestions(false)}
               disabled={isViewMode}
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
               className={inputClass(mobile)}
               placeholder="Phone number"
+            />
+          </div>
+        </div>
+      </MobileFormSection>
+
+      <MobileFormSection title="Additional Information">
+        <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">Optional — you can skip these and still save admission</p>
+        <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Gender</label>
+            <div className="relative mt-1">
+              <select value={gender} onChange={(e) => setGender(e.target.value)} disabled={isViewMode} className={cn(inputClass(mobile), 'appearance-none pr-8')}>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Date of Birth</label>
+            <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} disabled={isViewMode} className={cn(inputClass(mobile), 'mt-1')} />
+          </div>
+          <div className={mobile ? '' : 'md:col-span-2'}>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Address</label>
+            <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} disabled={isViewMode} placeholder="Address" className={cn(inputClass(mobile), 'mt-1 resize-none')} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Parent / Guardian Name</label>
+            <input value={parentName} onChange={(e) => setParentName(e.target.value)} disabled={isViewMode} placeholder="Parent or guardian name" className={cn(inputClass(mobile), 'mt-1')} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Parent Mobile Number</label>
+            <input
+              value={parentPhone}
+              onChange={(e) => setParentPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              disabled={isViewMode}
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="10-digit mobile number"
+              className={cn(inputClass(mobile), 'mt-1')}
             />
           </div>
         </div>
@@ -641,7 +844,7 @@ const Sales: React.FC = () => {
         <div className="space-y-3">
           {items.map((line) => (
             <div key={line.id} className={cn('grid gap-2 items-end', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12')}>
-              <div className={mobile ? '' : 'md:col-span-8'}>
+              <div className={mobile ? '' : 'md:col-span-5'}>
                 <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 block">Course</label>
                 <div className="relative">
                   <select
@@ -663,6 +866,26 @@ const Sales: React.FC = () => {
                 </div>
               </div>
               <div className={mobile ? '' : 'md:col-span-3'}>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 block">Duration</label>
+                <div className="relative">
+                  <select
+                    value={line.duration}
+                    onChange={(e) => setItems((prev) => prev.map((l) => (l.id === line.id ? { ...l, duration: e.target.value } : l)))}
+                    disabled={isViewMode}
+                    className={cn(inputClass(mobile), 'appearance-none pr-8 truncate')}
+                  >
+                    {COURSE_DURATIONS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
+              </div>
+              <div className={mobile ? '' : 'md:col-span-2'}>
                 <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Fee</label>
                 <input
                   type="number"
@@ -680,7 +903,7 @@ const Sales: React.FC = () => {
                 />
               </div>
               {!isViewMode && (
-                <div className={mobile ? '' : 'md:col-span-1 flex justify-end'}>
+                <div className={mobile ? '' : 'md:col-span-2 flex justify-end'}>
                   <button
                     type="button"
                     onClick={() => setItems((prev) => prev.filter((l) => l.id !== line.id))}
@@ -730,40 +953,61 @@ const Sales: React.FC = () => {
   return (
     <div className="erp-module-page p-3 md:p-6 md:bg-slate-50 dark:bg-slate-900">
       <MobilePageScaffold
-        title="Admissions"
+        title=""
         className="md:hidden"
-        actions={
-          <button onClick={openNew} className="mobile-primary-btn">
-            <Plus size={16} weight="bold" />
-            New
-          </button>
-        }
       >
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="relative p-2.5 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-            <div>
-              <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">Admissions</h3>
-              <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{filteredInvoices.length}</p>
+        <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
+          {/* Left Side: KPI Cards */}
+          <div className="flex-1 grid grid-cols-3 gap-2 md:gap-4">
+            <div className="relative p-2.5 sm:p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">Total Admission</h3>
+                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{filteredInvoices.length}</p>
+              </div>
+            </div>
+
+            <div className="relative p-2.5 sm:p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">Paid Amount</h3>
+                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                  ₹{totalPaidAmount.toLocaleString('en-IN')}
+                </p>
+              </div>
+            </div>
+
+            <div className="relative p-2.5 sm:p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+              <div>
+                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">Pending Amount</h3>
+                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                  ₹{Math.max(totalAdmissionsAmount - totalPaidAmount, 0).toLocaleString('en-IN')}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="relative p-2.5 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-            <div>
-              <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">Amount</h3>
-              <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
-                ₹{totalAdmissionsAmount.toLocaleString('en-IN')}
-              </p>
-            </div>
+          {/* Right Side: Action Button + Date Filters */}
+          <div className="flex flex-row items-center justify-end gap-1.5 flex-shrink-0 w-auto">
+            <PeriodFilterDropdown value={admissionPeriod} onChange={setAdmissionPeriod} />
+            <button onClick={openNew} className="erp-module-primary-btn">
+              <Plus size={14} weight="bold" />
+              <span>Admission</span>
+            </button>
           </div>
         </div>
         <MobileSearchBar value={admissionSearch} onChange={setAdmissionSearch} placeholder="Search by admission, student or phone" />
         <div className="space-y-3">
           {loading && <p className="text-sm text-slate-500">Loading admissions...</p>}
+
+          {!loading && admissionSearch.trim() === '' && filteredInvoices.length > 0 && (
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Recent Admissions</p>
+          )}
+
           {!loading &&
-            filteredInvoices.slice(0, 40).map((inv) => (
+            recentInvoices.map((inv) => (
               <MobileListCard
                 key={inv.id}
                 title={inv.partyName || 'Student'}
+                onTitleClick={() => openStudentDetails(inv)}
                 subtitle={inv.invoiceNumber || inv.id}
                 fields={[
                   { id: 'date', label: 'Date', value: (inv.invoiceDate || inv.createdAt || '').slice(0, 10) },
@@ -781,27 +1025,23 @@ const Sales: React.FC = () => {
                     actions={[
                       { id: 'view', label: 'View', icon: <Eye size={14} />, onClick: () => openExisting(inv, 'view') },
                       { id: 'edit', label: 'Edit', icon: <Pencil size={14} />, onClick: () => openExisting(inv, 'edit') },
-                      { id: 'delete', label: 'Delete', icon: <Trash size={14} />, tone: 'primary', onClick: () => handleDelete(inv.id) },
+                      { id: 'print', label: 'Print', icon: <Printer size={14} />, onClick: () => handlePrint(inv) },
+                      { id: 'delete', label: 'Delete', icon: <Trash size={14} />, tone: 'danger', onClick: () => handleDelete(inv.id) },
                     ]}
                   />
                 }
               />
             ))}
-          {!loading && filteredInvoices.length === 0 && <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">No admissions found</div>}
+
+          {!loading && filteredInvoices.length === 0 && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+              {admissionSearch.trim() !== '' ? 'No admissions found' : 'No admissions yet'}
+            </div>
+          )}
         </div>
       </MobilePageScaffold>
 
       <div className="hidden md:block w-full space-y-6 rounded-[24px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Admissions</h1>
-          </div>
-          <button onClick={openNew} className="erp-module-primary-btn">
-            <Plus size={18} weight="bold" />
-            New Admission
-          </button>
-        </div>
-
         <div className="erp-module-panel overflow-hidden border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900 ">
           <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/70 dark:border-slate-700 dark:bg-slate-900/70 flex items-center justify-between">
             <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Recent Admissions</div>
@@ -824,14 +1064,24 @@ const Sales: React.FC = () => {
                   <tr key={inv.id} className="border-t border-slate-200 dark:border-slate-700 dark:border-slate-700/60">
                     <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-100">{inv.invoiceNumber || inv.id}</td>
                     <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{(inv.invoiceDate || inv.createdAt || '').slice(0, 10)}</td>
-                    <td className="px-4 py-2 text-slate-700 dark:text-slate-200">{inv.partyName || 'Student'}</td>
+                    <td className="px-4 py-2">
+                      <button
+                        type="button"
+                        onClick={() => openStudentDetails(inv)}
+                        title="View student details"
+                        className="text-blue-600 dark:text-blue-400 font-medium text-left cursor-pointer hover:underline transition-colors"
+                      >
+                        {inv.partyName || 'Student'}
+                      </button>
+                    </td>
                     <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">₹{Number(inv.total || inv.grandTotal || 0).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-2 text-right text-slate-600 dark:text-slate-300">₹{Number(inv.paidAmount || 0).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-2 text-right">
                       <div className="inline-flex items-center justify-end gap-1">
-                        <button onClick={() => openExisting(inv, 'view')} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" title="View"><Eye size={16} /></button>
-                        <button onClick={() => openExisting(inv, 'edit')} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-amber-950/30" title="Edit"><Pencil size={16} /></button>
-                        <button onClick={() => handleDelete(inv.id)} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-red-950/30" title="Delete"><Trash size={16} /></button>
+                        <button onClick={() => openExisting(inv, 'view')} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" title="View"><Eye size={16} weight="duotone" /></button>
+                        <button onClick={() => openExisting(inv, 'edit')} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30" title="Edit"><Pencil size={16} weight="duotone" /></button>
+                        <button onClick={() => handlePrint(inv)} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800" title="Print"><Printer size={16} weight="duotone" /></button>
+                        <button onClick={() => handleDelete(inv.id)} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" title="Delete"><Trash size={16} weight="duotone" /></button>
                       </div>
                     </td>
                   </tr>
@@ -872,6 +1122,15 @@ const Sales: React.FC = () => {
           {formFields(true)}
         </MobileBottomSheet>
       )}
+
+      <StudentDetailsModal
+        open={!!viewingStudent}
+        onClose={() => setViewingStudent(null)}
+        student={viewingStudent?.student}
+        studentName={viewingStudent?.name}
+        phone={viewingStudent?.phone}
+        invoices={invoices}
+      />
     </div>
   )
 }

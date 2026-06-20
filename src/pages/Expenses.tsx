@@ -9,6 +9,7 @@ import {
   MagnifyingGlass,
   Trash,
   Eye,
+  Pencil,
   Download,
   TrendUp,
   TrendDown,
@@ -23,8 +24,9 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { toast } from 'sonner'
-import { getExpenses, createExpense, deleteExpense, Expense, generateExpenseNumber } from '../services/expenseService'
+import { getExpenses, createExpense, updateExpense, deleteExpense, Expense, generateExpenseNumber } from '../services/expenseService'
 import { useErrorHandler } from '../hooks/useErrorHandler'
+import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
 
 const Expenses = () => {
   // Language support
@@ -33,6 +35,8 @@ const Expenses = () => {
   const location = useLocation()
 
   const [showNewExpense, setShowNewExpense] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [viewingExpense, setViewingExpense] = useState<Expense | null>(null)
 
   // Handle action=new from sidebar navigation
   useEffect(() => {
@@ -43,10 +47,7 @@ const Expenses = () => {
     }
   }, [location.search])
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [selectedPeriod, setSelectedPeriod] = useState('all')
-  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false)
-  const [customStartDate, setCustomStartDate] = useState('')
-  const [customEndDate, setCustomEndDate] = useState('')
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilterValue>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -90,11 +91,6 @@ const Expenses = () => {
 
   // Calculate stats from real data
   const stats = React.useMemo(() => {
-    const now = new Date()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
-
     const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0)
 
     const salaryExpenses = expenses
@@ -105,26 +101,10 @@ const Expenses = () => {
       .filter(exp => exp.category === 'rent')
       .reduce((sum, exp) => sum + (exp.amount || 0), 0)
 
-    const thisMonthExpenses = expenses
-      .filter(exp => new Date(exp.date) >= monthStart)
-      .reduce((sum, exp) => sum + (exp.amount || 0), 0)
-
-    const lastMonthExpenses = expenses
-      .filter(exp => {
-        const d = new Date(exp.date)
-        return d >= lastMonthStart && d <= lastMonthEnd
-      })
-      .reduce((sum, exp) => sum + (exp.amount || 0), 0)
-
-    const percentChange = lastMonthExpenses > 0
-      ? ((thisMonthExpenses - lastMonthExpenses) / lastMonthExpenses * 100)
-      : 0
-
     return {
       totalExpenses,
       salary: salaryExpenses,
       rent: rentExpenses,
-      percentChange: Math.round(percentChange * 10) / 10
     }
   }, [expenses])
 
@@ -146,24 +126,14 @@ const Expenses = () => {
     }
 
     if (selectedPeriod === 'month') {
-      const monthAgo = new Date(startOfToday)
-      monthAgo.setMonth(monthAgo.getMonth() - 1)
-      return expenseDate >= monthAgo
+      const monthStart = new Date(startOfToday.getFullYear(), startOfToday.getMonth(), 1)
+      return expenseDate >= monthStart
     }
 
     if (selectedPeriod === 'year') {
       const yearAgo = new Date(startOfToday)
       yearAgo.setFullYear(yearAgo.getFullYear() - 1)
       return expenseDate >= yearAgo
-    }
-
-    if (selectedPeriod === 'custom') {
-      if (!customStartDate || !customEndDate) return true
-      const from = new Date(customStartDate)
-      from.setHours(0, 0, 0, 0)
-      const to = new Date(customEndDate)
-      to.setHours(23, 59, 59, 999)
-      return expenseDate >= from && expenseDate <= to
     }
 
     return true
@@ -192,7 +162,7 @@ const Expenses = () => {
         return
       }
       const expenseData = {
-        expenseNumber: generateExpenseNumber(),
+        expenseNumber: editingId ? undefined as any : generateExpenseNumber(),
         date: newExpenseForm.date,
         category: newExpenseForm.category,
         amount: amountValue,
@@ -200,6 +170,25 @@ const Expenses = () => {
         description: newExpenseForm.title + (newExpenseForm.description ? ' - ' + newExpenseForm.description : ''),
         status: newExpenseForm.status,
         createdBy: 'current-user'
+      }
+
+      if (editingId) {
+        const { expenseNumber, ...updatePayload } = expenseData
+        await updateExpense(editingId, updatePayload)
+        toast.success('Expense updated successfully')
+        setShowNewExpense(false)
+        setEditingId(null)
+        setNewExpenseForm({
+          title: '',
+          amount: '',
+          date: new Date().toISOString().split('T')[0],
+          category: 'other',
+          paymentMode: 'cash',
+          description: '',
+          status: 'paid'
+        })
+        fetchExpenses()
+        return
       }
 
       const createdExpense = await createExpense(expenseData)
@@ -262,6 +251,47 @@ const Expenses = () => {
     }
   }
 
+  // Open the form in create mode (reset any edit state)
+  const openNewExpense = () => {
+    setEditingId(null)
+    setNewExpenseForm({
+      title: '',
+      amount: '',
+      date: new Date().toISOString().split('T')[0],
+      category: 'other',
+      paymentMode: 'cash',
+      description: '',
+      status: 'paid'
+    })
+    setShowNewExpense(true)
+  }
+
+  // Close the form and reset edit state
+  const closeExpenseForm = () => {
+    setShowNewExpense(false)
+    setEditingId(null)
+  }
+
+  // Open the form pre-filled for editing
+  const handleEditExpense = (expense: Expense) => {
+    setEditingId(expense.id)
+    setNewExpenseForm({
+      title: expense.description || '',
+      amount: String(expense.amount ?? ''),
+      date: (expense.date || '').slice(0, 10),
+      category: expense.category,
+      paymentMode: expense.paymentMode,
+      description: '',
+      status: expense.status === 'paid' ? 'paid' : 'pending'
+    })
+    setShowNewExpense(true)
+  }
+
+  // Open a read-only details view
+  const handleViewExpense = (expense: Expense) => {
+    setViewingExpense(expense)
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -276,128 +306,46 @@ const Expenses = () => {
       <div className="flex-shrink-0">
 
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
-        <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
-          {/* Left Side: KPI Cards - Rectangular filling space */}
-          <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Total Expenses Card */}
-            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+          <div className="flex-1 min-w-0 grid grid-cols-3 gap-1.5 sm:gap-2">
+            <div className="relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.totalExpenses || 'Total'}</h3>
-                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{t.expenses?.totalExpenses || 'Total Expenses'}</h3>
+                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200 truncate">
                   ₹{stats.totalExpenses >= 10000000 ? (stats.totalExpenses / 10000000).toFixed(1) + ' Cr' : stats.totalExpenses >= 100000 ? (stats.totalExpenses / 100000).toFixed(1) + ' L' : stats.totalExpenses >= 1000 ? (stats.totalExpenses / 1000).toFixed(1) + ' K' : stats.totalExpenses.toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
 
-            {/* Salary Card */}
-            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+            <div className="relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.salary || 'Salary'}</h3>
-                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{t.expenses?.salary || 'Salary'}</h3>
+                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200 truncate">
                   ₹{stats.salary >= 10000000 ? (stats.salary / 10000000).toFixed(1) + ' Cr' : stats.salary >= 100000 ? (stats.salary / 100000).toFixed(1) + ' L' : stats.salary >= 1000 ? (stats.salary / 1000).toFixed(1) + ' K' : stats.salary.toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
 
-            {/* Rent Card */}
-            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
+            <div className="relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.rent || 'Rent'}</h3>
-                <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
+                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{t.expenses?.rent || 'Rent'}</h3>
+                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200 truncate">
                   ₹{stats.rent >= 10000000 ? (stats.rent / 10000000).toFixed(1) + ' Cr' : stats.rent >= 100000 ? (stats.rent / 100000).toFixed(1) + ' L' : stats.rent >= 1000 ? (stats.rent / 1000).toFixed(1) + ' K' : stats.rent.toLocaleString('en-IN')}
-                </p>
-              </div>
-            </div>
-
-            {/* Change Card */}
-            <div className="relative p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.expenses?.change || 'Change'}</h3>
-                <p className={cn("text-2xl font-bold mt-1", stats.percentChange >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
-                  {stats.percentChange >= 0 ? '+' : ''}{stats.percentChange.toFixed(1)}%
                 </p>
               </div>
             </div>
           </div>
 
           {/* Right Side: Date Filters + Action Buttons */}
-          <div className="flex flex-col items-end gap-2 flex-shrink-0 w-full md:w-auto">
-            {/* Action Button */}
+          <div className="flex flex-row items-center justify-end gap-1.5 flex-shrink-0 w-auto">
+            <PeriodFilterDropdown value={selectedPeriod} onChange={setSelectedPeriod} />
             <button
-              onClick={() => setShowNewExpense(true)}
+              onClick={openNewExpense}
               className="erp-module-primary-btn"
             >
               <Plus size={14} weight="bold" />
               <span>Expense</span>
             </button>
-
-            {/* Date Filter Tabs */}
-            <div className="relative erp-module-filter-wrap w-full md:w-auto inventory-date-filter-wrap">
-              <div className="inventory-date-filter-row">
-                {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => {
-                      setSelectedPeriod(period)
-                      if (period === 'custom') {
-                        setShowCustomDatePicker(true)
-                      } else {
-                        setShowCustomDatePicker(false)
-                      }
-                    }}
-                    className={cn('erp-module-filter-chip inventory-date-filter-chip', selectedPeriod === period && 'is-active')}
-                  >
-                    {period.charAt(0).toUpperCase() + period.slice(1)}
-                  </button>
-                ))}
-              </div>
-
-              {showCustomDatePicker && (
-                <div className="absolute top-full left-0 md:left-auto md:right-0 mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-full md:min-w-[280px]">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Select Date Range</span>
-                    <button
-                      onClick={() => setShowCustomDatePicker(false)}
-                      className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
-                    >
-                      <X size={16} className="text-slate-500" />
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">From Date</label>
-                      <input
-                        type="date"
-                        value={customStartDate}
-                        onChange={(e) => setCustomStartDate(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">To Date</label>
-                      <input
-                        type="date"
-                        value={customEndDate}
-                        onChange={(e) => setCustomEndDate(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                    </div>
-                    <button
-                      onClick={() => setShowCustomDatePicker(false)}
-                      disabled={!customStartDate || !customEndDate}
-                      className={cn(
-                        "w-full py-2 rounded-lg text-sm font-semibold transition-all",
-                        customStartDate && customEndDate
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "bg-slate-200 text-slate-400 cursor-not-allowed"
-                      )}
-                    >
-                      Apply Filter
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
@@ -405,15 +353,15 @@ const Expenses = () => {
           {/* Search Bar & Category Filter Tabs Row */}
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
             {/* Search Bar */}
-            <div className="erp-module-panel w-full md:flex-1 p-3">
-              <div className="flex items-center gap-2">
-                <MagnifyingGlass size={16} weight="bold" className="text-slate-400" />
+            <div className="w-full md:flex-1">
+              <div className="relative">
+                <MagnifyingGlass size={18} weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   placeholder={t.expenses?.searchExpenses || 'Search expenses...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="erp-module-search-input flex-1"
+                  className="w-full min-h-[44px] rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
                 />
               </div>
             </div>
@@ -434,7 +382,7 @@ const Expenses = () => {
               {expenses.length === 0 ? 'No expenses recorded yet' : 'No expenses match your search'}
             </p>
             <button
-              onClick={() => setShowNewExpense(true)}
+              onClick={openNewExpense}
               className="text-blue-600 font-medium hover:underline text-sm"
             >
               Add your first expense
@@ -550,7 +498,22 @@ const Expenses = () => {
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 className="p-1.5 hover:bg-blue-50 rounded transition-colors text-blue-600"
+                                onClick={() => handleViewExpense(expense)}
+                                title="View"
+                              >
+                                <Eye size={16} weight="duotone" />
+                              </button>
+                              <button
+                                className="p-1.5 hover:bg-amber-50 rounded transition-colors text-amber-600"
+                                onClick={() => handleEditExpense(expense)}
+                                title="Edit"
+                              >
+                                <Pencil size={16} weight="duotone" />
+                              </button>
+                              <button
+                                className="p-1.5 hover:bg-red-50 rounded transition-colors text-red-600"
                                 onClick={() => handleDeleteExpense(expense.id)}
+                                title="Delete"
                               >
                                 <Trash size={16} weight="duotone" />
                               </button>
@@ -574,10 +537,10 @@ const Expenses = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowNewExpense(false)}
+              onClick={closeExpenseForm}
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
             />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowNewExpense(false)}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={closeExpenseForm}>
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -585,7 +548,7 @@ const Expenses = () => {
                 onClick={(e) => e.stopPropagation()}
                 className="bg-card rounded-lg shadow-xl border border-border w-full max-w-md max-h-[90vh] overflow-y-auto p-6"
               >
-              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">{t.expenses?.addNewExpense || 'Add New Expense'}</h3>
+              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">{editingId ? 'Edit Expense' : (t.expenses?.addNewExpense || 'Add New Expense')}</h3>
               <div className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5 sm:mb-2">{t.expenses?.expenseTitle || 'Title'}</label>
@@ -679,16 +642,89 @@ const Expenses = () => {
                     className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isSaving && <Spinner size={16} className="animate-spin" />}
-                    {t.expenses?.saveExpense || 'Save Expense'}
+                    {editingId ? 'Update Expense' : (t.expenses?.saveExpense || 'Save Expense')}
                   </button>
                   <button
-                    onClick={() => setShowNewExpense(false)}
+                    onClick={closeExpenseForm}
                     className="px-4 py-2 bg-muted text-muted-foreground rounded-lg font-medium hover:bg-muted/80"
                   >
                     {t.common?.cancel || 'Cancel'}
                   </button>
                 </div>
               </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* View Expense Modal */}
+      <AnimatePresence>
+        {viewingExpense && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setViewingExpense(null)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setViewingExpense(null)}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden"
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800">Expense Details</h3>
+                    <p className="text-xs text-slate-500">{viewingExpense.expenseNumber}</p>
+                  </div>
+                  <button onClick={() => setViewingExpense(null)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-500">
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="p-5 space-y-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Date</span>
+                    <span className="font-medium text-slate-800">{new Date(viewingExpense.date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Category</span>
+                    <span className="font-medium text-slate-800 capitalize">{viewingExpense.category}</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-slate-500">Description</span>
+                    <span className="font-medium text-slate-800 text-right">{viewingExpense.description || '-'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Payment Mode</span>
+                    <span className="font-medium text-slate-800 capitalize">{viewingExpense.paymentMode}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Status</span>
+                    <span className={cn(
+                      "inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase",
+                      viewingExpense.status === 'paid' ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                    )}>
+                      {viewingExpense.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+                    <span className="text-slate-500">Amount</span>
+                    <span className="text-lg font-bold text-slate-900">₹{Number(viewingExpense.amount || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+                <div className="flex gap-2 px-5 py-4 border-t border-slate-200">
+                  <button
+                    onClick={() => { const exp = viewingExpense; setViewingExpense(null); handleEditExpense(exp); }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700"
+                  >
+                    <Pencil size={16} weight="duotone" /> Edit
+                  </button>
+                </div>
               </motion.div>
             </div>
           </>

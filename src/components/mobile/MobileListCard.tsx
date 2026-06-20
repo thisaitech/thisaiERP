@@ -10,14 +10,25 @@ type Props = {
   actions?: ReactNode
   footer?: ReactNode
   className?: string
+  onTitleClick?: () => void
 }
 
-const MobileListCard = ({ title, subtitle, fields = [], status, actions, footer, className }: Props) => {
+const MobileListCard = ({ title, subtitle, fields = [], status, actions, footer, className, onTitleClick }: Props) => {
   return (
     <article className={cn('mobile-list-card', className)}>
       <header className="mobile-list-card-header">
         <div className="mobile-list-card-head-main">
-          <h3 className="mobile-list-card-title">{title}</h3>
+          {onTitleClick ? (
+            <button
+              type="button"
+              onClick={onTitleClick}
+              className="mobile-list-card-title text-left cursor-pointer text-blue-600 hover:underline bg-transparent border-0 p-0"
+            >
+              {title}
+            </button>
+          ) : (
+            <h3 className="mobile-list-card-title">{title}</h3>
+          )}
           {subtitle && <p className="mobile-list-card-subtitle">{subtitle}</p>}
         </div>
         <div className="mobile-list-card-head-right">

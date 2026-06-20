@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   House, Receipt, Users, Package, ChartLine, List, X,
   Moon, Sun, Wallet, Bank, FileText, SignOut,
-  Buildings, SquaresFour, UserList
+  Buildings, SquaresFour, UserList, Bell
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -294,7 +294,7 @@ const Layout = () => {
     return acc
   }, {} as Record<string, string>)
   const getTopNavActiveClass = (path: string) => cn(
-    "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-semibold"
+    "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-semibold border border-blue-200 dark:border-blue-800 shadow-sm"
   )
 
   const companyInitials = (() => {
@@ -311,11 +311,11 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200" style={moduleThemeVars}>
       {/* Desktop Navigation - Minimalist Style */}
-      <header className="sticky top-0 z-50 hidden lg:block py-3 px-4 lg:px-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+      <header className="sticky top-0 z-50 hidden lg:block py-3 px-4 lg:px-6 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/80 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 backdrop-blur-md border-b border-slate-200/70 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="w-full">
-          <div className="flex items-center justify-between h-12 px-4 bg-white dark:bg-slate-900">
-            <div className="flex items-center gap-2">
-              <nav className="flex items-center gap-0.5">
+          <div className="flex items-center justify-between h-14 px-2">
+            <div className="flex items-center gap-2 w-full">
+              <nav className="flex items-center gap-2 w-full">
                 {/* Dashboard (matches left HOME button) */}
                 <NavLink
                   key="__dashboard"
@@ -323,13 +323,13 @@ const Layout = () => {
                   end
                   onMouseEnter={() => prefetchRoute('/')}
                   className={({ isActive }) => cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
+                    "flex items-center gap-2 px-4 py-2 text-[17px] font-semibold rounded-xl transition-all duration-200 hover:-translate-y-0.5",
                     isActive
                       ? getTopNavActiveClass('/')
-                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                      : "bg-white border border-slate-200 text-slate-600 shadow-sm hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:bg-slate-800/60 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-blue-400"
                   )}
                 >
-                  <House size={16} weight="bold" />
+                  <House size={20} weight="bold" />
                   <span>{t.nav.dashboard}</span>
                 </NavLink>
 
@@ -339,13 +339,13 @@ const Layout = () => {
                     to={item.path}
                     onMouseEnter={() => prefetchRoute(item.path)}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
+                      "flex items-center gap-2 px-4 py-2 text-[17px] font-semibold rounded-xl transition-all duration-200 hover:-translate-y-0.5",
                       isActive
                         ? getTopNavActiveClass(item.path)
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                        : "bg-white border border-slate-200 text-slate-600 shadow-sm hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:bg-slate-800/60 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-blue-400"
                     )}
                   >
-                    <item.icon size={16} weight="bold" />
+                    <item.icon size={20} weight="bold" />
                     <span>{item.label}</span>
                   </NavLink>
                 ))}
@@ -387,13 +387,13 @@ const Layout = () => {
                     to={item.path}
                     onMouseEnter={() => prefetchRoute(item.path)}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
+                      "flex items-center gap-2 px-4 py-2 text-[17px] font-semibold rounded-xl transition-all duration-200 hover:-translate-y-0.5",
                       isActive
                         ? getTopNavActiveClass(item.path)
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                        : "bg-white border border-slate-200 text-slate-600 shadow-sm hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:bg-slate-800/60 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-blue-400"
                     )}
                   >
-                    <item.icon size={16} weight="bold" />
+                    <item.icon size={20} weight="bold" />
                     <span>{item.label}</span>
                   </NavLink>
                 ))}
@@ -405,16 +405,26 @@ const Layout = () => {
                     to={visitorItem.path}
                     onMouseEnter={() => prefetchRoute(visitorItem.path)}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 text-[15px] font-medium rounded-lg transition-all duration-200",
+                      "flex items-center gap-2 px-4 py-2 text-[17px] font-semibold rounded-xl transition-all duration-200 hover:-translate-y-0.5",
                       isActive
                         ? getTopNavActiveClass(visitorItem.path)
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50"
+                        : "bg-white border border-slate-200 text-slate-600 shadow-sm hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:bg-slate-800/60 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-blue-400"
                     )}
                   >
-                    <visitorItem.icon size={16} weight="bold" />
+                    <visitorItem.icon size={20} weight="bold" />
                     <span>{visitorItem.label}</span>
                   </NavLink>
                 )}
+
+                {/* Notification Bell */}
+                <button
+                  type="button"
+                  onClick={() => toast('No new notifications', { icon: '🔔' })}
+                  title="Notifications"
+                  className="relative ml-auto flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-slate-200 text-amber-500 shadow-sm hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-all duration-200 dark:bg-slate-800/60 dark:border-slate-700 dark:text-amber-400 dark:hover:bg-slate-700/50"
+                >
+                  <Bell size={20} weight="fill" />
+                </button>
 
                 {/* Company button (no Profile page): dropdown for theme + sign out */}
                 <div className="relative" ref={userDropdownRef}>
