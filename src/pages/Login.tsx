@@ -254,25 +254,6 @@ const Login = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Logo and Title */}
-        <div className="text-center mb-6">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="inline-flex p-4 bg-white rounded-2xl shadow-lg mb-4"
-          >
-            <Sparkle size={32} weight="duotone" className="text-primary" />
-          </motion.div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">
-            ThisAI ERP
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">
-            {mode === 'login' && 'Sign in to continue'}
-            {mode === 'register' && 'Create your business account'}
-            {mode === 'forgot' && 'Reset your password'}
-          </p>
-        </div>
-
         {/* Auth Card */}
         <motion.div
           layout
@@ -312,26 +293,6 @@ const Login = () => {
                   disabled={isLoading}
                 />
 
-                {/* Remember me & Forgot password */}
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
-                    />
-                    <span className="text-slate-600">Remember me</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setMode('forgot')}
-                    className="text-primary hover:text-primary/80 font-medium"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-
                 {/* Submit Button */}
                 <motion.button
                   type="submit"
@@ -357,18 +318,6 @@ const Login = () => {
                     </>
                   )}
                 </motion.button>
-
-                {/* Register Link */}
-                <p className="text-center text-sm text-slate-600">
-                  Don't have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setMode('register')}
-                    className="text-primary font-semibold hover:underline"
-                  >
-                    Register now
-                  </button>
-                </p>
               </motion.form>
             )}
 
@@ -604,11 +553,6 @@ const Login = () => {
             )}
           </AnimatePresence>
         </motion.div>
-
-        {/* Footer */}
-        <p className="text-center text-sm text-slate-500 mt-6">
-          © 2025 ThisAI ERP. All rights reserved.
-        </p>
       </motion.div>
     </div>
   )

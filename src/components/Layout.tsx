@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   House, Receipt, Users, Package, ChartLine, List, X,
   Moon, Sun, Wallet, Bank, FileText, SignOut,
-  Buildings, SquaresFour, UserList, Bell
+  Buildings, SquaresFour, UserList
 } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
@@ -21,6 +21,8 @@ import { getVisitors } from '../services/visitorService'
 import { toast } from 'sonner'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTheme } from '../contexts/ThemeContext'
+import NotificationBell from './notifications/NotificationBell'
+import useIsMobileViewport from '../hooks/useIsMobileViewport'
 
 const routePrefetchers: Record<string, () => Promise<unknown>> = {
   '/': () => import('../pages/Dashboard'),
@@ -84,6 +86,7 @@ const Layout = () => {
   const location = useLocation()
   const { userData } = useAuth()
   const userDropdownRef = useRef<HTMLDivElement>(null)
+  const isMobileViewport = useIsMobileViewport()
 
   const prefetchRoute = (path: string) => {
     const fn = routePrefetchers[path]
@@ -417,14 +420,7 @@ const Layout = () => {
                 )}
 
                 {/* Notification Bell */}
-                <button
-                  type="button"
-                  onClick={() => toast('No new notifications', { icon: '🔔' })}
-                  title="Notifications"
-                  className="relative ml-auto flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-slate-200 text-amber-500 shadow-sm hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-all duration-200 dark:bg-slate-800/60 dark:border-slate-700 dark:text-amber-400 dark:hover:bg-slate-700/50"
-                >
-                  <Bell size={20} weight="fill" />
-                </button>
+                {!isMobileViewport && <NotificationBell className="ml-auto" />}
 
                 {/* Company button (no Profile page): dropdown for theme + sign out */}
                 <div className="relative" ref={userDropdownRef}>
@@ -493,6 +489,12 @@ const Layout = () => {
           </h1>
           
           <div className="flex items-center justify-end w-[84px] gap-2">
+            {isMobileViewport && (
+            <NotificationBell
+              buttonClassName="w-8 h-8 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none border border-slate-100 dark:border-slate-700"
+              panelClassName="right-0"
+            />
+            )}
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200

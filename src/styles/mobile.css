@@ -537,7 +537,7 @@
   background: var(--mobile-surface-2);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   [data-mobile-premium-ui='true'] .erp-module-page {
     padding: 12px;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);

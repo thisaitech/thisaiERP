@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
 import { useNavigate } from 'react-router-dom'
-import { useLanguage } from '../contexts/LanguageContext'
-import { useAuth } from '../contexts/AuthContext'
 import { getInvoices } from '../services/invoiceService'
 import { getExpenses } from '../services/expenseService'
 import { getParties } from '../services/partyService'
@@ -17,14 +15,12 @@ import {
   Users,
   Package,
   ArrowRight,
-  WarningCircle,
   ChartLine,
   Plus,
   FileText,
   Calculator,
   UserPlus,
   X,
-  Phone,
   Scan,
   ChatCircleText,
   Share,
@@ -38,6 +34,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 import { toast } from 'sonner'
 import { getLowStockItems } from '../utils/stockUtils'
+import useIsMobileViewport from '../hooks/useIsMobileViewport'
+import { formatStatAmount } from '../utils/formatStatAmount'
 
 type WeeklyOverviewEntry = {
   day: string
@@ -210,11 +208,8 @@ const WeeklyOverviewChart = ({ data, height = 256, compact = false, onDayClick }
 
 const Dashboard = () => {
   const navigate = useNavigate()
-  const { t, language } = useLanguage()
-  const { userData } = useAuth()
+  const isMobileViewport = useIsMobileViewport()
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilterValue>('today')
-  const [currentAlertIndex, setCurrentAlertIndex] = useState(0)
-  const [greeting, setGreeting] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
   // Real metrics state
@@ -235,14 +230,6 @@ const Dashboard = () => {
   const [todayInvoices, setTodayInvoices] = useState(0)
   const [currentLevel, setCurrentLevel] = useState(1)
   const [levelProgress, setLevelProgress] = useState(0)
-
-  // Set greeting based on time - with translation support
-  useEffect(() => {
-    const hour = new Date().getHours()
-    if (hour < 12) setGreeting(language === 'ta' ? 'காலை வணக்கம்' : 'Good Morning')
-    else if (hour < 17) setGreeting(language === 'ta' ? 'மதிய வணக்கம்' : 'Good Afternoon')
-    else setGreeting(language === 'ta' ? 'மாலை வணக்கம்' : 'Good Evening')
-  }, [language])
 
   // Fetch real data from Firebase
   const fetchDashboardData = useCallback(async () => {
@@ -801,76 +788,21 @@ const Dashboard = () => {
     )
   }
 
-  const lowStockCount = lowStockDetails.length
-  const lowStockMessage = lowStockCount > 0
-    ? `${lowStockCount} ${lowStockCount === 1 ? 'item needs' : 'items need'} reorder soon`
-    : 'Inventory levels are stable'
-  const lowStockAction = lowStockCount > 0 ? 'View Items' : 'Browse Inventory'
-  const lowStockLink = lowStockCount > 0 ? '/inventory?filter=low-stock' : '/inventory'
-  const lowStockPriority = lowStockCount > 0 ? 'medium' : 'low'
-
-  const smartAlerts = [
-    {
-      id: 1,
-      type: 'action',
-      priority: 'high',
-      icon: Phone,
-      title: 'Call Rajesh Kumar',
-      message: '₹15K payment overdue by 3 days',
-      action: 'Call Now',
-      link: 'tel:+919876543210',
-      color: 'red'
-    },
-    {
-      id: 2,
-      type: 'warning',
-      priority: lowStockPriority,
-      icon: WarningCircle,
-      title: 'Low Stock Alert',
-      message: lowStockMessage,
-      action: lowStockAction,
-      link: lowStockLink,
-      color: 'orange'
-    },
-    {
-      id: 3,
-      type: 'info',
-      priority: 'low',
-      icon: ChartLine,
-      title: 'GST-3B Due',
-      message: 'Due in 3 days (₹0 liability)',
-      action: 'View',
-      link: '/reports',
-      color: 'blue'
-    }
-  ]
-
-  // Auto-rotate alerts
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentAlertIndex((prev) => (prev + 1) % smartAlerts.length)
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [smartAlerts.length])
-
   // ==================== MOBILE DASHBOARD (Minimalist UI) ====================
   const MobileDashboard = () => {
     return (
       <div className="p-4 pb-28 bg-slate-50 dark:bg-slate-900 min-h-screen">
-        {/* Header */}
-        <div className="mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{greeting}, {userData?.firstName || 'User'}!</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Welcome back.</p>
+        <div className="mb-5 space-y-3">
+          <h1 className="text-center text-lg font-extrabold tracking-tight text-slate-800 dark:text-white">
+            Welcome ✨
+          </h1>
+          <div className="flex w-full justify-end">
+            {periodFilter}
           </div>
-        </div>
-        {/* Period Filter */}
-        <div className="mt-4 mb-5">
-          {periodFilter}
         </div>
 
         <motion.div
-          className="grid grid-cols-3 gap-3"
+          className="erp-module-kpi-grid min-w-0"
           initial="hidden"
           animate="visible"
           variants={{
@@ -894,28 +826,30 @@ const Dashboard = () => {
               }}
               onClick={() => navigate(stat.route)}
               className={cn(
-                "relative p-3 rounded-2xl cursor-pointer overflow-hidden text-center flex flex-col items-center justify-center gap-1.5 transition-all duration-200 hover:scale-[1.02]",
+                "relative min-w-0 w-full p-3 pt-3.5 rounded-2xl cursor-pointer text-center flex flex-col items-center gap-2 transition-all duration-200",
                 "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm"
               )}
             >
-              <div className="flex flex-col items-center justify-center gap-1">
-                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+              <div className="flex flex-col items-center justify-center gap-1 w-full min-w-0">
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
                   <stat.icon size={16} weight="bold" className={stat.color} />
                 </div>
-                <p className="text-[11px] font-semibold leading-none text-slate-500 dark:text-slate-400 text-center whitespace-nowrap mt-1">{stat.label}</p>
+                <p className="erp-inline-stat-label text-slate-500 dark:text-slate-400 text-center mt-1">{stat.label}</p>
               </div>
-              <p className="text-lg font-bold text-slate-800 dark:text-slate-100 text-center leading-none mt-0.5">
-                {`\u20B9${formatExactAmount(stat.value)}`}
-              </p>
+              <div className="erp-inline-stat-scroll">
+                <p className="erp-inline-stat-value text-slate-800 dark:text-slate-100">
+                  {formatStatAmount(stat.value)}
+                </p>
+              </div>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Weekly Chart - Minimalist */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mt-5 shadow-sm">
-          <div className="flex justify-between items-center mb-3">
+        {/* Weekly Chart */}
+        <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mt-5 shadow-sm">
+          <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-base font-semibold text-slate-800 dark:text-slate-100">Weekly Overview</p>
-            <div className="flex items-center gap-3 text-xs">
+            <div className="flex flex-wrap items-center gap-3 text-xs">
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600"></div>
                 <span className="text-slate-500 dark:text-slate-400">Admissions</span>
@@ -926,12 +860,14 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-          <WeeklyOverviewChart
-            data={weeklyOverviewData}
-            height={128}
-            compact
-            onDayClick={handleWeeklyOverviewDayClick}
-          />
+          <div className="min-h-[200px] w-full">
+            <WeeklyOverviewChart
+              data={weeklyOverviewData}
+              height={200}
+              compact
+              onDayClick={handleWeeklyOverviewDayClick}
+            />
+          </div>
         </div>
 
         {/* Recent Transactions */}
@@ -995,13 +931,13 @@ const Dashboard = () => {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
         <div className="w-full space-y-6">
           {/* Period Filter (above stats cards) */}
-          <div className="flex flex-col items-start gap-3">
+          <div className="flex w-full justify-end">
             {periodFilter}
           </div>
 
           {/* Stats Cards - Professional Neutral Style (6 Cards in a row) */}
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5 min-w-0"
             initial="hidden"
             animate="visible"
             variants={{
@@ -1009,11 +945,11 @@ const Dashboard = () => {
             }}
           >
             {[
-              { label: 'Admissions', sublabel: 'vs yesterday', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, accentColor: 'green' },
-              { label: 'Spending', sublabel: 'This period', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, accentColor: 'amber' },
-              { label: 'Profit', sublabel: 'Net earnings', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, accentColor: 'green' },
-              { label: 'Bank Balance', sublabel: 'Available', value: metrics.cash.inHand, growth: null, route: '/banking', icon: Bank, accentColor: 'blue', isBalance: true },
-              { label: 'Course Value', sublabel: 'Course worth', value: metrics.inventory.value, growth: null, route: '/inventory', icon: Package, accentColor: 'slate' },
+              { label: 'Admissions', value: getValueByPeriod(metrics.sales), route: '/sales', icon: TrendUp, accentColor: 'green' },
+              { label: 'Spending', value: getExpenseByPeriod(), route: '/expenses', icon: Wallet, accentColor: 'amber' },
+              { label: 'Profit', value: getProfitByPeriod(), route: '/reports', icon: ChartLine, accentColor: 'green' },
+              { label: 'Bank Balance', value: metrics.cash.inHand, route: '/banking', icon: Bank, accentColor: 'blue', isBalance: true },
+              { label: 'Course Value', value: metrics.inventory.value, route: '/inventory', icon: Package, accentColor: 'slate' },
             ].map((stat, i) => {
               const isNegative = stat.value < 0
               const displayValue = Math.abs(stat.value)
@@ -1033,7 +969,7 @@ const Dashboard = () => {
                 }}
                 onClick={() => navigate(stat.route)}
                 className={cn(
-                  "relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group",
+                  "relative min-w-0 p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 group",
                   "bg-white dark:bg-slate-800",
                   "border border-slate-200 dark:border-slate-700",
                   "shadow-[4px_4px_12px_rgba(0,0,0,0.06),-2px_-2px_8px_rgba(255,255,255,0.8)]",
@@ -1054,7 +990,7 @@ const Dashboard = () => {
                 )} />
 
                 <div className="flex justify-between items-start mb-2 mt-1">
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
+                  <p className="erp-inline-stat-label text-slate-500 dark:text-slate-400">{stat.label}</p>
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:scale-110",
                     "bg-slate-100 dark:bg-slate-700"
@@ -1069,24 +1005,11 @@ const Dashboard = () => {
                     )} />
                   </div>
                 </div>
-                <p className={cn("text-xl lg:text-2xl font-bold mb-1", valueColor)}>
-                  {isNegative && '-'}{`\u20B9${formatExactAmount(displayValue)}`}
-                </p>
-                {stat.growth !== null ? (
-                  <p className={cn(
-                    "text-xs font-medium",
-                    stat.growth >= 0 ? 'text-green-600' : 'text-red-600',
-                  )}>
-                    {stat.growth >= 0 ? `+${stat.growth.toFixed(1)}%` : `${stat.growth.toFixed(1)}%`} {stat.sublabel}
+                <div className="erp-inline-stat-scroll">
+                  <p className={cn("erp-inline-stat-value", valueColor)}>
+                    {isNegative && '-'}{formatStatAmount(displayValue)}
                   </p>
-                ) : stat.isBalance && isNegative ? (
-                  <p className="text-xs font-medium text-red-500 flex items-center gap-1">
-                    <WarningCircle size={12} weight="fill" />
-                    Overdraft
-                  </p>
-                ) : (
-                  <p className="text-xs font-medium text-slate-400 dark:text-slate-500">{stat.sublabel}</p>
-                )}
+                </div>
               </motion.div>
             )})}
           </motion.div>
@@ -1177,15 +1100,7 @@ const Dashboard = () => {
 
     return (
       <div className="erp-module-page p-0 bg-slate-50 dark:bg-slate-900">
-        {/* Mobile Dashboard */}
-        <div className="md:hidden">
-          <MobileDashboard />
-        </div>
-        
-        {/* Desktop Dashboard */}
-        <div className="hidden md:block">
-          <DesktopDashboard />
-        </div>
+        {isMobileViewport ? <MobileDashboard /> : <DesktopDashboard />}
       </div>
     )
   }

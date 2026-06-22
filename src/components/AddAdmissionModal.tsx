@@ -19,7 +19,7 @@ const COURSES = [
   { id: '11', name: 'INTERNSHIP', sellingPrice: 4000 },
 ]
 
-const COURSE_DURATIONS = ['1 Week', '2 Weeks', '1 Month', '2 Months', '3 Months', '6 Months', '1 Year', '2 Years', '3 Years', 'Or More']
+const COURSE_DURATIONS = ['1 Week', '2 Weeks', '1 Month', '45 Days', '2 Months', '3 Months', '6 Months', '1 Year', '2 Years', '3 Years', 'Or More']
 
 type LineItem = {
   id: string

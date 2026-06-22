@@ -23,11 +23,12 @@ type Props = {
   value: PeriodFilterValue
   onChange: (value: PeriodFilterValue) => void
   className?: string
+  compact?: boolean
 }
 
 const MENU_MIN_WIDTH = 152
 
-const PeriodFilterDropdown = ({ value, onChange, className }: Props) => {
+const PeriodFilterDropdown = ({ value, onChange, className, compact = false }: Props) => {
   const [open, setOpen] = useState(false)
   const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -145,17 +146,18 @@ const PeriodFilterDropdown = ({ value, onChange, className }: Props) => {
           aria-expanded={open}
           aria-haspopup="listbox"
           className={cn(
-            'inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700',
-            'bg-white dark:bg-slate-800 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200',
+            'inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700',
+            'bg-white dark:bg-slate-800 font-medium text-slate-700 dark:text-slate-200',
             'hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors',
+            compact ? 'gap-1 px-2 py-1.5 text-xs' : 'gap-2 px-3 py-2 text-sm',
             open && 'ring-2 ring-blue-100 dark:ring-blue-900/40 border-blue-400'
           )}
         >
-          <FunnelSimple size={16} weight="bold" className="text-slate-500" />
-          <span>Filter</span>
+          <FunnelSimple size={compact ? 14 : 16} weight="bold" className="text-slate-500 shrink-0" />
+          {!compact && <span>Filter</span>}
           <CaretDown
-            size={14}
-            className={cn('text-slate-500 transition-transform', open && 'rotate-180')}
+            size={compact ? 12 : 14}
+            className={cn('text-slate-500 transition-transform shrink-0', open && 'rotate-180')}
           />
         </button>
       </div>

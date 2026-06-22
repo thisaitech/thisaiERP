@@ -5,7 +5,6 @@ import {
   Plus,
   Wallet,
   Receipt,
-  Calendar,
   MagnifyingGlass,
   Trash,
   Eye,
@@ -27,6 +26,34 @@ import { toast } from 'sonner'
 import { getExpenses, createExpense, updateExpense, deleteExpense, Expense, generateExpenseNumber } from '../services/expenseService'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
+import { formatStatAmount } from '../utils/formatStatAmount'
+import MobileListCard from '../components/mobile/MobileListCard'
+import MobileActionMenu from '../components/mobile/MobileActionMenu'
+
+function getExpenseDisplayName(expense: Expense): string {
+  const description = (expense.description || '').trim()
+  if (!description) return 'Expense'
+  const dashIndex = description.indexOf(' - ')
+  if (dashIndex > 0) return description.slice(0, dashIndex).trim()
+  return description
+}
+
+function formatExpenseDate(value: string | undefined): string {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value.slice(0, 10)
+  return date.toLocaleDateString('en-IN')
+}
+
+function getExpenseStatusMeta(expense: Expense, paidLabel: string, pendingLabel: string) {
+  if (expense.status === 'paid') {
+    return { label: paidLabel, className: 'bg-emerald-100 text-emerald-700' }
+  }
+  if (expense.status === 'reimbursed') {
+    return { label: 'Reimbursed', className: 'bg-blue-100 text-blue-700' }
+  }
+  return { label: pendingLabel, className: 'bg-amber-100 text-amber-700' }
+}
 
 const Expenses = () => {
   // Language support
@@ -89,26 +116,9 @@ const Expenses = () => {
     fetchExpenses()
   }, [fetchExpenses])
 
-  // Calculate stats from real data
-  const stats = React.useMemo(() => {
-    const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0)
+  const formatExpenseAmount = formatStatAmount
 
-    const salaryExpenses = expenses
-      .filter(exp => exp.category === 'salary')
-      .reduce((sum, exp) => sum + (exp.amount || 0), 0)
-
-    const rentExpenses = expenses
-      .filter(exp => exp.category === 'rent')
-      .reduce((sum, exp) => sum + (exp.amount || 0), 0)
-
-    return {
-      totalExpenses,
-      salary: salaryExpenses,
-      rent: rentExpenses,
-    }
-  }, [expenses])
-
-  const periodFilteredExpenses = expenses.filter((expense) => {
+  const periodFilteredExpenses = React.useMemo(() => expenses.filter((expense) => {
     if (selectedPeriod === 'all') return true
 
     const expenseDate = new Date(expense.date)
@@ -137,10 +147,43 @@ const Expenses = () => {
     }
 
     return true
-  })
+  }), [expenses, selectedPeriod])
+
+  const stats = React.useMemo(() => {
+    const sumAmount = (rows: Expense[]) => rows.reduce((sum, exp) => sum + (exp.amount || 0), 0)
+    const paidExpenses = periodFilteredExpenses.filter(
+      (exp) => exp.status === 'paid' || exp.status === 'reimbursed'
+    )
+    const pendingExpenses = periodFilteredExpenses.filter((exp) => exp.status === 'pending')
+
+    return {
+      totalExpenses: sumAmount(periodFilteredExpenses),
+      paidExpenses: sumAmount(paidExpenses),
+      pendingExpenses: sumAmount(pendingExpenses),
+    }
+  }, [periodFilteredExpenses])
+
+  const matchesExpenseCategory = (expense: Expense, category: string) => {
+    if (category === 'all') return true
+    if (category === 'rent') return expense.category === 'rent'
+    if (category === 'salary') return expense.category === 'salary'
+    if (category === 'other') return expense.category !== 'rent' && expense.category !== 'salary'
+    return expense.category === category
+  }
+
+  const categoryTabs = [
+    { id: 'all', label: t.expenses?.all || 'All', count: periodFilteredExpenses.length },
+    { id: 'rent', label: t.expenses?.rent || 'Rent', count: periodFilteredExpenses.filter((exp) => exp.category === 'rent').length },
+    { id: 'salary', label: t.expenses?.salary || 'Salary', count: periodFilteredExpenses.filter((exp) => exp.category === 'salary').length },
+    {
+      id: 'other',
+      label: 'Other',
+      count: periodFilteredExpenses.filter((exp) => exp.category !== 'rent' && exp.category !== 'salary').length,
+    },
+  ]
 
   const filteredExpenses = periodFilteredExpenses.filter(expense =>
-    (selectedCategory === 'all' || expense.category === selectedCategory) &&
+    matchesExpenseCategory(expense, selectedCategory) &&
     (searchQuery === '' ||
       (expense.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (expense.expenseNumber || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -307,37 +350,43 @@ const Expenses = () => {
 
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-          <div className="flex-1 min-w-0 grid grid-cols-3 gap-1.5 sm:gap-2">
-            <div className="relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
+          <div className="erp-module-kpi-grid">
+            <div className="erp-inline-stat-card relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{t.expenses?.totalExpenses || 'Total Expenses'}</h3>
-                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200 truncate">
-                  ₹{stats.totalExpenses >= 10000000 ? (stats.totalExpenses / 10000000).toFixed(1) + ' Cr' : stats.totalExpenses >= 100000 ? (stats.totalExpenses / 100000).toFixed(1) + ' L' : stats.totalExpenses >= 1000 ? (stats.totalExpenses / 1000).toFixed(1) + ' K' : stats.totalExpenses.toLocaleString('en-IN')}
-                </p>
+                <h3 className="erp-inline-stat-label text-slate-500 dark:text-slate-400" title={t.expenses?.totalExpenses || 'Total Expenses'}>Total</h3>
+                <div className="erp-inline-stat-scroll mt-0.5">
+                  <p className="erp-inline-stat-value text-slate-700 dark:text-slate-200">
+                    {formatExpenseAmount(stats.totalExpenses)}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
+            <div className="erp-inline-stat-card relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{t.expenses?.salary || 'Salary'}</h3>
-                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200 truncate">
-                  ₹{stats.salary >= 10000000 ? (stats.salary / 10000000).toFixed(1) + ' Cr' : stats.salary >= 100000 ? (stats.salary / 100000).toFixed(1) + ' L' : stats.salary >= 1000 ? (stats.salary / 1000).toFixed(1) + ' K' : stats.salary.toLocaleString('en-IN')}
-                </p>
+                <h3 className="erp-inline-stat-label text-slate-500 dark:text-slate-400" title="Paid Expenses">Paid</h3>
+                <div className="erp-inline-stat-scroll mt-0.5">
+                  <p className="erp-inline-stat-value text-slate-700 dark:text-slate-200">
+                    {formatExpenseAmount(stats.paidExpenses)}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
+            <div className="erp-inline-stat-card relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{t.expenses?.rent || 'Rent'}</h3>
-                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200 truncate">
-                  ₹{stats.rent >= 10000000 ? (stats.rent / 10000000).toFixed(1) + ' Cr' : stats.rent >= 100000 ? (stats.rent / 100000).toFixed(1) + ' L' : stats.rent >= 1000 ? (stats.rent / 1000).toFixed(1) + ' K' : stats.rent.toLocaleString('en-IN')}
-                </p>
+                <h3 className="erp-inline-stat-label text-slate-500 dark:text-slate-400" title="Pending Expenses">Pending</h3>
+                <div className="erp-inline-stat-scroll mt-0.5">
+                  <p className="erp-inline-stat-value text-blue-600 dark:text-blue-400">
+                    {formatExpenseAmount(stats.pendingExpenses)}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Right Side: Date Filters + Action Buttons */}
-          <div className="flex flex-row items-center justify-end gap-1.5 flex-shrink-0 w-auto">
+          <div className="flex w-full flex-row items-center justify-end gap-1.5 flex-shrink-0 sm:w-auto">
             <PeriodFilterDropdown value={selectedPeriod} onChange={setSelectedPeriod} />
             <button
               onClick={openNewExpense}
@@ -350,23 +399,33 @@ const Expenses = () => {
         </div>
 
         <div className="space-y-2">
-          {/* Search Bar & Category Filter Tabs Row */}
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
-            {/* Search Bar */}
-            <div className="w-full md:flex-1">
-              <div className="relative">
-                <MagnifyingGlass size={18} weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder={t.expenses?.searchExpenses || 'Search expenses...'}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full min-h-[44px] rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
-                />
-              </div>
-            </div>
+          <div className="relative">
+            <MagnifyingGlass size={18} weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder={t.expenses?.searchExpenses || 'Search expenses...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full min-h-[44px] rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+            />
+          </div>
 
-
+          <div className="grid grid-cols-4 gap-2 md:flex md:items-center md:gap-2 md:overflow-x-auto md:pb-1">
+            {categoryTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setSelectedCategory(tab.id)}
+                className={cn(
+                  'erp-module-filter-chip w-full md:w-auto justify-center text-center',
+                  selectedCategory === tab.id
+                    ? 'is-active'
+                    : 'border border-slate-200 dark:border-slate-600'
+                )}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -392,54 +451,40 @@ const Expenses = () => {
           <>
             {/* Mobile Expense Cards - Only visible on mobile */}
             <div className="md:hidden space-y-2">
-              {filteredExpenses.map((expense, index) => (
-                <div
-                  key={expense.id}
-                  className="bg-white rounded-lg shadow-sm border border-slate-200 p-3"
-                >
-                  {/* Header Row */}
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm text-slate-800 truncate">{expense.expenseNumber}</h3>
-                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{expense.description}</p>
-                    </div>
-                    <span className={cn(
-                      "px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ml-2 flex-shrink-0",
-                      expense.status === 'paid'
-                        ? "bg-green-100 text-green-700"
-                        : "bg-orange-100 text-orange-700"
-                    )}>
-                      {expense.status === 'paid' ? (t.common?.paid || 'Paid') : (t.common?.pending || 'Pending')}
-                    </span>
-                  </div>
-
-                  {/* Details Row */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar size={12} />
-                        {new Date(expense.date).toLocaleDateString()}
+              {filteredExpenses.map((expense) => {
+                const statusMeta = getExpenseStatusMeta(
+                  expense,
+                  t.common?.paid || 'Paid',
+                  t.common?.pending || 'Pending'
+                )
+                return (
+                  <MobileListCard
+                    key={expense.id}
+                    title={getExpenseDisplayName(expense)}
+                    onTitleClick={() => handleViewExpense(expense)}
+                    fields={[
+                      { id: 'date', label: 'Date', value: formatExpenseDate(expense.date) },
+                      { id: 'amount', label: 'Amount', value: formatStatAmount(expense.amount) },
+                      { id: 'category', label: 'Category', value: expense.category.replace(/_/g, ' ') },
+                      { id: 'payment', label: 'Payment', value: expense.paymentMode },
+                    ]}
+                    status={
+                      <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase', statusMeta.className)}>
+                        {statusMeta.label}
                       </span>
-                      <span className="px-2 py-0.5 bg-slate-100 rounded font-medium text-slate-700">{expense.category}</span>
-                    </div>
-                    <span className="text-base font-bold text-slate-800">₹{expense.amount.toLocaleString()}</span>
-                  </div>
-
-                  {/* Footer Row */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <span className="text-xs text-slate-500 flex items-center gap-1">
-                      <CreditCard size={12} />
-                      {expense.paymentMode}
-                    </span>
-                    <button
-                      className="p-1.5 hover:bg-blue-50 text-blue-600 rounded transition-colors"
-                      onClick={() => handleDeleteExpense(expense.id)}
-                    >
-                      <Trash size={14} weight="duotone" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                    }
+                    actions={
+                      <MobileActionMenu
+                        actions={[
+                          { id: 'view', label: 'View', icon: <Eye size={14} />, onClick: () => handleViewExpense(expense) },
+                          { id: 'edit', label: 'Edit', icon: <Pencil size={14} />, onClick: () => handleEditExpense(expense) },
+                          { id: 'delete', label: 'Delete', icon: <Trash size={14} />, tone: 'danger', onClick: () => handleDeleteExpense(expense.id) },
+                        ]}
+                      />
+                    }
+                  />
+                )
+              })}
             </div>
 
             {/* Desktop Table - Hidden on mobile */}
@@ -449,8 +494,7 @@ const Expenses = () => {
                   <thead className="erp-module-table-header bg-slate-50 border-b border-slate-200">
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.expenses?.date || 'Date'}</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">Expense #</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">Description</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">Expense</th>
                       <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.expenses?.category || 'Category'}</th>
                       <th className="px-4 py-2 text-right text-xs font-semibold text-slate-600">{t.expenses?.amount || 'Amount'}</th>
                       <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.common?.payment || 'Payment'}</th>
@@ -459,39 +503,40 @@ const Expenses = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredExpenses.map((expense, index) => (
+                    {filteredExpenses.map((expense) => {
+                      const statusMeta = getExpenseStatusMeta(
+                        expense,
+                        t.common?.paid || 'Paid',
+                        t.common?.pending || 'Pending'
+                      )
+                      return (
                       <tr
                         key={expense.id}
                         className="hover:bg-slate-50 transition-colors"
                         >
                           <td className="px-4 py-3 text-xs text-slate-600">
-                            {new Date(expense.date).toLocaleDateString()}
+                            {formatExpenseDate(expense.date)}
                           </td>
                           <td className="px-4 py-3">
-                            <p className="font-semibold text-sm text-slate-800">{expense.expenseNumber}</p>
+                            <p className="font-semibold text-sm text-slate-800">{getExpenseDisplayName(expense)}</p>
                           </td>
                           <td className="px-4 py-3">
-                            <p className="text-xs text-slate-600">{expense.description || '-'}</p>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded text-xs font-medium text-slate-700">
-                              {expense.category}
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded text-xs font-medium text-slate-700 capitalize">
+                              {expense.category.replace(/_/g, ' ')}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right font-bold text-sm text-slate-800">
-                            ₹{expense.amount.toLocaleString()}
+                            {formatStatAmount(expense.amount)}
                           </td>
-                          <td className="px-4 py-3 text-xs text-slate-600">
+                          <td className="px-4 py-3 text-xs text-slate-600 capitalize">
                             {expense.paymentMode}
                           </td>
                           <td className="px-4 py-3">
                             <span className={cn(
                               "inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase",
-                              expense.status === 'paid'
-                                ? "bg-green-100 text-green-700"
-                                : "bg-orange-100 text-orange-700"
+                              statusMeta.className
                             )}>
-                              {expense.status === 'paid' ? (t.common?.paid || 'Paid') : (t.common?.pending || 'Pending')}
+                              {statusMeta.label}
                             </span>
                           </td>
                           <td className="px-4 py-3">
@@ -520,7 +565,8 @@ const Expenses = () => {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      )
+                    })}
                     </tbody>
                   </table>
                 </div>
@@ -679,8 +725,8 @@ const Expenses = () => {
               >
                 <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-800">Expense Details</h3>
-                    <p className="text-xs text-slate-500">{viewingExpense.expenseNumber}</p>
+                    <h3 className="text-lg font-bold text-slate-800">{getExpenseDisplayName(viewingExpense)}</h3>
+                    <p className="text-xs text-slate-500">{formatExpenseDate(viewingExpense.date)}</p>
                   </div>
                   <button onClick={() => setViewingExpense(null)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-500">
                     <X size={18} />

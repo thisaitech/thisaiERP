@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { CalendarBlank, Eye, Pencil, Plus, Printer, Trash, Users, Wallet, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useLocation } from 'react-router-dom'
@@ -13,9 +14,9 @@ import MobileListCard from '../components/mobile/MobileListCard'
 import MobileActionMenu from '../components/mobile/MobileActionMenu'
 import MobileBottomSheet from '../components/mobile/MobileBottomSheet'
 import MobileFormSection from '../components/mobile/MobileFormSection'
-import MobileStickyCTA from '../components/mobile/MobileStickyCTA'
 import StudentDetailsModal from '../components/StudentDetailsModal'
 import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
+import { formatStatAmount, formatStatCount } from '../utils/formatStatAmount'
 
 const HARDCODED_COURSES = [
   { id: '1', name: 'FULLSTACK AI', sellingPrice: 35000 },
@@ -67,7 +68,7 @@ type AdmissionItem = {
   duration: string
 }
 
-const COURSE_DURATIONS = ['1 Week', '2 Weeks', '1 Month', '2 Months', '3 Months', '6 Months', '1 Year', '2 Years', '3 Years', 'Or More']
+const COURSE_DURATIONS = ['1 Week', '2 Weeks', '1 Month', '45 Days', '2 Months', '3 Months', '6 Months', '1 Year', '2 Years', '3 Years', 'Or More']
 
 const newLine = (): AdmissionItem => ({
   id: `line_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -135,6 +136,34 @@ const Sales: React.FC = () => {
   const [paidAmount, setPaidAmount] = useState<string>('0')
   const [focusedFeeLineId, setFocusedFeeLineId] = useState<string | null>(null)
   const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth < 768)
+  const [showOptionalAddress, setShowOptionalAddress] = useState(false)
+  const [showOptionalDob, setShowOptionalDob] = useState(false)
+  const [showOptionalGender, setShowOptionalGender] = useState(false)
+  const [showOptionalParent, setShowOptionalParent] = useState(false)
+  const [showOptionalNotes, setShowOptionalNotes] = useState(false)
+
+  const syncOptionalVisibility = (data: {
+    address?: string
+    dateOfBirth?: string
+    gender?: string
+    parentName?: string
+    parentPhone?: string
+    notes?: string
+  }) => {
+    setShowOptionalAddress(!!data.address?.trim())
+    setShowOptionalDob(!!data.dateOfBirth?.trim())
+    setShowOptionalGender(!!data.gender?.trim())
+    setShowOptionalParent(!!(data.parentName?.trim() || data.parentPhone?.trim()))
+    setShowOptionalNotes(!!data.notes?.trim())
+  }
+
+  const resetOptionalVisibility = () => {
+    setShowOptionalAddress(false)
+    setShowOptionalDob(false)
+    setShowOptionalGender(false)
+    setShowOptionalParent(false)
+    setShowOptionalNotes(false)
+  }
 
   useEffect(() => {
     if (location.state?.preselectPartyId && students.length > 0 && !selectedStudentId) {
@@ -150,6 +179,13 @@ const Sales: React.FC = () => {
         setDateOfBirth((p as any).admissionDetails?.dateOfBirth || '')
         setParentName((p as any).admissionDetails?.emergencyContact?.name || '')
         setParentPhone(String((p as any).admissionDetails?.emergencyContact?.phone || '').replace(/\D/g, '').slice(-10))
+        syncOptionalVisibility({
+          address: p.address || p.billingAddress?.street || '',
+          dateOfBirth: (p as any).admissionDetails?.dateOfBirth || '',
+          gender: (p as any).admissionDetails?.gender || '',
+          parentName: (p as any).admissionDetails?.emergencyContact?.name || '',
+          parentPhone: String((p as any).admissionDetails?.emergencyContact?.phone || '').replace(/\D/g, '').slice(-10),
+        })
         // Clean up state so we don't re-trigger on refresh
         window.history.replaceState({}, '')
       }
@@ -209,6 +245,7 @@ const Sales: React.FC = () => {
     setNotes('')
     setPaidAmount('0')
     setFocusedFeeLineId(null)
+    resetOptionalVisibility()
   }
 
   const openNew = () => {
@@ -265,6 +302,13 @@ const Sales: React.FC = () => {
         return recalcLine(nextLine)
       })
     )
+  }
+
+  const handleRemoveCourseLine = (lineId: string) => {
+    setItems((prev) => {
+      const next = prev.filter((l) => l.id !== lineId)
+      return next.length > 0 ? next : [newLine()]
+    })
   }
 
   const openExisting = (inv: any, mode: 'edit' | 'view') => {
@@ -333,6 +377,14 @@ const Sales: React.FC = () => {
     setNotes(inv.notes || '')
     setPaidAmount(String(Number(inv.paidAmount || 0)))
     setFocusedFeeLineId(null)
+    syncOptionalVisibility({
+      address: invoiceAddress || linkedStudentAddress || '',
+      dateOfBirth: inv.dateOfBirth || inv.admissionDetails?.dateOfBirth || linkedStudent?.admissionDetails?.dateOfBirth || '',
+      gender: inv.gender || inv.admissionDetails?.gender || linkedStudent?.admissionDetails?.gender || '',
+      parentName: inv.parentName || inv.admissionDetails?.emergencyContact?.name || linkedStudent?.admissionDetails?.emergencyContact?.name || '',
+      parentPhone: String(inv.parentPhone || inv.admissionDetails?.emergencyContact?.phone || linkedStudent?.admissionDetails?.emergencyContact?.phone || '').replace(/\D/g, '').slice(-10),
+      notes: inv.notes || '',
+    })
     setShowForm(true)
   }
 
@@ -647,8 +699,16 @@ const Sales: React.FC = () => {
 
   const inputClass = (mobile: boolean) =>
     mobile
-      ? 'mobile-control'
+      ? 'w-full px-3 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all'
       : 'mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+
+  const labelClass = (mobile: boolean) =>
+    mobile ? 'text-sm font-medium mb-1.5 block' : 'text-xs font-semibold text-slate-600 dark:text-slate-300'
+
+  const wrapSection = (mobile: boolean, title: string, children: React.ReactNode) => {
+    if (mobile) return <div className="space-y-3">{children}</div>
+    return <MobileFormSection title={title}>{children}</MobileFormSection>
+  }
 
   const showNativeDatePicker = (input: HTMLInputElement | null) => {
     if (!input || isViewMode) return
@@ -664,15 +724,15 @@ const Sales: React.FC = () => {
   }
 
   const formFields = (mobile: boolean) => (
-    <div className="space-y-4">
-      <MobileFormSection title="Admission Details">
-        <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3')}>
+    <div className={mobile ? 'space-y-4' : 'space-y-4'}>
+      {wrapSection(mobile, 'Admission Details', (
+        <div className={cn('grid gap-3', mobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-3')}>
           <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Admission No</label>
+            <label className={labelClass(mobile)}>Admission No</label>
             <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} disabled={isViewMode} className={inputClass(mobile)} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Date</label>
+            <label className={labelClass(mobile)}>Date</label>
             <div className="relative">
               <input
                 id="admission-date-input"
@@ -700,30 +760,32 @@ const Sales: React.FC = () => {
               )}
             </div>
           </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Paid Amount</label>
-            <input
-              type="number"
-              min={0}
-              value={paidAmount}
-              onFocus={() => {
-                if (paidAmount === '0') setPaidAmount('')
-              }}
-              onBlur={() => {
-                if (paidAmount.trim() === '') setPaidAmount('0')
-              }}
-              onChange={(e) => setPaidAmount(e.target.value)}
-              disabled={isViewMode}
-              className={inputClass(mobile)}
-            />
-          </div>
+          {!mobile && (
+            <div>
+              <label className={labelClass(mobile)}>Paid Amount</label>
+              <input
+                type="number"
+                min={0}
+                value={paidAmount}
+                onFocus={() => {
+                  if (paidAmount === '0') setPaidAmount('')
+                }}
+                onBlur={() => {
+                  if (paidAmount.trim() === '') setPaidAmount('0')
+                }}
+                onChange={(e) => setPaidAmount(e.target.value)}
+                disabled={isViewMode}
+                className={inputClass(mobile)}
+              />
+            </div>
+          )}
         </div>
-      </MobileFormSection>
+      ))}
 
-      <MobileFormSection title="Student">
-        <div className={cn('grid gap-2', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
+      {wrapSection(mobile, 'Student', (
+        <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
           <div className="relative">
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Student Name</label>
+            <label className={labelClass(mobile)}>Student Name</label>
             <input
               value={selectedStudent ? (selectedStudent.name || selectedStudent.companyName || '') : studentSearch}
               onChange={(e) => {
@@ -766,6 +828,13 @@ const Sales: React.FC = () => {
                       setDateOfBirth((s as any).admissionDetails?.dateOfBirth || '')
                       setParentName((s as any).admissionDetails?.emergencyContact?.name || '')
                       setParentPhone(String((s as any).admissionDetails?.emergencyContact?.phone || '').replace(/\D/g, '').slice(-10))
+                      syncOptionalVisibility({
+                        address: s.billingAddress?.street || s.address || '',
+                        dateOfBirth: (s as any).admissionDetails?.dateOfBirth || '',
+                        gender: (s as any).admissionDetails?.gender || '',
+                        parentName: (s as any).admissionDetails?.emergencyContact?.name || '',
+                        parentPhone: String((s as any).admissionDetails?.emergencyContact?.phone || '').replace(/\D/g, '').slice(-10),
+                      })
                     }}
                     className={cn('w-full text-left px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/60', 'flex items-center justify-between gap-3')}
                   >
@@ -779,73 +848,47 @@ const Sales: React.FC = () => {
             )}
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Phone</label>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-              onFocus={() => setShowStudentSuggestions(false)}
-              disabled={isViewMode}
-              type="tel"
-              inputMode="numeric"
-              maxLength={10}
-              className={inputClass(mobile)}
-              placeholder="Phone number"
-            />
-          </div>
-        </div>
-      </MobileFormSection>
-
-      <MobileFormSection title="Additional Information">
-        <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">Optional — you can skip these and still save admission</p>
-        <div className={cn('grid gap-3', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2')}>
-          <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Gender</label>
-            <div className="relative mt-1">
-              <select value={gender} onChange={(e) => setGender(e.target.value)} disabled={isViewMode} className={cn(inputClass(mobile), 'appearance-none pr-8')}>
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+            <label className={labelClass(mobile)}>{mobile ? 'Phone Number' : 'Phone'}</label>
+            {mobile ? (
+              <div className="flex">
+                <div className="flex items-center justify-center px-3 py-2.5 bg-muted border border-r-0 border-border rounded-l-lg text-muted-foreground font-medium select-none">
+                  +91
+                </div>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  onFocus={() => setShowStudentSuggestions(false)}
+                  disabled={isViewMode}
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  className={cn(inputClass(mobile), 'rounded-l-none')}
+                  placeholder="10 digit number"
+                />
               </div>
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Date of Birth</label>
-            <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} disabled={isViewMode} className={cn(inputClass(mobile), 'mt-1')} />
-          </div>
-          <div className={mobile ? '' : 'md:col-span-2'}>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Address</label>
-            <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} disabled={isViewMode} placeholder="Address" className={cn(inputClass(mobile), 'mt-1 resize-none')} />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Parent / Guardian Name</label>
-            <input value={parentName} onChange={(e) => setParentName(e.target.value)} disabled={isViewMode} placeholder="Parent or guardian name" className={cn(inputClass(mobile), 'mt-1')} />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Parent Mobile Number</label>
-            <input
-              value={parentPhone}
-              onChange={(e) => setParentPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-              disabled={isViewMode}
-              type="tel"
-              inputMode="numeric"
-              maxLength={10}
-              placeholder="10-digit mobile number"
-              className={cn(inputClass(mobile), 'mt-1')}
-            />
+            ) : (
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                onFocus={() => setShowStudentSuggestions(false)}
+                disabled={isViewMode}
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
+                className={inputClass(mobile)}
+                placeholder="Phone number"
+              />
+            )}
           </div>
         </div>
-      </MobileFormSection>
+      ))}
 
-      <MobileFormSection>
+      {wrapSection(mobile, 'Course', (
         <div className="space-y-3">
           {items.map((line) => (
-            <div key={line.id} className={cn('grid gap-2 items-end', mobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12')}>
+            <div key={line.id} className={cn('grid gap-2 items-end', mobile ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-12')}>
               <div className={mobile ? '' : 'md:col-span-5'}>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 block">Course</label>
+                <label className={cn(labelClass(mobile), !mobile && 'mb-1 block')}>Course</label>
                 <div className="relative">
                   <select
                     value={line.itemId}
@@ -866,7 +909,7 @@ const Sales: React.FC = () => {
                 </div>
               </div>
               <div className={mobile ? '' : 'md:col-span-3'}>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1 block">Duration</label>
+                <label className={cn(labelClass(mobile), !mobile && 'mb-1 block')}>Duration</label>
                 <div className="relative">
                   <select
                     value={line.duration}
@@ -886,7 +929,7 @@ const Sales: React.FC = () => {
                 </div>
               </div>
               <div className={mobile ? '' : 'md:col-span-2'}>
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Fee</label>
+                <label className={labelClass(mobile)}>Fee</label>
                 <input
                   type="number"
                   value={focusedFeeLineId === line.id && Number(line.rate || 0) === 0 ? '' : line.rate}
@@ -902,12 +945,34 @@ const Sales: React.FC = () => {
                   className={inputClass(mobile)}
                 />
               </div>
+              {mobile && (
+                <div>
+                  <label className={labelClass(mobile)}>Paid Amount</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={paidAmount}
+                    onFocus={() => {
+                      if (paidAmount === '0') setPaidAmount('')
+                    }}
+                    onBlur={() => {
+                      if (paidAmount.trim() === '') setPaidAmount('0')
+                    }}
+                    onChange={(e) => setPaidAmount(e.target.value)}
+                    disabled={isViewMode}
+                    className={inputClass(mobile)}
+                  />
+                </div>
+              )}
               {!isViewMode && (
-                <div className={mobile ? '' : 'md:col-span-2 flex justify-end'}>
+                <div className={cn(mobile ? 'col-span-2' : 'md:col-span-2', 'flex justify-end')}>
                   <button
                     type="button"
-                    onClick={() => setItems((prev) => prev.filter((l) => l.id !== line.id))}
-                    className="mobile-secondary-btn text-blue-600"
+                    onClick={() => handleRemoveCourseLine(line.id)}
+                    className={cn(
+                      'text-sm font-medium flex items-center gap-1 text-red-600 hover:text-red-700',
+                      !mobile && 'mobile-secondary-btn'
+                    )}
                     title="Remove"
                   >
                     <Trash size={16} />
@@ -919,35 +984,226 @@ const Sales: React.FC = () => {
           ))}
 
           {!isViewMode && (
-            <button type="button" onClick={() => setItems((prev) => [...prev, newLine()])} className="mobile-secondary-btn">
-              + Add Course
+            <button
+              type="button"
+              onClick={() => setItems((prev) => [...prev, newLine()])}
+              className={mobile ? 'text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1' : 'mobile-secondary-btn'}
+            >
+              {mobile && <Plus size={14} weight="bold" />}
+              Add Course
             </button>
           )}
 
-          <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-700 pt-2">
-            <div className="text-sm text-slate-600 dark:text-slate-300">Total</div>
-            <div className="text-lg font-bold text-slate-800 dark:text-slate-100">₹{Number(total).toLocaleString('en-IN')}</div>
+          <div className={cn('space-y-2 pt-2', mobile ? 'border-t border-border' : 'border-t border-slate-200 dark:border-slate-700')}>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-slate-600 dark:text-slate-300">Total Fees</div>
+              <div className="text-lg font-bold text-slate-800 dark:text-slate-100">₹{Number(total).toLocaleString('en-IN')}</div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-slate-600 dark:text-slate-300">Total Paid Amount</div>
+              <div className="text-lg font-bold text-slate-800 dark:text-slate-100">₹{Number(paidAmount || 0).toLocaleString('en-IN')}</div>
+            </div>
           </div>
         </div>
-      </MobileFormSection>
+      ))}
 
-      <MobileFormSection title="Notes">
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={mobile ? 4 : 3} disabled={isViewMode} className={inputClass(mobile)} />
-      </MobileFormSection>
+      {mobile ? (
+        <div className="space-y-2 pt-2 border-t border-border">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Optional Information</p>
+
+          <div>
+            {!showOptionalAddress && !isViewMode ? (
+              <button
+                type="button"
+                onClick={() => setShowOptionalAddress(true)}
+                className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+              >
+                <Plus size={14} weight="bold" />
+                Address
+              </button>
+            ) : (showOptionalAddress || (isViewMode && address.trim())) ? (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2">
+                <label className={labelClass(mobile)}>Address</label>
+                <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} disabled={isViewMode} placeholder="Address" className={cn(inputClass(mobile), 'resize-none')} />
+              </motion.div>
+            ) : null}
+          </div>
+
+          <div>
+            {!showOptionalDob && !isViewMode ? (
+              <button
+                type="button"
+                onClick={() => setShowOptionalDob(true)}
+                className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+              >
+                <Plus size={14} weight="bold" />
+                Date of Birth
+              </button>
+            ) : (showOptionalDob || (isViewMode && dateOfBirth.trim())) ? (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2">
+                <label className={labelClass(mobile)}>Date of Birth</label>
+                <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} disabled={isViewMode} className={inputClass(mobile)} />
+              </motion.div>
+            ) : null}
+          </div>
+
+          <div>
+            {!showOptionalGender && !isViewMode ? (
+              <button
+                type="button"
+                onClick={() => setShowOptionalGender(true)}
+                className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+              >
+                <Plus size={14} weight="bold" />
+                Gender
+              </button>
+            ) : (showOptionalGender || (isViewMode && gender.trim())) ? (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2">
+                <label className={labelClass(mobile)}>Gender</label>
+                <div className="relative">
+                  <select value={gender} onChange={(e) => setGender(e.target.value)} disabled={isViewMode} className={cn(inputClass(mobile), 'appearance-none pr-8')}>
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </div>
+              </motion.div>
+            ) : null}
+          </div>
+
+          <div>
+            {!showOptionalParent && !isViewMode ? (
+              <button
+                type="button"
+                onClick={() => setShowOptionalParent(true)}
+                className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+              >
+                <Plus size={14} weight="bold" />
+                Parent / Guardian
+              </button>
+            ) : (showOptionalParent || (isViewMode && (parentName.trim() || parentPhone.trim()))) ? (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2">
+                <label className={labelClass(mobile)}>Parent / Guardian Name</label>
+                <input value={parentName} onChange={(e) => setParentName(e.target.value)} disabled={isViewMode} placeholder="Parent or guardian name" className={inputClass(mobile)} />
+                <label className={labelClass(mobile)}>Parent Mobile Number</label>
+                <input
+                  value={parentPhone}
+                  onChange={(e) => setParentPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  disabled={isViewMode}
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="10-digit mobile number"
+                  className={inputClass(mobile)}
+                />
+              </motion.div>
+            ) : null}
+          </div>
+
+          <div>
+            {!showOptionalNotes && !isViewMode ? (
+              <button
+                type="button"
+                onClick={() => setShowOptionalNotes(true)}
+                className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+              >
+                <Plus size={14} weight="bold" />
+                Notes
+              </button>
+            ) : (showOptionalNotes || (isViewMode && notes.trim())) ? (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2">
+                <label className={labelClass(mobile)}>Notes</label>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} disabled={isViewMode} className={cn(inputClass(mobile), 'resize-none')} />
+              </motion.div>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <>
+          <MobileFormSection title="Additional Information">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">Optional — you can skip these and still save admission</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Gender</label>
+                <div className="relative mt-1">
+                  <select value={gender} onChange={(e) => setGender(e.target.value)} disabled={isViewMode} className={cn(inputClass(false), 'appearance-none pr-8')}>
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Date of Birth</label>
+                <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} disabled={isViewMode} className={cn(inputClass(false), 'mt-1')} />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Address</label>
+                <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} disabled={isViewMode} placeholder="Address" className={cn(inputClass(false), 'mt-1 resize-none')} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Parent / Guardian Name</label>
+                <input value={parentName} onChange={(e) => setParentName(e.target.value)} disabled={isViewMode} placeholder="Parent or guardian name" className={cn(inputClass(false), 'mt-1')} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Parent Mobile Number</label>
+                <input
+                  value={parentPhone}
+                  onChange={(e) => setParentPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  disabled={isViewMode}
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="10-digit mobile number"
+                  className={cn(inputClass(false), 'mt-1')}
+                />
+              </div>
+            </div>
+          </MobileFormSection>
+
+          <MobileFormSection title="Notes">
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} disabled={isViewMode} className={inputClass(false)} />
+          </MobileFormSection>
+        </>
+      )}
     </div>
   )
 
-  const footerActions = (
-    <>
-      <button onClick={() => setShowForm(false)} className="mobile-secondary-btn">
+  const footerActions = (mobile = false) => (
+    <div className={cn('flex w-full gap-3')}>
+      <button
+        onClick={() => setShowForm(false)}
+        className={cn(
+          mobile
+            ? 'flex-1 px-4 py-2.5 bg-muted rounded-lg font-medium hover:bg-muted/80 transition-colors'
+            : 'mobile-secondary-btn'
+        )}
+      >
         {isViewMode ? 'Close' : 'Cancel'}
       </button>
       {!isViewMode && (
-        <button disabled={saving} onClick={handleSave} className={cn('mobile-primary-btn', saving && 'opacity-70 pointer-events-none')}>
+        <button
+          disabled={saving}
+          onClick={handleSave}
+          className={cn(
+            mobile
+              ? 'flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50'
+              : 'mobile-primary-btn',
+            saving && 'opacity-70 pointer-events-none'
+          )}
+        >
           {saving ? (formMode === 'edit' ? 'Updating...' : 'Saving...') : (formMode === 'edit' ? 'Update Admission' : 'Save Admission')}
         </button>
       )}
-    </>
+    </div>
   )
 
   return (
@@ -958,35 +1214,35 @@ const Sales: React.FC = () => {
       >
         <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
           {/* Left Side: KPI Cards */}
-          <div className="flex-1 grid grid-cols-3 gap-2 md:gap-4">
-            <div className="relative p-2.5 sm:p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">Total Admission</h3>
-                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{filteredInvoices.length}</p>
+          <div className="erp-module-kpi-grid">
+            <div className="erp-inline-stat-card relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm min-w-0">
+              <h3 className="erp-inline-stat-label text-slate-500 dark:text-slate-400" title="Total Admission">Total</h3>
+              <div className="erp-inline-stat-scroll mt-0.5">
+                <p className="erp-inline-stat-value text-slate-700 dark:text-slate-200">{formatStatCount(filteredInvoices.length)}</p>
               </div>
             </div>
 
-            <div className="relative p-2.5 sm:p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">Paid Amount</h3>
-                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
-                  ₹{totalPaidAmount.toLocaleString('en-IN')}
+            <div className="erp-inline-stat-card relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm min-w-0">
+              <h3 className="erp-inline-stat-label text-slate-500 dark:text-slate-400" title="Paid Amount">Paid</h3>
+              <div className="erp-inline-stat-scroll mt-0.5">
+                <p className="erp-inline-stat-value text-slate-700 dark:text-slate-200">
+                  {formatStatAmount(totalPaidAmount)}
                 </p>
               </div>
             </div>
 
-            <div className="relative p-2.5 sm:p-4 rounded-2xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
-              <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium truncate">Pending Amount</h3>
-                <p className="text-base sm:text-lg md:text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">
-                  ₹{Math.max(totalAdmissionsAmount - totalPaidAmount, 0).toLocaleString('en-IN')}
+            <div className="erp-inline-stat-card relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm min-w-0">
+              <h3 className="erp-inline-stat-label text-slate-500 dark:text-slate-400" title="Pending Amount">Pending</h3>
+              <div className="erp-inline-stat-scroll mt-0.5">
+                <p className="erp-inline-stat-value text-slate-700 dark:text-slate-200">
+                  {formatStatAmount(Math.max(totalAdmissionsAmount - totalPaidAmount, 0))}
                 </p>
               </div>
             </div>
           </div>
 
           {/* Right Side: Action Button + Date Filters */}
-          <div className="flex flex-row items-center justify-end gap-1.5 flex-shrink-0 w-auto">
+          <div className="flex w-full flex-row items-center justify-end gap-1.5 flex-shrink-0 sm:w-auto">
             <PeriodFilterDropdown value={admissionPeriod} onChange={setAdmissionPeriod} />
             <button onClick={openNew} className="erp-module-primary-btn">
               <Plus size={14} weight="bold" />
@@ -1118,7 +1374,7 @@ const Sales: React.FC = () => {
       )}
 
       {isMobileViewport && (
-        <MobileBottomSheet open={showForm} title={modalTitle} subtitle="Admission entry" onClose={() => setShowForm(false)} footer={<MobileStickyCTA>{footerActions}</MobileStickyCTA>}>
+        <MobileBottomSheet open={showForm} title={modalTitle} onClose={() => setShowForm(false)} footer={footerActions(true)}>
           {formFields(true)}
         </MobileBottomSheet>
       )}

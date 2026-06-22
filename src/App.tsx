@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 import { LanguageProvider } from './contexts/LanguageContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -34,6 +35,7 @@ function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
+            <NotificationProvider>
             <div className="min-h-screen bg-background text-foreground overflow-x-hidden max-w-[100vw]">
               <ToastCleaner />
               <Toaster
@@ -87,6 +89,7 @@ function App() {
                 </Routes>
               </Suspense>
             </div>
+            </NotificationProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

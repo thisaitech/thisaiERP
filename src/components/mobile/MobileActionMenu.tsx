@@ -34,13 +34,13 @@ const MobileActionMenu = ({ actions, className }: Props) => {
         <DotsThreeVertical size={18} weight="bold" />
       </button>
       {open && (
-        <div className="absolute right-0 top-[calc(100%+6px)] min-w-[160px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl p-1.5 z-[9999]">
+        <div className="absolute right-0 top-[calc(100%+6px)] min-w-[190px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl p-1.5 z-[9999]">
           {actions.map((action) => (
             <button
               key={action.id}
               type="button"
               className={cn(
-                'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors',
+                'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left whitespace-nowrap transition-colors',
                 (action.tone === 'danger' || action.tone === 'primary')
                   ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30'
                   : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60'

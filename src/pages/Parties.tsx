@@ -35,6 +35,27 @@ import { getPartyName } from '../utils/partyUtils'
 import StudentDetailsModal from '../components/StudentDetailsModal'
 import AddAdmissionModal from '../components/AddAdmissionModal'
 import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
+import { formatStatAmount, formatStatCount } from '../utils/formatStatAmount'
+import MobileListCard from '../components/mobile/MobileListCard'
+import MobileActionMenu from '../components/mobile/MobileActionMenu'
+
+function getPartyPaymentStatusMeta(outstanding: number, totalBilled: number) {
+  if (totalBilled <= 0 && outstanding === 0) {
+    return { label: 'NEW', className: 'bg-slate-100 text-slate-600' }
+  }
+  if (outstanding < 0) {
+    return { label: 'PENDING', className: 'bg-amber-100 text-amber-700' }
+  }
+  if (outstanding === 0) {
+    return { label: 'PAID', className: 'bg-emerald-100 text-emerald-700' }
+  }
+  return { label: 'PARTIAL', className: 'bg-amber-100 text-amber-700' }
+}
+
+function getPartyPaidAmount(totalBilled: number, outstanding: number): number {
+  const pending = outstanding < 0 ? Math.abs(outstanding) : 0
+  return Math.max(totalBilled - pending, 0)
+}
 
 // Indian States list with priority states first
 const INDIAN_STATES = [
@@ -835,6 +856,59 @@ const Parties = () => {
     printWindow.document.close()
   }
 
+  const renderPartyMobileCard = (party: (typeof parties)[number]) => {
+    const outstanding = party.outstanding ?? party.currentBalance ?? 0
+    const totalBilled = party.type === 'customer' ? (party.totalSales || 0) : (party.totalPurchases || 0)
+    const paidAmount = getPartyPaidAmount(totalBilled, outstanding)
+    const statusMeta = getPartyPaymentStatusMeta(outstanding, totalBilled)
+    const partyTypeLabel = party.type === 'customer'
+      ? (language === 'ta' ? 'மாணவர்' : 'Student')
+      : (language === 'ta' ? 'வாடிக்கையாளர்' : 'Client')
+    const joinedDate = String((party as any).createdAt || '').slice(0, 10)
+
+    return (
+      <MobileListCard
+        key={party.id}
+        title={getPartyName(party)}
+        onTitleClick={() => setViewingStudent(party)}
+        subtitle={party.phone || party.email || partyTypeLabel}
+        fields={[
+          { id: 'date', label: 'Date', value: joinedDate || '—' },
+          { id: 'phone', label: 'Phone', value: party.phone || '-' },
+          { id: 'total', label: 'Total', value: formatStatAmount(totalBilled) },
+          { id: 'paid', label: 'Paid', value: formatStatAmount(paidAmount) },
+        ]}
+        status={
+          <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase', statusMeta.className)}>
+            {statusMeta.label}
+          </span>
+        }
+        actions={
+          <MobileActionMenu
+            actions={[
+              {
+                id: 'admission',
+                label: 'Add Admission',
+                icon: <Plus size={14} />,
+                onClick: () => setAdmissionForStudent({
+                  id: party.id,
+                  name: getPartyName(party),
+                  phone: party.phone || '',
+                  email: party.email || '',
+                  address: party.billingAddress?.street || (party as any).address || '',
+                  admissionDetails: (party as any).admissionDetails,
+                }),
+              },
+              { id: 'view', label: 'View', icon: <Eye size={14} />, onClick: () => setViewingStudent(party) },
+              { id: 'edit', label: 'Edit', icon: <Pencil size={14} />, onClick: () => handleEditParty(party) },
+              { id: 'delete', label: 'Delete', icon: <Trash size={14} />, tone: 'danger', onClick: () => handleDeleteParty(party) },
+            ]}
+          />
+        }
+      />
+    )
+  }
+
   return (
     <div className="erp-module-page p-3 sm:p-4 lg:p-4 pb-16 sm:pb-20 lg:pb-6">
       {/* Header */}
@@ -846,40 +920,46 @@ const Parties = () => {
         {/* Top Row: KPI Cards (Left) + Filters & Actions (Right) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           {/* Left Side: KPI Cards */}
-          <div className="flex-1 min-w-0 grid grid-cols-3 gap-1.5 sm:gap-2">
-            {/* Total Students Card */}
-            <div onClick={() => setActiveTab('customers')} className="relative p-2 sm:p-2.5 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
+          <div className="erp-module-kpi-grid">
+            {/* Total Card */}
+            <div onClick={() => setActiveTab('customers')} className="erp-inline-stat-card relative p-2 sm:p-2.5 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{language === 'ta' ? 'மொத்த மாணவர்கள்' : 'Total Students'}</h3>
-                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200">
-                  {parties.filter(p => p.type === 'customer').length}
-                </p>
+                <h3 className="erp-inline-stat-label text-slate-500 dark:text-slate-400" title={language === 'ta' ? 'மொத்த மாணவர்கள்' : 'Total Students'}>{language === 'ta' ? 'மொத்தம்' : 'Total'}</h3>
+                <div className="erp-inline-stat-scroll mt-0.5">
+                  <p className="erp-inline-stat-value text-slate-700 dark:text-slate-200">
+                    {formatStatCount(parties.filter(p => p.type === 'customer').length)}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Paid Amount Card */}
-            <div className="relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
+            {/* Paid Card */}
+            <div className="erp-inline-stat-card relative p-2 sm:p-2.5 rounded-xl transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{language === 'ta' ? 'செலுத்திய தொகை' : 'Paid Amount'}</h3>
-                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200 truncate">
-                  {"₹"}{partiesSummary.totalPaid >= 10000000 ? (partiesSummary.totalPaid / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalPaid >= 100000 ? (partiesSummary.totalPaid / 100000).toFixed(1) + ' L' : partiesSummary.totalPaid >= 1000 ? (partiesSummary.totalPaid / 1000).toFixed(1) + ' K' : partiesSummary.totalPaid.toLocaleString('en-IN')}
-                </p>
+                <h3 className="erp-inline-stat-label text-slate-500 dark:text-slate-400" title={language === 'ta' ? 'செலுத்திய தொகை' : 'Paid Amount'}>{language === 'ta' ? 'செலுத்தியது' : 'Paid'}</h3>
+                <div className="erp-inline-stat-scroll mt-0.5">
+                  <p className="erp-inline-stat-value text-slate-700 dark:text-slate-200">
+                    {formatStatAmount(partiesSummary.totalPaid)}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Pending Amount Card */}
-            <div onClick={() => setActiveTab('customers')} className="relative p-2 sm:p-2.5 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
+            {/* Pending Card */}
+            <div onClick={() => setActiveTab('customers')} className="erp-inline-stat-card relative p-2 sm:p-2.5 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md min-w-0">
               <div>
-                <h3 className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{language === 'ta' ? 'நிலுவை தொகை' : 'Pending Amount'}</h3>
-                <p className="text-sm sm:text-base font-bold mt-0.5 text-slate-700 dark:text-slate-200 truncate">
-                  {"₹"}{partiesSummary.totalReceivables >= 10000000 ? (partiesSummary.totalReceivables / 10000000).toFixed(1) + ' Cr' : partiesSummary.totalReceivables >= 100000 ? (partiesSummary.totalReceivables / 100000).toFixed(1) + ' L' : partiesSummary.totalReceivables >= 1000 ? (partiesSummary.totalReceivables / 1000).toFixed(1) + ' K' : partiesSummary.totalReceivables.toLocaleString('en-IN')}
-                </p>
+                <h3 className="erp-inline-stat-label text-slate-500 dark:text-slate-400" title={language === 'ta' ? 'நிலுவை தொகை' : 'Pending Amount'}>{language === 'ta' ? 'நிலுவை' : 'Pending'}</h3>
+                <div className="erp-inline-stat-scroll mt-0.5">
+                  <p className="erp-inline-stat-value text-slate-700 dark:text-slate-200">
+                    {formatStatAmount(partiesSummary.totalReceivables)}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Right Side: Date Filters + Action Button */}
-          <div className="flex flex-row items-center justify-end gap-1.5 flex-shrink-0 w-auto">
+          <div className="flex w-full flex-row items-center justify-end gap-1.5 flex-shrink-0 sm:w-auto">
             <PeriodFilterDropdown value={statsFilter} onChange={setStatsFilter} />
             <button
               onClick={() => setShowAddModal(true)}
@@ -944,7 +1024,12 @@ const Parties = () => {
           <p className="text-slate-500 text-sm">{language === 'ta' ? 'தரப்பினர் எதுவும் இல்லை' : 'No students or clients found'}</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+        <>
+          <div className="md:hidden space-y-2">
+            {filteredParties.map((party) => renderPartyMobileCard(party))}
+          </div>
+
+          <div className="hidden md:block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
@@ -1072,6 +1157,7 @@ const Parties = () => {
             </table>
           </div>
         </div>
+        </>
       )}
 
       {/* Add Student/Client Modal */}
