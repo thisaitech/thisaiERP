@@ -2346,6 +2346,22 @@ export function exportSalesRegisterExcel(reportData: any) {
 }
 
 // Stock Alert PDF Export
+const STOCK_ALERT_HEADERS = ['Course Name', 'Opening Seats', 'Enrolled', 'Available', 'Status']
+
+const mapStockAlertStatus = (status: string) => {
+  if (status === 'full' || status === 'Out of Stock') return 'Full'
+  if (status === 'low' || status === 'Low Stock') return 'Low Seats'
+  return 'Seats Available'
+}
+
+const mapStockAlertRow = (item: any) => [
+  item.name,
+  (item.openingSeats ?? item.totalSeats ?? item.quantity ?? 0).toString(),
+  (item.enrolled ?? 0).toString(),
+  (item.available ?? item.quantity ?? 0).toString(),
+  mapStockAlertStatus(item.status)
+]
+
 export function exportStockAlertPDF(reportData: any) {
   const doc = new jsPDF()
 
@@ -2363,7 +2379,7 @@ export function exportStockAlertPDF(reportData: any) {
 
   doc.setFontSize(11)
   doc.setTextColor(0, 0, 0)
-  doc.text(`Total Items: ${reportData.summary.totalItems}`, 14, 55)
+  doc.text(`Total Courses: ${reportData.summary.totalItems}`, 14, 55)
 
   doc.setTextColor(34, 197, 94) // Green
   doc.text(`In Stock: ${reportData.summary.inStock}`, 14, 62)
@@ -2380,23 +2396,17 @@ export function exportStockAlertPDF(reportData: any) {
   let startY = 90
 
   // Out of Stock Items
-  const outOfStockItems = reportData.items.filter((item: any) => item.status === 'Out of Stock')
+  const outOfStockItems = reportData.items.filter((item: any) => item.status === 'full' || item.status === 'Out of Stock')
   if (outOfStockItems.length > 0) {
     doc.setFontSize(14)
     doc.setTextColor(239, 68, 68)
     doc.text('OUT OF STOCK - Urgent Action Required', 14, startY)
     doc.setTextColor(0, 0, 0)
 
-    const outOfStockData = outOfStockItems.map((item: any) => [
-      item.name,
-      item.sku || 'N/A',
-      (item.quantity ?? 0).toString(),
-      item.unitPrice ? `₹${item.unitPrice.toLocaleString('en-IN')}/unit` : '₹0',
-      'Out of Stock'
-    ])
+    const outOfStockData = outOfStockItems.map(mapStockAlertRow)
 
     autoTable(doc, {
-      head: [['Item Name', 'SKU', 'Quantity', 'Unit Price', 'Status']],
+      head: [STOCK_ALERT_HEADERS],
       body: outOfStockData,
       startY: startY + 5,
       styles: { fontSize: 10 },
@@ -2408,23 +2418,17 @@ export function exportStockAlertPDF(reportData: any) {
   }
 
   // Low Stock Items
-  const lowStockItems = reportData.items.filter((item: any) => item.status === 'Low Stock')
+  const lowStockItems = reportData.items.filter((item: any) => item.status === 'low' || item.status === 'Low Stock')
   if (lowStockItems.length > 0) {
     doc.setFontSize(14)
     doc.setTextColor(255, 152, 0)
     doc.text('LOW STOCK - Reorder Soon', 14, startY)
     doc.setTextColor(0, 0, 0)
 
-    const lowStockData = lowStockItems.map((item: any) => [
-      item.name,
-      item.sku || 'N/A',
-      (item.quantity ?? 0).toString(),
-      `₹${(item.value || 0).toLocaleString('en-IN')}`,
-      'Low Stock'
-    ])
+    const lowStockData = lowStockItems.map(mapStockAlertRow)
 
     autoTable(doc, {
-      head: [['Item Name', 'SKU', 'Quantity', 'Value', 'Status']],
+      head: [STOCK_ALERT_HEADERS],
       body: lowStockData,
       startY: startY + 5,
       styles: { fontSize: 10 },
@@ -2436,23 +2440,17 @@ export function exportStockAlertPDF(reportData: any) {
   }
 
   // In Stock Items (first 10)
-  const inStockItems = reportData.items.filter((item: any) => item.status === 'In Stock').slice(0, 10)
+  const inStockItems = reportData.items.filter((item: any) => item.status === 'available' || item.status === 'In Stock').slice(0, 10)
   if (inStockItems.length > 0) {
     doc.setFontSize(14)
     doc.setTextColor(34, 197, 94)
     doc.text('IN STOCK (Top 10)', 14, startY)
     doc.setTextColor(0, 0, 0)
 
-    const inStockData = inStockItems.map((item: any) => [
-      item.name,
-      item.sku || 'N/A',
-      (item.quantity ?? 0).toString(),
-      `₹${(item.value || 0).toLocaleString('en-IN')}`,
-      'In Stock'
-    ])
+    const inStockData = inStockItems.map(mapStockAlertRow)
 
     autoTable(doc, {
-      head: [['Item Name', 'SKU', 'Quantity', 'Value', 'Status']],
+      head: [STOCK_ALERT_HEADERS],
       body: inStockData,
       startY: startY + 5,
       styles: { fontSize: 10 },
@@ -2494,7 +2492,7 @@ export function exportStockAlertExcel(reportData: any) {
     [`Generated: ${new Date().toLocaleString()}`],
     [''],
     ['SUMMARY'],
-    ['Total Items', reportData.summary.totalItems],
+    ['Total Courses', reportData.summary.totalItems],
     ['In Stock', reportData.summary.inStock],
     ['Low Stock', reportData.summary.lowStock],
     ['Out of Stock', reportData.summary.outOfStock],
@@ -2502,63 +2500,45 @@ export function exportStockAlertExcel(reportData: any) {
   ]
 
   // Out of Stock Items
-  const outOfStockItems = reportData.items.filter((item: any) => item.status === 'Out of Stock')
+  const outOfStockItems = reportData.items.filter((item: any) => item.status === 'full' || item.status === 'Out of Stock')
   if (outOfStockItems.length > 0) {
     ws_data.push(
       ['OUT OF STOCK - URGENT ACTION REQUIRED'],
-      ['Item Name', 'SKU', 'Quantity', 'Value (₹)', 'Status']
+      ['Course Name', 'Opening Seats', 'Enrolled', 'Available', 'Status']
     )
 
     outOfStockItems.forEach((item: any) => {
-      ws_data.push([
-        item.name,
-        item.sku || 'N/A',
-        item.quantity ?? 0,
-        item.value?.toFixed(2) || '0.00',
-        'Out of Stock'
-      ])
+      ws_data.push(mapStockAlertRow(item))
     })
 
     ws_data.push([''])
   }
 
   // Low Stock Items
-  const lowStockItems = reportData.items.filter((item: any) => item.status === 'Low Stock')
+  const lowStockItems = reportData.items.filter((item: any) => item.status === 'low' || item.status === 'Low Stock')
   if (lowStockItems.length > 0) {
     ws_data.push(
       ['LOW STOCK - REORDER SOON'],
-      ['Item Name', 'SKU', 'Quantity', 'Value (₹)', 'Status']
+      ['Course Name', 'Opening Seats', 'Enrolled', 'Available', 'Status']
     )
 
     lowStockItems.forEach((item: any) => {
-      ws_data.push([
-        item.name,
-        item.sku || 'N/A',
-        item.quantity ?? 0,
-        item.value?.toFixed(2) || '0.00',
-        'Low Stock'
-      ])
+      ws_data.push(mapStockAlertRow(item))
     })
 
     ws_data.push([''])
   }
 
   // In Stock Items (first 10)
-  const inStockItems = reportData.items.filter((item: any) => item.status === 'In Stock').slice(0, 10)
+  const inStockItems = reportData.items.filter((item: any) => item.status === 'available' || item.status === 'In Stock').slice(0, 10)
   if (inStockItems.length > 0) {
     ws_data.push(
       ['IN STOCK (TOP 10)'],
-      ['Item Name', 'SKU', 'Quantity', 'Value (₹)', 'Status']
+      ['Course Name', 'Opening Seats', 'Enrolled', 'Available', 'Status']
     )
 
     inStockItems.forEach((item: any) => {
-      ws_data.push([
-        item.name,
-        item.sku || 'N/A',
-        item.quantity ?? 0,
-        item.value?.toFixed(2) || '0.00',
-        'In Stock'
-      ])
+      ws_data.push(mapStockAlertRow(item))
     })
 
     ws_data.push([''])
@@ -2584,10 +2564,10 @@ export function exportStockAlertExcel(reportData: any) {
 
   // Set column widths
   ws['!cols'] = [
-    { wch: 30 }, // Item Name
-    { wch: 15 }, // SKU
-    { wch: 10 }, // Quantity
-    { wch: 15 }, // Value
+    { wch: 30 }, // Course Name
+    { wch: 12 }, // Opening Seats
+    { wch: 10 }, // Enrolled
+    { wch: 12 }, // Available
     { wch: 15 }  // Status
   ]
 

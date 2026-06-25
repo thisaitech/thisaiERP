@@ -253,7 +253,6 @@ const Visitors = () => {
                 <h2 className="text-lg font-bold text-card-foreground">
                   {editingId ? 'Edit Visitor' : 'Register Visitor'}
                 </h2>
-                <p className="text-sm text-muted-foreground">Record walk-in or enquiry details</p>
               </div>
               <button
                 type="button"

@@ -17,20 +17,9 @@ import MobileFormSection from '../components/mobile/MobileFormSection'
 import StudentDetailsModal from '../components/StudentDetailsModal'
 import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
 import { formatStatAmount, formatStatCount } from '../utils/formatStatAmount'
+import { DEFAULT_COURSES } from '../constants/courses'
 
-const HARDCODED_COURSES = [
-  { id: '1', name: 'FULLSTACK AI', sellingPrice: 35000 },
-  { id: '2', name: 'AI ENGINEER', sellingPrice: 25000 },
-  { id: '3', name: 'UI/UX DESIGN AI', sellingPrice: 10000 },
-  { id: '4', name: 'SPOKEN ENGLISH AI', sellingPrice: 10000 },
-  { id: '5', name: 'VIBE CODING', sellingPrice: 15000 },
-  { id: '6', name: 'AI & GEN AI', sellingPrice: 6000 },
-  { id: '7', name: 'AI & GEN AI & PROMPT ENGINEERING', sellingPrice: 10000 },
-  { id: '8', name: 'AI AUTOMATIONS', sellingPrice: 15000 },
-  { id: '9', name: 'PYTHON WITH ML(AI)', sellingPrice: 15000 },
-  { id: '10', name: 'BASIC COMPUTER COURSE', sellingPrice: 10000 },
-  { id: '11', name: 'INTERNSHIP', sellingPrice: 4000 },
-]
+const HARDCODED_COURSES = DEFAULT_COURSES
 
 type Student = {
   id: string

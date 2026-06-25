@@ -5,6 +5,7 @@ import { getParties } from './partyService'
 import { getLedgerSummary } from './ledgerService'
 import { getExpenses, calculateProratedAmount, type Expense } from './expenseService'
 import { getBankingPageData } from './bankingService'
+import { resolveCourseCatalogItems } from '../constants/courses'
 
 // TODO: Replace this with a proper service that fetches settings from Firestore
 async function getFinancialSettings() {
@@ -1329,15 +1330,31 @@ export async function getSaleSummaryByHSN() {
  * Stock Summary Report
  */
 export async function getStockSummary() {
-  const items = await getItems()
+  const [items, sales] = await Promise.all([getItems(), getInvoices('sale')])
 
-  // Ensure stock is always a number (handle undefined/null from Firebase)
-  // Use reorderPoint for low stock threshold (same as Inventory page)
-  const normalizedItems = items.map(item => ({
-    ...item,
-    stock: item.stock ?? 0,
-    reorderPoint: item.reorderPoint ?? 0 // Use reorderPoint to match Inventory page
-  }))
+  const enrollmentById = new Map<string, number>()
+  const enrollmentByName = new Map<string, number>()
+  sales.forEach((sale) => {
+    getInvoiceItems(sale).forEach((line) => {
+      const qty = line.quantity || 1
+      if (line.itemId) {
+        enrollmentById.set(line.itemId, (enrollmentById.get(line.itemId) || 0) + qty)
+      }
+      const name = (line.itemName || line.description || '').trim().toLowerCase()
+      if (name) {
+        enrollmentByName.set(name, (enrollmentByName.get(name) || 0) + qty)
+      }
+    })
+  })
+
+  // Only training courses from the catalog / course categories — not legacy inventory items.
+  const normalizedItems = resolveCourseCatalogItems(
+    items.map(item => ({
+      ...item,
+      stock: item.stock ?? 0,
+      reorderPoint: item.reorderPoint ?? 0,
+    }))
+  )
 
   const outOfStockCount = normalizedItems.filter(item => item.stock === 0).length
   // Low stock: stock > 0 AND stock <= reorderPoint (same logic as Inventory page)
@@ -1355,17 +1372,32 @@ export async function getStockSummary() {
   return {
     summary,
     items: normalizedItems.map(item => {
-      const qty = item.stock
+      const available = item.stock
       const reorderPoint = item.reorderPoint
+      const enrolledFromAdmissions =
+        enrollmentById.get(item.id) ??
+        enrollmentByName.get((item.name || '').trim().toLowerCase()) ??
+        0
+      const openingSeats =
+        item.stockBase && item.stockBase > 0
+          ? item.stockBase
+          : available + enrolledFromAdmissions
+      const totalSeats = openingSeats
+      const enrolled = Math.max(0, totalSeats - available)
 
       return {
         name: item.name,
+        totalSeats,
+        openingSeats,
+        enrolled,
+        available,
+        // Legacy fields kept for older export paths
         sku: item.sku,
-        quantity: qty,
-        value: qty * (item.sellingPrice || 0),
-        unitPrice: item.sellingPrice || 0, // Add unit price for reference
-        status: qty === 0 ? 'Out of Stock' :
-                qty <= reorderPoint ? 'Low Stock' : 'In Stock'
+        quantity: available,
+        value: available * (item.sellingPrice || 0),
+        unitPrice: item.sellingPrice || 0,
+        status: available === 0 ? 'full' :
+                available <= reorderPoint ? 'low' : 'available'
       }
     })
   }

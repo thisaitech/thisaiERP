@@ -4,20 +4,9 @@ import { X, Trash, Plus, CalendarBlank, User } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { cn } from '../lib/utils'
 import { createInvoice } from '../services/invoiceService'
+import { DEFAULT_COURSES } from '../constants/courses'
 
-const COURSES = [
-  { id: '1', name: 'FULLSTACK AI', sellingPrice: 35000 },
-  { id: '2', name: 'AI ENGINEER', sellingPrice: 25000 },
-  { id: '3', name: 'UI/UX DESIGN AI', sellingPrice: 10000 },
-  { id: '4', name: 'SPOKEN ENGLISH AI', sellingPrice: 10000 },
-  { id: '5', name: 'VIBE CODING', sellingPrice: 15000 },
-  { id: '6', name: 'AI & GEN AI', sellingPrice: 6000 },
-  { id: '7', name: 'AI & GEN AI & PROMPT ENGINEERING', sellingPrice: 10000 },
-  { id: '8', name: 'AI AUTOMATIONS', sellingPrice: 15000 },
-  { id: '9', name: 'PYTHON WITH ML(AI)', sellingPrice: 15000 },
-  { id: '10', name: 'BASIC COMPUTER COURSE', sellingPrice: 10000 },
-  { id: '11', name: 'INTERNSHIP', sellingPrice: 4000 },
-]
+const COURSES = DEFAULT_COURSES
 
 const COURSE_DURATIONS = ['1 Week', '2 Weeks', '1 Month', '45 Days', '2 Months', '3 Months', '6 Months', '1 Year', '2 Years', '3 Years', 'Or More']
 

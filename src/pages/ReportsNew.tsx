@@ -65,6 +65,7 @@ const ReportsNew = () => {
   // Report data states
   const [reportData, setReportData] = useState<any>(null)
   const [currentReportType, setCurrentReportType] = useState<string | null>(null)
+  const [expandedBillProfitIndex, setExpandedBillProfitIndex] = useState<number | null>(null)
   // Pagination state for Item-wise Profit & Loss report
   const [itemPlPage, setItemPlPage] = useState<number>(1)
   const [itemPlPerPage, setItemPlPerPage] = useState<number>(10)
@@ -105,10 +106,519 @@ const ReportsNew = () => {
     return { startDate, endDate }
   }
 
+  const getSeatStatusLabel = (status: string) => {
+    if (status === 'full' || status === 'Out of Stock') return t.inventory.outOfStock
+    if (status === 'low' || status === 'Low Stock') return t.inventory.lowStock
+    return t.inventory.inStock
+  }
+
+  const isSeatStatus = (status: string, kind: 'full' | 'low' | 'available') => {
+    if (kind === 'full') return status === 'full' || status === 'Out of Stock'
+    if (kind === 'low') return status === 'low' || status === 'Low Stock'
+    return status === 'available' || status === 'In Stock'
+  }
+
+  const getSeatStatusShort = (status: string) => {
+    if (status === 'full' || status === 'Out of Stock') return t.inventory.outOfStock
+    if (status === 'low' || status === 'Low Stock') return t.reports.lowSeatsShort
+    return t.reports.seatsAvailableShort
+  }
+
+  const renderMobileSeatHeader = (line1: string, line2?: string) => (
+    <div className="flex flex-col items-center justify-center gap-px leading-[1.15] min-h-[2.35em]">
+      <span>{line1}</span>
+      {line2 ? <span>{line2}</span> : <span aria-hidden className="invisible select-none">.</span>}
+    </div>
+  )
+
+  const formatMobileCurrency = (amount: number) => {
+    const abs = Math.abs(amount)
+    const sign = amount < 0 ? '-' : ''
+    if (abs >= 10000000) return `${sign}₹${(abs / 10000000).toFixed(1)}Cr`
+    if (abs >= 100000) return `${sign}₹${(abs / 100000).toFixed(1)}L`
+    return `${sign}₹${Math.round(abs).toLocaleString('en-IN')}`
+  }
+
+  const renderStockAlertReport = () => {
+    if (!reportData?.summary || !reportData?.items) return null
+
+    const availableCount = reportData.items.filter((item: any) => isSeatStatus(item.status, 'available')).length
+    const fullItems = reportData.items.filter((item: any) => isSeatStatus(item.status, 'full'))
+    const lowItems = reportData.items.filter((item: any) => isSeatStatus(item.status, 'low'))
+    const openItems = reportData.items.filter((item: any) => isSeatStatus(item.status, 'available')).slice(0, 10)
+
+    const allSeatItems = [
+      ...fullItems.map((item: any, index: number) => ({ item, index, kind: 'full' as const })),
+      ...lowItems.map((item: any, index: number) => ({ item, index, kind: 'low' as const })),
+      ...openItems.map((item: any, index: number) => ({ item, index, kind: 'available' as const })),
+    ]
+
+    const renderSeatRow = (item: any, index: number, kind: 'full' | 'low' | 'available') => {
+      const rowTone =
+        kind === 'full' ? 'bg-destructive/5' :
+        kind === 'low' ? 'bg-warning/5' : ''
+      const availableTone =
+        kind === 'full' ? 'font-bold text-destructive' :
+        kind === 'low' ? 'font-bold text-warning' : ''
+      const statusTone =
+        kind === 'full' ? 'bg-destructive/10 text-destructive' :
+        kind === 'low' ? 'bg-warning/10 text-warning' :
+        'bg-success/10 text-success'
+      const statusIcon = kind === 'full' ? '🔴' : kind === 'low' ? '🟠' : '🟢'
+
+      return (
+        <tr key={`${kind}-${index}`} className={cn('border-b border-border/60 last:border-0', rowTone)}>
+          <td className="py-1 px-0.5 md:py-2 md:px-3 text-[9px] md:text-sm font-medium text-center align-middle leading-tight break-words whitespace-normal">
+            {item.name}
+          </td>
+          <td className="py-1 px-0.5 md:py-2 md:px-3 text-[9px] md:text-sm text-center text-muted-foreground tabular-nums align-middle">
+            {item.openingSeats ?? item.totalSeats}
+          </td>
+          <td className="py-1 px-0.5 md:py-2 md:px-3 text-[9px] md:text-sm text-center tabular-nums align-middle">
+            {item.enrolled}
+          </td>
+          <td className={cn('py-1 px-0.5 md:py-2 md:px-3 text-[9px] md:text-sm text-center tabular-nums align-middle', availableTone)}>
+            {item.available}
+          </td>
+          <td className="py-1 px-0.5 md:py-2 md:px-3 text-center align-middle">
+            <span className={cn('inline-flex items-center justify-center px-1 py-0.5 md:px-2 md:py-0.5 rounded-full text-[8px] md:text-xs font-medium leading-none whitespace-nowrap', statusTone)}>
+              <span className="hidden md:inline">{statusIcon} </span>
+              <span className="md:hidden">{getSeatStatusShort(item.status)}</span>
+              <span className="hidden md:inline">{getSeatStatusLabel(item.status)}</span>
+            </span>
+          </td>
+        </tr>
+      )
+    }
+
+    return (
+      <div className="bg-card rounded-xl p-2 md:p-5 shadow-sm border border-border overflow-hidden">
+        <h2 className="text-sm md:text-lg font-bold mb-2 md:mb-3 leading-tight text-center md:text-left">
+          Low Seats Alert - Courses to Review
+        </h2>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-3 mb-2 md:mb-4">
+          <div className="p-2 md:p-3 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl min-w-0 text-center">
+            <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 leading-tight whitespace-nowrap">{t.inventory.totalCourses}</p>
+            <p className="text-base md:text-2xl font-bold text-primary tabular-nums leading-none">{reportData.summary.totalItems}</p>
+          </div>
+          <div className="p-2 md:p-3 bg-success/5 border border-success/20 md:border-2 rounded-lg md:rounded-xl min-w-0 text-center">
+            <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 leading-tight whitespace-nowrap">
+              <span className="md:hidden">{t.reports.seatsAvailableShort}</span>
+              <span className="hidden md:inline">{t.reports.seatsAvailableKpi}</span>
+            </p>
+            <p className="text-base md:text-2xl font-bold text-success tabular-nums leading-none">{availableCount}</p>
+          </div>
+          <div className="p-2 md:p-3 bg-warning/5 border border-warning/20 md:border-2 rounded-lg md:rounded-xl min-w-0 text-center">
+            <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 leading-tight whitespace-nowrap">{t.inventory.lowStock}</p>
+            <p className="text-base md:text-2xl font-bold text-warning tabular-nums leading-none">{reportData.summary.lowStock}</p>
+          </div>
+          <div className="p-2 md:p-3 bg-destructive/5 border border-destructive/20 md:border-2 rounded-lg md:rounded-xl min-w-0 text-center">
+            <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 leading-tight whitespace-nowrap">{t.reports.noSeats}</p>
+            <p className="text-base md:text-2xl font-bold text-destructive tabular-nums leading-none">{reportData.summary.outOfStock}</p>
+          </div>
+        </div>
+
+        <div className="overflow-hidden md:overflow-x-auto">
+          <table className="w-full table-fixed md:table-auto border-collapse">
+            <colgroup className="md:hidden">
+              <col style={{ width: '30%' }} />
+              <col style={{ width: '17.5%' }} />
+              <col style={{ width: '17.5%' }} />
+              <col style={{ width: '17.5%' }} />
+              <col style={{ width: '17.5%' }} />
+            </colgroup>
+            <thead>
+              <tr className="border-b border-border bg-muted/20 md:bg-transparent">
+                <th className="py-1.5 px-0.5 md:py-2 md:px-3 text-[9px] md:text-sm font-semibold text-center align-middle">
+                  <span className="md:hidden">{renderMobileSeatHeader(t.reports.courseNameLine1, t.reports.courseNameLine2)}</span>
+                  <span className="hidden md:inline">{t.reports.courseName}</span>
+                </th>
+                <th className="py-1.5 px-0.5 md:py-2 md:px-3 text-[9px] md:text-sm font-semibold text-center align-middle">
+                  <span className="md:hidden">{renderMobileSeatHeader(t.reports.openingSeatsLine1, t.reports.openingSeatsLine2)}</span>
+                  <span className="hidden md:inline">{t.reports.totalSeats}</span>
+                </th>
+                <th className="py-1.5 px-0.5 md:py-2 md:px-3 text-[9px] md:text-sm font-semibold text-center align-middle">
+                  <span className="md:hidden">{renderMobileSeatHeader(t.reports.enrolledLine1, t.reports.enrolledLine2)}</span>
+                  <span className="hidden md:inline">{t.reports.enrolled}</span>
+                </th>
+                <th className="py-1.5 px-0.5 md:py-2 md:px-3 text-[9px] md:text-sm font-semibold text-center align-middle">
+                  <span className="md:hidden">{renderMobileSeatHeader(t.reports.availableLine1, t.reports.availableLine2)}</span>
+                  <span className="hidden md:inline">{t.reports.available}</span>
+                </th>
+                <th className="py-1.5 px-0.5 md:py-2 md:px-3 text-[9px] md:text-sm font-semibold text-center align-middle">
+                  <span className="md:hidden">{renderMobileSeatHeader(t.reports.statusLine1)}</span>
+                  <span className="hidden md:inline">{t.common.status}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {allSeatItems.map(({ item, index, kind }) => renderSeatRow(item, index, kind))}
+            </tbody>
+          </table>
+        </div>
+
+        {(reportData.summary.lowStock > 0 || reportData.summary.outOfStock > 0) && (
+          <div className="mt-2 md:mt-4 p-2 md:p-3 bg-warning/10 border border-warning/20 rounded-lg">
+            <p className="text-xs md:text-sm font-semibold text-warning mb-0.5 text-center md:text-left">Action Required</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground text-center md:text-left leading-snug">
+              {reportData.summary.outOfStock > 0 && `${reportData.summary.outOfStock} course(s) have no seats. `}
+              {reportData.summary.lowStock > 0 && `${reportData.summary.lowStock} course(s) are running low on seats. `}
+              Please reorder these items soon to avoid stockouts.
+            </p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const renderDayBookReport = () => {
+    if (!reportData?.date) return null
+
+    const salesAmount = reportData.sales?.amount || 0
+    const purchasesAmount = reportData.purchases?.amount || 0
+    const netCashFlow = reportData.netCashFlow || 0
+    const salesCount = reportData.sales?.count || 0
+    const purchasesCount = reportData.purchases?.count || 0
+
+    return (
+      <div className="bg-card rounded-xl p-2 md:p-6 shadow-sm border border-border overflow-hidden">
+        <h2 className="text-sm md:text-lg font-bold mb-2 md:mb-4 leading-tight text-center md:text-left">
+          {t.reports.dayBookTitle} - {reportData.date}
+        </h2>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-3 md:mb-6">
+          <div className="p-2 md:p-4 bg-success/5 border border-success/20 md:border-2 rounded-lg md:rounded-xl min-w-0 text-center">
+            <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 leading-tight whitespace-nowrap">{t.reports.salesLabel}</p>
+            <p className="text-base md:text-2xl font-bold text-success tabular-nums leading-none">₹{salesAmount.toLocaleString('en-IN')}</p>
+            <p className="text-[9px] md:text-xs text-muted-foreground mt-1 leading-tight">{salesCount} {t.sales.invoices}</p>
+          </div>
+          <div className="p-2 md:p-4 bg-warning/5 border border-warning/20 md:border-2 rounded-lg md:rounded-xl min-w-0 text-center">
+            <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 leading-tight whitespace-nowrap">{t.reports.purchasesLabel}</p>
+            <p className="text-base md:text-2xl font-bold text-warning tabular-nums leading-none">₹{purchasesAmount.toLocaleString('en-IN')}</p>
+            <p className="text-[9px] md:text-xs text-muted-foreground mt-1 leading-tight">{purchasesCount} {t.reports.bills}</p>
+          </div>
+          <div className="col-span-2 md:col-span-1 p-2 md:p-4 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl min-w-0 text-center">
+            <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 leading-tight whitespace-nowrap">{t.reports.netCashFlow}</p>
+            <p className={cn('text-base md:text-2xl font-bold tabular-nums leading-none', netCashFlow >= 0 ? 'text-success' : 'text-destructive')}>
+              ₹{netCashFlow.toLocaleString('en-IN')}
+            </p>
+          </div>
+        </div>
+
+        {renderDayBookTransactions(reportData.transactions)}
+      </div>
+    )
+  }
+
+  const renderDayBookTransactions = (transactions: any[]) => {
+    if (!transactions || transactions.length === 0) return null
+    const rows = transactions.slice(0, 10)
+
+    return (
+      <>
+        <div className="md:hidden space-y-1.5">
+          {rows.map((tx, i) => (
+            <div key={i} className="p-2 border border-border rounded-lg bg-muted/10 grid grid-cols-2 gap-x-2 gap-y-2">
+              <div className="min-w-0 text-center">
+                <p className="text-[9px] font-semibold text-muted-foreground leading-tight">{t.reports.invoiceHash}</p>
+                <p className="mt-0.5 text-[11px] font-semibold text-foreground break-all leading-tight">{tx.invoiceNumber}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[9px] font-semibold text-muted-foreground leading-tight">{t.reports.type}</p>
+                <span
+                  className={cn(
+                    'inline-flex mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium',
+                    tx.type === 'sale' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
+                  )}
+                >
+                  {tx.type === 'sale' ? t.reports.sale : t.reports.purchase}
+                </span>
+              </div>
+              <div className="min-w-0 text-center">
+                <p className="text-[9px] font-semibold text-muted-foreground leading-tight">{t.reports.party}</p>
+                <p className="mt-0.5 text-[11px] text-foreground break-words leading-tight">{tx.partyName}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[9px] font-semibold text-muted-foreground leading-tight">{t.common.amount}</p>
+                <p className="mt-0.5 text-[11px] font-semibold text-foreground tabular-nums leading-tight">₹{(tx.grandTotal || 0).toLocaleString('en-IN')}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-4 text-sm font-semibold">{t.reports.invoiceHash}</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold">{t.reports.type}</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold">{t.reports.party}</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold">{t.common.amount}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((tx, i) => (
+                <tr key={i} className="border-b border-border last:border-0">
+                  <td className="py-3 px-4 text-sm">{tx.invoiceNumber}</td>
+                  <td className="py-3 px-4 text-sm">
+                    <span
+                      className={cn(
+                        'px-2 py-1 rounded text-xs font-medium',
+                        tx.type === 'sale' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
+                      )}
+                    >
+                      {tx.type === 'sale' ? t.reports.sale : t.reports.purchase}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-sm">{tx.partyName}</td>
+                  <td className="py-3 px-4 text-sm text-right font-medium">₹{(tx.grandTotal || 0).toLocaleString('en-IN')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    )
+  }
+
+  const renderBillProfitBills = (bills: any[]) => {
+    if (!bills || bills.length === 0) return null
+    const rows = bills.slice(0, 15)
+
+    const formatMobileAmount = (amount: number) => {
+      const abs = Math.abs(amount)
+      if (abs >= 100000) return `₹${(amount / 100000).toFixed(1)}L`
+      return `₹${Math.round(amount).toLocaleString('en-IN')}`
+    }
+
+    const renderBillDetailRow = (label: string, value: React.ReactNode) => (
+      <div className="text-center min-w-0">
+        <p className="text-[9px] font-semibold text-muted-foreground leading-tight">{label}</p>
+        <p className="mt-0.5 text-[11px] leading-tight break-words">{value}</p>
+      </div>
+    )
+
+    return (
+      <>
+        <div className="md:hidden overflow-hidden">
+          <table className="w-full table-fixed border-collapse">
+            <colgroup>
+              <col style={{ width: '42%' }} />
+              <col style={{ width: '29%' }} />
+              <col style={{ width: '29%' }} />
+            </colgroup>
+            <thead>
+              <tr className="border-b border-border bg-muted/20">
+                <th className="py-1.5 px-0.5 text-[9px] font-semibold text-center align-middle">
+                  {t.reports.party}
+                </th>
+                <th className="py-1.5 px-0.5 text-[9px] font-semibold text-center align-middle">
+                  {renderMobileSeatHeader(t.reports.revenueShort, '')}
+                </th>
+                <th className="py-1.5 px-0.5 text-[9px] font-semibold text-center align-middle">
+                  {renderMobileSeatHeader('Profit', 'Margin')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((bill: any, i: number) => (
+                <React.Fragment key={i}>
+                  <tr className="border-b border-border/60 last:border-0">
+                    <td className="py-1 px-0.5 text-center align-middle leading-tight">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedBillProfitIndex(expandedBillProfitIndex === i ? null : i)}
+                        className={cn(
+                          'w-full text-[9px] font-medium break-words whitespace-normal text-center underline underline-offset-2',
+                          expandedBillProfitIndex === i ? 'text-primary' : 'text-foreground'
+                        )}
+                      >
+                        {bill.partyName}
+                      </button>
+                    </td>
+                    <td className="py-1 px-0.5 text-[9px] text-center align-middle leading-tight tabular-nums">
+                      {formatMobileAmount(bill.revenue)}
+                    </td>
+                    <td className="py-1 px-0.5 text-center align-middle leading-tight">
+                      <span className={cn('block text-[9px] font-semibold tabular-nums', bill.profit >= 0 ? 'text-success' : 'text-destructive')}>
+                        {formatMobileAmount(bill.profit)}
+                      </span>
+                      <span className="block text-[8px] text-muted-foreground tabular-nums">{bill.profitMargin.toFixed(0)}%</span>
+                    </td>
+                  </tr>
+                  {expandedBillProfitIndex === i && (
+                    <tr className="border-b border-border/60 bg-muted/15">
+                      <td colSpan={3} className="p-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          {renderBillDetailRow(t.reports.invoiceHash, bill.invoiceNumber)}
+                          {renderBillDetailRow(t.common.date, bill.invoiceDate)}
+                          {renderBillDetailRow(t.reports.party, bill.partyName)}
+                          {renderBillDetailRow('Revenue', `₹${bill.revenue.toLocaleString('en-IN')}`)}
+                          {renderBillDetailRow('Cost', `₹${bill.cost.toLocaleString('en-IN')}`)}
+                          {renderBillDetailRow(
+                            'Profit',
+                            <span className={cn('font-semibold', bill.profit >= 0 ? 'text-success' : 'text-destructive')}>
+                              ₹{bill.profit.toLocaleString('en-IN')}
+                            </span>
+                          )}
+                          {renderBillDetailRow('Margin %', `${bill.profitMargin.toFixed(1)}%`)}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-4 text-sm font-semibold">Invoice #</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold">Date</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold">Student</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold">Revenue</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold">Cost</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold">Profit</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold">Margin %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((bill: any, i: number) => (
+                <tr key={i} className="border-b border-border last:border-0">
+                  <td className="py-3 px-4 text-sm font-medium">{bill.invoiceNumber}</td>
+                  <td className="py-3 px-4 text-sm">{bill.invoiceDate}</td>
+                  <td className="py-3 px-4 text-sm">{bill.partyName}</td>
+                  <td className="py-3 px-4 text-sm text-right">₹{bill.revenue.toLocaleString('en-IN')}</td>
+                  <td className="py-3 px-4 text-sm text-right">₹{bill.cost.toLocaleString('en-IN')}</td>
+                  <td className={cn('py-3 px-4 text-sm text-right font-semibold', bill.profit >= 0 ? 'text-success' : 'text-destructive')}>
+                    ₹{bill.profit.toLocaleString('en-IN')}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-right">{bill.profitMargin.toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    )
+  }
+
+  const renderProfitLossReport = () => {
+    if (!reportData || reportData.revenue === undefined) return null
+
+    return (
+      <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+        <h2 className="text-lg font-bold mb-4">Income & Expenses Statement</h2>
+
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between py-2">
+              <span className="font-medium">Revenue (Fees)</span>
+              <span className="font-bold">₹{(reportData.revenue || 0).toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between py-2">
+              <span className="font-medium">Cost of Goods Sold</span>
+              <span className="font-bold">₹{(reportData.costOfGoodsSold || 0).toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between py-2 border-t">
+              <span className="font-semibold">Gross Profit</span>
+              <span className="font-bold text-success">₹{(reportData.grossProfit || 0).toLocaleString('en-IN')} ({(reportData.grossProfitMargin || 0).toFixed(1)}%)</span>
+            </div>
+          </div>
+          <div className="border-t pt-4">
+            <h3 className="font-semibold mb-3">Operating Expenses</h3>
+            <div className="space-y-2 pl-4">
+              {reportData.operatingExpenses?.rent > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Rent</span>
+                  <span>₹{reportData.operatingExpenses.rent.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              {(reportData.operatingExpenses?.salary > 0 || reportData.operatingExpenses?.salaries > 0) && (
+                <div className="flex justify-between text-sm">
+                  <span>Salaries</span>
+                  <span>₹{(reportData.operatingExpenses.salary || reportData.operatingExpenses.salaries || 0).toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              {reportData.operatingExpenses?.utilities > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Utilities</span>
+                  <span>₹{reportData.operatingExpenses.utilities.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              {reportData.operatingExpenses?.marketing > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Marketing</span>
+                  <span>₹{reportData.operatingExpenses.marketing.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              {reportData.operatingExpenses?.office_supplies > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Office Supplies</span>
+                  <span>₹{reportData.operatingExpenses.office_supplies.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              {reportData.operatingExpenses?.travel > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Travel</span>
+                  <span>₹{reportData.operatingExpenses.travel.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              {reportData.operatingExpenses?.food > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Food</span>
+                  <span>₹{reportData.operatingExpenses.food.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              {reportData.operatingExpenses?.internet > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Internet</span>
+                  <span>₹{reportData.operatingExpenses.internet.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              {reportData.operatingExpenses?.software > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Software</span>
+                  <span>₹{reportData.operatingExpenses.software.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              {reportData.operatingExpenses?.other > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Other</span>
+                  <span>₹{reportData.operatingExpenses.other.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t pt-2">
+                <span className="font-medium">Total Expenses</span>
+                <span className="font-bold">₹{(reportData.totalExpenses || 0).toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+          </div>
+          <div className="border-t pt-4">
+            <div className="flex flex-nowrap items-center justify-between gap-2 py-3 bg-primary/5 px-3 md:px-4 rounded-lg">
+              <span className="font-bold text-sm md:text-lg whitespace-nowrap shrink-0">Net Profit</span>
+              <span className={cn(
+                'font-bold text-sm md:text-2xl text-right whitespace-nowrap tabular-nums shrink-0',
+                (reportData.netProfit || 0) >= 0 ? 'text-success' : 'text-destructive'
+              )}>
+                ₹{(reportData.netProfit || 0).toLocaleString('en-IN')} ({(reportData.netProfitMargin || 0).toFixed(1)}%)
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const loadReport = async (reportType: string) => {
     setLoading(true)
     // Clear previous data to force re-render with fresh data
     setReportData(null)
+    setExpandedBillProfitIndex(null)
     try {
       const { startDate, endDate } = getDateRange(selectedPeriod)
       let data
@@ -819,7 +1329,6 @@ const ReportsNew = () => {
                     </div>
                     <div>
                       <p className="font-medium text-sm text-slate-800">{t.reports.dayBook}</p>
-                      <p className="text-[10px] text-slate-500">{t.reports.whatHappenedToday}</p>
                     </div>
                   </button>
 
@@ -837,7 +1346,6 @@ const ReportsNew = () => {
                     </div>
                     <div>
                       <p className="font-medium text-sm text-slate-800">{t.reports.profitLossToday}</p>
-                      <p className="text-[10px] text-slate-500">{t.reports.didIEarnOrLose}</p>
                     </div>
                   </button>
 
@@ -855,7 +1363,6 @@ const ReportsNew = () => {
                     </div>
                     <div>
                       <p className="font-medium text-sm text-slate-800">{t.reports.cashBankBalance}</p>
-                      <p className="text-[10px] text-slate-500">{t.reports.doIHaveMoney}</p>
                     </div>
                   </button>
 
@@ -873,7 +1380,6 @@ const ReportsNew = () => {
                     </div>
                     <div>
                       <p className="font-medium text-sm text-slate-800">{t.reports.pendingToReceive}</p>
-                      <p className="text-[10px] text-slate-500">{t.reports.whoOwesMeMoney}</p>
                     </div>
                   </button>
 
@@ -891,7 +1397,6 @@ const ReportsNew = () => {
                     </div>
                     <div>
                       <p className="font-medium text-sm text-slate-800">{t.reports.pendingToPay}</p>
-                      <p className="text-[10px] text-slate-500">{t.reports.whoDoIOwe}</p>
                     </div>
                   </button>
 
@@ -909,7 +1414,6 @@ const ReportsNew = () => {
                     </div>
                     <div>
                       <p className="font-medium text-sm text-slate-800">{t.reports.stockSummaryReport}</p>
-                      <p className="text-[10px] text-slate-500">{t.reports.whatNeedsReorder}</p>
                     </div>
                   </button>
 
@@ -927,209 +1431,16 @@ const ReportsNew = () => {
                     </div>
                     <div>
                       <p className="font-medium text-sm text-slate-800">{t.reports.fastMovingItems}</p>
-                      <p className="text-[10px] text-slate-500">{t.reports.bestSellers}</p>
                     </div>
                   </button>
                 </div>
 
                 {/* Render the selected report content - all report displays are already defined below */}
                 {/* Day Book Report */}
-                {reportData && reportData.date && currentReportType === 'day-book' && (
-                  <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">{t.reports.dayBookTitle} - {reportData.date}</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="p-4 bg-success/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">{t.reports.salesLabel}</p>
-                        <p className="text-2xl font-bold text-success">₹{(reportData.sales?.amount || 0).toLocaleString('en-IN')}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{reportData.sales?.count || 0} {t.sales.invoices}</p>
-                      </div>
-                      <div className="p-4 bg-warning/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">{t.reports.purchasesLabel}</p>
-                        <p className="text-2xl font-bold text-warning">₹{(reportData.purchases?.amount || 0).toLocaleString('en-IN')}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{reportData.purchases?.count || 0} {t.reports.bills}</p>
-                      </div>
-                      <div className="p-4 bg-primary/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">{t.reports.netCashFlow}</p>
-                        <p className={cn("text-2xl font-bold", (reportData.netCashFlow || 0) >= 0 ? "text-success" : "text-destructive")}>
-                          ₹{(reportData.netCashFlow || 0).toLocaleString('en-IN')}
-                        </p>
-                      </div>
-                    </div>
-                    {reportData.transactions && reportData.transactions.length > 0 && (
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-border">
-                              <th className="text-left py-3 px-4 text-sm font-semibold">{t.reports.invoiceHash}</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">{t.reports.type}</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">{t.reports.party}</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">{t.common.amount}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {reportData.transactions.slice(0, 10).map((tx: any, i: number) => (
-                              <tr key={i} className="border-b border-border last:border-0">
-                                <td className="py-3 px-4 text-sm">{tx.invoiceNumber}</td>
-                                <td className="py-3 px-4 text-sm">
-                                  <span className={cn("px-2 py-1 rounded text-xs font-medium",
-                                    tx.type === 'sale' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning')}>
-                                    {tx.type === 'sale' ? t.reports.sale : t.reports.purchase}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-4 text-sm">{tx.partyName}</td>
-                                <td className="py-3 px-4 text-sm text-right font-medium">₹{(tx.grandTotal || 0).toLocaleString('en-IN')}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {currentReportType === 'day-book' && renderDayBookReport()}
 
                 {/* P&L Statement */}
-                {reportData && reportData.revenue !== undefined && currentReportType === 'profit-loss' && (
-                  <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Income & Expenses Statement</h2>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      Period: {reportData.period?.startDate} to {reportData.period?.endDate}
-                    </p>
-
-                    {/* Smart Warning for Partial Period */}
-                    {reportData.warningData && reportData.warningData.isPartialPeriod && (
-                      <div className="mb-6 bg-warning/10 border-2 border-warning/30 rounded-xl p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="text-warning text-2xl">⚠️</div>
-                          <div className="flex-1">
-                            <p className="font-bold text-warning text-base mb-2">
-                              Partial Period Detected ({reportData.warningData.daysInPeriod} of {reportData.warningData.daysInMonth} days)
-                            </p>
-                            {reportData.warningData.expensesProrated ? (
-                              <div className="space-y-2">
-                                <p className="text-sm text-foreground">
-                                  ✅ Recurring expenses have been <strong>automatically prorated</strong> for this partial period:
-                                </p>
-                                {reportData.warningData.recurringExpenses.map((exp: any, idx: number) => (
-                                  <div key={idx} className="text-xs text-muted-foreground pl-4">
-                                    • {exp.category?.charAt(0).toUpperCase() + exp.category?.slice(1)}: ₹{(exp.monthlyAmount || 0).toLocaleString('en-IN')} (full month)
-                                    → ₹{(exp.proratedAmount || 0).toLocaleString('en-IN')} ({reportData.warningData?.daysInPeriod || 0} days)
-                                  </div>
-                                ))}
-                                <p className="text-xs text-muted-foreground mt-2 italic">
-                                  Only {reportData.warningData.daysInPeriod} days' worth of monthly expenses are counted.
-                                  This prevents misleading losses in partial-month reports.
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                <p className="text-sm text-foreground">
-                                  ⚠️ Some expenses may look high for just {reportData.warningData.daysInPeriod} days.
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Tip: Mark recurring expenses (Rent, Salary) as "Monthly Recurring" for automatic daily proration.
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between py-2">
-                          <span className="font-medium">Revenue (Fees)</span>
-                          <span className="font-bold">₹{(reportData.revenue || 0).toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="flex justify-between py-2">
-                          <span className="font-medium">Cost of Goods Sold</span>
-                          <span className="font-bold">₹{(reportData.costOfGoodsSold || 0).toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-t">
-                          <span className="font-semibold">Gross Profit</span>
-                          <span className="font-bold text-success">₹{(reportData.grossProfit || 0).toLocaleString('en-IN')} ({(reportData.grossProfitMargin || 0).toFixed(1)}%)</span>
-                        </div>
-                      </div>
-                      <div className="border-t pt-4">
-                        <h3 className="font-semibold mb-3">Operating Expenses</h3>
-                        <div className="space-y-2 pl-4">
-                          {reportData.operatingExpenses?.rent > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Rent</span>
-                              <span>₹{reportData.operatingExpenses.rent.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {(reportData.operatingExpenses?.salary > 0 || reportData.operatingExpenses?.salaries > 0) && (
-                            <div className="flex justify-between text-sm">
-                              <span>Salaries</span>
-                              <span>₹{(reportData.operatingExpenses.salary || reportData.operatingExpenses.salaries || 0).toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.utilities > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Utilities</span>
-                              <span>₹{reportData.operatingExpenses.utilities.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.marketing > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Marketing</span>
-                              <span>₹{reportData.operatingExpenses.marketing.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.office_supplies > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Office Supplies</span>
-                              <span>₹{reportData.operatingExpenses.office_supplies.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.travel > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Travel</span>
-                              <span>₹{reportData.operatingExpenses.travel.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.food > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Food</span>
-                              <span>₹{reportData.operatingExpenses.food.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.internet > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Internet</span>
-                              <span>₹{reportData.operatingExpenses.internet.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.software > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Software</span>
-                              <span>₹{reportData.operatingExpenses.software.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.other > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Other</span>
-                              <span>₹{reportData.operatingExpenses.other.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          <div className="flex justify-between border-t pt-2">
-                            <span className="font-medium">Total Expenses</span>
-                            <span className="font-bold">₹{(reportData.totalExpenses || 0).toLocaleString('en-IN')}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="border-t pt-4">
-                        <div className="flex justify-between py-3 bg-primary/5 px-4 rounded-lg">
-                          <span className="font-bold text-lg">Net Profit</span>
-                          <span className={cn("font-bold text-2xl", (reportData.netProfit || 0) >= 0 ? 'text-success' : 'text-destructive')}>
-                            ₹{(reportData.netProfit || 0).toLocaleString('en-IN')} ({(reportData.netProfitMargin || 0).toFixed(1)}%)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {currentReportType === 'profit-loss' && renderProfitLossReport()}
 
                 {/* Cash & Bank Balance Report */}
                 {reportData && reportData.asOfDate && currentReportType === 'cash-bank-balance' && (
@@ -1138,18 +1449,18 @@ const ReportsNew = () => {
                     <p className="text-sm text-muted-foreground mb-6">As on: {reportData.asOfDate}</p>
 
                     {/* Main Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="p-6 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Cash in Hand</p>
-                        <p className="text-3xl font-bold text-success">₹{(reportData.cashInHand || 0).toLocaleString('en-IN')}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-6 bg-success/5 border border-success/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Cash in Hand</p>
+                        <p className="text-base md:text-3xl font-bold text-success tabular-nums leading-none">₹{(reportData.cashInHand || 0).toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-6 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Total Bank Balance</p>
-                        <p className="text-3xl font-bold text-primary">₹{(reportData.totalBankBalance || 0).toLocaleString('en-IN')}</p>
+                      <div className="p-2 md:p-6 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Total Bank Balance</p>
+                        <p className="text-base md:text-3xl font-bold text-primary tabular-nums leading-none">₹{(reportData.totalBankBalance || 0).toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-6 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Total Liquid Cash</p>
-                        <p className="text-3xl font-bold text-accent">₹{(reportData.totalLiquidCash || 0).toLocaleString('en-IN')}</p>
+                      <div className="col-span-2 md:col-span-1 p-2 md:p-6 bg-accent/5 border border-accent/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Total Liquid Cash</p>
+                        <p className="text-base md:text-3xl font-bold text-accent tabular-nums leading-none">₹{(reportData.totalLiquidCash || 0).toLocaleString('en-IN')}</p>
                       </div>
                     </div>
 
@@ -1204,18 +1515,18 @@ const ReportsNew = () => {
                     <p className="text-sm text-muted-foreground mb-6">Students who owe fees</p>
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="p-6 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Total Receivables</p>
-                        <p className="text-3xl font-bold text-warning">₹{reportData.totalReceivables.toLocaleString('en-IN')}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-6 bg-warning/5 border border-warning/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Total Receivables</p>
+                        <p className="text-base md:text-3xl font-bold text-warning tabular-nums leading-none">₹{reportData.totalReceivables.toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-6 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Pending Invoices</p>
-                        <p className="text-3xl font-bold text-primary">{reportData.totalInvoices}</p>
+                      <div className="p-2 md:p-6 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Pending Invoices</p>
+                        <p className="text-base md:text-3xl font-bold text-primary tabular-nums leading-none">{reportData.totalInvoices}</p>
                       </div>
-                      <div className="p-6 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Students Owing</p>
-                        <p className="text-3xl font-bold text-accent">{reportData.totalCustomers}</p>
+                      <div className="col-span-2 md:col-span-1 p-2 md:p-6 bg-accent/5 border border-accent/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Students Owing</p>
+                        <p className="text-base md:text-3xl font-bold text-accent tabular-nums leading-none">{reportData.totalCustomers}</p>
                       </div>
                     </div>
 
@@ -1301,18 +1612,18 @@ const ReportsNew = () => {
                     <p className="text-sm text-muted-foreground mb-6">Vendors you owe money to</p>
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="p-6 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Total Payables</p>
-                        <p className="text-3xl font-bold text-destructive">₹{reportData.totalPayables.toLocaleString('en-IN')}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-6 bg-destructive/5 border border-destructive/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Total Payables</p>
+                        <p className="text-base md:text-3xl font-bold text-destructive tabular-nums leading-none">₹{reportData.totalPayables.toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-6 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Pending Invoices</p>
-                        <p className="text-3xl font-bold text-primary">{reportData.totalInvoices}</p>
+                      <div className="p-2 md:p-6 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Pending Invoices</p>
+                        <p className="text-base md:text-3xl font-bold text-primary tabular-nums leading-none">{reportData.totalInvoices}</p>
                       </div>
-                      <div className="p-6 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Vendors to Pay</p>
-                        <p className="text-3xl font-bold text-accent">{reportData.totalSuppliers}</p>
+                      <div className="col-span-2 md:col-span-1 p-2 md:p-6 bg-accent/5 border border-accent/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Vendors to Pay</p>
+                        <p className="text-base md:text-3xl font-bold text-accent tabular-nums leading-none">{reportData.totalSuppliers}</p>
                       </div>
                     </div>
 
@@ -1752,7 +2063,7 @@ const ReportsNew = () => {
                     )}
 
                     {/* Main Summary Cards - Shows Flow: Invoice Value → Deductions → Taxable Value → Output Tax */}
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-1.5 md:gap-3 mb-6">
                       <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
                         <p className="text-xs text-muted-foreground mb-1">Total Fees</p>
                         <p className="text-2xl font-bold text-primary">{reportData.summary.totalSales}</p>
@@ -1810,7 +2121,7 @@ const ReportsNew = () => {
                     )}
 
                     {/* GST Breakdown */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-4 mb-6">
                       <div className="p-3 bg-red-500/10 rounded-lg">
                         <p className="text-xs text-muted-foreground mb-1">CGST</p>
                         <p className="text-lg font-bold text-red-600">₹{reportData.summary.totalCGST.toLocaleString('en-IN')}</p>
@@ -2036,113 +2347,7 @@ const ReportsNew = () => {
                 )}
 
                 {/* Stock Alert Report */}
-                {reportData && reportData.summary && reportData.items && currentReportType === 'stock-alert' && (
-                  <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Low Seats Alert - Courses to Review</h2>
-
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Total Items</p>
-                        <p className="text-2xl font-bold text-primary">{reportData.summary.totalItems}</p>
-                      </div>
-                      <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Seats Available</p>
-                        <p className="text-2xl font-bold text-success">
-                          {reportData.items.filter((item: any) => item.status === 'In Stock').length}
-                        </p>
-                      </div>
-                      <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Low Seats</p>
-                        <p className="text-2xl font-bold text-warning">{reportData.summary.lowStock}</p>
-                      </div>
-                      <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">No Seats</p>
-                        <p className="text-2xl font-bold text-destructive">{reportData.summary.outOfStock}</p>
-                      </div>
-                    </div>
-
-                    {/* Items Table */}
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="text-left py-3 px-4 text-sm font-semibold">Item Name</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">SKU</th>
-                            <th className="text-right py-3 px-4 text-sm font-semibold">Quantity</th>
-                            <th className="text-right py-3 px-4 text-sm font-semibold">Value</th>
-                            <th className="text-center py-3 px-4 text-sm font-semibold">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {/* Out of Stock items first */}
-                          {reportData.items
-                            .filter((item: any) => item.status === 'Out of Stock')
-                            .map((item: any, index: number) => (
-                              <tr key={`out-${index}`} className="border-b border-border last:border-0 bg-destructive/5">
-                                <td className="py-3 px-4 text-sm font-medium">{item.name}</td>
-                                <td className="py-3 px-4 text-sm text-muted-foreground">{item.sku}</td>
-                                <td className="py-3 px-4 text-sm text-right font-bold text-destructive">{item.quantity}</td>
-                                <td className="py-3 px-4 text-sm text-right">₹{item.value.toLocaleString('en-IN')}</td>
-                                <td className="py-3 px-4 text-center">
-                                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
-                                    🔴 {item.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-
-                          {/* Low Stock items second */}
-                          {reportData.items
-                            .filter((item: any) => item.status === 'Low Stock')
-                            .map((item: any, index: number) => (
-                              <tr key={`low-${index}`} className="border-b border-border last:border-0 bg-warning/5">
-                                <td className="py-3 px-4 text-sm font-medium">{item.name}</td>
-                                <td className="py-3 px-4 text-sm text-muted-foreground">{item.sku}</td>
-                                <td className="py-3 px-4 text-sm text-right font-bold text-warning">{item.quantity}</td>
-                                <td className="py-3 px-4 text-sm text-right">₹{item.value.toLocaleString('en-IN')}</td>
-                                <td className="py-3 px-4 text-center">
-                                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-warning/10 text-warning">
-                                    🟠 {item.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-
-                          {/* In Stock items last */}
-                          {reportData.items
-                            .filter((item: any) => item.status === 'In Stock')
-                            .slice(0, 10)
-                            .map((item: any, index: number) => (
-                              <tr key={`in-${index}`} className="border-b border-border last:border-0">
-                                <td className="py-3 px-4 text-sm font-medium">{item.name}</td>
-                                <td className="py-3 px-4 text-sm text-muted-foreground">{item.sku}</td>
-                                <td className="py-3 px-4 text-sm text-right">{item.quantity}</td>
-                                <td className="py-3 px-4 text-sm text-right">₹{item.value.toLocaleString('en-IN')}</td>
-                                <td className="py-3 px-4 text-center">
-                                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
-                                    🟢 {item.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Note */}
-                    {(reportData.summary.lowStock > 0 || reportData.summary.outOfStock > 0) && (
-                      <div className="mt-6 p-4 bg-warning/10 border border-warning/20 rounded-lg">
-                        <p className="text-sm font-semibold text-warning mb-1">Action Required</p>
-                        <p className="text-xs text-muted-foreground">
-                          {reportData.summary.outOfStock > 0 && `${reportData.summary.outOfStock} course(s) have no seats. `}
-                          {reportData.summary.lowStock > 0 && `${reportData.summary.lowStock} course(s) are running low on seats. `}
-                          Please reorder these items soon to avoid stockouts.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {currentReportType === 'stock-alert' && renderStockAlertReport()}
 
                 {/* Sales Register Report (Output Tax) - Inventory Tab Version */}
                 {reportData && reportData.summary && reportData.sales !== undefined && currentReportType === 'sales-register' && (
@@ -2161,7 +2366,7 @@ const ReportsNew = () => {
                     )}
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-1.5 md:gap-3 mb-6">
                       <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
                         <p className="text-xs text-muted-foreground mb-1">Total Fees</p>
                         <p className="text-2xl font-bold text-primary">{reportData.summary.totalSales}</p>
@@ -2185,7 +2390,7 @@ const ReportsNew = () => {
                     </div>
 
                     {/* GST Breakdown */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-6">
                       <div className="p-3 bg-red-500/10 rounded-lg">
                         <p className="text-xs text-muted-foreground mb-1">CGST</p>
                         <p className="text-lg font-bold text-red-600">₹{reportData.summary.totalCGST.toLocaleString('en-IN')}</p>
@@ -2201,7 +2406,7 @@ const ReportsNew = () => {
                     </div>
 
                     {/* Sale Type Breakdown */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-6">
                       <div className="p-3 bg-blue-500/10 rounded-lg">
                         <p className="text-xs text-muted-foreground mb-1">B2B Sales</p>
                         <p className="text-lg font-bold text-blue-600">{reportData.summary.b2bSales}</p>
@@ -2294,22 +2499,22 @@ const ReportsNew = () => {
                     </div>
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Total Items Sold</p>
-                        <p className="text-2xl font-bold text-primary">{reportData.summary.totalQuantitySold}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-4 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Total Items Sold</p>
+                        <p className="text-base md:text-2xl font-bold text-primary tabular-nums leading-none">{reportData.summary.totalQuantitySold}</p>
                       </div>
-                      <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Healthy Seats</p>
-                        <p className="text-2xl font-bold text-success">{reportData.summary.safeCount}</p>
+                      <div className="p-2 md:p-4 bg-success/5 border border-success/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Healthy Seats</p>
+                        <p className="text-base md:text-2xl font-bold text-success tabular-nums leading-none">{reportData.summary.safeCount}</p>
                       </div>
-                      <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Low Seats</p>
-                        <p className="text-2xl font-bold text-warning">{reportData.summary.lowCount}</p>
+                      <div className="p-2 md:p-4 bg-warning/5 border border-warning/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Low Seats</p>
+                        <p className="text-base md:text-2xl font-bold text-warning tabular-nums leading-none">{reportData.summary.lowCount}</p>
                       </div>
-                      <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Critical</p>
-                        <p className="text-2xl font-bold text-destructive">{reportData.summary.criticalCount}</p>
+                      <div className="p-2 md:p-4 bg-destructive/5 border border-destructive/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Critical</p>
+                        <p className="text-base md:text-2xl font-bold text-destructive tabular-nums leading-none">{reportData.summary.criticalCount}</p>
                       </div>
                     </div>
 
@@ -2319,11 +2524,10 @@ const ReportsNew = () => {
                         <table className="w-full">
                           <thead>
                             <tr className="border-b border-border">
-                              <th className="text-center py-3 px-4 text-sm font-semibold">Rank</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">Item Name</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Qty Sold (30d)</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Avg Daily Sale</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Seats Available</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Course Name</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Sales (30d)</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Avg Daily Sales</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Available Seats</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Days Left</th>
                               <th className="text-center py-3 px-4 text-sm font-semibold">Status</th>
                             </tr>
@@ -2338,9 +2542,6 @@ const ReportsNew = () => {
                                 item.status === 'Low' && "bg-warning/5"
                               )}
                             >
-                              <td className="py-3 px-4 text-sm text-center font-bold text-primary">
-                                #{item.rank}
-                              </td>
                               <td className="py-3 px-4 text-sm font-medium">
                                 {item.itemName}
                                 <div className="text-xs text-muted-foreground">{item.sku}</div>
@@ -2569,18 +2770,18 @@ const ReportsNew = () => {
                     <p className="text-sm text-muted-foreground mb-6">As on: {reportData.asOfDate}</p>
 
                     {/* Main Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="p-6 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Cash in Hand</p>
-                        <p className="text-3xl font-bold text-success">₹{(reportData.cashInHand || 0).toLocaleString('en-IN')}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-6 bg-success/5 border border-success/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Cash in Hand</p>
+                        <p className="text-base md:text-3xl font-bold text-success tabular-nums leading-none">₹{(reportData.cashInHand || 0).toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-6 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Total Bank Balance</p>
-                        <p className="text-3xl font-bold text-primary">₹{(reportData.totalBankBalance || 0).toLocaleString('en-IN')}</p>
+                      <div className="p-2 md:p-6 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Total Bank Balance</p>
+                        <p className="text-base md:text-3xl font-bold text-primary tabular-nums leading-none">₹{(reportData.totalBankBalance || 0).toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-6 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Total Liquid Cash</p>
-                        <p className="text-3xl font-bold text-accent">₹{(reportData.totalLiquidCash || 0).toLocaleString('en-IN')}</p>
+                      <div className="col-span-2 md:col-span-1 p-2 md:p-6 bg-accent/5 border border-accent/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Total Liquid Cash</p>
+                        <p className="text-base md:text-3xl font-bold text-accent tabular-nums leading-none">₹{(reportData.totalLiquidCash || 0).toLocaleString('en-IN')}</p>
                       </div>
                     </div>
 
@@ -2635,18 +2836,18 @@ const ReportsNew = () => {
                     <p className="text-sm text-muted-foreground mb-6">Students who owe fees</p>
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="p-6 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Total Receivables</p>
-                        <p className="text-3xl font-bold text-warning">₹{reportData.totalReceivables.toLocaleString('en-IN')}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-6 bg-warning/5 border border-warning/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Total Receivables</p>
+                        <p className="text-base md:text-3xl font-bold text-warning tabular-nums leading-none">₹{reportData.totalReceivables.toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-6 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Pending Invoices</p>
-                        <p className="text-3xl font-bold text-primary">{reportData.totalInvoices}</p>
+                      <div className="p-2 md:p-6 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Pending Invoices</p>
+                        <p className="text-base md:text-3xl font-bold text-primary tabular-nums leading-none">{reportData.totalInvoices}</p>
                       </div>
-                      <div className="p-6 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Students Owing</p>
-                        <p className="text-3xl font-bold text-accent">{reportData.totalCustomers}</p>
+                      <div className="col-span-2 md:col-span-1 p-2 md:p-6 bg-accent/5 border border-accent/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Students Owing</p>
+                        <p className="text-base md:text-3xl font-bold text-accent tabular-nums leading-none">{reportData.totalCustomers}</p>
                       </div>
                     </div>
 
@@ -2732,18 +2933,18 @@ const ReportsNew = () => {
                     <p className="text-sm text-muted-foreground mb-6">Vendors you owe money to</p>
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="p-6 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Total Payables</p>
-                        <p className="text-3xl font-bold text-destructive">₹{reportData.totalPayables.toLocaleString('en-IN')}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-6 bg-destructive/5 border border-destructive/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Total Payables</p>
+                        <p className="text-base md:text-3xl font-bold text-destructive tabular-nums leading-none">₹{reportData.totalPayables.toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-6 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Pending Invoices</p>
-                        <p className="text-3xl font-bold text-primary">{reportData.totalInvoices}</p>
+                      <div className="p-2 md:p-6 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Pending Invoices</p>
+                        <p className="text-base md:text-3xl font-bold text-primary tabular-nums leading-none">{reportData.totalInvoices}</p>
                       </div>
-                      <div className="p-6 bg-accent/5 border-2 border-accent/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-2">Vendors to Pay</p>
-                        <p className="text-3xl font-bold text-accent">{reportData.totalSuppliers}</p>
+                      <div className="col-span-2 md:col-span-1 p-2 md:p-6 bg-accent/5 border border-accent/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-2 leading-tight">Vendors to Pay</p>
+                        <p className="text-base md:text-3xl font-bold text-accent tabular-nums leading-none">{reportData.totalSuppliers}</p>
                       </div>
                     </div>
 
@@ -2823,258 +3024,36 @@ const ReportsNew = () => {
                 )}
 
                 {/* Display report previews based on loaded report */}
-                {reportData && reportData.date && currentReportType === 'day-book' && (
-                  <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">{t.reports.dayBookTitle} - {reportData.date}</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="p-4 bg-success/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">{t.reports.salesLabel}</p>
-                        <p className="text-2xl font-bold text-success">₹{reportData.sales.amount.toLocaleString('en-IN')}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{reportData.sales.count} {t.sales.invoices}</p>
-                      </div>
-                      <div className="p-4 bg-warning/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">{t.reports.purchasesLabel}</p>
-                        <p className="text-2xl font-bold text-warning">₹{reportData.purchases.amount.toLocaleString('en-IN')}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{reportData.purchases.count} {t.reports.bills}</p>
-                      </div>
-                      <div className="p-4 bg-primary/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">{t.reports.netCashFlow}</p>
-                        <p className={cn("text-2xl font-bold", reportData.netCashFlow >= 0 ? "text-success" : "text-destructive")}>
-                          ₹{reportData.netCashFlow.toLocaleString('en-IN')}
-                        </p>
-                      </div>
-                    </div>
-                    {reportData.transactions && reportData.transactions.length > 0 && (
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-border">
-                              <th className="text-left py-3 px-4 text-sm font-semibold">{t.reports.invoiceHash}</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">{t.reports.type}</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">{t.reports.party}</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">{t.common.amount}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {reportData.transactions.slice(0, 10).map((tx: any, i: number) => (
-                              <tr key={i} className="border-b border-border last:border-0">
-                                <td className="py-3 px-4 text-sm">{tx.invoiceNumber}</td>
-                                <td className="py-3 px-4 text-sm">
-                                  <span className={cn("px-2 py-1 rounded text-xs font-medium",
-                                    tx.type === 'sale' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning')}>
-                                    {tx.type === 'sale' ? t.reports.sale : t.reports.purchase}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-4 text-sm">{tx.partyName}</td>
-                                <td className="py-3 px-4 text-sm text-right font-medium">₹{(tx.grandTotal || 0).toLocaleString('en-IN')}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {currentReportType === 'day-book' && renderDayBookReport()}
 
                 {/* Bill-wise Profit Report */}
                 {reportData && reportData.bills && currentReportType === 'bill-profit' && (
-                  <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Receipt-wise Summary</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div className="p-4 bg-primary/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
-                        <p className="text-xl font-bold">₹{reportData.summary.totalRevenue.toLocaleString('en-IN')}</p>
+                  <div className="bg-card rounded-xl p-2 md:p-6 shadow-sm border border-border overflow-hidden">
+                    <h2 className="text-sm md:text-lg font-bold mb-2 md:mb-4 leading-tight text-center md:text-left">Receipt-wise Summary</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-4 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Total Revenue</p>
+                        <p className="text-base md:text-xl font-bold tabular-nums leading-none">₹{reportData.summary.totalRevenue.toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-4 bg-warning/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">Total Cost</p>
-                        <p className="text-xl font-bold">₹{reportData.summary.totalCost.toLocaleString('en-IN')}</p>
+                      <div className="p-2 md:p-4 bg-warning/5 border border-warning/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Total Cost</p>
+                        <p className="text-base md:text-xl font-bold tabular-nums leading-none">₹{reportData.summary.totalCost.toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-4 bg-success/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">Total Profit</p>
-                        <p className="text-xl font-bold text-success">₹{reportData.summary.totalProfit.toLocaleString('en-IN')}</p>
+                      <div className="p-2 md:p-4 bg-success/5 border border-success/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Total Profit</p>
+                        <p className="text-base md:text-xl font-bold text-success tabular-nums leading-none">₹{reportData.summary.totalProfit.toLocaleString('en-IN')}</p>
                       </div>
-                      <div className="p-4 bg-accent/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">Avg Margin</p>
-                        <p className="text-xl font-bold">{reportData.summary.avgProfitMargin.toFixed(1)}%</p>
+                      <div className="p-2 md:p-4 bg-accent/5 border border-accent/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Avg Margin</p>
+                        <p className="text-base md:text-xl font-bold tabular-nums leading-none">{reportData.summary.avgProfitMargin.toFixed(1)}%</p>
                       </div>
                     </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="text-left py-3 px-4 text-sm font-semibold">Invoice #</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">Date</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">Student</th>
-                            <th className="text-right py-3 px-4 text-sm font-semibold">Revenue</th>
-                            <th className="text-right py-3 px-4 text-sm font-semibold">Cost</th>
-                            <th className="text-right py-3 px-4 text-sm font-semibold">Profit</th>
-                            <th className="text-right py-3 px-4 text-sm font-semibold">Margin %</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {reportData.bills.slice(0, 15).map((bill: any, i: number) => (
-                            <tr key={i} className="border-b border-border last:border-0">
-                              <td className="py-3 px-4 text-sm font-medium">{bill.invoiceNumber}</td>
-                              <td className="py-3 px-4 text-sm">{bill.invoiceDate}</td>
-                              <td className="py-3 px-4 text-sm">{bill.partyName}</td>
-                              <td className="py-3 px-4 text-sm text-right">₹{bill.revenue.toLocaleString('en-IN')}</td>
-                              <td className="py-3 px-4 text-sm text-right">₹{bill.cost.toLocaleString('en-IN')}</td>
-                              <td className={cn("py-3 px-4 text-sm text-right font-semibold",
-                                bill.profit >= 0 ? 'text-success' : 'text-destructive')}>
-                                ₹{bill.profit.toLocaleString('en-IN')}
-                              </td>
-                              <td className="py-3 px-4 text-sm text-right">{bill.profitMargin.toFixed(1)}%</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    {renderBillProfitBills(reportData.bills)}
                   </div>
                 )}
 
                 {/* P&L Statement */}
-                {reportData && reportData.revenue !== undefined && currentReportType === 'profit-loss' && (
-                  <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Income & Expenses Statement</h2>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      Period: {reportData.period?.startDate} to {reportData.period?.endDate}
-                    </p>
-
-                    {/* Smart Warning for Partial Period */}
-                    {reportData.warningData && reportData.warningData.isPartialPeriod && (
-                      <div className="mb-6 bg-warning/10 border-2 border-warning/30 rounded-xl p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="text-warning text-2xl">⚠️</div>
-                          <div className="flex-1">
-                            <p className="font-bold text-warning text-base mb-2">
-                              Partial Period Detected ({reportData.warningData.daysInPeriod} of {reportData.warningData.daysInMonth} days)
-                            </p>
-                            {reportData.warningData.expensesProrated ? (
-                              <div className="space-y-2">
-                                <p className="text-sm text-foreground">
-                                  ✅ Recurring expenses have been <strong>automatically prorated</strong> for this partial period:
-                                </p>
-                                {reportData.warningData.recurringExpenses.map((exp: any, idx: number) => (
-                                  <div key={idx} className="text-xs text-muted-foreground pl-4">
-                                    • {exp.category?.charAt(0).toUpperCase() + exp.category?.slice(1)}: ₹{(exp.monthlyAmount || 0).toLocaleString('en-IN')} (full month)
-                                    → ₹{(exp.proratedAmount || 0).toLocaleString('en-IN')} ({reportData.warningData?.daysInPeriod || 0} days)
-                                  </div>
-                                ))}
-                                <p className="text-xs text-muted-foreground mt-2 italic">
-                                  Only {reportData.warningData.daysInPeriod} days' worth of monthly expenses are counted.
-                                  This prevents misleading losses in partial-month reports.
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                <p className="text-sm text-foreground">
-                                  ⚠️ Some expenses may look high for just {reportData.warningData.daysInPeriod} days.
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Tip: Mark recurring expenses (Rent, Salary) as "Monthly Recurring" for automatic daily proration.
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between py-2">
-                          <span className="font-medium">Revenue (Fees)</span>
-                          <span className="font-bold">₹{(reportData.revenue || 0).toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="flex justify-between py-2">
-                          <span className="font-medium">Cost of Goods Sold</span>
-                          <span className="font-bold">₹{(reportData.costOfGoodsSold || 0).toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-t">
-                          <span className="font-semibold">Gross Profit</span>
-                          <span className="font-bold text-success">₹{(reportData.grossProfit || 0).toLocaleString('en-IN')} ({(reportData.grossProfitMargin || 0).toFixed(1)}%)</span>
-                        </div>
-                      </div>
-                      <div className="border-t pt-4">
-                        <h3 className="font-semibold mb-3">Operating Expenses</h3>
-                        <div className="space-y-2 pl-4">
-                          {reportData.operatingExpenses?.rent > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Rent</span>
-                              <span>₹{reportData.operatingExpenses.rent.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {(reportData.operatingExpenses?.salary > 0 || reportData.operatingExpenses?.salaries > 0) && (
-                            <div className="flex justify-between text-sm">
-                              <span>Salaries</span>
-                              <span>₹{(reportData.operatingExpenses.salary || reportData.operatingExpenses.salaries || 0).toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.utilities > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Utilities</span>
-                              <span>₹{reportData.operatingExpenses.utilities.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.marketing > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Marketing</span>
-                              <span>₹{reportData.operatingExpenses.marketing.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.office_supplies > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Office Supplies</span>
-                              <span>₹{reportData.operatingExpenses.office_supplies.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.travel > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Travel</span>
-                              <span>₹{reportData.operatingExpenses.travel.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.food > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Food</span>
-                              <span>₹{reportData.operatingExpenses.food.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.internet > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Internet</span>
-                              <span>₹{reportData.operatingExpenses.internet.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.software > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Software</span>
-                              <span>₹{reportData.operatingExpenses.software.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          {reportData.operatingExpenses?.other > 0 && (
-                            <div className="flex justify-between text-sm">
-                              <span>Other</span>
-                              <span>₹{reportData.operatingExpenses.other.toLocaleString('en-IN')}</span>
-                            </div>
-                          )}
-                          <div className="flex justify-between border-t pt-2">
-                            <span className="font-medium">Total Expenses</span>
-                            <span className="font-bold">₹{(reportData.totalExpenses || 0).toLocaleString('en-IN')}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="border-t pt-4">
-                        <div className="flex justify-between py-3 bg-primary/5 px-4 rounded-lg">
-                          <span className="font-bold text-lg">Net Profit</span>
-                          <span className={cn("font-bold text-2xl", (reportData.netProfit || 0) >= 0 ? 'text-success' : 'text-destructive')}>
-                            ₹{(reportData.netProfit || 0).toLocaleString('en-IN')} ({(reportData.netProfitMargin || 0).toFixed(1)}%)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {currentReportType === 'profit-loss' && renderProfitLossReport()}
 
                 {/* Cash Flow Report */}
                 {reportData && reportData.transactions && currentReportType === 'cash-flow' && (
@@ -3329,24 +3308,37 @@ const ReportsNew = () => {
                     </p>
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Total Debit</p>
-                        <p className="text-xl font-bold text-success">₹{(reportData.totalDebit || 0).toLocaleString('en-IN')}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-4 bg-success/5 border border-success/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0 overflow-hidden">
+                        <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 leading-tight">Total Debit</p>
+                        <p className="text-sm md:text-xl font-bold text-success tabular-nums leading-tight">
+                          <span className="md:hidden">{formatMobileCurrency(reportData.totalDebit || 0)}</span>
+                          <span className="hidden md:inline">₹{(reportData.totalDebit || 0).toLocaleString('en-IN')}</span>
+                        </p>
                       </div>
-                      <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Total Credit</p>
-                        <p className="text-xl font-bold text-destructive">₹{(reportData.totalCredit || 0).toLocaleString('en-IN')}</p>
+                      <div className="p-2 md:p-4 bg-destructive/5 border border-destructive/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0 overflow-hidden">
+                        <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 leading-tight">Total Credit</p>
+                        <p className="text-sm md:text-xl font-bold text-destructive tabular-nums leading-tight">
+                          <span className="md:hidden">{formatMobileCurrency(reportData.totalCredit || 0)}</span>
+                          <span className="hidden md:inline">₹{(reportData.totalCredit || 0).toLocaleString('en-IN')}</span>
+                        </p>
                       </div>
-                      <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Difference</p>
-                        <p className="text-xl font-bold text-warning">₹{(reportData.difference || 0).toLocaleString('en-IN')}</p>
+                      <div className="p-2 md:p-4 bg-warning/5 border border-warning/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0 overflow-hidden">
+                        <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 leading-tight">Difference</p>
+                        <p className="text-sm md:text-xl font-bold text-warning tabular-nums leading-tight">
+                          <span className="md:hidden">{formatMobileCurrency(reportData.difference || 0)}</span>
+                          <span className="hidden md:inline">₹{(reportData.difference || 0).toLocaleString('en-IN')}</span>
+                        </p>
                       </div>
-                      <div className={cn("p-4 rounded-xl border-2",
-                        reportData.balanced ? "bg-success/5 border-success/20" : "bg-destructive/5 border-destructive/20")}>
-                        <p className="text-xs text-muted-foreground mb-1">Status</p>
-                        <p className={cn("text-xl font-bold", reportData.balanced ? "text-success" : "text-destructive")}>
-                          {reportData.balanced ? '✓ Balanced' : '✗ Unbalanced'}
+                      <div className={cn(
+                        'p-2 md:p-4 rounded-lg md:rounded-xl border md:border-2 text-center min-w-0 overflow-hidden',
+                        reportData.balanced ? 'bg-success/5 border-success/20' : 'bg-destructive/5 border-destructive/20'
+                      )}>
+                        <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 leading-tight">Status</p>
+                        <p className={cn('font-bold leading-tight', reportData.balanced ? 'text-success' : 'text-destructive')}>
+                          <span className="md:hidden text-sm block">{reportData.balanced ? '✓' : '✗'}</span>
+                          <span className="md:hidden text-[10px] block">{reportData.balanced ? 'Balanced' : 'Unbalanced'}</span>
+                          <span className="hidden md:inline text-xl">{reportData.balanced ? '✓ Balanced' : '✗ Unbalanced'}</span>
                         </p>
                       </div>
                     </div>
@@ -3921,113 +3913,7 @@ const ReportsNew = () => {
                 </div>
 
                 {/* Stock Alert Report */}
-                {reportData && reportData.summary && reportData.items && currentReportType === 'stock-alert' && (
-                  <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-                    <h2 className="text-lg font-bold mb-4">Low Seats Alert - Courses to Review</h2>
-
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Total Items</p>
-                        <p className="text-2xl font-bold text-primary">{reportData.summary.totalItems}</p>
-                      </div>
-                      <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Seats Available</p>
-                        <p className="text-2xl font-bold text-success">
-                          {reportData.items.filter((item: any) => item.status === 'In Stock').length}
-                        </p>
-                      </div>
-                      <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Low Seats</p>
-                        <p className="text-2xl font-bold text-warning">{reportData.summary.lowStock}</p>
-                      </div>
-                      <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">No Seats</p>
-                        <p className="text-2xl font-bold text-destructive">{reportData.summary.outOfStock}</p>
-                      </div>
-                    </div>
-
-                    {/* Items Table */}
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="text-left py-3 px-4 text-sm font-semibold">Item Name</th>
-                            <th className="text-left py-3 px-4 text-sm font-semibold">SKU</th>
-                            <th className="text-right py-3 px-4 text-sm font-semibold">Quantity</th>
-                            <th className="text-right py-3 px-4 text-sm font-semibold">Value</th>
-                            <th className="text-center py-3 px-4 text-sm font-semibold">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {/* Out of Stock items first */}
-                          {reportData.items
-                            .filter((item: any) => item.status === 'Out of Stock')
-                            .map((item: any, index: number) => (
-                              <tr key={`out-${index}`} className="border-b border-border last:border-0 bg-destructive/5">
-                                <td className="py-3 px-4 text-sm font-medium">{item.name}</td>
-                                <td className="py-3 px-4 text-sm text-muted-foreground">{item.sku}</td>
-                                <td className="py-3 px-4 text-sm text-right font-bold text-destructive">{item.quantity}</td>
-                                <td className="py-3 px-4 text-sm text-right">₹{item.value.toLocaleString('en-IN')}</td>
-                                <td className="py-3 px-4 text-center">
-                                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
-                                    🔴 {item.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-
-                          {/* Low Stock items second */}
-                          {reportData.items
-                            .filter((item: any) => item.status === 'Low Stock')
-                            .map((item: any, index: number) => (
-                              <tr key={`low-${index}`} className="border-b border-border last:border-0 bg-warning/5">
-                                <td className="py-3 px-4 text-sm font-medium">{item.name}</td>
-                                <td className="py-3 px-4 text-sm text-muted-foreground">{item.sku}</td>
-                                <td className="py-3 px-4 text-sm text-right font-bold text-warning">{item.quantity}</td>
-                                <td className="py-3 px-4 text-sm text-right">₹{item.value.toLocaleString('en-IN')}</td>
-                                <td className="py-3 px-4 text-center">
-                                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-warning/10 text-warning">
-                                    🟠 {item.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-
-                          {/* In Stock items last */}
-                          {reportData.items
-                            .filter((item: any) => item.status === 'In Stock')
-                            .slice(0, 10)
-                            .map((item: any, index: number) => (
-                              <tr key={`in-${index}`} className="border-b border-border last:border-0">
-                                <td className="py-3 px-4 text-sm font-medium">{item.name}</td>
-                                <td className="py-3 px-4 text-sm text-muted-foreground">{item.sku}</td>
-                                <td className="py-3 px-4 text-sm text-right">{item.quantity}</td>
-                                <td className="py-3 px-4 text-sm text-right">₹{item.value.toLocaleString('en-IN')}</td>
-                                <td className="py-3 px-4 text-center">
-                                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
-                                    🟢 {item.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Note */}
-                    {(reportData.summary.lowStock > 0 || reportData.summary.outOfStock > 0) && (
-                      <div className="mt-6 p-4 bg-warning/10 border border-warning/20 rounded-lg">
-                        <p className="text-sm font-semibold text-warning mb-1">Action Required</p>
-                        <p className="text-xs text-muted-foreground">
-                          {reportData.summary.outOfStock > 0 && `${reportData.summary.outOfStock} course(s) have no seats. `}
-                          {reportData.summary.lowStock > 0 && `${reportData.summary.lowStock} course(s) are running low on seats. `}
-                          Please reorder these items soon to avoid stockouts.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {currentReportType === 'stock-alert' && renderStockAlertReport()}
 
                 {/* Sales Register Report (Output Tax) - Inventory Tab Version */}
                 {reportData && reportData.summary && reportData.sales !== undefined && currentReportType === 'sales-register' && (
@@ -4046,7 +3932,7 @@ const ReportsNew = () => {
                     )}
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-1.5 md:gap-3 mb-6">
                       <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
                         <p className="text-xs text-muted-foreground mb-1">Total Fees</p>
                         <p className="text-2xl font-bold text-primary">{reportData.summary.totalSales}</p>
@@ -4070,7 +3956,7 @@ const ReportsNew = () => {
                     </div>
 
                     {/* GST Breakdown */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-6">
                       <div className="p-3 bg-red-500/10 rounded-lg">
                         <p className="text-xs text-muted-foreground mb-1">CGST</p>
                         <p className="text-lg font-bold text-red-600">₹{reportData.summary.totalCGST.toLocaleString('en-IN')}</p>
@@ -4086,7 +3972,7 @@ const ReportsNew = () => {
                     </div>
 
                     {/* Sale Type Breakdown */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5 md:gap-4 mb-6">
                       <div className="p-3 bg-blue-500/10 rounded-lg">
                         <p className="text-xs text-muted-foreground mb-1">B2B Sales</p>
                         <p className="text-lg font-bold text-blue-600">{reportData.summary.b2bSales}</p>
@@ -4179,22 +4065,22 @@ const ReportsNew = () => {
                     </div>
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Total Items Sold</p>
-                        <p className="text-2xl font-bold text-primary">{reportData.summary.totalQuantitySold}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-4 bg-primary/5 border border-primary/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Total Items Sold</p>
+                        <p className="text-base md:text-2xl font-bold text-primary tabular-nums leading-none">{reportData.summary.totalQuantitySold}</p>
                       </div>
-                      <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Healthy Seats</p>
-                        <p className="text-2xl font-bold text-success">{reportData.summary.safeCount}</p>
+                      <div className="p-2 md:p-4 bg-success/5 border border-success/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Healthy Seats</p>
+                        <p className="text-base md:text-2xl font-bold text-success tabular-nums leading-none">{reportData.summary.safeCount}</p>
                       </div>
-                      <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Low Seats</p>
-                        <p className="text-2xl font-bold text-warning">{reportData.summary.lowCount}</p>
+                      <div className="p-2 md:p-4 bg-warning/5 border border-warning/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Low Seats</p>
+                        <p className="text-base md:text-2xl font-bold text-warning tabular-nums leading-none">{reportData.summary.lowCount}</p>
                       </div>
-                      <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-sm text-muted-foreground mb-1">Critical</p>
-                        <p className="text-2xl font-bold text-destructive">{reportData.summary.criticalCount}</p>
+                      <div className="p-2 md:p-4 bg-destructive/5 border border-destructive/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0">
+                        <p className="text-[9px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 leading-tight">Critical</p>
+                        <p className="text-base md:text-2xl font-bold text-destructive tabular-nums leading-none">{reportData.summary.criticalCount}</p>
                       </div>
                     </div>
 
@@ -4204,11 +4090,10 @@ const ReportsNew = () => {
                         <table className="w-full">
                           <thead>
                             <tr className="border-b border-border">
-                              <th className="text-center py-3 px-4 text-sm font-semibold">Rank</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">Item Name</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Qty Sold (30d)</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Avg Daily Sale</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Seats Available</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Course Name</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Sales (30d)</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Avg Daily Sales</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Available Seats</th>
                               <th className="text-right py-3 px-4 text-sm font-semibold">Days Left</th>
                               <th className="text-center py-3 px-4 text-sm font-semibold">Status</th>
                             </tr>
@@ -4223,9 +4108,6 @@ const ReportsNew = () => {
                                 item.status === 'Low' && "bg-warning/5"
                               )}
                             >
-                              <td className="py-3 px-4 text-sm text-center font-bold text-primary">
-                                #{item.rank}
-                              </td>
                               <td className="py-3 px-4 text-sm font-medium">
                                 {item.itemName}
                                 <div className="text-xs text-muted-foreground">{item.sku}</div>
@@ -4346,12 +4228,11 @@ const ReportsNew = () => {
                         <table className="w-full">
                           <thead>
                             <tr className="border-b border-border">
-                              <th className="text-center py-3 px-4 text-sm font-semibold">Rank</th>
-                              <th className="text-left py-3 px-4 text-sm font-semibold">Item Name</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Qty Sold (30d)</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Avg Daily Sale</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Seats Available</th>
-                              <th className="text-right py-3 px-4 text-sm font-semibold">Course Value</th>
+                              <th className="text-left py-3 px-4 text-sm font-semibold">Course Name</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Sales (30d)</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Avg Daily Sales</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Available Seats</th>
+                              <th className="text-right py-3 px-4 text-sm font-semibold">Revenue</th>
                               <th className="text-center py-3 px-4 text-sm font-semibold">Status</th>
                             </tr>
                           </thead>
@@ -4365,9 +4246,6 @@ const ReportsNew = () => {
                                   item.status === 'Very Slow' && "bg-warning/5"
                                 )}
                               >
-                                <td className="py-3 px-4 text-sm text-center font-bold text-destructive">
-                                  #{item.rank}
-                                </td>
                                 <td className="py-3 px-4 text-sm font-medium">
                                   {item.itemName}
                                   <div className="text-xs text-muted-foreground">{item.sku}</div>
@@ -4798,6 +4676,8 @@ const ReportsNew = () => {
                   ))}
                 </div>
 
+                {currentReportType === 'profit-loss' && renderProfitLossReport()}
+
                 {/* Cash Flow Report */}
                 {reportData && reportData.transactions && currentReportType === 'cash-flow' && (
                   <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
@@ -5051,24 +4931,37 @@ const ReportsNew = () => {
                     </p>
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      <div className="p-4 bg-success/5 border-2 border-success/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Total Debit</p>
-                        <p className="text-xl font-bold text-success">₹{(reportData.totalDebit || 0).toLocaleString('en-IN')}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-4 mb-4 md:mb-6">
+                      <div className="p-2 md:p-4 bg-success/5 border border-success/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0 overflow-hidden">
+                        <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 leading-tight">Total Debit</p>
+                        <p className="text-sm md:text-xl font-bold text-success tabular-nums leading-tight">
+                          <span className="md:hidden">{formatMobileCurrency(reportData.totalDebit || 0)}</span>
+                          <span className="hidden md:inline">₹{(reportData.totalDebit || 0).toLocaleString('en-IN')}</span>
+                        </p>
                       </div>
-                      <div className="p-4 bg-destructive/5 border-2 border-destructive/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Total Credit</p>
-                        <p className="text-xl font-bold text-destructive">₹{(reportData.totalCredit || 0).toLocaleString('en-IN')}</p>
+                      <div className="p-2 md:p-4 bg-destructive/5 border border-destructive/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0 overflow-hidden">
+                        <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 leading-tight">Total Credit</p>
+                        <p className="text-sm md:text-xl font-bold text-destructive tabular-nums leading-tight">
+                          <span className="md:hidden">{formatMobileCurrency(reportData.totalCredit || 0)}</span>
+                          <span className="hidden md:inline">₹{(reportData.totalCredit || 0).toLocaleString('en-IN')}</span>
+                        </p>
                       </div>
-                      <div className="p-4 bg-warning/5 border-2 border-warning/20 rounded-xl">
-                        <p className="text-xs text-muted-foreground mb-1">Difference</p>
-                        <p className="text-xl font-bold text-warning">₹{(reportData.difference || 0).toLocaleString('en-IN')}</p>
+                      <div className="p-2 md:p-4 bg-warning/5 border border-warning/20 md:border-2 rounded-lg md:rounded-xl text-center min-w-0 overflow-hidden">
+                        <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 leading-tight">Difference</p>
+                        <p className="text-sm md:text-xl font-bold text-warning tabular-nums leading-tight">
+                          <span className="md:hidden">{formatMobileCurrency(reportData.difference || 0)}</span>
+                          <span className="hidden md:inline">₹{(reportData.difference || 0).toLocaleString('en-IN')}</span>
+                        </p>
                       </div>
-                      <div className={cn("p-4 rounded-xl border-2",
-                        reportData.balanced ? "bg-success/5 border-success/20" : "bg-destructive/5 border-destructive/20")}>
-                        <p className="text-xs text-muted-foreground mb-1">Status</p>
-                        <p className={cn("text-xl font-bold", reportData.balanced ? "text-success" : "text-destructive")}>
-                          {reportData.balanced ? '✓ Balanced' : '✗ Unbalanced'}
+                      <div className={cn(
+                        'p-2 md:p-4 rounded-lg md:rounded-xl border md:border-2 text-center min-w-0 overflow-hidden',
+                        reportData.balanced ? 'bg-success/5 border-success/20' : 'bg-destructive/5 border-destructive/20'
+                      )}>
+                        <p className="text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1 leading-tight">Status</p>
+                        <p className={cn('font-bold leading-tight', reportData.balanced ? 'text-success' : 'text-destructive')}>
+                          <span className="md:hidden text-sm block">{reportData.balanced ? '✓' : '✗'}</span>
+                          <span className="md:hidden text-[10px] block">{reportData.balanced ? 'Balanced' : 'Unbalanced'}</span>
+                          <span className="hidden md:inline text-xl">{reportData.balanced ? '✓ Balanced' : '✗ Unbalanced'}</span>
                         </p>
                       </div>
                     </div>

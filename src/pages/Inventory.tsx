@@ -1097,7 +1097,7 @@ const Inventory = () => {
         <div className="flex flex-col md:flex-row items-stretch justify-between gap-2 md:gap-4 mb-3">
           {/* Left Side: KPI Cards - Rectangular filling space */}
           <div className="erp-legacy-kpi-grid flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Total Items Card */}
+            {/* Total Courses Card */}
             <div onClick={() => setActiveTab('all')} className="relative p-4 rounded-2xl cursor-pointer transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md">
               <div className="flex justify-between items-start mb-2">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
@@ -1105,7 +1105,7 @@ const Inventory = () => {
                 </div>
               </div>
               <div>
-                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.inventory.totalItems}</h3>
+                <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t.inventory.totalCourses}</h3>
                 <p className="text-2xl font-bold mt-1 text-slate-700 dark:text-slate-200">{inventorySummary.totalItems}</p>
               </div>
             </div>

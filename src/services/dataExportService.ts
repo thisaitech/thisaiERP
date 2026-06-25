@@ -103,7 +103,7 @@ export const exportCompleteData = async (companyName: string = 'MyBusiness') => 
       { 'Metric': 'Total Sales', 'Value': invoices.filter(i => i.type === 'sale').length },
       { 'Metric': 'Total Purchases', 'Value': invoices.filter(i => i.type === 'purchase').length },
       { 'Metric': 'Total Customers & Suppliers', 'Value': parties.length },
-      { 'Metric': 'Total Items', 'Value': items.length },
+      { 'Metric': 'Total Courses', 'Value': items.length },
       { 'Metric': 'Export Date', 'Value': new Date().toLocaleString('en-IN') },
       { 'Metric': 'Company Name', 'Value': companyName }
     ]
