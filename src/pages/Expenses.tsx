@@ -448,132 +448,44 @@ const Expenses = () => {
             </button>
           </div>
         ) : (
-          <>
-            {/* Mobile Expense Cards - Only visible on mobile */}
-            <div className="md:hidden space-y-2">
-              {filteredExpenses.map((expense) => {
-                const statusMeta = getExpenseStatusMeta(
-                  expense,
-                  t.common?.paid || 'Paid',
-                  t.common?.pending || 'Pending'
-                )
-                return (
-                  <MobileListCard
-                    key={expense.id}
-                    title={getExpenseDisplayName(expense)}
-                    onTitleClick={() => handleViewExpense(expense)}
-                    fields={[
-                      { id: 'date', label: 'Date', value: formatExpenseDate(expense.date) },
-                      { id: 'amount', label: 'Amount', value: formatStatAmount(expense.amount) },
-                      { id: 'category', label: 'Category', value: expense.category.replace(/_/g, ' ') },
-                      { id: 'payment', label: 'Payment', value: expense.paymentMode },
-                    ]}
-                    status={
-                      <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase', statusMeta.className)}>
-                        {statusMeta.label}
-                      </span>
-                    }
-                    actions={
-                      <MobileActionMenu
-                        actions={[
-                          { id: 'view', label: 'View', icon: <Eye size={14} />, onClick: () => handleViewExpense(expense) },
-                          { id: 'edit', label: 'Edit', icon: <Pencil size={14} />, onClick: () => handleEditExpense(expense) },
-                          { id: 'delete', label: 'Delete', icon: <Trash size={14} />, tone: 'danger', onClick: () => handleDeleteExpense(expense.id) },
-                        ]}
-                      />
-                    }
-                  />
-                )
-              })}
-            </div>
-
-            {/* Desktop Table - Hidden on mobile */}
-            <div className="hidden md:block bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="erp-module-table-header bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.expenses?.date || 'Date'}</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">Expense</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.expenses?.category || 'Category'}</th>
-                      <th className="px-4 py-2 text-right text-xs font-semibold text-slate-600">{t.expenses?.amount || 'Amount'}</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.common?.payment || 'Payment'}</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600">{t.common?.status || 'Status'}</th>
-                      <th className="px-4 py-2 text-right text-xs font-semibold text-slate-600">{t.common?.actions || 'Actions'}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredExpenses.map((expense) => {
-                      const statusMeta = getExpenseStatusMeta(
-                        expense,
-                        t.common?.paid || 'Paid',
-                        t.common?.pending || 'Pending'
-                      )
-                      return (
-                      <tr
-                        key={expense.id}
-                        className="hover:bg-slate-50 transition-colors"
-                        >
-                          <td className="px-4 py-3 text-xs text-slate-600">
-                            {formatExpenseDate(expense.date)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <p className="font-semibold text-sm text-slate-800">{getExpenseDisplayName(expense)}</p>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded text-xs font-medium text-slate-700 capitalize">
-                              {expense.category.replace(/_/g, ' ')}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right font-bold text-sm text-slate-800">
-                            {formatStatAmount(expense.amount)}
-                          </td>
-                          <td className="px-4 py-3 text-xs text-slate-600 capitalize">
-                            {expense.paymentMode}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={cn(
-                              "inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase",
-                              statusMeta.className
-                            )}>
-                              {statusMeta.label}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                className="p-1.5 hover:bg-blue-50 rounded transition-colors text-blue-600"
-                                onClick={() => handleViewExpense(expense)}
-                                title="View"
-                              >
-                                <Eye size={16} weight="duotone" />
-                              </button>
-                              <button
-                                className="p-1.5 hover:bg-amber-50 rounded transition-colors text-amber-600"
-                                onClick={() => handleEditExpense(expense)}
-                                title="Edit"
-                              >
-                                <Pencil size={16} weight="duotone" />
-                              </button>
-                              <button
-                                className="p-1.5 hover:bg-red-50 rounded transition-colors text-red-600"
-                                onClick={() => handleDeleteExpense(expense.id)}
-                                title="Delete"
-                              >
-                                <Trash size={16} weight="duotone" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+          <div className="grid grid-cols-1 gap-3">
+            {filteredExpenses.map((expense) => {
+              const statusMeta = getExpenseStatusMeta(
+                expense,
+                t.common?.paid || 'Paid',
+                t.common?.pending || 'Pending'
+              )
+              return (
+                <MobileListCard
+                  key={expense.id}
+                  title={getExpenseDisplayName(expense)}
+                  onTitleClick={() => handleViewExpense(expense)}
+                  fields={[
+                    { id: 'date', label: 'Date', value: formatExpenseDate(expense.date) },
+                    { id: 'amount', label: 'Amount', value: formatStatAmount(expense.amount) },
+                    { id: 'category', label: 'Category', value: expense.category.replace(/_/g, ' ') },
+                    { id: 'payment', label: 'Payment', value: expense.paymentMode },
+                  ]}
+                  status={
+                    <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase', statusMeta.className)}>
+                      {statusMeta.label}
+                    </span>
+                  }
+                  actions={
+                    <MobileActionMenu
+                      actions={[
+                        { id: 'view', label: 'View', icon: <Eye size={14} />, onClick: () => handleViewExpense(expense) },
+                        { id: 'edit', label: 'Edit', icon: <Pencil size={14} />, onClick: () => handleEditExpense(expense) },
+                        { id: 'delete', label: 'Delete', icon: <Trash size={14} />, tone: 'danger', onClick: () => handleDeleteExpense(expense.id) },
+                      ]}
+                    />
+                  }
+                />
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* New Expense Modal */}
       <AnimatePresence>

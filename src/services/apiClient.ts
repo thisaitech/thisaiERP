@@ -51,7 +51,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   const q = query(collection(firestoreDb, collectionName), where('companyId', '==', companyId))
   const snap = await getDocs(q)
   const data = snap.docs
-    .map((d) => d.data())
+    .map((d) => ({ id: d.id, ...d.data() }))
     .sort((a: any, b: any) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))
   return { data } as ListResponse<unknown> as T
 }

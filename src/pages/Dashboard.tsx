@@ -792,57 +792,90 @@ const Dashboard = () => {
   const MobileDashboard = () => {
     return (
       <div className="p-4 pb-28 bg-slate-50 dark:bg-slate-900 min-h-screen">
-        <div className="mb-5 space-y-3">
-          <h1 className="text-center text-lg font-extrabold tracking-tight text-slate-800 dark:text-white">
-            Welcome ✨
-          </h1>
-          <div className="flex w-full justify-end">
-            {periodFilter}
+        <div className="mb-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-extrabold tracking-tight text-slate-800 dark:text-white">
+              Welcome ✨
+            </h1>
+            <div>
+              {periodFilter}
+            </div>
           </div>
         </div>
 
+        {/* Stats Cards - Grid format */}
         <motion.div
-          className="erp-module-kpi-grid min-w-0"
+          className="grid grid-cols-2 gap-3 min-w-0 mb-5"
           initial="hidden"
           animate="visible"
           variants={{
-            visible: {
-              transition: {
-                staggerChildren: 0.1,
-              },
-            },
+            visible: { transition: { staggerChildren: 0.05 } },
           }}
         >
           {[
-            { label: 'Admissions', value: getValueByPeriod(metrics.sales), growth: metrics.sales.growth, route: '/sales', icon: TrendUp, color: 'text-blue-600' },
-            { label: 'Spending', value: getExpenseByPeriod(), growth: null, route: '/expenses', icon: Wallet, color: 'text-slate-700' },
-            { label: 'Profit', value: getProfitByPeriod(), growth: metrics.profit.growth, route: '/reports', icon: ChartLine, color: 'text-green-600' },
-          ].map((stat, i) => (
-            <motion.div
-              key={i}
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              onClick={() => navigate(stat.route)}
-              className={cn(
-                "relative min-w-0 w-full p-3 pt-3.5 rounded-2xl cursor-pointer text-center flex flex-col items-center gap-2 transition-all duration-200",
-                "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm"
-              )}
-            >
-              <div className="flex flex-col items-center justify-center gap-1 w-full min-w-0">
-                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-                  <stat.icon size={16} weight="bold" className={stat.color} />
+            { label: 'Admissions', value: getValueByPeriod(metrics.sales), route: '/sales', icon: TrendUp, accentColor: 'green' },
+            { label: 'Spending', value: getExpenseByPeriod(), route: '/expenses', icon: Wallet, accentColor: 'amber' },
+            { label: 'Profit', value: getProfitByPeriod(), route: '/reports', icon: ChartLine, accentColor: 'green' },
+            { label: 'Bank Balance', value: metrics.cash.inHand, route: '/banking', icon: Bank, accentColor: 'blue', isBalance: true },
+            { label: 'Course Value', value: metrics.inventory.value, route: '/inventory', icon: Package, accentColor: 'slate' },
+          ].map((stat, i) => {
+            const isNegative = stat.value < 0
+            const displayValue = Math.abs(stat.value)
+            const valueColor = stat.isBalance && isNegative ? 'text-red-600 dark:text-red-400' :
+                              stat.accentColor === 'green' ? 'text-green-600 dark:text-green-400' :
+                              stat.accentColor === 'red' ? 'text-red-600 dark:text-red-400' :
+                              stat.accentColor === 'blue' ? 'text-blue-600 dark:text-blue-400' :
+                              stat.accentColor === 'amber' ? 'text-amber-600 dark:text-amber-400' :
+                              'text-slate-700 dark:text-slate-200'
+
+            return (
+              <motion.div
+                key={i}
+                variants={{
+                  hidden: { opacity: 0, y: 10 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                onClick={() => navigate(stat.route)}
+                className={cn(
+                  "relative min-w-0 p-3 rounded-xl cursor-pointer transition-all duration-200 active:scale-95",
+                  "bg-white dark:bg-slate-800",
+                  "border border-slate-200 dark:border-slate-700",
+                  "shadow-sm",
+                  stat.isBalance && isNegative && "border-l-4 border-l-red-500",
+                  i === 4 && "col-span-2"
+                )}
+              >
+                <div className={cn(
+                  "absolute top-0 left-0 right-0 h-0.5 rounded-t-xl opacity-70",
+                  stat.accentColor === 'green' && 'bg-blue-500',
+                  stat.accentColor === 'red' && 'bg-blue-500',
+                  stat.accentColor === 'blue' && 'bg-blue-500',
+                  stat.accentColor === 'amber' && 'bg-blue-500',
+                  stat.accentColor === 'slate' && 'bg-slate-400 dark:bg-slate-600',
+                  stat.isBalance && isNegative && 'bg-blue-500 opacity-100'
+                )} />
+
+                <div className="flex justify-between items-start mb-1 mt-0.5">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">{stat.label}</p>
+                  <div className="w-6 h-6 rounded flex items-center justify-center bg-slate-100 dark:bg-slate-700">
+                    <stat.icon size={12} weight="bold" className={cn(
+                      stat.accentColor === 'green' && 'text-green-600 dark:text-green-400',
+                      stat.accentColor === 'red' && 'text-red-600 dark:text-red-400',
+                      stat.accentColor === 'blue' && 'text-blue-600 dark:text-blue-400',
+                      stat.accentColor === 'amber' && 'text-amber-600 dark:text-amber-400',
+                      stat.accentColor === 'slate' && 'text-slate-600 dark:text-slate-400',
+                      stat.isBalance && isNegative && 'text-red-600 dark:text-red-400'
+                    )} />
+                  </div>
                 </div>
-                <p className="erp-inline-stat-label text-slate-500 dark:text-slate-400 text-center mt-1">{stat.label}</p>
-              </div>
-              <div className="erp-inline-stat-scroll">
-                <p className="erp-inline-stat-value text-slate-800 dark:text-slate-100">
-                  {formatStatAmount(stat.value)}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+                <div className="erp-inline-stat-scroll mt-1">
+                  <p className={cn("text-sm font-bold", valueColor)}>
+                    {isNegative && '-'}{formatStatAmount(displayValue)}
+                  </p>
+                </div>
+              </motion.div>
+            )
+          })}
         </motion.div>
 
         {/* Weekly Chart */}
@@ -928,11 +961,16 @@ const Dashboard = () => {
 
   // ==================== DESKTOP DASHBOARD (Minimalist UI Design) ====================
     const DesktopDashboard = () => (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
-        <div className="w-full space-y-6">
-          {/* Period Filter (above stats cards) */}
-          <div className="flex w-full justify-end">
-            {periodFilter}
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 lg:p-6">
+        <div className="w-full space-y-4">
+          {/* Header Row */}
+          <div className="flex justify-between items-center pb-1">
+            <h1 className="text-lg font-extrabold tracking-tight text-slate-800 dark:text-white">
+              Welcome ✨
+            </h1>
+            <div>
+              {periodFilter}
+            </div>
           </div>
 
           {/* Stats Cards - Professional Neutral Style (6 Cards in a row) */}

@@ -596,68 +596,8 @@ const Visitors = () => {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700 text-left text-slate-500">
-                  <th className="px-3 py-3 font-medium">Name</th>
-                  <th className="px-3 py-3 font-medium">Phone</th>
-                  <th className="px-3 py-3 font-medium">Address</th>
-                  <th className="px-3 py-3 font-medium">Enquiry</th>
-                  <th className="px-3 py-3 font-medium">Course</th>
-                  <th className="px-3 py-3 font-medium">Profession</th>
-                  <th className="px-3 py-3 font-medium">Source</th>
-                  <th className="px-3 py-3 font-medium">Date</th>
-                  <th className="px-3 py-3 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((visitor) => (
-                  <tr key={visitor.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-900/40">
-                    <td className="px-3 py-3">
-                      <button
-                        type="button"
-                        onClick={() => openView(visitor)}
-                        title="View visitor details"
-                        className="font-medium text-blue-600 dark:text-blue-400 text-left cursor-pointer hover:underline transition-colors"
-                      >
-                        {visitor.name}
-                      </button>
-                    </td>
-                    <td className="px-3 py-3">{visitor.phone}</td>
-                    <td className="px-3 py-3 max-w-[180px] truncate">{visitor.address || '—'}</td>
-                    <td className="px-3 py-3">
-                      <span className={cn(
-                        'text-xs font-semibold px-2 py-0.5 rounded-full',
-                        visitor.enquiryType === 'training' ? 'bg-blue-100 text-blue-700' : 'bg-blue-100 text-blue-700'
-                      )}>
-                        {ENQUIRY_TYPE_LABELS[visitor.enquiryType]}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">{visitor.course || '—'}</td>
-                    <td className="px-3 py-3">{visitor.profession || '—'}</td>
-                    <td className="px-3 py-3">
-                      {SOURCE_LABELS[visitor.source]}
-                      {visitor.sourceDetail ? ` (${visitor.sourceDetail})` : ''}
-                    </td>
-                    <td className="px-3 py-3">{visitor.visitDate}</td>
-                    <td className="px-3 py-3">
-                      <div className="flex justify-end gap-1">
-                        <button type="button" onClick={() => openView(visitor)} title="View" className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30">
-                          <Eye size={16} weight="duotone" />
-                        </button>
-                        <button type="button" onClick={() => openEdit(visitor)} title="Edit" className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30">
-                          <PencilSimple size={16} weight="duotone" />
-                        </button>
-                        <button type="button" onClick={() => handleDelete(visitor.id, visitor.name)} title="Delete" className="p-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30">
-                          <Trash size={16} weight="duotone" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 gap-3">
+            {filtered.map(visitorCard)}
           </div>
         )}
       </div>

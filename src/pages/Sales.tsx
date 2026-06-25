@@ -645,11 +645,35 @@ const Sales: React.FC = () => {
       return true
     }
 
-    return invoices.filter((inv) => {
+    const matched = invoices.filter((inv) => {
       if (!matchesPeriod(inv)) return false
       if (!q) return true
       return `${inv.invoiceNumber || ''} ${inv.partyName || ''} ${inv.phone || ''}`.toLowerCase().includes(q)
     })
+
+    // Deduplicate by invoice number — keep highest-status record to avoid
+    // showing the same admission twice (once PENDING, once PAID) after an edit.
+    const statusRank = (s: string) => s === 'paid' ? 2 : s === 'partial' ? 1 : 0
+    const deduped = new Map<string, any>()
+    for (const inv of matched) {
+      const key = String(inv.invoiceNumber || inv.id || '').trim().toLowerCase()
+      if (!key) continue
+      const existing = deduped.get(key)
+      if (!existing) {
+        deduped.set(key, inv)
+      } else {
+        const invRank = statusRank(String(inv.status || ''))
+        const existRank = statusRank(String(existing.status || ''))
+        if (invRank > existRank) {
+          deduped.set(key, inv)
+        } else if (invRank === existRank) {
+          const invTime = String(inv.updatedAt || inv.createdAt || '')
+          const existTime = String(existing.updatedAt || existing.createdAt || '')
+          if (invTime > existTime) deduped.set(key, inv)
+        }
+      }
+    }
+    return [...deduped.values()]
   }, [invoices, admissionSearch, admissionPeriod])
 
   const totalAdmissionsAmount = useMemo(
@@ -662,6 +686,7 @@ const Sales: React.FC = () => {
   )
 
   const recentInvoices = useMemo(() => {
+    // filteredInvoices is already deduplicated — just sort by date and limit.
     return [...filteredInvoices]
       .sort((a, b) => {
         const dateA = String(a.invoiceDate || a.createdAt || '')
@@ -1344,16 +1369,18 @@ const Sales: React.FC = () => {
 
       {showForm && !isMobileViewport && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="w-full max-w-3xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
-              <div className="font-bold text-slate-800 dark:text-slate-100">{modalTitle}</div>
-              <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X size={18} /></button>
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-background shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <div className="font-bold text-base text-foreground">{modalTitle}</div>
+              <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-muted"><X size={18} /></button>
             </div>
-            <div className="p-5 max-h-[68vh] overflow-auto bg-white dark:bg-slate-800 dark:bg-transparent">{formFields(false)}</div>
-            <div className="px-5 py-4 border-t border-slate-200 dark:border-slate-700 dark:border-slate-700 flex items-center justify-end gap-3">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 shadow-sm hover:brightness-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 ">{isViewMode ? 'Close' : 'Cancel'}</button>
+            <div className="flex-1 overflow-y-auto p-4">{formFields(true)}</div>
+            <div className="px-4 py-3 border-t border-border bg-muted/30 flex items-center gap-3">
+              <button onClick={() => setShowForm(false)} className="flex-1 px-4 py-2.5 bg-muted rounded-lg font-medium hover:bg-muted/80 transition-colors text-sm">
+                {isViewMode ? 'Close' : 'Cancel'}
+              </button>
               {!isViewMode && (
-                <button disabled={saving} onClick={handleSave} className={cn('px-5 py-2 rounded-xl font-semibold text-white', saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700')}>
+                <button disabled={saving} onClick={handleSave} className={cn('flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50', saving && 'opacity-70 pointer-events-none')}>
                   {saving ? (formMode === 'edit' ? 'Updating...' : 'Saving...') : (formMode === 'edit' ? 'Update Admission' : 'Save Admission')}
                 </button>
               )}

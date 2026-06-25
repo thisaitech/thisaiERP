@@ -50,6 +50,7 @@ import { useErrorHandler } from '../hooks/useErrorHandler'
 import useIsMobileViewport from '../hooks/useIsMobileViewport'
 import MobilePageScaffold from '../components/mobile/MobilePageScaffold'
 import MobileStatCards from '../components/mobile/MobileStatCards'
+import PeriodFilterDropdown, { type PeriodFilterValue } from '../components/PeriodFilterDropdown'
 
 const Banking = () => {
   const { handleError } = useErrorHandler()
@@ -784,25 +785,11 @@ const Banking = () => {
             ]}
           />
 
-          <div className="relative erp-module-filter-wrap w-full inventory-date-filter-wrap">
-            <div className="inventory-date-filter-row">
-              {[
-                { value: 'today', label: t.common.today },
-                { value: 'week', label: t.common.week },
-                { value: 'month', label: t.common.month },
-                { value: 'year', label: t.common.year },
-                { value: 'all', label: t.common.all },
-                { value: 'custom', label: t.common.custom },
-              ].map((filter) => (
-                <button
-                  key={filter.value}
-                  onClick={() => setSelectedPeriod(filter.value)}
-                  className={cn('erp-module-filter-chip inventory-date-filter-chip', selectedPeriod === filter.value && 'is-active')}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex justify-center mb-3">
+            <PeriodFilterDropdown
+              value={(selectedPeriod === 'all' || selectedPeriod === 'today' || selectedPeriod === 'week' || selectedPeriod === 'month' || selectedPeriod === 'year') ? selectedPeriod as PeriodFilterValue : 'all'}
+              onChange={(val) => setSelectedPeriod(val)}
+            />
           </div>
 
           <div className="erp-module-filter-wrap w-full inventory-date-filter-wrap">
@@ -853,26 +840,16 @@ const Banking = () => {
         {/* Top Row: Date Filter + Action Button (Right Aligned) */}
         <div className="flex items-center justify-end mb-3">
           <div className="flex items-center gap-2">
-            <div className="erp-module-filter-wrap">
-              {['today', 'week', 'month', 'year', 'all', 'custom'].map((period) => (
-                <button
-                  key={period}
-                  onClick={() => setSelectedPeriod(period)}
-                  className={cn(
-                    "erp-module-filter-chip whitespace-nowrap",
-                    selectedPeriod === period && "is-active"
-                  )}
-                >
-                  {period.charAt(0).toUpperCase() + period.slice(1)}
-                </button>
-              ))}
-            </div>
+            <PeriodFilterDropdown
+              value={(selectedPeriod === 'all' || selectedPeriod === 'today' || selectedPeriod === 'week' || selectedPeriod === 'month' || selectedPeriod === 'year') ? selectedPeriod as PeriodFilterValue : 'all'}
+              onChange={(val) => setSelectedPeriod(val)}
+            />
             <button
               onClick={() => setShowAddAccount(true)}
-              className="erp-module-primary-btn text-xs sm:text-sm"
+              className="erp-module-primary-btn text-xs sm:text-sm flex items-center gap-1"
             >
               <Plus size={14} weight="bold" />
-              <span className="hidden sm:inline">{t.banking.addAccount}</span>
+              <span>{t.banking.addAccount}</span>
             </button>
           </div>
         </div>

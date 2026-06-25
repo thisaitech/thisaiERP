@@ -200,6 +200,9 @@ export interface Item {
   sku?: string
   imageUrl?: string
   expiryDate?: string  // Optional expiry date for perishable items
+  duration?: string    // Course duration (e.g. '1 Month', '3 Months')
+  learningMode?: 'Online' | 'Offline' | 'Hybrid'
+  preferredTime?: string
   isActive: boolean
   createdAt: string
   updatedAt: string

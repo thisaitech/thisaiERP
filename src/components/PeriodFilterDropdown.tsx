@@ -136,6 +136,9 @@ const PeriodFilterDropdown = ({ value, onChange, className, compact = false }: P
       )
     : null
 
+  const selectedOption = PERIOD_FILTER_OPTIONS.find((option) => option.id === value)
+  const buttonLabel = selectedOption ? `Filter: ${selectedOption.label}` : 'Filter'
+
   return (
     <>
       <div className={cn('relative', className)}>
@@ -154,7 +157,7 @@ const PeriodFilterDropdown = ({ value, onChange, className, compact = false }: P
           )}
         >
           <FunnelSimple size={compact ? 14 : 16} weight="bold" className="text-slate-500 shrink-0" />
-          {!compact && <span>Filter</span>}
+          {!compact && <span>{buttonLabel}</span>}
           <CaretDown
             size={compact ? 12 : 14}
             className={cn('text-slate-500 transition-transform shrink-0', open && 'rotate-180')}

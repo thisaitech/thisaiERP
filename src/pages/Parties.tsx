@@ -1013,7 +1013,7 @@ const Parties = () => {
         ))}
       </div>
 
-      {/* Students / Clients Table */}
+      {/* Students / Clients List — single-column card view */}
       {isLoadingParties ? (
         <div className="flex items-center justify-center py-20">
           <ArrowsClockwise size={32} weight="duotone" className="text-blue-600 animate-spin" />
@@ -1024,140 +1024,9 @@ const Parties = () => {
           <p className="text-slate-500 text-sm">{language === 'ta' ? 'தரப்பினர் எதுவும் இல்லை' : 'No students or clients found'}</p>
         </div>
       ) : (
-        <>
-          <div className="md:hidden space-y-2">
-            {filteredParties.map((party) => renderPartyMobileCard(party))}
-          </div>
-
-          <div className="hidden md:block rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-left text-[11px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  <th className="px-3 py-2.5">Name</th>
-                  <th className="px-3 py-2.5">Phone</th>
-                  <th className="px-3 py-2.5">Type</th>
-                  <th className="px-3 py-2.5 text-right">Balance</th>
-                  <th className="px-3 py-2.5 text-right">Total Billed</th>
-                  <th className="px-2 py-2.5 text-right w-0">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredParties.map((party, index) => {
-                  const outstanding = party.outstanding ?? party.currentBalance ?? 0
-                  const getProperColor = () => {
-                    if (outstanding === 0) return 'grey'
-                    return outstanding > 0 ? 'green' : 'red'
-                  }
-                  const outstandingColor = getProperColor()
-                  const outstandingFormatted = `₹${Math.abs(outstanding).toLocaleString('en-IN')}`
-
-                  return (
-                    <motion.tr
-                      key={party.id}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.02 }}
-                      className="border-b border-slate-100 dark:border-slate-700/60 hover:bg-slate-50/80 dark:hover:bg-slate-900/40"
-                    >
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-2 min-w-[120px]">
-                          <div className={cn(
-                            'p-1.5 rounded-lg flex-shrink-0',
-                            party.type === 'customer' ? 'bg-blue-50' : 'bg-orange-50'
-                          )}>
-                            {party.type === 'customer' ? (
-                              <UserCircle size={16} weight="duotone" className="text-blue-600" />
-                            ) : (
-                              <Storefront size={16} weight="duotone" className="text-orange-600" />
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setViewingStudent(party)}
-                            title="View student details"
-                            className="font-medium text-slate-800 dark:text-slate-100 truncate text-left cursor-pointer hover:text-blue-600 hover:underline transition-colors"
-                          >
-                            {getPartyName(party)}
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                        {party.phone || '-'}
-                      </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap">
-                        <span className={cn(
-                          'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium',
-                          party.type === 'customer' ? 'bg-blue-50 text-blue-700' : 'bg-orange-50 text-orange-700'
-                        )}>
-                          {party.type === 'customer' ? (language === 'ta' ? 'மாணவர்' : 'Student') : (language === 'ta' ? 'வாடிக்கையாளர்' : 'Client')}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-right whitespace-nowrap">
-                        <span className={cn(
-                          'font-semibold text-xs',
-                          outstandingColor === 'green' && 'text-emerald-600',
-                          outstandingColor === 'red' && 'text-red-600',
-                          outstandingColor === 'grey' && 'text-slate-500'
-                        )}>
-                          {outstanding !== 0 && (outstandingColor === 'green' ? '+' : '-')}
-                          {outstandingFormatted}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-right text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                        ₹{((party.type === 'customer' ? (party.totalSales || 0) : (party.totalPurchases || 0))).toLocaleString('en-IN')}
-                      </td>
-                      <td className="px-2 py-2.5 w-0">
-                        <div className="inline-flex items-center justify-end gap-0">
-                          <button
-                            type="button"
-                            onClick={() => setAdmissionForStudent({
-                              id: party.id,
-                              name: getPartyName(party),
-                              phone: party.phone || '',
-                              email: party.email || '',
-                              address: party.billingAddress?.street || (party as any).address || '',
-                              admissionDetails: (party as any).admissionDetails,
-                            })}
-                            className="p-1 rounded-md text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                            title="Add Admission"
-                          >
-                            <Plus size={15} weight="bold" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setViewingStudent(party)}
-                            className="p-1 rounded-md text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-                            title="View"
-                          >
-                            <Eye size={15} weight="duotone" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleEditParty(party)}
-                            className="p-1 rounded-md text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                            title="Edit"
-                          >
-                            <Pencil size={15} weight="duotone" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteParty(party)}
-                            className="p-1 rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                            title="Delete"
-                          >
-                            <Trash size={15} weight="duotone" />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+        <div className="grid grid-cols-1 gap-3">
+          {filteredParties.map((party) => renderPartyMobileCard(party))}
         </div>
-        </>
       )}
 
       {/* Add Student/Client Modal */}

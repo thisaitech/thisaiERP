@@ -1654,44 +1654,30 @@ const ReportsNew = () => {
 
                     {/* Supplier List */}
                     {reportData.suppliers && reportData.suppliers.length > 0 ? (
-                      <div className="space-y-4">
-                        <h3 className="font-semibold text-sm">Vendors to Pay</h3>
-                        {reportData.suppliers.map((supplier: any, idx: number) => (
-                          <div key={idx} className="border border-border rounded-lg p-4 hover:border-destructive transition-colors">
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <h4 className="font-bold text-base">{supplier.supplierName}</h4>
-                                <p className="text-sm text-muted-foreground">{supplier.invoiceCount} pending invoice(s)</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-2xl font-bold text-destructive">₹{supplier.totalDue.toLocaleString('en-IN')}</p>
-                                <p className="text-xs text-muted-foreground">Total Due</p>
-                              </div>
-                            </div>
-
-                            {/* Invoice Details */}
-                            <div className="space-y-2 border-t pt-3">
-                              {supplier.invoices.map((inv: any, i: number) => (
-                                <div key={i} className="flex justify-between text-sm">
-                                  <div className="flex-1">
-                                    <span className="font-medium">{inv.invoiceNumber}</span>
-                                    <span className="text-muted-foreground ml-2">({inv.invoiceDate})</span>
-                                    {inv.overdueDays > 0 && (
-                                      <span className={cn("ml-2 px-2 py-0.5 rounded text-xs font-medium",
-                                        inv.overdueDays <= 30 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive")}>
-                                        {inv.overdueDays} days overdue
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="text-right">
-                                    <span className="font-bold text-destructive">₹{inv.dueAmount.toLocaleString('en-IN')}</span>
-                                    <span className="text-muted-foreground text-xs ml-2">/ ₹{inv.grandTotal.toLocaleString('en-IN')}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
+                      <div>
+                        <h3 className="font-semibold text-sm mb-3">Vendors to Pay</h3>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-border">
+                                <th className="text-left py-2 px-3 font-semibold text-muted-foreground">Invoice No</th>
+                                <th className="text-left py-2 px-3 font-semibold text-muted-foreground">Due</th>
+                                <th className="text-left py-2 px-3 font-semibold text-muted-foreground">Amount</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {reportData.suppliers.flatMap((supplier: any) =>
+                                supplier.invoices.map((inv: any, i: number) => (
+                                  <tr key={`${supplier.supplierName}-${i}`} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                                    <td className="py-3 px-3 font-medium text-primary">{inv.invoiceNumber}</td>
+                                    <td className="py-3 px-3 text-destructive font-medium">₹{inv.dueAmount.toLocaleString('en-IN')}</td>
+                                    <td className="py-3 px-3 text-destructive font-medium">₹{inv.grandTotal.toLocaleString('en-IN')}</td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
@@ -2975,44 +2961,30 @@ const ReportsNew = () => {
 
                     {/* Supplier List */}
                     {reportData.suppliers && reportData.suppliers.length > 0 ? (
-                      <div className="space-y-4">
-                        <h3 className="font-semibold text-sm">Vendors to Pay</h3>
-                        {reportData.suppliers.map((supplier: any, idx: number) => (
-                          <div key={idx} className="border border-border rounded-lg p-4 hover:border-destructive transition-colors">
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <h4 className="font-bold text-base">{supplier.supplierName}</h4>
-                                <p className="text-sm text-muted-foreground">{supplier.invoiceCount} pending invoice(s)</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-2xl font-bold text-destructive">₹{supplier.totalDue.toLocaleString('en-IN')}</p>
-                                <p className="text-xs text-muted-foreground">Total Due</p>
-                              </div>
-                            </div>
-
-                            {/* Invoice Details */}
-                            <div className="space-y-2 border-t pt-3">
-                              {supplier.invoices.map((inv: any, i: number) => (
-                                <div key={i} className="flex justify-between text-sm">
-                                  <div className="flex-1">
-                                    <span className="font-medium">{inv.invoiceNumber}</span>
-                                    <span className="text-muted-foreground ml-2">({inv.invoiceDate})</span>
-                                    {inv.overdueDays > 0 && (
-                                      <span className={cn("ml-2 px-2 py-0.5 rounded text-xs font-medium",
-                                        inv.overdueDays <= 30 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive")}>
-                                        {inv.overdueDays} days overdue
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="text-right">
-                                    <span className="font-bold text-destructive">₹{inv.dueAmount.toLocaleString('en-IN')}</span>
-                                    <span className="text-muted-foreground text-xs ml-2">/ ₹{inv.grandTotal.toLocaleString('en-IN')}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
+                      <div>
+                        <h3 className="font-semibold text-sm mb-3">Vendors to Pay</h3>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-border">
+                                <th className="text-left py-2 px-3 font-semibold text-muted-foreground">Invoice No</th>
+                                <th className="text-left py-2 px-3 font-semibold text-muted-foreground">Due</th>
+                                <th className="text-left py-2 px-3 font-semibold text-muted-foreground">Amount</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {reportData.suppliers.flatMap((supplier: any) =>
+                                supplier.invoices.map((inv: any, i: number) => (
+                                  <tr key={`${supplier.supplierName}-${i}`} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                                    <td className="py-3 px-3 font-medium text-primary">{inv.invoiceNumber}</td>
+                                    <td className="py-3 px-3 text-destructive font-medium">₹{inv.dueAmount.toLocaleString('en-IN')}</td>
+                                    <td className="py-3 px-3 text-destructive font-medium">₹{inv.grandTotal.toLocaleString('en-IN')}</td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
