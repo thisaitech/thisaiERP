@@ -1,7 +1,7 @@
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import { getAnalytics, isSupported } from 'firebase/analytics'
-import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { getAuth, type Auth } from 'firebase/auth'
+import { getFirestore, type Firestore } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,11 +13,19 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 }
 
-export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig)
-export const firebaseAuth = getAuth(firebaseApp)
-export const firestoreDb = getFirestore(firebaseApp)
+export const isFirebaseConfigured =
+  Boolean(firebaseConfig.apiKey) &&
+  Boolean(firebaseConfig.authDomain) &&
+  Boolean(firebaseConfig.projectId) &&
+  Boolean(firebaseConfig.appId)
 
-if (firebaseConfig.measurementId) {
+const appConfig = isFirebaseConfigured ? firebaseConfig : null
+
+export const firebaseApp = appConfig ? (getApps().length ? getApp() : initializeApp(appConfig)) : null
+export const firebaseAuth: Auth | null = firebaseApp ? getAuth(firebaseApp) : null
+export const firestoreDb: Firestore | null = firebaseApp ? getFirestore(firebaseApp) : null
+
+if (firebaseApp && firebaseConfig.measurementId) {
   isSupported()
     .then((supported) => {
       if (supported) getAnalytics(firebaseApp)

@@ -586,6 +586,27 @@
     font-size: 1.3rem;
   }
 
+  [data-mobile-premium-ui='true'] .erp-module-page .erp-inline-stat-card {
+    padding: 8px 10px;
+  }
+
+  [data-mobile-premium-ui='true'] .erp-module-page .erp-inline-stat-label {
+    font-size: 0.56rem;
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+    white-space: normal;
+  }
+
+  [data-mobile-premium-ui='true'] .erp-module-page .erp-inline-stat-value {
+    font-size: 0.72rem;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+
+  [data-mobile-premium-ui='true'] .erp-module-page .erp-inline-stat-scroll .erp-inline-stat-value {
+    min-width: 0;
+  }
+
   [data-mobile-premium-ui='true'] .erp-module-page .erp-legacy-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
@@ -620,11 +641,27 @@
     gap: 6px;
   }
 
+  [data-mobile-premium-ui='true'] .erp-module-page .inventory-course-filter-wrap {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+  }
+
+  [data-mobile-premium-ui='true'] .erp-module-page .inventory-course-filter-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
   [data-mobile-premium-ui='true'] .erp-module-page .erp-module-filter-chip {
-    min-height: 36px;
-    font-size: 0.78rem;
-    padding: 0 10px;
+    min-height: 44px;
+    font-size: 0.74rem;
+    padding: 6px 4px;
     border-radius: 9px;
+    white-space: normal;
+    min-width: 0;
+  }
+
+  [data-mobile-premium-ui='true'] .erp-module-page .inventory-summary-text {
+    display: none !important;
   }
 
   [data-mobile-premium-ui='true'] .erp-module-page .erp-module-search-input {

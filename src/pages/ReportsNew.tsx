@@ -2669,7 +2669,7 @@ const ReportsNew = () => {
                         <Package size={24} className="text-primary" weight="duotone" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-muted-foreground">Course Value</h3>
+                        <h3 className="text-sm font-medium text-muted-foreground">Courses</h3>
                         <p className="text-2xl font-bold">₹{(reportData.stock?.totalStockValue || 0).toLocaleString('en-IN')}</p>
                       </div>
                     </div>

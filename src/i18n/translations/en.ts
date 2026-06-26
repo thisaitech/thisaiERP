@@ -78,7 +78,7 @@ export const en = {
 
   // Navigation
   nav: {
-    dashboard: 'Dashboard',
+    dashboard: 'Courses',
     sales: 'Admissions',
     pos: 'POS',
     purchases: 'Purchases',
@@ -103,7 +103,7 @@ export const en = {
 
   // Dashboard
   dashboard: {
-    title: 'Dashboard',
+    title: 'Courses',
     welcome: 'Welcome',
     todaySales: "Today's Sales",
     totalRevenue: 'Total Revenue',

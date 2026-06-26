@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect } from 'react'
+﻿import React, { Suspense, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -1197,15 +1197,17 @@ const Inventory = () => {
       >
         <div className="flex flex-col md:flex-row md:items-center gap-2">
           {/* Search Bar */}
-          <div className="flex-1 relative">
-            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
-            <input
-              type="text"
-              placeholder={t.inventory.searchByNameSku}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="erp-module-search-input pl-9 pr-3"
-            />
+          <div className="mobile-search-wrap flex-1">
+            <div className="mobile-search-input-wrap">
+              <MagnifyingGlass size={18} className="mobile-search-icon" />
+              <input
+                type="text"
+                placeholder={t.inventory.searchByNameSku}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="mobile-search-input"
+              />
+            </div>
           </div>
 
           {/* Category Filter Pills - Visible on all screens */}
@@ -1325,7 +1327,7 @@ const Inventory = () => {
                 {/* Desktop Row */}
                 <div className="hidden md:flex items-center px-3 py-2 bg-white rounded-lg border border-slate-100 hover:border-blue-200 hover:shadow-sm transition-all">
                   {/* Item Name */}
-                  <div style={{ width: '30%' }} className="flex items-center gap-2 min-w-0">
+                  <div style={{ width: '29%' }} className="flex items-center gap-2 min-w-0">
                     <div className="p-1.5 rounded-lg flex-shrink-0 bg-blue-50">
                       <Package size={16} weight="duotone" className="text-blue-600" />
                     </div>
@@ -1378,7 +1380,7 @@ const Inventory = () => {
                   </div>
 
                   {/* Price */}
-                  <div style={{ width: '12%' }} className="text-right text-xs text-slate-800 font-semibold">
+                  <div style={{ width: '14%' }} className="text-right text-xs text-slate-800 font-semibold pr-6">
                     ₹{(item.sellingPrice || 0).toLocaleString('en-IN')}
                   </div>
 
@@ -1388,7 +1390,7 @@ const Inventory = () => {
                   </div>
 
                   {/* Status Badge */}
-                  <div style={{ width: '10%' }} className="flex justify-center">
+                  <div style={{ width: '14%' }} className="flex justify-start pl-6">
                     <span className={cn(
                       "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium",
                       status.color === 'success' && "bg-blue-50 text-emerald-700",
@@ -1401,7 +1403,7 @@ const Inventory = () => {
                   </div>
 
                   {/* Actions */}
-                  <div style={{ width: '14%' }} className="flex items-center justify-center gap-0.5">
+                  <div style={{ width: '21%' }} className="flex items-center justify-end gap-0.5 pr-1">
                     <button
                       onClick={() => handleViewItem(item)}
                       className="w-7 h-7 flex items-center justify-center bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"

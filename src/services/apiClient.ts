@@ -1,5 +1,5 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
-import { firestoreDb } from './firebase'
+import { firestoreDb, isFirebaseConfigured } from './firebase'
 
 type ListResponse<T> = { data: T[] }
 type OneResponse<T> = { data: T }
@@ -20,6 +20,13 @@ function parsePath(path: string): { collectionName: string; id?: string } {
 
 function makeId(collectionName: string): string {
   return `${collectionName}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+}
+
+function requireFirestoreDb() {
+  if (!isFirebaseConfigured || !firestoreDb) {
+    throw new Error('Firebase is not configured. Add VITE_FIREBASE_* values to .env to enable data access.')
+  }
+  return firestoreDb
 }
 
 function removeUndefined(value: unknown): unknown {
@@ -43,12 +50,12 @@ export async function apiGet<T>(path: string): Promise<T> {
   const companyId = currentCompanyId()
 
   if (id) {
-    const snap = await getDoc(doc(firestoreDb, collectionName, id))
+    const snap = await getDoc(doc(requireFirestoreDb(), collectionName, id))
     if (!snap.exists()) throw new Error('Not found')
     return { data: snap.data() } as T
   }
 
-  const q = query(collection(firestoreDb, collectionName), where('companyId', '==', companyId))
+  const q = query(collection(requireFirestoreDb(), collectionName), where('companyId', '==', companyId))
   const snap = await getDocs(q)
   const data = snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
@@ -71,7 +78,7 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   }
 
   const cleanData = removeUndefined(data)
-  await setDoc(doc(firestoreDb, collectionName, id), cleanData as Record<string, unknown>)
+  await setDoc(doc(requireFirestoreDb(), collectionName, id), cleanData as Record<string, unknown>)
   return { data: cleanData } as OneResponse<unknown> as T
 }
 
@@ -79,7 +86,7 @@ export async function apiPut<T>(path: string, body?: unknown): Promise<T> {
   const { collectionName, id } = parsePath(path)
   if (!id) throw new Error(`Missing record id for ${path}`)
   const companyId = currentCompanyId()
-  const ref = doc(firestoreDb, collectionName, id)
+  const ref = doc(requireFirestoreDb(), collectionName, id)
   const existing = await getDoc(ref)
   const existingData = existing.exists() ? existing.data() : {}
   const now = new Date().toISOString()
@@ -101,6 +108,6 @@ export async function apiPut<T>(path: string, body?: unknown): Promise<T> {
 export async function apiDelete<T>(path: string): Promise<T> {
   const { collectionName, id } = parsePath(path)
   if (!id) throw new Error(`Missing record id for ${path}`)
-  await deleteDoc(doc(firestoreDb, collectionName, id))
+  await deleteDoc(doc(requireFirestoreDb(), collectionName, id))
   return { ok: true } as T
 }

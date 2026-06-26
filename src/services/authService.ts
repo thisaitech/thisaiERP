@@ -5,7 +5,7 @@ import {
   signOut as firebaseSignOut,
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
-import { firebaseAuth, firestoreDb } from './firebase'
+import { firebaseAuth, firestoreDb, isFirebaseConfigured } from './firebase'
 
 export type UserRole = 'admin' | 'manager' | 'cashier'
 
@@ -24,6 +24,20 @@ export interface UserData {
 
 const AUTH_CHANGED_EVENT = 'auth-changed'
 
+function requireFirebaseAuth() {
+  if (!isFirebaseConfigured || !firebaseAuth) {
+    throw new Error('Firebase is not configured. Add VITE_FIREBASE_* values to .env to enable authentication.')
+  }
+  return firebaseAuth
+}
+
+function requireFirestoreDb() {
+  if (!isFirebaseConfigured || !firestoreDb) {
+    throw new Error('Firebase is not configured. Add VITE_FIREBASE_* values to .env to enable data storage.')
+  }
+  return firestoreDb
+}
+
 function emitAuthChanged() {
   window.dispatchEvent(new Event(AUTH_CHANGED_EVENT))
 }
@@ -40,7 +54,7 @@ function saveSession(user: UserData, token: string) {
 }
 
 async function getUserData(uid: string): Promise<UserData> {
-  const snap = await getDoc(doc(firestoreDb, 'users', uid))
+  const snap = await getDoc(doc(requireFirestoreDb(), 'users', uid))
   if (!snap.exists()) {
     throw new Error('User profile not found. Please register this account first.')
   }
@@ -48,12 +62,12 @@ async function getUserData(uid: string): Promise<UserData> {
 }
 
 export const signIn = async (email: string, password: string): Promise<UserData> => {
-  const credential = await signInWithEmailAndPassword(firebaseAuth, email, password)
+  const credential = await signInWithEmailAndPassword(requireFirebaseAuth(), email, password)
   const userData = await getUserData(credential.user.uid)
   const lastLogin = new Date().toISOString()
   const updatedUser = { ...userData, lastLogin }
 
-  await updateDoc(doc(firestoreDb, 'users', credential.user.uid), { lastLogin })
+  await updateDoc(doc(requireFirestoreDb(), 'users', credential.user.uid), { lastLogin })
   saveSession(updatedUser, await credential.user.getIdToken())
   return updatedUser
 }
@@ -64,7 +78,7 @@ export const createAdminAccount = async (
   fullName: string,
   companyName: string
 ): Promise<UserData> => {
-  const credential = await createUserWithEmailAndPassword(firebaseAuth, email, password)
+  const credential = await createUserWithEmailAndPassword(requireFirebaseAuth(), email, password)
   const now = new Date().toISOString()
   const userData: UserData = {
     uid: credential.user.uid,
@@ -78,13 +92,15 @@ export const createAdminAccount = async (
     lastLogin: now,
   }
 
-  await setDoc(doc(firestoreDb, 'users', credential.user.uid), userData)
+  await setDoc(doc(requireFirestoreDb(), 'users', credential.user.uid), userData)
   saveSession(userData, await credential.user.getIdToken())
   return userData
 }
 
 export const signOut = async (): Promise<void> => {
-  await firebaseSignOut(firebaseAuth)
+  if (firebaseAuth) {
+    await firebaseSignOut(firebaseAuth)
+  }
   localStorage.removeItem('auth_token')
   localStorage.removeItem('user')
   emitAuthChanged()
@@ -105,6 +121,13 @@ export const getCurrentUser = (): UserData | null => {
 }
 
 export const onAuthChange = (callback: (user: UserData | null) => void) => {
+  if (!isFirebaseConfigured || !firebaseAuth) {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user')
+    callback(null)
+    return () => {}
+  }
+
   const emitCurrent = () => callback(getCurrentUser())
   const unsubscribeFirebase = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
     if (!firebaseUser) {

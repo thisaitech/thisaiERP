@@ -260,7 +260,7 @@ const Layout = () => {
   const currentPageTitle =
     mobileRouteLabels.find((item) => location.pathname === item.path)?.label ||
     mobileRouteLabels.find((item) => location.pathname.startsWith(item.path + '/'))?.label ||
-    (userData?.companyName || t.nav.dashboard)
+    t.nav.dashboard
 
   const isPathActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname === path || location.pathname.startsWith(`${path}/`)
@@ -481,14 +481,14 @@ const Layout = () => {
 
       {/* Mobile Header - Premium Glassmorphism */}
       <header className="sticky top-0 z-40 lg:hidden px-4 py-3 bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="w-[84px]" aria-hidden="true" />
-          
-          <h1 className="text-lg font-extrabold tracking-tight text-slate-800 dark:text-white truncate max-w-[200px] text-center flex-1">
+        <div className="grid grid-cols-[minmax(0,96px)_minmax(0,1fr)_minmax(0,96px)] items-center gap-2">
+          <div aria-hidden="true" />
+
+          <h1 className="justify-self-center w-full max-w-[calc(100vw-220px)] truncate px-1 text-center text-lg font-extrabold tracking-tight text-slate-800 dark:text-white">
             {currentPageTitle}
           </h1>
-          
-          <div className="flex items-center justify-end w-[84px] gap-2">
+
+          <div className="flex items-center justify-end gap-2">
             {isMobileViewport && (
             <NotificationBell
               buttonClassName="w-8 h-8 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none border border-slate-100 dark:border-slate-700"

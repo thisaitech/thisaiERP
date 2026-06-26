@@ -250,13 +250,14 @@ const Login = () => {
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={false}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md relative z-10"
       >
         {/* Auth Card */}
         <motion.div
           layout
+          initial={false}
           className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-[2rem] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] border border-slate-200/50 dark:border-slate-800/50 p-8 overflow-hidden text-slate-900 dark:text-slate-100"
         >
           <AnimatePresence mode="wait">
@@ -264,7 +265,7 @@ const Login = () => {
             {mode === 'login' && (
               <motion.form
                 key="login"
-                initial={{ opacity: 0, x: -20 }}
+                initial={false}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 onSubmit={handleLogin}
@@ -325,7 +326,7 @@ const Login = () => {
             {mode === 'register' && (
               <motion.form
                 key="register"
-                initial={{ opacity: 0, x: 20 }}
+                initial={false}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 onSubmit={handleRegister}
@@ -504,7 +505,7 @@ const Login = () => {
             {mode === 'forgot' && (
               <motion.form
                 key="forgot"
-                initial={{ opacity: 0, x: 20 }}
+                initial={false}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 onSubmit={handleForgotPassword}
