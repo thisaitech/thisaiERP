@@ -817,7 +817,7 @@ const Dashboard = () => {
             { label: 'Spending', value: getExpenseByPeriod(), route: '/expenses', icon: Wallet, accentColor: 'amber' },
             { label: 'Profit', value: getProfitByPeriod(), route: '/reports', icon: ChartLine, accentColor: 'green' },
             { label: 'Bank Balance', value: metrics.cash.inHand, route: '/banking', icon: Bank, accentColor: 'blue', isBalance: true },
-            { label: 'Inventory Value', value: metrics.inventory.value, route: '/inventory', icon: Package, accentColor: 'slate' },
+            { label: 'Course Value', value: metrics.inventory.value, route: '/inventory', icon: Package, accentColor: 'slate' },
           ].map((stat, i) => {
             const isNegative = stat.value < 0
             const displayValue = Math.abs(stat.value)
@@ -987,7 +987,7 @@ const Dashboard = () => {
               { label: 'Spending', value: getExpenseByPeriod(), route: '/expenses', icon: Wallet, accentColor: 'amber' },
               { label: 'Profit', value: getProfitByPeriod(), route: '/reports', icon: ChartLine, accentColor: 'green' },
               { label: 'Bank Balance', value: metrics.cash.inHand, route: '/banking', icon: Bank, accentColor: 'blue', isBalance: true },
-              { label: 'Inventory Value', value: metrics.inventory.value, route: '/inventory', icon: Package, accentColor: 'slate' },
+              { label: 'Course Value', value: metrics.inventory.value, route: '/inventory', icon: Package, accentColor: 'slate' },
             ].map((stat, i) => {
               const isNegative = stat.value < 0
               const displayValue = Math.abs(stat.value)
