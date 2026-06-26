@@ -6,11 +6,7 @@ import './styles/tokens.css'
 import './styles/mobile.css'
 import { initializeTheme } from './services/themeService'
 import './services/firebase'
-
-// If a PWA service worker was previously registered on this origin, it can keep serving
-// stale cached assets even during local development. Ensure dev always uses the latest
-// bundle from Vite.
-const appEnv = (import.meta as any).env || {}
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(async (registrations) => {
@@ -19,26 +15,32 @@ if ('serviceWorker' in navigator) {
     try {
       await Promise.all(registrations.map((r) => r.unregister()))
 
-      // Best-effort cache cleanup (Workbox precaches can otherwise linger).
       if ('caches' in window) {
         const keys = await caches.keys()
         await Promise.all(keys.map((k) => caches.delete(k)))
       }
 
-      // Avoid infinite reload loops.
       if (!sessionStorage.getItem('sw-cleaned')) {
         sessionStorage.setItem('sw-cleaned', '1')
         window.location.reload()
       }
     } catch {
-      // Non-fatal; the app still works without unregistering.
+      // Non-fatal
     }
   })
 }
 
-// Initialize festival theme on app start
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection:', event.reason)
+})
+
+window.addEventListener('error', (event) => {
+  console.error('Global error:', event.error)
+})
+
 initializeTheme()
 
+const appEnv = (import.meta as any).env || {}
 const motionLevel = (appEnv.VITE_MOTION_LEVEL || 'balanced').toLowerCase()
 const mobileDensity = (appEnv.VITE_MOBILE_DENSITY || 'compact').toLowerCase()
 const premiumMobileEnabled = (appEnv.VITE_MOBILE_PREMIUM_UI ?? 'true') !== 'false'
@@ -49,6 +51,8 @@ document.documentElement.dataset.mobilePremiumUi = premiumMobileEnabled ? 'true'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>,
 )

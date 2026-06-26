@@ -78,7 +78,7 @@ export const ta = {
 
   // Navigation - வழிசெலுத்தல்
   nav: {
-    dashboard: 'கோர்ஸ்கள்',
+    dashboard: 'டாஷ்போர்டு',
     sales: 'விற்பனை',
     pos: 'விற்பனை நிலையம்',
     purchases: 'கொள்முதல்',
@@ -102,9 +102,9 @@ export const ta = {
     upgradeNow: 'இப்போது மேம்படுத்து',
   },
 
-  // Dashboard - கோர்ஸ்கள்
+  // Dashboard - டாஷ்போர்டு
   dashboard: {
-    title: 'கோர்ஸ்கள்',
+    title: 'டாஷ்போர்டு',
     welcome: 'வரவேற்கிறோம்',
     todaySales: 'இன்றைய விற்பனை',
     totalRevenue: 'மொத்த வருவாய்',

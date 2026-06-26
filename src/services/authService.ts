@@ -62,14 +62,53 @@ async function getUserData(uid: string): Promise<UserData> {
 }
 
 export const signIn = async (email: string, password: string): Promise<UserData> => {
-  const credential = await signInWithEmailAndPassword(requireFirebaseAuth(), email, password)
-  const userData = await getUserData(credential.user.uid)
-  const lastLogin = new Date().toISOString()
-  const updatedUser = { ...userData, lastLogin }
+  try {
+    const credential = await signInWithEmailAndPassword(requireFirebaseAuth(), email, password)
+    const userData = await getUserData(credential.user.uid)
+    const lastLogin = new Date().toISOString()
+    const updatedUser = { ...userData, lastLogin }
 
-  await updateDoc(doc(requireFirestoreDb(), 'users', credential.user.uid), { lastLogin })
-  saveSession(updatedUser, await credential.user.getIdToken())
-  return updatedUser
+    await updateDoc(doc(requireFirestoreDb(), 'users', credential.user.uid), { lastLogin })
+    saveSession(updatedUser, await credential.user.getIdToken())
+    return updatedUser
+  } catch (firebaseError: any) {
+    console.warn('Firebase login failed, trying API fallback:', firebaseError.message)
+    return signInWithApi(email, password)
+  }
+}
+
+async function signInWithApi(email: string, password: string): Promise<UserData> {
+  const apiBase = (import.meta as any).env?.VITE_API_URL || ''
+  if (!apiBase) {
+    throw new Error('API login unavailable: VITE_API_URL is not configured.')
+  }
+
+  const response = await fetch(`${apiBase}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  })
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => 'Login failed')
+    throw new Error(text || `API login failed (${response.status})`)
+  }
+
+  const result = await response.json()
+  const userData: UserData = {
+    uid: result.user.uid,
+    email: result.user.email,
+    displayName: result.user.displayName,
+    companyName: result.user.companyName,
+    companyId: result.user.companyId,
+    role: result.user.role,
+    status: result.user.status,
+    createdAt: result.user.createdAt,
+    lastLogin: result.user.lastLogin,
+  }
+
+  saveSession(userData, result.token)
+  return userData
 }
 
 export const createAdminAccount = async (

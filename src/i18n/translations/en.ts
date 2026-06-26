@@ -78,7 +78,7 @@ export const en = {
 
   // Navigation
   nav: {
-    dashboard: 'Courses',
+    dashboard: 'Dashboard',
     sales: 'Admissions',
     pos: 'POS',
     purchases: 'Purchases',
@@ -479,7 +479,7 @@ export const en = {
 
   // Inventory
   inventory: {
-    title: 'Courses',
+    title: 'Dashboard',
     items: 'Courses',
     newItem: 'New Course',
     addItem: 'Add Course',

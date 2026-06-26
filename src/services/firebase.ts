@@ -21,7 +21,14 @@ export const isFirebaseConfigured =
 
 const appConfig = isFirebaseConfigured ? firebaseConfig : null
 
-export const firebaseApp = appConfig ? (getApps().length ? getApp() : initializeApp(appConfig)) : null
+let firebaseAppInstance: ReturnType<typeof initializeApp> | null = null
+try {
+  firebaseAppInstance = appConfig ? (getApps().length ? getApp() : initializeApp(appConfig)) : null
+} catch (e) {
+  console.warn('Firebase initialization failed; API fallback will be used.', e)
+  firebaseAppInstance = null
+}
+export const firebaseApp = firebaseAppInstance
 export const firebaseAuth: Auth | null = firebaseApp ? getAuth(firebaseApp) : null
 export const firestoreDb: Firestore | null = firebaseApp ? getFirestore(firebaseApp) : null
 
