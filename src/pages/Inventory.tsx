@@ -103,8 +103,6 @@ const Inventory = () => {
   const [boxPurchasePrice, setBoxPurchasePrice] = useState('')
   const [lastEditedBox, setLastEditedBox] = useState<'selling' | 'purchase' | null>(null)
   const [duration, setDuration] = useState('1 Month')
-  const [learningMode, setLearningMode] = useState<'Online' | 'Offline' | 'Hybrid'>('Offline')
-  const [preferredTime, setPreferredTime] = useState('')
 
   // Auto-calculate box prices when piece prices or pcs per box changes
   useEffect(() => {
@@ -362,8 +360,6 @@ const Inventory = () => {
     setItemName('')
     setItemDescription('')
     setDuration('1 Month')
-    setLearningMode('Offline')
-    setPreferredTime('')
     setUnitType('PCS')
     setRetailPrice('')
     setWholesalePrice('')
@@ -567,8 +563,6 @@ const Inventory = () => {
         brand: brandName?.trim() || undefined,
         barcode: barcodeNumber?.trim() || undefined,
         duration: duration,
-        learningMode: learningMode,
-        preferredTime: preferredTime || undefined,
         // Calculate stock in base units (Pcs)
         // If entering in Box, multiply by piecesPerPurchaseUnit
         // If entering in Pcs, use as-is
@@ -650,8 +644,6 @@ const Inventory = () => {
     setIgstRate((item.tax?.igst || 0).toString())
     setItemCategory(item.category || 'Programming')
     setDuration(item.duration || '1 Month')
-    setLearningMode(item.learningMode || 'Offline')
-    setPreferredTime(item.preferredTime || '')
     setHsnCode(item.hsnCode || '')
     setStockQuantity(item.stock?.toString() || '')
     setLowStockAlert(item.reorderPoint?.toString() || '')
@@ -714,8 +706,6 @@ const Inventory = () => {
         },
         category: itemCategory,
         duration: duration,
-        learningMode: learningMode,
-        preferredTime: preferredTime || undefined,
         // Calculate stock in base units (Pcs)
         // If entering in Box, multiply by piecesPerPurchaseUnit
         stock: (() => {
@@ -1341,22 +1331,6 @@ const Inventory = () => {
                             <Clock size={10} /> {item.duration}
                           </span>
                         )}
-                        {item.learningMode && (
-                          <>
-                            <span className="text-slate-300">•</span>
-                            <span className="bg-blue-50 text-blue-700 px-1 rounded-sm text-[9px] uppercase font-bold tracking-wider">
-                              {item.learningMode}
-                            </span>
-                          </>
-                        )}
-                        {item.preferredTime && (
-                          <>
-                            <span className="text-slate-300">•</span>
-                            <span className="text-slate-500">
-                              🕒 {item.preferredTime}
-                            </span>
-                          </>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1455,22 +1429,6 @@ const Inventory = () => {
                               <span className="text-slate-300 text-[10px]">•</span>
                               <span className="text-[10px] text-slate-500 font-medium flex items-center gap-0.5">
                                 <Clock size={10} /> {item.duration}
-                              </span>
-                            </>
-                          )}
-                          {item.learningMode && (
-                            <>
-                              <span className="text-slate-300 text-[10px]">•</span>
-                              <span className="bg-blue-50 text-blue-700 px-1 rounded-sm text-[9px] uppercase font-bold tracking-wider">
-                                {item.learningMode}
-                              </span>
-                            </>
-                          )}
-                          {item.preferredTime && (
-                            <>
-                              <span className="text-slate-300 text-[10px]">•</span>
-                              <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
-                                🕒 {item.preferredTime}
                               </span>
                             </>
                           )}
@@ -1736,43 +1694,7 @@ const Inventory = () => {
                           </select>
                         </div>
 
-                        {/* Learning Mode */}
-                        <div>
-                          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block flex items-center gap-2">
-                            <Laptop size={16} weight="duotone" className="text-slate-400" />
-                            Learning Mode
-                          </label>
-                          <select
-                            value={learningMode}
-                            onChange={(e) => setLearningMode(e.target.value as any)}
-                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"
-                          >
-                            <option value="Offline">Offline</option>
-                            <option value="Online">Online</option>
-                            <option value="Hybrid">Hybrid</option>
-                          </select>
-                        </div>
 
-                        {/* Preferred Class Time */}
-                        <div>
-                          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block flex items-center gap-2">
-                            <Clock size={16} weight="duotone" className="text-slate-400" />
-                            Preferred Class Time
-                          </label>
-                          <select
-                            value={preferredTime}
-                            onChange={(e) => setPreferredTime(e.target.value)}
-                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white"
-                          >
-                            <option value="">Select Time Slot</option>
-                            <option value="07:00 AM - 09:00 AM">07:00 AM - 09:00 AM</option>
-                            <option value="09:00 AM - 11:00 AM">09:00 AM - 11:00 AM</option>
-                            <option value="11:00 AM - 01:00 PM">11:00 AM - 01:00 PM</option>
-                            <option value="01:00 PM - 03:00 PM">01:00 PM - 03:00 PM</option>
-                            <option value="03:00 PM - 05:00 PM">03:00 PM - 05:00 PM</option>
-                            <option value="05:00 PM - 07:00 PM">05:00 PM - 07:00 PM</option>
-                            <option value="07:00 PM - 09:00 PM">07:00 PM - 09:00 PM</option>
-                          </select>
                         </div>
 
                         {/* Description with {t.inventory.aiSuggestions} */}
@@ -2481,43 +2403,7 @@ const Inventory = () => {
                           </select>
                         </div>
 
-                        {/* Learning Mode */}
-                        <div>
-                          <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
-                            <Laptop size={14} weight="duotone" className="text-primary" />
-                            Learning Mode
-                          </label>
-                          <select
-                            value={learningMode}
-                            onChange={(e) => setLearningMode(e.target.value as any)}
-                            className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                          >
-                            <option value="Offline">Offline</option>
-                            <option value="Online">Online</option>
-                            <option value="Hybrid">Hybrid</option>
-                          </select>
-                        </div>
 
-                        {/* Preferred Class Time */}
-                        <div>
-                          <label className="text-xs font-medium mb-1.5 block flex items-center gap-1">
-                            <Clock size={14} weight="duotone" className="text-primary" />
-                            Preferred Class Time
-                          </label>
-                          <select
-                            value={preferredTime}
-                            onChange={(e) => setPreferredTime(e.target.value)}
-                            className="w-full px-3 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                          >
-                            <option value="">Select Time Slot</option>
-                            <option value="07:00 AM - 09:00 AM">07:00 AM - 09:00 AM</option>
-                            <option value="09:00 AM - 11:00 AM">09:00 AM - 11:00 AM</option>
-                            <option value="11:00 AM - 01:00 PM">11:00 AM - 01:00 PM</option>
-                            <option value="01:00 PM - 03:00 PM">01:00 PM - 03:00 PM</option>
-                            <option value="03:00 PM - 05:00 PM">03:00 PM - 05:00 PM</option>
-                            <option value="05:00 PM - 07:00 PM">05:00 PM - 07:00 PM</option>
-                            <option value="07:00 PM - 09:00 PM">07:00 PM - 09:00 PM</option>
-                          </select>
                         </div>
 
                         {/* Description */}
@@ -3227,18 +3113,6 @@ const Inventory = () => {
                   <div>
                     <label className="text-sm text-muted-foreground">Course Duration</label>
                     <p className="font-medium">{selectedItem.duration}</p>
-                  </div>
-                )}
-                {selectedItem.learningMode && (
-                  <div>
-                    <label className="text-sm text-muted-foreground">Learning Mode</label>
-                    <p className="font-medium">{selectedItem.learningMode}</p>
-                  </div>
-                )}
-                {selectedItem.preferredTime && (
-                  <div>
-                    <label className="text-sm text-muted-foreground">Preferred Class Time</label>
-                    <p className="font-medium">{selectedItem.preferredTime}</p>
                   </div>
                 )}
                 {selectedItem.hsnCode && (
